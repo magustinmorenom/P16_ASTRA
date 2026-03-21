@@ -16,7 +16,7 @@ class RepositorioCalculo:
 
     async def guardar(
         self,
-        perfil_id: uuid.UUID,
+        perfil_id: uuid.UUID | None,
         tipo: str,
         hash_parametros: str,
         resultado_json: dict,

@@ -15,10 +15,10 @@ class Calculo(ModeloBase):
 
     __tablename__ = "calculos"
 
-    perfil_id: Mapped[uuid.UUID] = mapped_column(
+    perfil_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("perfiles.id"),
-        nullable=False,
+        nullable=True,
     )
     tipo: Mapped[str] = mapped_column(String(20), nullable=False)
     hash_parametros: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
