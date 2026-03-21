@@ -1,0 +1,71 @@
+# CLAUDE.md — P16_ASTRA / CosmicEngine
+
+## Regla Principal: Verificar Contexto Antes de Actuar
+
+**OBLIGATORIO:** Antes de ejecutar cualquier acción (escribir código, crear archivos, diseñar, planificar, o tomar decisiones de arquitectura), TODOS los agentes DEBEN:
+
+IMPORTANTE IDIOMA: TODO LO QUE PROGRAMES DEBE SER EN ESPAÑOL (salvo nombres especificos) y la interfaz tambien debe ser en español.
+
+1. **Leer la carpeta `context/`** — Listar y leer todos los archivos en `context/` para entender el estado actual del proyecto, las decisiones de arquitectura y los requisitos.
+2. **Respetar las decisiones documentadas** — Las ADRs (Architecture Decision Records) y documentos en `context/` son la fuente de verdad. No contradecir ni ignorar lo que está documentado allí.
+3. **Validar coherencia** — Cualquier código, diseño o decisión debe ser coherente con los documentos de contexto. Si hay un conflicto, preguntar al usuario antes de proceder.
+
+### Archivos de Contexto Actuales
+
+| Archivo | Contenido |
+|---------|-----------|
+| `context/ADR-0.md` | Architecture Requirements Document — CosmicEngine v1.0. Define stack, servicios, modelos de datos, endpoints, dependencias y roadmap. |
+
+> Cuando se agreguen nuevos archivos a `context/`, los agentes deben leerlos todos antes de actuar.
+
+---
+
+## Proyecto: CosmicEngine
+
+Plataforma de cálculo esotérico-astronómico que integra:
+- **Carta Astral** (astrología occidental, pyswisseph + kerykeion)
+- **Human Design** (Body Graph, 88 grados solares)
+- **Numerología** (Pitagórico y Caldeo)
+- **Revolución Solar** y **Tránsitos en tiempo real**
+
+### Stack Tecnológico
+
+- **Backend:** Python 3.11+, FastAPI, pyswisseph, kerykeion, SQLAlchemy, PostgreSQL, Redis
+- **Frontend:** Next.js 14+, React 18+, d3.js, TailwindCSS, SVG generativo
+- **Geocodificación:** Nominatim/OSM + timezonefinder
+- **Efemérides:** Swiss Ephemeris (archivos .se1)
+
+### Estructura de la API
+
+Base: `/api/v1/`
+- `POST /natal` — Carta natal completa
+- `POST /human-design` — Body Graph + perfil HD
+- `POST /numerology` — Carta numerológica
+- `POST /solar-return/{year}` — Revolución solar
+- `GET /transits` — Posición actual de astros
+- `GET/POST /profile/{id}` — Guardar/recuperar perfil
+
+### Decisiones Clave (ADRs)
+
+- **ADR-01:** Sistema de casas Placidus por defecto (configurable)
+- **ADR-02:** Numerología Pitagórica por defecto (Caldeo como alternativa)
+- **ADR-03:** Motor único pyswisseph para todos los cálculos astronómicos
+- **ADR-04:** Geocodificación con Nominatim/OSM (gratuito)
+- **ADR-05:** Cache Redis (cálculos deterministas)
+
+### Puntos Críticos
+
+- Zona horaria DEBE resolverse en la fecha histórica del nacimiento, no en el presente
+- Los 88 grados de HD son grados eclípticos del Sol, NO días calendario
+- Números maestros (11, 22, 33) NO se reducen en numerología
+- Precisión solar requerida: < 0.01 grados vs Astro.com
+
+---
+
+## Convenciones para Agentes
+
+- Usar el skill `fullstack-engineer` para tareas de implementación backend/frontend
+- Usar el skill `ux-designer` para tareas de diseño de interfaces
+- Todo código nuevo debe seguir el stack definido en `context/ADR-0.md`
+- No introducir dependencias fuera del stack sin aprobación explícita del usuario
+- Los cálculos astronómicos son deterministas: mismo input = mismo output (aprovechar cache)
