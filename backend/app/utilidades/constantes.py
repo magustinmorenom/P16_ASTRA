@@ -118,8 +118,9 @@ ORDEN_PUERTAS_HD = [
     28, 44, 1, 43, 14, 34, 9, 5, 26, 11, 10, 58, 38, 54, 61, 60,
 ]
 
-# Grado de inicio de la puerta 41 (2° Acuario = 332.0° eclíptico)
-GRADO_INICIO_PUERTA_41 = 332.0
+# Grado de inicio de la puerta 41 (2° Acuario = 302.0° eclíptico)
+# Acuario empieza en 300°, +2° = 302°
+GRADO_INICIO_PUERTA_41 = 302.0
 
 # Cada puerta ocupa 5.625° (360° / 64 puertas)
 GRADOS_POR_PUERTA = 5.625

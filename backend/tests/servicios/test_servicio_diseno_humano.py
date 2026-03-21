@@ -14,20 +14,20 @@ class TestMapeoLongitudPuerta:
     """Tests del mapeo de longitud a puerta/línea."""
 
     def test_puerta_41_inicio(self):
-        """332.0° debe mapear a puerta 41, línea 1."""
-        puerta, linea = ServicioDisenoHumano._mapear_longitud_a_puerta_linea(332.0)
+        """302.0° (2° Acuario) debe mapear a puerta 41, línea 1."""
+        puerta, linea = ServicioDisenoHumano._mapear_longitud_a_puerta_linea(302.0)
         assert puerta == 41
         assert linea == 1
 
     def test_puerta_siguiente(self):
-        """332.0 + 5.625 = 337.625° debe ser puerta 19 (segunda en el orden)."""
-        puerta, linea = ServicioDisenoHumano._mapear_longitud_a_puerta_linea(337.625)
+        """302.0 + 5.625 = 307.625° debe ser puerta 19 (segunda en el orden)."""
+        puerta, linea = ServicioDisenoHumano._mapear_longitud_a_puerta_linea(307.625)
         assert puerta == 19
         assert linea == 1
 
     def test_lineas_1_a_6(self):
         """Dentro de una puerta, las 6 líneas deben estar correctas."""
-        base = 332.0  # Inicio puerta 41
+        base = 302.0  # Inicio puerta 41
         for i in range(6):
             lon = base + i * 0.9375 + 0.01  # Pequeño offset para estar dentro
             _, linea = ServicioDisenoHumano._mapear_longitud_a_puerta_linea(lon)
