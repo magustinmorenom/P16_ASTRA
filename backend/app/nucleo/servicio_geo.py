@@ -41,6 +41,7 @@ class ServicioGeo:
         async with Nominatim(
             user_agent=config.nominatim_user_agent,
             adapter_factory=AioHTTPAdapter,
+            timeout=10,
         ) as geocodificador:
             ubicacion = await geocodificador.geocode(consulta)
 

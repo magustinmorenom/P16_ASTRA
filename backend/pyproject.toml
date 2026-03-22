@@ -8,7 +8,7 @@ dependencies = [
     "uvicorn[standard]>=0.27",
     "pyswisseph>=2.10.3.2",
     "kerykeion>=4.14",
-    "geopy>=2.4",
+    "geopy[aiohttp]>=2.4",
     "timezonefinder>=6.4",
     "pytz>=2024.1",
     "redis[hiredis]>=5.0",
@@ -29,6 +29,10 @@ dev = [
     "pytest-cov>=4.1",
     "httpx>=0.27",
     "ruff>=0.3",
+]
+scripts = [
+    "rich>=13.0",
+    "httpx>=0.27",
 ]
 
 [build-system]

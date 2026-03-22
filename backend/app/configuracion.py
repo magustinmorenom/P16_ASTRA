@@ -14,11 +14,11 @@ class Configuracion(BaseSettings):
     )
 
     # Base de datos
-    database_url: str = "postgresql+asyncpg://cosmic:cosmic123@localhost:5432/cosmicengine"
-    database_url_sync: str = "postgresql+psycopg2://cosmic:cosmic123@localhost:5432/cosmicengine"
+    database_url: str = "postgresql+asyncpg://cosmic:cosmic123@localhost:5434/cosmicengine"
+    database_url_sync: str = "postgresql+psycopg2://cosmic:cosmic123@localhost:5434/cosmicengine"
 
     # Redis
-    redis_url: str = "redis://localhost:6379/0"
+    redis_url: str = "redis://localhost:6380/0"
 
     # Efemérides
     ephe_path: str = "./datos_efemerides"
