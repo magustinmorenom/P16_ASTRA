@@ -131,10 +131,40 @@ The ASTRA brand palette is built on three pillars: **Violet** (spiritual depth),
 - **Content density**: Low to medium. Never overwhelm. If a screen feels busy, split it.
 - **Safe areas**: Always respect device safe areas and notch zones.
 
-### Iconography
-- **Style**: Line icons (1.5-2px stroke), rounded caps and joins. Optional: duotone for emphasis.
-- **Size**: 24px standard, 20px compact, 32px feature icons.
-- **Custom spiritual icons**: Lotus, moon phases, chakra symbols, meditation poses, crystals, celestial bodies — always elegant, never cartoonish.
+### Iconography — Phosphor Icons
+
+**Phosphor** es la librería de iconos oficial de ASTRA. Usar siempre `iconFontFamily: "phosphor"` en Pencil.
+
+- **Librería**: Phosphor Icons (6000+ iconos, trazo refinado y profesional).
+- **Style**: Line icons (1.5-2px stroke), rounded caps and joins. Phosphor ofrece variantes regular, bold, fill, duotone y thin — usar **regular** por defecto y **fill** para estados activos.
+- **Size**: 24px standard, 20px compact, 32px feature icons, 48px hero icons.
+- **Custom spiritual icons**: Usar iconos Phosphor relevantes para el dominio espiritual:
+  - Astrología: `star`, `star-four`, `moon`, `sun`, `planet`, `compass`, `shooting-star`
+  - Diseño Humano: `hexagon`, `git-network`, `graph`
+  - Numerología: `hash`, `number-circle-one` a `nine`
+  - General espiritual: `sparkle`, `eye`, `heart`, `infinity`, `flower-lotus`, `yin-yang`
+  - Navegación: `house`, `magnifying-glass`, `bell`, `gear`, `user`, `caret-right`, `caret-down`, `arrow-right`, `arrow-left`
+  - Formularios: `envelope`, `lock`, `eye-slash`, `calendar-blank`, `clock`, `map-pin`, `globe`
+  - Acciones: `check`, `check-circle`, `x`, `paper-plane-tilt`, `play`, `info`
+- **Nunca usar Lucide, Feather ni Material Icons** — Phosphor es el estándar único de ASTRA.
+
+#### Mapeo rápido Lucide → Phosphor (referencia de migración)
+| Concepto | Phosphor |
+|----------|----------|
+| Buscar | `magnifying-glass` |
+| Enviar | `paper-plane-tilt` |
+| Email | `envelope` |
+| Ocultar password | `eye-slash` |
+| Reloj | `clock` |
+| Check completado | `check-circle` |
+| Loading | `spinner-gap` |
+| Configuración | `gear` |
+| Órbita/Planeta | `planet` |
+| Flecha derecha/izquierda | `arrow-right` / `arrow-left` |
+| Chevron der/abajo | `caret-right` / `caret-down` |
+| Wifi | `wifi-high` |
+| Señal celular | `cell-signal-full` |
+| Calendario | `calendar-blank` |
 
 ---
 
