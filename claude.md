@@ -66,6 +66,7 @@ Base: `/api/v1/`
 
 - Usar el skill `fullstack-engineer` para tareas de implementación backend/frontend
 - Usar el skill `ux-designer` para tareas de diseño de interfaces
+- Usar el skill `payment-gateway` para integración de pagos con MercadoPago (checkout, suscripciones, webhooks, testing)
 - Todo código nuevo debe seguir el stack definido en `context/ADR-0.md`
 - No introducir dependencias fuera del stack sin aprobación explícita del usuario
 - Los cálculos astronómicos son deterministas: mismo input = mismo output (aprovechar cache)

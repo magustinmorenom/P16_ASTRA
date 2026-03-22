@@ -7,7 +7,7 @@
 | Base URL | `http://localhost:8000` |
 | Prefijo API | `/api/v1` |
 | Formato | JSON |
-| Autenticación | JWT Bearer (opcional en endpoints de cálculo, obligatoria en `/auth/me`, `/auth/logout`, `/auth/cambiar-contrasena`) |
+| Autenticación | JWT Bearer (opcional en endpoints de cálculo, obligatoria en auth protegidos y suscripciones) |
 | CORS | Habilitado para todos los orígenes |
 | Header de tiempo | `X-Tiempo-Respuesta` (segundos) |
 
@@ -36,6 +36,13 @@
 | **Perfiles** | | | |
 | `POST` | `/api/v1/profile` | Opcional | Crear perfil (vincula a usuario si hay token) |
 | `GET` | `/api/v1/profile/{perfil_id}` | No | Obtener perfil por ID |
+| **Suscripciones** | | | |
+| `GET` | `/api/v1/suscripcion/planes` | No | Lista planes con precios por país |
+| `GET` | `/api/v1/suscripcion/mi-suscripcion` | Sí | Suscripción activa del usuario |
+| `POST` | `/api/v1/suscripcion/suscribirse` | Sí | Crear checkout en MercadoPago |
+| `POST` | `/api/v1/suscripcion/cancelar` | Sí | Cancelar suscripción activa |
+| `POST` | `/api/v1/suscripcion/webhook` | No* | Webhook de MercadoPago (HMAC) |
+| `GET` | `/api/v1/suscripcion/pagos` | Sí | Historial de pagos del usuario |
 
 ---
 
@@ -812,6 +819,352 @@ Mismo formato que la respuesta de creación.
 
 ---
 
+## Suscripciones y Pagos (MercadoPago)
+
+CosmicEngine es **gratis por defecto**. Los usuarios pueden hacer upgrade a **Premium** ($9 USD/mes) con cobro recurrente vía MercadoPago. Se soportan tres países: Argentina (ARS), Brasil (BRL) y México (MXN), cada uno con credenciales y tipo de cambio independientes.
+
+### Modelo de Planes
+
+| Plan | Precio | Perfiles | Cálculos/día | Features |
+|------|--------|----------|--------------|----------|
+| **Gratis** | $0 | 3 | 5 | `natal_basico`, `numerologia_basica` |
+| **Premium** | $9 USD/mes | Ilimitados | Ilimitados | `natal`, `diseno_humano`, `numerologia`, `retorno_solar`, `transitos`, `exportar_pdf` |
+
+### Flujo de Suscripción
+
+```
+1. GET /suscripcion/planes         → usuario ve planes y precios en su moneda
+2. POST /suscripcion/suscribirse   → backend crea preapproval en MP, retorna init_point
+3. Frontend redirige a init_point  → usuario paga en MercadoPago
+4. MP envía webhook                → backend actualiza estado a "activa"
+5. Cobro mensual automático        → MP cobra y envía webhook de pago
+6. POST /suscripcion/cancelar      → cancela en MP + crea suscripción gratis
+```
+
+> **Nota:** El webhook NO usa JWT — usa validación HMAC del header `x-signature` de MercadoPago.
+
+---
+
+## GET /api/v1/suscripcion/planes — Listar Planes
+
+Lista todos los planes activos con precios convertidos a la moneda del país solicitado.
+
+### Request
+
+```bash
+curl "http://localhost:8000/api/v1/suscripcion/planes?pais_codigo=AR"
+```
+
+### Query Parameters
+
+| Parámetro | Tipo | Default | Descripción |
+|-----------|------|---------|-------------|
+| `pais_codigo` | string | `"AR"` | Código ISO del país (`AR`, `BR`, `MX`) |
+
+### Response (200)
+
+```json
+{
+  "exito": true,
+  "datos": [
+    {
+      "id": "uuid",
+      "nombre": "Gratis",
+      "slug": "gratis",
+      "descripcion": "Plan gratuito con funcionalidades básicas",
+      "precio_usd_centavos": 0,
+      "intervalo": "months",
+      "limite_perfiles": 3,
+      "limite_calculos_dia": 5,
+      "features": ["natal_basico", "numerologia_basica"],
+      "precio_local": null,
+      "moneda_local": null
+    },
+    {
+      "id": "uuid",
+      "nombre": "Premium",
+      "slug": "premium",
+      "descripcion": "Plan premium con todas las funcionalidades",
+      "precio_usd_centavos": 900,
+      "intervalo": "months",
+      "limite_perfiles": -1,
+      "limite_calculos_dia": -1,
+      "features": ["natal", "diseno_humano", "numerologia", "retorno_solar", "transitos", "exportar_pdf"],
+      "precio_local": 1080000,
+      "moneda_local": "ARS"
+    }
+  ]
+}
+```
+
+> `precio_local` está en centavos de la moneda local. `1080000` = $10.800 ARS. Para el plan gratis es `null`.
+
+---
+
+## GET /api/v1/suscripcion/mi-suscripcion — Suscripción Activa
+
+Retorna la suscripción activa del usuario autenticado.
+
+### Request
+
+```bash
+curl http://localhost:8000/api/v1/suscripcion/mi-suscripcion \
+  -H "Authorization: Bearer <token_acceso>"
+```
+
+### Response (200) — Con suscripción
+
+```json
+{
+  "exito": true,
+  "datos": {
+    "id": "uuid",
+    "plan_id": "uuid",
+    "plan_nombre": "Premium",
+    "plan_slug": "premium",
+    "pais_codigo": "AR",
+    "estado": "activa",
+    "mp_preapproval_id": "mp_preapproval_123",
+    "fecha_inicio": "2026-03-22T10:00:00+00:00",
+    "fecha_fin": null,
+    "creado_en": "2026-03-22T10:00:00+00:00"
+  }
+}
+```
+
+### Response (200) — Sin suscripción
+
+```json
+{
+  "exito": true,
+  "datos": null,
+  "mensaje": "Sin suscripción activa"
+}
+```
+
+### Errores
+
+| Código | Causa |
+|--------|-------|
+| 401 | Sin token o token inválido |
+
+---
+
+## POST /api/v1/suscripcion/suscribirse — Crear Checkout
+
+Crea un preapproval (suscripción recurrente) en MercadoPago y retorna la URL de checkout para redirigir al usuario.
+
+### Request
+
+```bash
+curl -X POST http://localhost:8000/api/v1/suscripcion/suscribirse \
+  -H "Authorization: Bearer <token_acceso>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "plan_id": "uuid-del-plan-premium",
+    "pais_codigo": "AR"
+  }'
+```
+
+### Body
+
+| Campo | Tipo | Requerido | Default | Validación |
+|-------|------|-----------|---------|------------|
+| `plan_id` | string | Sí | — | UUID de un plan activo (no gratis) |
+| `pais_codigo` | string | No | `"AR"` | `AR`, `BR` o `MX` |
+
+### Response (200)
+
+```json
+{
+  "exito": true,
+  "datos": {
+    "init_point": "https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_id=123",
+    "suscripcion_id": "uuid-suscripcion-local",
+    "mp_preapproval_id": "mp_preapproval_123"
+  }
+}
+```
+
+> El frontend debe redirigir al usuario a `init_point`. MercadoPago se encarga del cobro, PCI y 3DS.
+
+### Comportamiento
+
+1. Cancela todas las suscripciones activas previas del usuario
+2. Calcula el precio local: `precio_usd × tipo_cambio` del país
+3. Crea preapproval en MP con estado `pending`
+4. Crea suscripción local con estado `pendiente`
+5. Cuando el usuario completa el pago, MP envía webhook y se activa
+
+### Errores
+
+| Código | Causa |
+|--------|-------|
+| 401 | Sin token o token inválido |
+| 404 | Plan no encontrado, plan inactivo, o sin precio para el país |
+| 422 | `pais_codigo` inválido (no es AR/BR/MX) |
+| 502 | Error de conexión con MercadoPago, plan gratis no permite checkout, o sin config de MP para el país |
+
+---
+
+## POST /api/v1/suscripcion/cancelar — Cancelar Suscripción
+
+Cancela la suscripción activa del usuario. Si tiene preapproval en MP, lo cancela allí también. Crea automáticamente una suscripción al plan gratis.
+
+### Request
+
+```bash
+curl -X POST http://localhost:8000/api/v1/suscripcion/cancelar \
+  -H "Authorization: Bearer <token_acceso>"
+```
+
+### Response (200)
+
+```json
+{
+  "exito": true,
+  "mensaje": "Suscripción cancelada correctamente"
+}
+```
+
+### Comportamiento
+
+1. Si la suscripción tiene `mp_preapproval_id`, envía `PUT /preapproval/{id}` con `status=cancelled` a MP
+2. Si falla la cancelación en MP, cancela localmente de todos modos (el usuario no queda trabado)
+3. Actualiza la suscripción local a estado `cancelada`
+4. Crea una nueva suscripción al plan `gratis` automáticamente
+
+### Errores
+
+| Código | Causa |
+|--------|-------|
+| 401 | Sin token o token inválido |
+| 404 | No tiene suscripción activa |
+
+---
+
+## POST /api/v1/suscripcion/webhook — Webhook MercadoPago
+
+Recibe notificaciones de MercadoPago sobre cambios en suscripciones y pagos. **Siempre retorna 200** para evitar reintentos innecesarios de MP.
+
+### Request (enviado por MercadoPago)
+
+```json
+{
+  "id": "evt_12345",
+  "type": "subscription_preapproval",
+  "action": "updated",
+  "data": {
+    "id": "preapproval_id_o_payment_id"
+  }
+}
+```
+
+### Headers de MercadoPago
+
+| Header | Descripción |
+|--------|-------------|
+| `x-signature` | Firma HMAC-SHA256 (formato `ts=xxxx,v1=yyyy`) |
+| `x-request-id` | ID único del request |
+
+### Tipos de Evento Procesados
+
+| Tipo | Acción |
+|------|--------|
+| `subscription_preapproval` | Sincroniza estado de suscripción (pending→pendiente, authorized→activa, paused→pausada, cancelled→cancelada) |
+| `subscription_authorized_payment` | Registra pago recurrente en tabla `pagos` |
+| `payment` | Registra pago individual (fallback) |
+
+### Seguridad
+
+- **Firma HMAC**: Si `MP_WEBHOOK_SECRET` está configurado, verifica la firma `x-signature` contra el manifest `id:{data_id};request-id:{x_request_id};ts:{ts};`
+- **Idempotencia**: Cada evento se procesa una sola vez (tabla `eventos_webhook` con PK = event ID)
+
+### Response (200) — Siempre
+
+```json
+{
+  "exito": true,
+  "mensaje": "Webhook procesado"
+}
+```
+
+---
+
+## GET /api/v1/suscripcion/pagos — Historial de Pagos
+
+Lista el historial de pagos del usuario autenticado.
+
+### Request
+
+```bash
+curl "http://localhost:8000/api/v1/suscripcion/pagos?limite=20&offset=0" \
+  -H "Authorization: Bearer <token_acceso>"
+```
+
+### Query Parameters
+
+| Parámetro | Tipo | Default | Descripción |
+|-----------|------|---------|-------------|
+| `limite` | int | `50` | Máximo de resultados |
+| `offset` | int | `0` | Desplazamiento para paginación |
+
+### Response (200)
+
+```json
+{
+  "exito": true,
+  "datos": [
+    {
+      "id": "uuid",
+      "estado": "aprobado",
+      "monto_centavos": 1080000,
+      "moneda": "ARS",
+      "metodo_pago": "credit_card",
+      "detalle_estado": "accredited",
+      "fecha_pago": "2026-03-22T10:00:00+00:00",
+      "creado_en": "2026-03-22T10:00:00+00:00"
+    }
+  ]
+}
+```
+
+### Estados de Pago
+
+| Estado MP | Estado Local |
+|-----------|-------------|
+| `approved` | `aprobado` |
+| `pending` | `pendiente` |
+| `in_process` | `en_proceso` |
+| `rejected` | `rechazado` |
+| `cancelled` | `cancelado` |
+| `refunded` | `reembolsado` |
+| `charged_back` | `contracargo` |
+
+### Errores
+
+| Código | Causa |
+|--------|-------|
+| 401 | Sin token o token inválido |
+
+---
+
+## Feature Gating
+
+Los endpoints premium se protegen con la dependencia `requiere_plan("premium")`. Si el usuario no tiene el plan requerido, se retorna 403.
+
+```json
+{
+  "exito": false,
+  "error": "LimiteExcedido",
+  "detalle": "Se requiere plan premium. Tu plan actual es gratis."
+}
+```
+
+> **Nota:** El gating en endpoints de cálculo se activará en una fase posterior. Actualmente solo está implementada la infraestructura.
+
+---
+
 ## Códigos de Error
 
 | Código HTTP | Clase | Descripción |
@@ -820,12 +1173,16 @@ Mismo formato que la respuesta de creación.
 | 401 | `ErrorAutenticacion` | Credenciales inválidas, usuario desactivado |
 | 401 | `ErrorTokenInvalido` | Token JWT inválido, expirado o revocado |
 | 403 | `ErrorAccesoDenegado` | No tiene permisos para acceder al recurso |
+| 403 | `LimiteExcedido` | Límite del plan excedido (feature gating) |
 | 404 | `UbicacionNoEncontrada` | Geocodificación falló (ciudad/país no encontrado) |
 | 404 | `PerfilNoEncontrado` | UUID de perfil no existe |
 | 404 | `UsuarioNoEncontrado` | Usuario no encontrado |
+| 404 | `PlanNoEncontrado` | Plan no encontrado o inactivo |
+| 404 | `SuscripcionNoEncontrada` | Suscripción no encontrada o sin suscripción activa |
 | 409 | `EmailYaRegistrado` | El email ya está registrado |
 | 422 | `ErrorDatosEntrada` | Datos de entrada inválidos (validación Pydantic) |
 | 500 | `ErrorCalculoEfemerides` | Error interno en Swiss Ephemeris |
+| 502 | `ErrorPasarelaPago` | Error de conexión o respuesta inesperada de MercadoPago |
 
 ### Formato de Error
 
@@ -891,6 +1248,18 @@ Todas las respuestas incluyen `"cache": true|false` para indicar si el resultado
 | `GOOGLE_CLIENT_ID` | `""` | Client ID de Google OAuth (Google Cloud Console) |
 | `GOOGLE_CLIENT_SECRET` | `""` | Client Secret de Google OAuth |
 | `GOOGLE_REDIRECT_URI` | `http://localhost:8000/api/v1/auth/google/callback` | URI de callback para Google OAuth |
+| **MercadoPago** | | |
+| `MP_ACCESS_TOKEN_AR` | `""` | Access token de MP para Argentina |
+| `MP_PUBLIC_KEY_AR` | `""` | Public key de MP para Argentina |
+| `MP_ACCESS_TOKEN_BR` | `""` | Access token de MP para Brasil |
+| `MP_PUBLIC_KEY_BR` | `""` | Public key de MP para Brasil |
+| `MP_ACCESS_TOKEN_MX` | `""` | Access token de MP para México |
+| `MP_PUBLIC_KEY_MX` | `""` | Public key de MP para México |
+| `MP_WEBHOOK_SECRET` | `""` | Secret para verificar firma HMAC de webhooks |
+| `MP_NOTIFICATION_URL` | `http://localhost:8000/api/v1/suscripcion/webhook` | URL pública para recibir webhooks de MP |
+| `MP_URL_EXITO` | `http://localhost:3000/suscripcion/exito` | URL de retorno tras pago exitoso |
+| `MP_URL_FALLO` | `http://localhost:3000/suscripcion/fallo` | URL de retorno tras pago fallido |
+| `MP_URL_PENDIENTE` | `http://localhost:3000/suscripcion/pendiente` | URL de retorno si el pago queda pendiente |
 
 ### Docker Compose
 

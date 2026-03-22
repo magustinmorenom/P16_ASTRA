@@ -79,6 +79,34 @@ class UsuarioNoEncontrado(CosmicEngineError):
         super().__init__(detalle, codigo=404)
 
 
+class PlanNoEncontrado(CosmicEngineError):
+    """Plan no encontrado."""
+
+    def __init__(self, detalle: str = "Plan no encontrado"):
+        super().__init__(detalle, codigo=404)
+
+
+class SuscripcionNoEncontrada(CosmicEngineError):
+    """Suscripción no encontrada."""
+
+    def __init__(self, detalle: str = "Suscripción no encontrada"):
+        super().__init__(detalle, codigo=404)
+
+
+class LimiteExcedido(CosmicEngineError):
+    """Límite del plan excedido."""
+
+    def __init__(self, detalle: str = "Límite del plan excedido"):
+        super().__init__(detalle, codigo=403)
+
+
+class ErrorPasarelaPago(CosmicEngineError):
+    """Error en la pasarela de pago (MercadoPago)."""
+
+    def __init__(self, detalle: str = "Error en la pasarela de pago"):
+        super().__init__(detalle, codigo=502)
+
+
 class EmailYaRegistrado(CosmicEngineError):
     """El email ya está registrado."""
 

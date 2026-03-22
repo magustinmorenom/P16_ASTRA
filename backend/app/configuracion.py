@@ -46,6 +46,21 @@ class Configuracion(BaseSettings):
     google_client_secret: str = ""
     google_redirect_uri: str = "http://localhost:8000/api/v1/auth/google/callback"
 
+    # MercadoPago — credenciales por país
+    mp_access_token_ar: str = ""
+    mp_public_key_ar: str = ""
+    mp_access_token_br: str = ""
+    mp_public_key_br: str = ""
+    mp_access_token_mx: str = ""
+    mp_public_key_mx: str = ""
+
+    # MercadoPago — webhook y URLs
+    mp_webhook_secret: str = ""
+    mp_notification_url: str = "http://localhost:8000/api/v1/suscripcion/webhook"
+    mp_url_exito: str = "http://localhost:3000/suscripcion/exito"
+    mp_url_fallo: str = "http://localhost:3000/suscripcion/fallo"
+    mp_url_pendiente: str = "http://localhost:3000/suscripcion/pendiente"
+
 
 @lru_cache
 def obtener_configuracion() -> Configuracion:

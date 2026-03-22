@@ -109,6 +109,7 @@ def _registrar_rutas(app: FastAPI) -> None:
         numerologia,
         perfil,
         retorno_solar,
+        suscripcion,
         transitos,
     )
 
@@ -120,6 +121,7 @@ def _registrar_rutas(app: FastAPI) -> None:
     app.include_router(retorno_solar.router, prefix=prefijo, tags=["Revolución Solar"])
     app.include_router(transitos.router, prefix=prefijo, tags=["Tránsitos"])
     app.include_router(perfil.router, prefix=prefijo, tags=["Perfiles"])
+    app.include_router(suscripcion.router, prefix=prefijo)
 
     @app.get("/health", tags=["Sistema"])
     async def health_check():
