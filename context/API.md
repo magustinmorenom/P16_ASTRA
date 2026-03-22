@@ -7,7 +7,7 @@
 | Base URL | `http://localhost:8000` |
 | Prefijo API | `/api/v1` |
 | Formato | JSON |
-| Autenticación | No requerida (v1) |
+| Autenticación | JWT Bearer (opcional en endpoints de cálculo, obligatoria en `/auth/me`, `/auth/logout`, `/auth/cambiar-contrasena`) |
 | CORS | Habilitado para todos los orígenes |
 | Header de tiempo | `X-Tiempo-Respuesta` (segundos) |
 
@@ -15,16 +15,27 @@
 
 ## Tabla Resumen de Endpoints
 
-| Método | Ruta | Descripción | Cache TTL | Persiste en DB |
-|--------|------|-------------|-----------|----------------|
-| `GET` | `/health` | Estado del sistema | — | No |
-| `POST` | `/api/v1/natal` | Carta natal completa | ∞ (determinista) | Sí |
-| `POST` | `/api/v1/human-design` | Diseño Humano (Body Graph) | ∞ (determinista) | Sí |
-| `POST` | `/api/v1/numerology` | Carta numerológica | ∞ (determinista) | Sí |
-| `POST` | `/api/v1/solar-return/{anio}` | Revolución solar | ∞ (determinista) | Sí |
-| `GET` | `/api/v1/transits` | Posiciones planetarias actuales | 600s (10 min) | No |
-| `POST` | `/api/v1/profile` | Crear perfil | — | Sí |
-| `GET` | `/api/v1/profile/{perfil_id}` | Obtener perfil por ID | — | Lectura |
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| `GET` | `/health` | No | Estado del sistema |
+| **Autenticación** | | | |
+| `POST` | `/api/v1/auth/registrar` | No | Registro con email/contraseña |
+| `POST` | `/api/v1/auth/login` | No | Login email/contraseña |
+| `POST` | `/api/v1/auth/logout` | Sí | Invalidar refresh token |
+| `POST` | `/api/v1/auth/renovar` | No | Renovar access token |
+| `POST` | `/api/v1/auth/cambiar-contrasena` | Sí | Cambiar contraseña |
+| `GET` | `/api/v1/auth/google/url` | No | URL de autorización Google |
+| `GET` | `/api/v1/auth/google/callback` | No | Callback OAuth Google |
+| `GET` | `/api/v1/auth/me` | Sí | Datos del usuario autenticado |
+| **Cálculos** | | | |
+| `POST` | `/api/v1/natal` | Opcional | Carta natal completa |
+| `POST` | `/api/v1/human-design` | Opcional | Diseño Humano (Body Graph) |
+| `POST` | `/api/v1/numerology` | Opcional | Carta numerológica |
+| `POST` | `/api/v1/solar-return/{anio}` | Opcional | Revolución solar |
+| `GET` | `/api/v1/transits` | No | Posiciones planetarias actuales |
+| **Perfiles** | | | |
+| `POST` | `/api/v1/profile` | Opcional | Crear perfil (vincula a usuario si hay token) |
+| `GET` | `/api/v1/profile/{perfil_id}` | No | Obtener perfil por ID |
 
 ---
 
@@ -41,6 +52,273 @@ source .venv/bin/activate
 alembic upgrade head
 uvicorn app.principal:aplicacion --reload --host 0.0.0.0 --port 8000
 ```
+
+---
+
+## Autenticación
+
+CosmicEngine usa **JWT stateless** con dos tipos de token:
+
+| Token | Duración | Uso |
+|-------|----------|-----|
+| `token_acceso` | 30 minutos | Header `Authorization: Bearer <token>` en cada request autenticado |
+| `token_refresco` | 7 días | Enviarlo a `/auth/renovar` para obtener un nuevo `token_acceso` |
+
+**Endpoints públicos:** Los endpoints de cálculo (`/natal`, `/human-design`, `/numerology`, `/solar-return`, `/transits`) funcionan sin token. Si se envía un token válido, el usuario queda vinculado al perfil/cálculo.
+
+**Logout:** Se invalida el `token_refresco` agregándolo a una blacklist en Redis con TTL = tiempo restante del token.
+
+---
+
+## POST /api/v1/auth/registrar — Registro
+
+Crea un nuevo usuario con email y contraseña.
+
+### Request
+
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/registrar \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "usuario@ejemplo.com",
+    "nombre": "Juan Pérez",
+    "contrasena": "miContrasena123"
+  }'
+```
+
+### Body
+
+| Campo | Tipo | Requerido | Validación |
+|-------|------|-----------|------------|
+| `email` | string | Sí | Email válido, único |
+| `nombre` | string | Sí | 1-100 caracteres |
+| `contrasena` | string | Sí | 8-128 caracteres |
+
+### Response (200)
+
+```json
+{
+  "exito": true,
+  "datos": {
+    "usuario": {
+      "id": "uuid",
+      "email": "usuario@ejemplo.com",
+      "nombre": "Juan Pérez"
+    },
+    "token_acceso": "eyJ...",
+    "token_refresco": "eyJ...",
+    "tipo": "bearer"
+  }
+}
+```
+
+### Errores
+
+| Código | Causa |
+|--------|-------|
+| 409 | Email ya registrado |
+| 422 | Datos inválidos (email, nombre vacío, contraseña corta) |
+
+---
+
+## POST /api/v1/auth/login — Iniciar Sesión
+
+Autentica con email y contraseña.
+
+### Request
+
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "usuario@ejemplo.com",
+    "contrasena": "miContrasena123"
+  }'
+```
+
+### Response (200)
+
+Mismo formato que `/auth/registrar`.
+
+### Errores
+
+| Código | Causa |
+|--------|-------|
+| 401 | Email no registrado, contraseña incorrecta, usuario desactivado, o usuario Google (sin contraseña local) |
+
+---
+
+## POST /api/v1/auth/logout — Cerrar Sesión
+
+Invalida el token de refresco (lo agrega a la blacklist en Redis).
+
+### Request
+
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/logout \
+  -H "Authorization: Bearer <token_acceso>" \
+  -H "Content-Type: application/json" \
+  -d '{"token_refresco": "eyJ..."}'
+```
+
+### Response (200)
+
+```json
+{
+  "exito": true,
+  "mensaje": "Sesión cerrada correctamente"
+}
+```
+
+---
+
+## POST /api/v1/auth/renovar — Renovar Token
+
+Genera un nuevo `token_acceso` a partir de un `token_refresco` válido.
+
+### Request
+
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/renovar \
+  -H "Content-Type: application/json" \
+  -d '{"token_refresco": "eyJ..."}'
+```
+
+### Response (200)
+
+```json
+{
+  "exito": true,
+  "datos": {
+    "token_acceso": "eyJ...",
+    "tipo": "bearer"
+  }
+}
+```
+
+### Errores
+
+| Código | Causa |
+|--------|-------|
+| 401 | Token expirado, inválido, revocado, no es de tipo refresco, o usuario desactivado/eliminado |
+
+---
+
+## POST /api/v1/auth/cambiar-contrasena — Cambiar Contraseña
+
+Cambia la contraseña del usuario autenticado.
+
+### Request
+
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/cambiar-contrasena \
+  -H "Authorization: Bearer <token_acceso>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contrasena_actual": "miContrasena123",
+    "contrasena_nueva": "nuevaContrasena456"
+  }'
+```
+
+### Response (200)
+
+```json
+{
+  "exito": true,
+  "mensaje": "Contraseña actualizada correctamente"
+}
+```
+
+### Errores
+
+| Código | Causa |
+|--------|-------|
+| 401 | Contraseña actual incorrecta, o usuario Google (sin contraseña local) |
+
+---
+
+## GET /api/v1/auth/google/url — URL de Google OAuth
+
+Retorna la URL de autorización de Google para iniciar el flujo OAuth2.
+
+### Request
+
+```bash
+curl http://localhost:8000/api/v1/auth/google/url
+```
+
+### Response (200)
+
+```json
+{
+  "exito": true,
+  "datos": {
+    "url": "https://accounts.google.com/o/oauth2/v2/auth?client_id=...&redirect_uri=...&scope=openid+email+profile"
+  }
+}
+```
+
+> **Nota:** Requiere configurar `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` en las variables de entorno.
+
+---
+
+## GET /api/v1/auth/google/callback — Callback Google OAuth
+
+Recibe el código de autorización de Google, crea o autentica al usuario, y retorna tokens.
+
+### Request
+
+```
+GET /api/v1/auth/google/callback?code=<codigo_autorizacion>
+```
+
+### Response (200)
+
+Mismo formato que `/auth/registrar`.
+
+### Errores
+
+| Código | Causa |
+|--------|-------|
+| 401 | Usuario desactivado |
+| 409 | Email ya registrado con otro proveedor (local) |
+
+---
+
+## GET /api/v1/auth/me — Datos del Usuario
+
+Retorna los datos del usuario autenticado.
+
+### Request
+
+```bash
+curl http://localhost:8000/api/v1/auth/me \
+  -H "Authorization: Bearer <token_acceso>"
+```
+
+### Response (200)
+
+```json
+{
+  "exito": true,
+  "datos": {
+    "id": "uuid",
+    "email": "usuario@ejemplo.com",
+    "nombre": "Juan Pérez",
+    "activo": true,
+    "verificado": false,
+    "proveedor_auth": "local",
+    "ultimo_acceso": "2026-03-21T15:30:00+00:00",
+    "creado_en": "2026-03-21T12:00:00+00:00"
+  }
+}
+```
+
+### Errores
+
+| Código | Causa |
+|--------|-------|
+| 401 | Sin token, token inválido, expirado, revocado, usuario no encontrado o desactivado |
 
 ---
 
@@ -539,8 +817,13 @@ Mismo formato que la respuesta de creación.
 | Código HTTP | Clase | Descripción |
 |-------------|-------|-------------|
 | 400 | `ErrorZonaHoraria` | No se pudo resolver la zona horaria para la fecha/ubicación |
+| 401 | `ErrorAutenticacion` | Credenciales inválidas, usuario desactivado |
+| 401 | `ErrorTokenInvalido` | Token JWT inválido, expirado o revocado |
+| 403 | `ErrorAccesoDenegado` | No tiene permisos para acceder al recurso |
 | 404 | `UbicacionNoEncontrada` | Geocodificación falló (ciudad/país no encontrado) |
 | 404 | `PerfilNoEncontrado` | UUID de perfil no existe |
+| 404 | `UsuarioNoEncontrado` | Usuario no encontrado |
+| 409 | `EmailYaRegistrado` | El email ya está registrado |
 | 422 | `ErrorDatosEntrada` | Datos de entrada inválidos (validación Pydantic) |
 | 500 | `ErrorCalculoEfemerides` | Error interno en Swiss Ephemeris |
 
@@ -601,6 +884,13 @@ Todas las respuestas incluyen `"cache": true|false` para indicar si el resultado
 | `EPHE_PATH` | `./datos_efemerides` | Ruta a archivos Swiss Ephemeris (.se1) |
 | `AMBIENTE` | `desarrollo` | Entorno de ejecución |
 | `LOG_LEVEL` | `INFO` | Nivel de logging |
+| `CLAVE_SECRETA` | *(cambiar en producción)* | Clave para firmar JWT. Generar con `openssl rand -hex 32` |
+| `ALGORITMO_JWT` | `HS256` | Algoritmo de firma JWT |
+| `EXPIRACION_TOKEN_ACCESO` | `30` | Minutos de vida del access token |
+| `EXPIRACION_TOKEN_REFRESCO` | `10080` | Minutos de vida del refresh token (7 días) |
+| `GOOGLE_CLIENT_ID` | `""` | Client ID de Google OAuth (Google Cloud Console) |
+| `GOOGLE_CLIENT_SECRET` | `""` | Client Secret de Google OAuth |
+| `GOOGLE_REDIRECT_URI` | `http://localhost:8000/api/v1/auth/google/callback` | URI de callback para Google OAuth |
 
 ### Docker Compose
 

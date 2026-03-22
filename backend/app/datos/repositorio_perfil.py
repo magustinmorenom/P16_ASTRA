@@ -25,6 +25,7 @@ class RepositorioPerfil:
         latitud: float | None = None,
         longitud: float | None = None,
         zona_horaria: str | None = None,
+        usuario_id: uuid.UUID | None = None,
     ) -> Perfil:
         """Crea un nuevo perfil."""
         hora = time.fromisoformat(hora_nacimiento)
@@ -37,6 +38,7 @@ class RepositorioPerfil:
             latitud=latitud,
             longitud=longitud,
             zona_horaria=zona_horaria,
+            usuario_id=usuario_id,
         )
         self.sesion.add(perfil)
         await self.sesion.commit()

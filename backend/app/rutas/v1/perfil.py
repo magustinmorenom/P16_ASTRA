@@ -1,14 +1,15 @@
 """Rutas de perfiles de usuario."""
 
 import uuid
-from typing import AsyncGenerator
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.datos.repositorio_perfil import RepositorioPerfil
+from app.dependencias_auth import obtener_usuario_opcional
 from app.esquemas.entrada import DatosNacimiento
 from app.excepciones import PerfilNoEncontrado
+from app.modelos.usuario import Usuario
 from app.nucleo.servicio_geo import ServicioGeo
 from app.nucleo.servicio_zona_horaria import ServicioZonaHoraria
 from app.principal import _obtener_db_placeholder
@@ -20,6 +21,7 @@ router = APIRouter()
 async def crear_perfil(
     datos: DatosNacimiento,
     db: AsyncSession = Depends(_obtener_db_placeholder),
+    usuario: Usuario | None = Depends(obtener_usuario_opcional),
 ):
     """Crea un nuevo perfil con datos de nacimiento."""
     # Geocodificar
@@ -42,6 +44,7 @@ async def crear_perfil(
         latitud=geo.latitud,
         longitud=geo.longitud,
         zona_horaria=zona,
+        usuario_id=usuario.id if usuario else None,
     )
 
     return {

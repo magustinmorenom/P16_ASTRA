@@ -35,6 +35,17 @@ class Configuracion(BaseSettings):
     cache_ttl_transitos: int = 600
     cache_ttl_determinista: int = 0  # 0 = sin expiración
 
+    # JWT
+    clave_secreta: str = "CAMBIAR-EN-PRODUCCION-generar-con-openssl-rand-hex-32"
+    algoritmo_jwt: str = "HS256"
+    expiracion_token_acceso: int = 30  # minutos
+    expiracion_token_refresco: int = 10080  # 7 días en minutos
+
+    # Google OAuth
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_redirect_uri: str = "http://localhost:8000/api/v1/auth/google/callback"
+
 
 @lru_cache
 def obtener_configuracion() -> Configuracion:
