@@ -8,11 +8,43 @@ import { useRouter } from "next/navigation";
 import { Icono } from "@/componentes/ui/icono";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { useStoreUI } from "@/lib/stores/store-ui";
+import { usarMiPerfil, usarMisCalculos } from "@/lib/hooks";
+import { obtenerSimbolo } from "@/lib/utilidades/formatear-grado";
+
+// ---------------------------------------------------------------------------
+// Mapa de signo zodiacal a icono SVG
+// ---------------------------------------------------------------------------
+const ICONO_SIGNO: Record<string, string> = {
+  Aries: "/img/icons/004-aries.svg",
+  Tauro: "/img/icons/005-taurus.svg",
+  "Géminis": "/img/icons/006-gemini.svg",
+  "Cáncer": "/img/icons/007-cancer.svg",
+  Leo: "/img/icons/008-leo.svg",
+  Virgo: "/img/icons/009-virgo.svg",
+  Libra: "/img/icons/010-libra.svg",
+  Escorpio: "/img/icons/011-scorpio.svg",
+  Sagitario: "/img/icons/017-sagittarius.svg",
+  Capricornio: "/img/icons/001-capricorn.svg",
+  Acuario: "/img/icons/002-aquarius.svg",
+  Piscis: "/img/icons/003-pisces.svg",
+};
 
 export default function Navbar() {
   const router = useRouter();
   const { usuario, cerrarSesion } = useStoreAuth();
   const { toggleSidebar } = useStoreUI();
+
+  const { data: perfil } = usarMiPerfil();
+  const { data: calculos, isLoading: cargandoCalculos } = usarMisCalculos();
+
+  const sol = calculos?.natal?.planetas?.find((p: { nombre: string }) => p.nombre === "Sol");
+  const luna = calculos?.natal?.planetas?.find((p: { nombre: string }) => p.nombre === "Luna");
+  const ascendente = calculos?.natal?.ascendente;
+
+  const nombreRaw = perfil?.nombre ?? usuario?.nombre ?? "Usuario";
+  const nombreUsuario = nombreRaw
+    .toLowerCase()
+    .replace(/\b\w/g, (c: string) => c.toUpperCase());
 
   const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false);
   const refMenuUsuario = useRef<HTMLDivElement>(null);
@@ -45,10 +77,10 @@ export default function Navbar() {
     .toUpperCase();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-[56px] bg-[#2D1B69]">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-[62px] bg-[#2D1B69]">
       <div className="h-full mx-auto px-4 lg:px-6 flex items-center justify-between gap-4">
         {/* Izquierda: Hamburguesa (mobile) + Logo + Home */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <button
             className="lg:hidden text-white p-1"
             onClick={toggleSidebar}
@@ -61,9 +93,9 @@ export default function Navbar() {
             <Image
               src="/img/logo-astra-blanco.png"
               alt="ASTRA"
-              width={100}
-              height={28}
-              className="h-7 w-auto"
+              width={80}
+              height={22}
+              className="h-[22px] w-auto"
               priority
             />
           </Link>
@@ -77,8 +109,55 @@ export default function Navbar() {
           </Link>
         </div>
 
+        {/* Centro: Ribbon glassmorphism con perfil cósmico */}
+        <div className="hidden md:flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/[0.07] backdrop-blur-md border border-white/[0.10] max-w-md">
+          {/* Nombre */}
+          <span className="text-white/90 text-xs font-medium truncate max-w-[140px]">
+            {nombreUsuario}
+          </span>
+
+          {/* Separador */}
+          <div className="h-3.5 w-px bg-white/20 shrink-0" />
+
+          {/* Sol / Luna / Asc */}
+          {cargandoCalculos ? (
+            <div className="flex items-center gap-3">
+              <div className="h-4 w-8 rounded bg-white/10 animate-pulse" />
+              <div className="h-4 w-8 rounded bg-white/10 animate-pulse" />
+              <div className="h-4 w-8 rounded bg-white/10 animate-pulse" />
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                {sol && ICONO_SIGNO[sol.signo] ? (
+                  <Image src={ICONO_SIGNO[sol.signo]} alt={sol.signo} width={14} height={14} className="brightness-0 invert opacity-80" />
+                ) : (
+                  <span className="text-white/70 text-[10px]">{sol ? obtenerSimbolo(sol.signo) : "—"}</span>
+                )}
+                <span className="text-white/50 text-[10px]">Sol</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {luna && ICONO_SIGNO[luna.signo] ? (
+                  <Image src={ICONO_SIGNO[luna.signo]} alt={luna.signo} width={14} height={14} className="brightness-0 invert opacity-80" />
+                ) : (
+                  <span className="text-white/70 text-[10px]">{luna ? obtenerSimbolo(luna.signo) : "—"}</span>
+                )}
+                <span className="text-white/50 text-[10px]">Luna</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {ascendente && ICONO_SIGNO[ascendente.signo] ? (
+                  <Image src={ICONO_SIGNO[ascendente.signo]} alt={ascendente.signo} width={14} height={14} className="brightness-0 invert opacity-80" />
+                ) : (
+                  <span className="text-white/70 text-[10px]">{ascendente ? obtenerSimbolo(ascendente.signo) : "—"}</span>
+                )}
+                <span className="text-white/50 text-[10px]">Asc</span>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Derecha: campana + avatar */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             className="relative p-2 text-violet-300 hover:text-white transition-colors"
             aria-label="Notificaciones"

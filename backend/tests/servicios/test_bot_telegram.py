@@ -1,7 +1,6 @@
 """Tests para el bot de Telegram — Oráculo ASTRA."""
 
 import uuid
-from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

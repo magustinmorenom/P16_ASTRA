@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Tarjeta } from "@/componentes/ui/tarjeta";
 import { Avatar } from "@/componentes/ui/avatar";
@@ -10,17 +11,50 @@ import { Input } from "@/componentes/ui/input";
 import { Icono } from "@/componentes/ui/icono";
 import { Separador } from "@/componentes/ui/separador";
 
-import { usarCambiarContrasena } from "@/lib/hooks";
+import {
+  usarCambiarContrasena,
+  usarMiPerfil,
+  usarActualizarPerfil,
+  usarCartaNatal,
+  usarDisenoHumano,
+  usarNumerologia,
+  usarRetornoSolar,
+} from "@/lib/hooks";
 import { useStoreAuth } from "@/lib/stores/store-auth";
+import type { DatosNacimiento } from "@/lib/tipos";
 
 export default function PaginaPerfil() {
   const { usuario } = useStoreAuth();
   const cambiarContrasena = usarCambiarContrasena();
+  const queryClient = useQueryClient();
 
+  // Perfil y mutations de cálculo
+  const { data: perfil, isLoading: cargandoPerfil } = usarMiPerfil();
+  const actualizarPerfil = usarActualizarPerfil();
+  const cartaNatal = usarCartaNatal();
+  const disenoHumano = usarDisenoHumano();
+  const numerologia = usarNumerologia();
+  const retornoSolar = usarRetornoSolar();
+
+  // Estado de edición de datos de nacimiento
+  const [editando, setEditando] = useState(false);
+  const [formNacimiento, setFormNacimiento] = useState({
+    nombre: "",
+    fecha_nacimiento: "",
+    hora_nacimiento: "",
+    ciudad_nacimiento: "",
+    pais_nacimiento: "",
+  });
+  const [recalculando, setRecalculando] = useState(false);
+  const [mensajeNacimiento, setMensajeNacimiento] = useState<{
+    tipo: "exito" | "error";
+    texto: string;
+  } | null>(null);
+
+  // Estado de cambio de contraseña
   const [contrasenaActual, setContrasenaActual] = useState("");
   const [contrasenaNueva, setContrasenaNueva] = useState("");
   const [contrasenaConfirmar, setContrasenaConfirmar] = useState("");
-
   const [mensaje, setMensaje] = useState<{
     tipo: "exito" | "error";
     texto: string;
@@ -28,45 +62,141 @@ export default function PaginaPerfil() {
 
   const esProveedorLocal = usuario?.proveedor_auth === "local";
 
+  function iniciarEdicion() {
+    if (!perfil) return;
+    setFormNacimiento({
+      nombre: perfil.nombre ?? "",
+      fecha_nacimiento: perfil.fecha_nacimiento ?? "",
+      hora_nacimiento: (perfil.hora_nacimiento ?? "").slice(0, 5),
+      ciudad_nacimiento: perfil.ciudad_nacimiento ?? "",
+      pais_nacimiento: perfil.pais_nacimiento ?? "",
+    });
+    setMensajeNacimiento(null);
+    setEditando(true);
+  }
+
+  function cancelarEdicion() {
+    setEditando(false);
+    setMensajeNacimiento(null);
+  }
+
+  async function guardarDatosNacimiento() {
+    if (!perfil) return;
+
+    // Validaciones básicas
+    if (!formNacimiento.nombre.trim()) {
+      setMensajeNacimiento({ tipo: "error", texto: "El nombre es obligatorio." });
+      return;
+    }
+    if (!formNacimiento.fecha_nacimiento) {
+      setMensajeNacimiento({ tipo: "error", texto: "La fecha de nacimiento es obligatoria." });
+      return;
+    }
+    if (!formNacimiento.hora_nacimiento) {
+      setMensajeNacimiento({ tipo: "error", texto: "La hora de nacimiento es obligatoria." });
+      return;
+    }
+    if (!formNacimiento.ciudad_nacimiento.trim()) {
+      setMensajeNacimiento({ tipo: "error", texto: "La ciudad de nacimiento es obligatoria." });
+      return;
+    }
+    if (!formNacimiento.pais_nacimiento.trim()) {
+      setMensajeNacimiento({ tipo: "error", texto: "El pais de nacimiento es obligatorio." });
+      return;
+    }
+
+    setMensajeNacimiento(null);
+
+    try {
+      const resultado = await actualizarPerfil.mutateAsync({
+        nombre: formNacimiento.nombre.trim(),
+        fecha_nacimiento: formNacimiento.fecha_nacimiento,
+        hora_nacimiento: formNacimiento.hora_nacimiento,
+        ciudad_nacimiento: formNacimiento.ciudad_nacimiento.trim(),
+        pais_nacimiento: formNacimiento.pais_nacimiento.trim(),
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const cambiaron = (resultado as any).datos_nacimiento_cambiaron ?? false;
+
+      if (cambiaron) {
+        setRecalculando(true);
+        setMensajeNacimiento({ tipo: "exito", texto: "Datos actualizados. Recalculando tus cartas..." });
+
+        const datosCalculo: DatosNacimiento = {
+          nombre: formNacimiento.nombre.trim(),
+          fecha_nacimiento: formNacimiento.fecha_nacimiento,
+          hora_nacimiento: formNacimiento.hora_nacimiento,
+          ciudad_nacimiento: formNacimiento.ciudad_nacimiento.trim(),
+          pais_nacimiento: formNacimiento.pais_nacimiento.trim(),
+        };
+
+        const anioActual = new Date().getFullYear();
+
+        await Promise.allSettled([
+          cartaNatal.mutateAsync({ datos: datosCalculo, perfilId: perfil.id }),
+          disenoHumano.mutateAsync({ datos: datosCalculo, perfilId: perfil.id }),
+          numerologia.mutateAsync({
+            datos: { nombre: datosCalculo.nombre, fecha_nacimiento: datosCalculo.fecha_nacimiento },
+            perfilId: perfil.id,
+          }),
+          retornoSolar.mutateAsync({
+            datosNacimiento: datosCalculo,
+            anio: anioActual,
+            perfilId: perfil.id,
+          }),
+        ]);
+
+        queryClient.invalidateQueries({ queryKey: ["calculos", "me"] });
+        setRecalculando(false);
+        setMensajeNacimiento({ tipo: "exito", texto: "Datos y cartas actualizados correctamente." });
+      } else {
+        setMensajeNacimiento({ tipo: "exito", texto: "Datos actualizados correctamente." });
+      }
+
+      setEditando(false);
+    } catch {
+      setRecalculando(false);
+      setMensajeNacimiento({
+        tipo: "error",
+        texto: "No se pudieron actualizar los datos. Intenta nuevamente.",
+      });
+    }
+  }
+
+  function formatearFechaNacimiento(fecha: string | undefined | null): string {
+    if (!fecha) return "—";
+    try {
+      return new Date(fecha + "T00:00:00").toLocaleDateString("es-ES", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    } catch {
+      return "—";
+    }
+  }
+
   function manejarCambioContrasena() {
-    // Validaciones
     if (!contrasenaActual || !contrasenaNueva || !contrasenaConfirmar) {
-      setMensaje({
-        tipo: "error",
-        texto: "Todos los campos son obligatorios.",
-      });
+      setMensaje({ tipo: "error", texto: "Todos los campos son obligatorios." });
       return;
     }
-
     if (contrasenaNueva.length < 8) {
-      setMensaje({
-        tipo: "error",
-        texto: "La nueva contrasena debe tener al menos 8 caracteres.",
-      });
+      setMensaje({ tipo: "error", texto: "La nueva contrasena debe tener al menos 8 caracteres." });
       return;
     }
-
     if (contrasenaNueva !== contrasenaConfirmar) {
-      setMensaje({
-        tipo: "error",
-        texto: "Las contrasenas nuevas no coinciden.",
-      });
+      setMensaje({ tipo: "error", texto: "Las contrasenas nuevas no coinciden." });
       return;
     }
 
     setMensaje(null);
-
     cambiarContrasena.mutate(
-      {
-        contrasena_actual: contrasenaActual,
-        contrasena_nueva: contrasenaNueva,
-      },
+      { contrasena_actual: contrasenaActual, contrasena_nueva: contrasenaNueva },
       {
         onSuccess: () => {
-          setMensaje({
-            tipo: "exito",
-            texto: "Contrasena actualizada correctamente.",
-          });
+          setMensaje({ tipo: "exito", texto: "Contrasena actualizada correctamente." });
           setContrasenaActual("");
           setContrasenaNueva("");
           setContrasenaConfirmar("");
@@ -74,8 +204,7 @@ export default function PaginaPerfil() {
         onError: () => {
           setMensaje({
             tipo: "error",
-            texto:
-              "No se pudo cambiar la contrasena. Verifica que la contrasena actual sea correcta.",
+            texto: "No se pudo cambiar la contrasena. Verifica que la contrasena actual sea correcta.",
           });
         },
       }
@@ -232,6 +361,180 @@ export default function PaginaPerfil() {
       </Tarjeta>
 
       {/* ================================================================ */}
+      {/* Datos de Nacimiento                                              */}
+      {/* ================================================================ */}
+      <Tarjeta className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Icono nombre="estrella" tamaño={20} className="text-acento" />
+            <h2 className="text-lg font-semibold text-texto">
+              Datos de Nacimiento
+            </h2>
+          </div>
+          {!editando && perfil && (
+            <Boton variante="fantasma" tamaño="sm" onClick={iniciarEdicion}>
+              <Icono nombre="lapiz" tamaño={16} />
+              Editar
+            </Boton>
+          )}
+        </div>
+
+        {cargandoPerfil ? (
+          <p className="text-sm text-texto-secundario">Cargando datos...</p>
+        ) : !perfil ? (
+          <p className="text-sm text-texto-secundario">
+            No tienes datos de nacimiento registrados. Completa el onboarding para comenzar.
+          </p>
+        ) : editando ? (
+          <div className="space-y-4">
+            <Input
+              etiqueta="Nombre"
+              name="nombre"
+              placeholder="Tu nombre"
+              value={formNacimiento.nombre}
+              onChange={(e) => setFormNacimiento((p) => ({ ...p, nombre: e.target.value }))}
+              icono={<Icono nombre="usuario" tamaño={16} />}
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                etiqueta="Fecha de nacimiento"
+                type="date"
+                name="fecha_nacimiento"
+                value={formNacimiento.fecha_nacimiento}
+                onChange={(e) => setFormNacimiento((p) => ({ ...p, fecha_nacimiento: e.target.value }))}
+                icono={<Icono nombre="calendario" tamaño={16} />}
+              />
+
+              <Input
+                etiqueta="Hora de nacimiento"
+                type="time"
+                name="hora_nacimiento"
+                value={formNacimiento.hora_nacimiento}
+                onChange={(e) => setFormNacimiento((p) => ({ ...p, hora_nacimiento: e.target.value }))}
+                icono={<Icono nombre="reloj" tamaño={16} />}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                etiqueta="Ciudad de nacimiento"
+                name="ciudad_nacimiento"
+                placeholder="Ej: Buenos Aires"
+                value={formNacimiento.ciudad_nacimiento}
+                onChange={(e) => setFormNacimiento((p) => ({ ...p, ciudad_nacimiento: e.target.value }))}
+                icono={<Icono nombre="ubicacion" tamaño={16} />}
+              />
+
+              <Input
+                etiqueta="Pais de nacimiento"
+                name="pais_nacimiento"
+                placeholder="Ej: Argentina"
+                value={formNacimiento.pais_nacimiento}
+                onChange={(e) => setFormNacimiento((p) => ({ ...p, pais_nacimiento: e.target.value }))}
+                icono={<Icono nombre="globo" tamaño={16} />}
+              />
+            </div>
+
+            {mensajeNacimiento && (
+              <div
+                className={`rounded-lg px-4 py-3 text-sm ${
+                  mensajeNacimiento.tipo === "exito"
+                    ? "bg-exito/10 text-exito border border-exito/20"
+                    : "bg-error/10 text-error border border-error/20"
+                }`}
+                role="alert"
+              >
+                {mensajeNacimiento.texto}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <Boton
+                onClick={guardarDatosNacimiento}
+                cargando={actualizarPerfil.isPending || recalculando}
+                icono={<Icono nombre="check" tamaño={16} />}
+              >
+                {recalculando ? "Recalculando cartas..." : "Guardar"}
+              </Boton>
+              <Boton
+                variante="fantasma"
+                onClick={cancelarEdicion}
+                disabled={actualizarPerfil.isPending || recalculando}
+              >
+                Cancelar
+              </Boton>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-texto-terciario uppercase tracking-wider mb-1">
+                  Nombre
+                </p>
+                <p className="text-sm text-texto">{perfil.nombre ?? "—"}</p>
+              </div>
+
+              <div>
+                <p className="text-xs text-texto-terciario uppercase tracking-wider mb-1">
+                  Fecha de nacimiento
+                </p>
+                <p className="text-sm text-texto">
+                  {formatearFechaNacimiento(perfil.fecha_nacimiento)}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs text-texto-terciario uppercase tracking-wider mb-1">
+                  Hora de nacimiento
+                </p>
+                <p className="text-sm text-texto">
+                  {perfil.hora_nacimiento ? perfil.hora_nacimiento.slice(0, 5) : "—"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs text-texto-terciario uppercase tracking-wider mb-1">
+                  Ciudad
+                </p>
+                <p className="text-sm text-texto">{perfil.ciudad_nacimiento ?? "—"}</p>
+              </div>
+
+              <div>
+                <p className="text-xs text-texto-terciario uppercase tracking-wider mb-1">
+                  Pais
+                </p>
+                <p className="text-sm text-texto">{perfil.pais_nacimiento ?? "—"}</p>
+              </div>
+
+              {perfil.zona_horaria && (
+                <div>
+                  <p className="text-xs text-texto-terciario uppercase tracking-wider mb-1">
+                    Zona horaria
+                  </p>
+                  <p className="text-sm text-texto">{perfil.zona_horaria}</p>
+                </div>
+              )}
+            </div>
+
+            {mensajeNacimiento && (
+              <div
+                className={`mt-4 rounded-lg px-4 py-3 text-sm ${
+                  mensajeNacimiento.tipo === "exito"
+                    ? "bg-exito/10 text-exito border border-exito/20"
+                    : "bg-error/10 text-error border border-error/20"
+                }`}
+                role="alert"
+              >
+                {mensajeNacimiento.texto}
+              </div>
+            )}
+          </>
+        )}
+      </Tarjeta>
+
+      {/* ================================================================ */}
       {/* Suscripcion y plan                                               */}
       {/* ================================================================ */}
       <Tarjeta className="mb-6">
@@ -326,7 +629,6 @@ export default function PaginaPerfil() {
               icono={<Icono nombre="candado" tamaño={16} />}
             />
 
-            {/* Mensaje de exito o error */}
             {mensaje && (
               <div
                 className={`rounded-lg px-4 py-3 text-sm ${

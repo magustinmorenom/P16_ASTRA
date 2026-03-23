@@ -4,17 +4,19 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.cache.gestor_cache import GestorCache
 from app.datos.repositorio_calculo import RepositorioCalculo
 from app.datos.repositorio_perfil import RepositorioPerfil
 from app.dependencias_auth import obtener_usuario_actual, obtener_usuario_opcional
-from app.esquemas.entrada import DatosNacimiento
+from app.esquemas.entrada import DatosActualizarPerfil, DatosNacimiento
 from app.excepciones import PerfilNoEncontrado
 from app.modelos.usuario import Usuario
 from app.nucleo.servicio_geo import ServicioGeo
 from app.nucleo.servicio_zona_horaria import ServicioZonaHoraria
-from app.principal import _obtener_db_placeholder
+from app.principal import _obtener_db_placeholder, _obtener_redis_placeholder
 from app.servicios.servicio_pdf_perfil import ServicioPDFPerfil
 
 router = APIRouter()
@@ -90,6 +92,85 @@ async def obtener_mi_perfil(
             "latitud": float(perfil.latitud) if perfil.latitud else None,
             "longitud": float(perfil.longitud) if perfil.longitud else None,
             "zona_horaria": perfil.zona_horaria,
+        },
+    }
+
+
+@router.put("/profile/me")
+async def actualizar_mi_perfil(
+    datos: DatosActualizarPerfil,
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+    redis: Redis = Depends(_obtener_redis_placeholder),
+    usuario: Usuario = Depends(obtener_usuario_actual),
+):
+    """Actualiza el perfil del usuario autenticado. Re-geocodifica si cambia ciudad/país."""
+    repo = RepositorioPerfil(db)
+    perfil = await repo.obtener_por_usuario(usuario.id)
+
+    if not perfil:
+        raise HTTPException(status_code=404, detail="Perfil no encontrado")
+
+    campos_actualizar: dict = {}
+    datos_dict = datos.model_dump(exclude_none=True)
+
+    if not datos_dict:
+        raise HTTPException(status_code=422, detail="No se proporcionaron campos para actualizar")
+
+    # Detectar si cambian datos de nacimiento (afectan cálculos)
+    campos_nacimiento = {"fecha_nacimiento", "hora_nacimiento", "ciudad_nacimiento", "pais_nacimiento"}
+    datos_nacimiento_cambiaron = False
+
+    for campo in campos_nacimiento:
+        if campo in datos_dict:
+            valor_actual = getattr(perfil, campo)
+            valor_nuevo = datos_dict[campo]
+            # hora_nacimiento es time en el modelo, comparar como string
+            if campo == "hora_nacimiento":
+                valor_actual = str(valor_actual)[:5] if valor_actual else None
+            else:
+                valor_actual = str(valor_actual) if valor_actual else None
+                valor_nuevo = str(valor_nuevo) if valor_nuevo else None
+            if valor_actual != valor_nuevo:
+                datos_nacimiento_cambiaron = True
+                break
+
+    # Si cambió ciudad o país → re-geocodificar
+    ciudad = datos_dict.get("ciudad_nacimiento", perfil.ciudad_nacimiento)
+    pais = datos_dict.get("pais_nacimiento", perfil.pais_nacimiento)
+    if datos_nacimiento_cambiaron and ("ciudad_nacimiento" in datos_dict or "pais_nacimiento" in datos_dict):
+        geo = await ServicioGeo.geocodificar(ciudad, pais)
+        zona = ServicioZonaHoraria.obtener_zona_horaria(geo.latitud, geo.longitud)
+        campos_actualizar["latitud"] = geo.latitud
+        campos_actualizar["longitud"] = geo.longitud
+        campos_actualizar["zona_horaria"] = zona
+
+    # Agregar todos los campos proporcionados
+    campos_actualizar.update(datos_dict)
+
+    # Actualizar perfil en DB
+    perfil = await repo.actualizar(perfil, **campos_actualizar)
+
+    # Si cambiaron datos de nacimiento → eliminar cálculos viejos + invalidar cache
+    if datos_nacimiento_cambiaron:
+        repo_calculo = RepositorioCalculo(db)
+        hashes = await repo_calculo.eliminar_todos_por_perfil(perfil.id)
+        if hashes:
+            cache = GestorCache(redis)
+            await cache.invalidar_multiples(hashes)
+
+    return {
+        "exito": True,
+        "datos": {
+            "id": str(perfil.id),
+            "nombre": perfil.nombre,
+            "fecha_nacimiento": str(perfil.fecha_nacimiento),
+            "hora_nacimiento": str(perfil.hora_nacimiento),
+            "ciudad_nacimiento": perfil.ciudad_nacimiento,
+            "pais_nacimiento": perfil.pais_nacimiento,
+            "latitud": float(perfil.latitud) if perfil.latitud else None,
+            "longitud": float(perfil.longitud) if perfil.longitud else None,
+            "zona_horaria": perfil.zona_horaria,
+            "datos_nacimiento_cambiaron": datos_nacimiento_cambiaron,
         },
     }
 

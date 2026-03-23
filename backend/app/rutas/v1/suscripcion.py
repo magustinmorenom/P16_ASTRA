@@ -3,7 +3,7 @@
 import io
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 import httpx
 from fastapi import APIRouter, Depends, Request
@@ -14,6 +14,7 @@ from app.configuracion import obtener_configuracion
 from app.datos.repositorio_factura import RepositorioFactura
 from app.datos.repositorio_pago import RepositorioPago
 from app.datos.repositorio_plan import RepositorioPlan
+from app.modelos.config_pais_mp import ConfigPaisMp
 from app.datos.repositorio_suscripcion import RepositorioSuscripcion
 from app.dependencias_auth import obtener_usuario_actual
 from app.esquemas.suscripcion import EsquemaSuscribirse
@@ -22,7 +23,9 @@ from app.excepciones import (
     PlanNoEncontrado,
     SuscripcionNoEncontrada,
 )
+from app.datos.repositorio_usuario import RepositorioUsuario
 from app.modelos.usuario import Usuario
+from app.servicios.servicio_email import ServicioEmail
 from app.principal import _obtener_db_placeholder
 from app.servicios.servicio_mercadopago import (
     MAPA_ESTADOS_PAGO,
@@ -377,6 +380,14 @@ async def cancelar_suscripcion(
             estado="activa",
         )
 
+    # Email de cancelación (fire-and-forget)
+    try:
+        await ServicioEmail.enviar_suscripcion_cancelada(
+            usuario.email, usuario.nombre, "Premium"
+        )
+    except Exception:
+        logger.warning("No se pudo enviar email de cancelación a %s", usuario.email)
+
     return {"exito": True, "mensaje": "Suscripción cancelada correctamente"}
 
 
@@ -475,11 +486,20 @@ async def _procesar_preapproval(
 
     await repo_sus.actualizar_estado(suscripcion.id, estado_local, datos_mp=datos_mp)
 
-    # Si se activó la premium, cancelar la suscripción gratis
+    # Si se activó la premium, cancelar la suscripción gratis y notificar
     if estado_local == "activa":
         await repo_sus.cancelar_gratis_usuario(suscripcion.usuario_id)
+        try:
+            repo_usuario = RepositorioUsuario(db)
+            usuario = await repo_usuario.obtener_por_id(suscripcion.usuario_id)
+            if usuario:
+                await ServicioEmail.enviar_suscripcion_activa(
+                    usuario.email, usuario.nombre, "Premium"
+                )
+        except Exception:
+            logger.warning("No se pudo enviar email de suscripción activa")
 
-    # Si fue cancelada, degradar a plan gratis
+    # Si fue cancelada, degradar a plan gratis y notificar
     if estado_local == "cancelada":
         plan_gratis = await repo_plan.obtener_por_slug("gratis")
         if plan_gratis:
@@ -591,6 +611,15 @@ async def _procesar_pago(
     if estado_local == "aprobado" and suscripcion and suscripcion.estado != "activa":
         await repo_sus.actualizar_estado(suscripcion.id, "activa", datos_mp=datos_pago)
         await repo_sus.cancelar_gratis_usuario(suscripcion.usuario_id)
+        try:
+            repo_usuario = RepositorioUsuario(db)
+            usuario = await repo_usuario.obtener_por_id(suscripcion.usuario_id)
+            if usuario:
+                await ServicioEmail.enviar_suscripcion_activa(
+                    usuario.email, usuario.nombre, "Premium"
+                )
+        except Exception:
+            logger.warning("No se pudo enviar email de suscripción activa")
 
     # Auto-crear factura si el pago fue aprobado y hay usuario
     if estado_local == "aprobado" and usuario_id:
@@ -623,8 +652,6 @@ async def sincronizar_pagos(
     repo_sus = RepositorioSuscripcion(db)
     repo_pago = RepositorioPago(db)
     repo_factura = RepositorioFactura(db)
-    repo_plan = RepositorioPlan(db)
-
     # Buscar TODAS las suscripciones con MP (no solo la activa)
     suscripciones = await repo_sus.listar_con_mp_por_usuario(usuario.id)
     if not suscripciones:

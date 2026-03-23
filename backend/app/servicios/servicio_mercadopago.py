@@ -6,7 +6,6 @@ import logging
 
 import httpx
 
-from app.configuracion import obtener_configuracion
 from app.excepciones import ErrorPasarelaPago
 
 logger = logging.getLogger(__name__)

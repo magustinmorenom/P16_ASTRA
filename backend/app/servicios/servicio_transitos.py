@@ -3,11 +3,9 @@
 from datetime import datetime, date, timedelta
 
 import pytz
-import swisseph as swe
 
 from app.nucleo.servicio_efemerides import ServicioEfemerides
 from app.nucleo.servicio_zona_horaria import ServicioZonaHoraria
-from app.servicios.servicio_astro import ServicioAstro
 from app.utilidades.constantes import ASPECTOS
 from app.utilidades.convertidores import diferencia_angular
 

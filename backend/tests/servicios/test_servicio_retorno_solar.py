@@ -1,10 +1,7 @@
 """Tests para el servicio de retorno solar."""
 
-import pytest
 
 from app.servicios.servicio_retorno_solar import ServicioRetornoSolar
-from app.nucleo.servicio_efemerides import ServicioEfemerides
-from app.utilidades.convertidores import diferencia_angular
 
 # JD para 1990-01-15 16:30 UTC
 JD_TEST = 2447908.1875

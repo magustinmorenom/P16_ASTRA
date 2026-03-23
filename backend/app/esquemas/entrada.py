@@ -20,6 +20,19 @@ class DatosNacimiento(BaseModel):
     sistema_casas: str = Field(default="placidus", description="Sistema de casas astrológicas")
 
 
+class DatosActualizarPerfil(BaseModel):
+    """Datos opcionales para actualizar un perfil existente."""
+
+    nombre: str | None = Field(default=None, min_length=1, max_length=100)
+    fecha_nacimiento: date | None = Field(default=None)
+    hora_nacimiento: str | None = Field(
+        default=None,
+        pattern=r"^\d{2}:\d{2}$",
+    )
+    ciudad_nacimiento: str | None = Field(default=None, min_length=1, max_length=100)
+    pais_nacimiento: str | None = Field(default=None, min_length=1, max_length=60)
+
+
 class DatosNumerologia(BaseModel):
     """Datos para cálculo numerológico."""
 

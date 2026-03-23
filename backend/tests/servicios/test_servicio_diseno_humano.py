@@ -1,9 +1,7 @@
 """Tests para el servicio de Diseño Humano."""
 
-import pytest
 
 from app.servicios.servicio_diseno_humano import ServicioDisenoHumano
-from app.utilidades.constantes import ORDEN_PUERTAS_HD
 
 
 # JD para 1990-01-15 16:30 UTC (Buenos Aires 14:30 local, verano UTC-2)

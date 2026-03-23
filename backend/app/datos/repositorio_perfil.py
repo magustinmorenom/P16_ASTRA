@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import time
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -68,6 +69,16 @@ class RepositorioPerfil:
             select(Perfil).order_by(Perfil.creado_en.desc()).limit(limite).offset(offset)
         )
         return list(resultado.scalars().all())
+
+    async def actualizar(self, perfil: Perfil, **campos: Any) -> Perfil:
+        """Actualiza los campos proporcionados en un perfil existente."""
+        for campo, valor in campos.items():
+            if campo == "hora_nacimiento" and isinstance(valor, str):
+                valor = time.fromisoformat(valor)
+            setattr(perfil, campo, valor)
+        await self.sesion.commit()
+        await self.sesion.refresh(perfil)
+        return perfil
 
     async def eliminar(self, perfil_id: uuid.UUID) -> bool:
         """Elimina un perfil por su ID."""

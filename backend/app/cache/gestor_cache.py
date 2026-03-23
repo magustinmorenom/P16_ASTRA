@@ -66,3 +66,14 @@ class GestorCache:
             await self.redis.delete(f"cosmic:{clave}")
         except Exception as e:
             logger.warning("Error invalidando cache: %s", e)
+
+    async def invalidar_multiples(self, claves: list[str]) -> None:
+        """Elimina múltiples entradas del cache."""
+        if not claves:
+            return
+        try:
+            claves_redis = [f"cosmic:{c}" for c in claves]
+            await self.redis.delete(*claves_redis)
+            logger.debug("Cache DELETE múltiple: %d claves", len(claves_redis))
+        except Exception as e:
+            logger.warning("Error invalidando cache múltiple: %s", e)
