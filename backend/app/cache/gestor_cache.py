@@ -19,6 +19,9 @@ class GestorCache:
         "numerology": 0,
         "solar-return": 0,
         "transits": 600,  # 10 minutos
+        "calendario-hoy": 600,       # 10 min (día actual)
+        "calendario-futuro": 3600,   # 1 hora (fechas futuras)
+        "calendario-pasado": 0,      # infinito (determinista)
     }
 
     def __init__(self, redis: Redis):

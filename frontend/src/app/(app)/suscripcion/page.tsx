@@ -17,6 +17,9 @@ import {
   usarPagos,
   usarDetectarPais,
   usarSincronizarPagos,
+  usarEstadoVinculacion,
+  usarGenerarCodigo,
+  usarDesvincular,
 } from "@/lib/hooks";
 import { formatearFechaHora, formatearFecha } from "@/lib/utilidades/formatear-fecha";
 import type { Plan } from "@/lib/tipos";
@@ -106,6 +109,12 @@ export default function PaginaSuscripcion() {
   const { data: paisDetectado, isLoading: cargandoPais } = usarDetectarPais();
   const sincronizarPagos = usarSincronizarPagos();
   const planActualSlug = miSuscripcion?.plan_slug ?? "gratis";
+
+  // Oráculo ASTRA
+  const { data: vinculacion, isLoading: cargandoVinculacion } = usarEstadoVinculacion();
+  const generarCodigo = usarGenerarCodigo();
+  const desvincular = usarDesvincular();
+  const [codigoGenerado, setCodigoGenerado] = useState<string | null>(null);
 
   // Actualizar país seleccionado cuando se detecte por IP
   useEffect(() => {
@@ -447,6 +456,103 @@ export default function PaginaSuscripcion() {
           </Tarjeta>
         )}
       </section>
+
+      {/* ---------------------------------------------------------- */}
+      {/* Seccion: Oráculo ASTRA (solo premium)                      */}
+      {/* ---------------------------------------------------------- */}
+      {planActualSlug === "premium" && (
+        <section className="flex flex-col gap-4">
+          <h2 className="text-xl font-semibold text-texto">
+            Oráculo ASTRA
+          </h2>
+          <p className="text-sm text-texto-secundario">
+            Tu guía espiritual personalizado, disponible 24/7 en Telegram.
+          </p>
+
+          {cargandoVinculacion ? (
+            <Esqueleto className="h-32" />
+          ) : vinculacion?.vinculado ? (
+            <Tarjeta variante="default" padding="md">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <Badge variante="exito">Vinculado</Badge>
+                  <span className="text-sm text-texto-secundario">
+                    @{vinculacion.telegram_username ?? "sin username"}
+                  </span>
+                </div>
+                <p className="text-sm text-texto-terciario">
+                  Podés enviar mensajes al bot en Telegram para consultar al oráculo.
+                </p>
+                <Boton
+                  variante="secundario"
+                  onClick={() => desvincular.mutate()}
+                  cargando={desvincular.isPending}
+                  className="self-start"
+                >
+                  Desvincular Telegram
+                </Boton>
+              </div>
+            </Tarjeta>
+          ) : (
+            <Tarjeta variante="default" padding="md">
+              <div className="flex flex-col gap-4">
+                {codigoGenerado ? (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-sm text-texto-secundario">
+                      Seguí estos pasos para vincular tu cuenta:
+                    </p>
+                    <ol className="list-decimal list-inside text-sm text-texto-secundario flex flex-col gap-1">
+                      <li>
+                        Abrí <span className="font-medium text-texto">@AstraOraculoBot</span> en Telegram
+                      </li>
+                      <li>
+                        Enviá el comando:{" "}
+                        <code className="bg-fondo-elevado px-2 py-0.5 rounded text-acento font-mono">
+                          /vincular {codigoGenerado}
+                        </code>
+                      </li>
+                    </ol>
+                    <p className="text-xs text-texto-terciario">
+                      El código expira en 10 minutos.
+                    </p>
+                    <Boton
+                      variante="secundario"
+                      onClick={() => {
+                        generarCodigo.mutate(undefined, {
+                          onSuccess: (resp) => setCodigoGenerado(resp.codigo),
+                        });
+                      }}
+                      cargando={generarCodigo.isPending}
+                      className="self-start"
+                    >
+                      Generar nuevo código
+                    </Boton>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-sm text-texto-secundario">
+                      Vinculá tu cuenta de Telegram para acceder al oráculo desde el celular.
+                    </p>
+                    <Boton
+                      variante="primario"
+                      onClick={() => {
+                        generarCodigo.mutate(undefined, {
+                          onSuccess: (resp) => setCodigoGenerado(resp.codigo),
+                        });
+                      }}
+                      cargando={generarCodigo.isPending}
+                      className="self-start"
+                      icono={<Icono nombre="enlace" tamaño={18} />}
+                    >
+                      Vincular Telegram
+                    </Boton>
+                  </div>
+                )}
+              </div>
+            </Tarjeta>
+          )}
+        </section>
+      )}
 
       {/* ---------------------------------------------------------- */}
       {/* Seccion: Historial de Pagos                                */}

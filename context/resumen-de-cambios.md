@@ -156,3 +156,7 @@ Próximos pasos:
   | Usuario                | TESTUSER3739889284689218308    |
   | Contraseña             | ***REMOVED***                     |
   | Código de verificación | 675535                         |
+
+  FASE DE AGENTES:
+ANTHROPIC_API_KEY=***REMOVED***
+TELEGRAM_BOT_TOKEN=***REMOVED***

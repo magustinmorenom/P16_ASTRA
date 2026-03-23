@@ -142,9 +142,11 @@ def _registrar_rutas(app: FastAPI) -> None:
     """Registra todos los routers de la API."""
     from app.rutas.v1 import (
         auth,
+        calendario_cosmico,
         diseno_humano,
         natal,
         numerologia,
+        oraculo,
         perfil,
         retorno_solar,
         suscripcion,
@@ -158,8 +160,10 @@ def _registrar_rutas(app: FastAPI) -> None:
     app.include_router(numerologia.router, prefix=prefijo, tags=["Numerología"])
     app.include_router(retorno_solar.router, prefix=prefijo, tags=["Revolución Solar"])
     app.include_router(transitos.router, prefix=prefijo, tags=["Tránsitos"])
+    app.include_router(calendario_cosmico.router, prefix=prefijo, tags=["Calendario Cósmico"])
     app.include_router(perfil.router, prefix=prefijo, tags=["Perfiles"])
     app.include_router(suscripcion.router, prefix=prefijo)
+    app.include_router(oraculo.router, prefix=prefijo)
 
     @app.get("/health", tags=["Sistema"])
     async def health_check():

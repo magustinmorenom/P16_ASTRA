@@ -2,7 +2,8 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.datos.repositorio_calculo import RepositorioCalculo
@@ -14,6 +15,7 @@ from app.modelos.usuario import Usuario
 from app.nucleo.servicio_geo import ServicioGeo
 from app.nucleo.servicio_zona_horaria import ServicioZonaHoraria
 from app.principal import _obtener_db_placeholder
+from app.servicios.servicio_pdf_perfil import ServicioPDFPerfil
 
 router = APIRouter()
 
@@ -116,6 +118,39 @@ async def obtener_mis_calculos(
     calculos = await repo_calculo.obtener_todos_por_perfil(perfil.id)
 
     return {"exito": True, "datos": calculos}
+
+
+@router.get("/profile/me/pdf")
+async def descargar_perfil_pdf(
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+    usuario: Usuario = Depends(obtener_usuario_actual),
+):
+    """Genera y descarga el perfil cósmico completo en formato PDF."""
+    repo_perfil = RepositorioPerfil(db)
+    perfil = await repo_perfil.obtener_por_usuario(usuario.id)
+
+    if not perfil:
+        raise HTTPException(status_code=404, detail="Perfil no encontrado")
+
+    perfil_dict = {
+        "nombre": perfil.nombre,
+        "fecha_nacimiento": str(perfil.fecha_nacimiento),
+        "hora_nacimiento": str(perfil.hora_nacimiento),
+        "ciudad_nacimiento": perfil.ciudad_nacimiento,
+        "pais_nacimiento": perfil.pais_nacimiento,
+    }
+
+    repo_calculo = RepositorioCalculo(db)
+    calculos = await repo_calculo.obtener_todos_por_perfil(perfil.id)
+
+    buffer = ServicioPDFPerfil.generar(perfil_dict, calculos)
+
+    nombre_archivo = f"perfil_cosmico_{perfil.nombre.replace(' ', '_')}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={nombre_archivo}"},
+    )
 
 
 @router.get("/profile/{perfil_id}")

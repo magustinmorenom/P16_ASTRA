@@ -57,6 +57,13 @@ class Configuracion(BaseSettings):
     # MercadoPago — email del comprador test (para sandbox con test accounts)
     mp_payer_email_test: str = ""
 
+    # Telegram Bot
+    telegram_bot_token: str = ""
+
+    # Anthropic (Claude API)
+    anthropic_api_key: str = ""
+    anthropic_modelo: str = "claude-opus-4-6"
+
     # MercadoPago — webhook y URLs
     mp_webhook_secret: str = ""
     mp_notification_url: str = "http://localhost:8000/api/v1/suscripcion/webhook"

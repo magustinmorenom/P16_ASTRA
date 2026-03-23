@@ -18,6 +18,8 @@ export { usarRetornoSolar } from "./usar-retorno-solar";
 
 export { usarTransitos } from "./usar-transitos";
 
+export { usarTransitosDia, usarTransitosRango } from "./usar-calendario-cosmico";
+
 export { usarCrearPerfil, usarMiPerfil, usarObtenerPerfil } from "./usar-perfil";
 
 export { usarMisCalculos } from "./usar-mis-calculos";
@@ -34,3 +36,9 @@ export {
   usarFacturas,
   usarSincronizarPagos,
 } from "./usar-suscripcion";
+
+export {
+  usarGenerarCodigo,
+  usarEstadoVinculacion,
+  usarDesvincular,
+} from "./usar-oraculo";

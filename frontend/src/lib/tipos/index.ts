@@ -65,6 +65,13 @@ export type {
   Transitos,
 } from "./transitos";
 
+// Calendario Cósmico
+export type {
+  PlanetaCalendario,
+  TransitosDia,
+  CalendarioRango,
+} from "./calendario-cosmico";
+
 // Perfil
 export type {
   Perfil,
@@ -89,3 +96,9 @@ export type {
   Factura,
   EstadoVerificacion,
 } from "./suscripcion";
+
+// Oráculo
+export type {
+  CodigoVinculacion,
+  EstadoVinculacion,
+} from "./oraculo";
