@@ -1,6 +1,5 @@
 """Dependencias de suscripción para inyección en endpoints."""
 
-import uuid
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession

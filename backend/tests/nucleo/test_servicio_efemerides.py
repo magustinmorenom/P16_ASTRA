@@ -1,6 +1,5 @@
 """Tests para el servicio de efemérides."""
 
-import pytest
 
 from app.nucleo.servicio_efemerides import ServicioEfemerides
 from app.utilidades.constantes import ID_SOL, ID_LUNA, ID_JUPITER

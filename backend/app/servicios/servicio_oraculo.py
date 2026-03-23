@@ -1,8 +1,5 @@
 """Servicio Oráculo — integración con Claude API (Anthropic)."""
 
-import json
-import locale
-import os
 from datetime import datetime
 from pathlib import Path
 

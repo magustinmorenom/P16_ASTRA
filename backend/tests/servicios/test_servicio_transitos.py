@@ -1,6 +1,5 @@
 """Tests para el servicio de tránsitos."""
 
-import pytest
 
 from app.servicios.servicio_transitos import ServicioTransitos
 

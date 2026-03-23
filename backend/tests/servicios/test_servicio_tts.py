@@ -1,7 +1,6 @@
 """Tests para ServicioTTS."""
 
 import io
-import struct
 import wave
 from unittest.mock import MagicMock, patch
 

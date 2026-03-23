@@ -3,7 +3,7 @@
 import io
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 import httpx
 from fastapi import APIRouter, Depends, Request
@@ -14,6 +14,7 @@ from app.configuracion import obtener_configuracion
 from app.datos.repositorio_factura import RepositorioFactura
 from app.datos.repositorio_pago import RepositorioPago
 from app.datos.repositorio_plan import RepositorioPlan
+from app.modelos.config_pais_mp import ConfigPaisMp
 from app.datos.repositorio_suscripcion import RepositorioSuscripcion
 from app.dependencias_auth import obtener_usuario_actual
 from app.esquemas.suscripcion import EsquemaSuscribirse
@@ -623,8 +624,6 @@ async def sincronizar_pagos(
     repo_sus = RepositorioSuscripcion(db)
     repo_pago = RepositorioPago(db)
     repo_factura = RepositorioFactura(db)
-    repo_plan = RepositorioPlan(db)
-
     # Buscar TODAS las suscripciones con MP (no solo la activa)
     suscripciones = await repo_sus.listar_con_mp_por_usuario(usuario.id)
     if not suscripciones:

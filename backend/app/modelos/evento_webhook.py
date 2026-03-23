@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import DateTime, String, func
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.modelos.base import Base
 

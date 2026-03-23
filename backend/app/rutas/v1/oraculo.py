@@ -1,6 +1,5 @@
 """Endpoints del Oráculo ASTRA — vinculación Telegram."""
 
-from datetime import timezone
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession

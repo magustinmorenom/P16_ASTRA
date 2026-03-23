@@ -2,7 +2,6 @@
 
 from datetime import date
 
-import pytest
 
 from app.servicios.servicio_numerologia import ServicioNumerologia
 

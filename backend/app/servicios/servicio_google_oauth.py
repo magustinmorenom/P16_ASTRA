@@ -38,7 +38,7 @@ class ServicioGoogleOAuth:
         )
 
         # Intercambiar código por token
-        token = await cliente.fetch_token(
+        await cliente.fetch_token(
             GOOGLE_TOKEN_URL,
             code=codigo,
         )

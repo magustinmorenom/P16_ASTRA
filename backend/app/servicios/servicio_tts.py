@@ -1,7 +1,6 @@
 """Servicio Text-to-Speech via Google Gemini API."""
 
 import io
-import struct
 import wave
 
 from google import genai
