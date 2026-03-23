@@ -1,10 +1,16 @@
 """Rutas de autenticación."""
 
+import logging
+import uuid
+
 import jwt
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.datos.repositorio_perfil import RepositorioPerfil
+from app.datos.repositorio_plan import RepositorioPlan
+from app.datos.repositorio_suscripcion import RepositorioSuscripcion
 from app.datos.repositorio_usuario import RepositorioUsuario
 from app.dependencias_auth import obtener_usuario_actual
 from app.esquemas.auth import (
@@ -24,7 +30,25 @@ from app.principal import _obtener_db_placeholder, _obtener_redis_placeholder
 from app.servicios.servicio_auth import ServicioAuth
 from app.servicios.servicio_google_oauth import ServicioGoogleOAuth
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
+
+
+async def _asignar_plan_gratis(usuario_id: uuid.UUID, db: AsyncSession) -> None:
+    """Crea una suscripción al plan gratis para un usuario nuevo."""
+    try:
+        repo_plan = RepositorioPlan(db)
+        plan_gratis = await repo_plan.obtener_por_slug("gratis")
+        if plan_gratis:
+            repo_sus = RepositorioSuscripcion(db)
+            await repo_sus.crear(
+                usuario_id=usuario_id,
+                plan_id=plan_gratis.id,
+                estado="activa",
+            )
+    except Exception as e:
+        logger.warning("No se pudo asignar plan gratis a %s: %s", usuario_id, e)
 
 
 @router.post("/registrar")
@@ -47,6 +71,9 @@ async def registrar(
         nombre=datos.nombre,
         hash_contrasena=hash_contrasena,
     )
+
+    # Asignar plan gratis automáticamente
+    await _asignar_plan_gratis(usuario.id, db)
 
     # Generar tokens
     tokens = ServicioAuth.generar_tokens(usuario.id, usuario.email)
@@ -216,6 +243,9 @@ async def google_callback(
             google_id=datos_google["google_id"],
         )
 
+        # Asignar plan gratis automáticamente
+        await _asignar_plan_gratis(usuario.id, db)
+
     if not usuario.activo:
         raise ErrorAutenticacion("Usuario desactivado")
 
@@ -238,8 +268,36 @@ async def google_callback(
 @router.get("/me")
 async def obtener_perfil_usuario(
     usuario: Usuario = Depends(obtener_usuario_actual),
+    db: AsyncSession = Depends(_obtener_db_placeholder),
 ):
-    """Retorna los datos del usuario autenticado."""
+    """Retorna los datos del usuario autenticado, incluyendo su plan actual."""
+    # Obtener suscripción y plan activo
+    plan_slug = None
+    plan_nombre = None
+    suscripcion_estado = None
+
+    try:
+        repo_sus = RepositorioSuscripcion(db)
+        suscripcion = await repo_sus.obtener_activa(usuario.id)
+        if suscripcion:
+            suscripcion_estado = suscripcion.estado
+            repo_plan = RepositorioPlan(db)
+            plan = await repo_plan.obtener_por_id(suscripcion.plan_id)
+            if plan:
+                plan_slug = plan.slug
+                plan_nombre = plan.nombre
+    except Exception:
+        pass
+
+    # Verificar si el usuario tiene perfil creado
+    tiene_perfil = False
+    try:
+        repo_perfil = RepositorioPerfil(db)
+        perfil = await repo_perfil.obtener_por_usuario(usuario.id)
+        tiene_perfil = perfil is not None
+    except Exception:
+        pass
+
     return {
         "exito": True,
         "datos": {
@@ -249,6 +307,10 @@ async def obtener_perfil_usuario(
             "activo": usuario.activo,
             "verificado": usuario.verificado,
             "proveedor_auth": usuario.proveedor_auth,
+            "plan_slug": plan_slug,
+            "plan_nombre": plan_nombre,
+            "suscripcion_estado": suscripcion_estado,
+            "tiene_perfil": tiene_perfil,
             "ultimo_acceso": usuario.ultimo_acceso.isoformat() if usuario.ultimo_acceso else None,
             "creado_en": usuario.creado_en.isoformat() if usuario.creado_en else None,
         },

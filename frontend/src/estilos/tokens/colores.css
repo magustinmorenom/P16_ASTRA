@@ -1,0 +1,75 @@
+/* ============================================
+   ASTRA / CosmicEngine — Design Tokens: Colores
+   Fuente de verdad para toda la paleta.
+   Cambiar toda la UI = editar este archivo.
+   ============================================ */
+
+:root {
+  /* --- Primitivos Violet --- */
+  --color-violet-50: #f3e8ff;
+  --color-violet-100: #e9d5ff;
+  --color-violet-200: #d8b4fe;
+  --color-violet-300: #c084fc;
+  --color-violet-400: #a855f7;
+  --color-violet-500: #7C4DFF;
+  --color-violet-600: #6D28D9;
+  --color-violet-700: #5B21B6;
+  --color-violet-800: #4C1D95;
+  --color-violet-900: #2E1065;
+  --color-violet-950: #1a0a3e;
+
+  /* --- Primitivos Dorado --- */
+  --color-dorado-300: #FCD34D;
+  --color-dorado-400: #FBBF24;
+  --color-dorado-500: #F59E0B;
+
+  /* --- Primitivos Cyan --- */
+  --color-cyan-300: #67E8F9;
+  --color-cyan-400: #22D3EE;
+  --color-cyan-500: #06B6D4;
+
+  /* --- Primitivos Neutros --- */
+  --color-gris-50: #fafafa;
+  --color-gris-100: #f5f5f5;
+  --color-gris-200: #e5e5e5;
+  --color-gris-300: #d4d4d4;
+  --color-gris-400: #a3a3a3;
+  --color-gris-500: #737373;
+  --color-gris-600: #525252;
+  --color-gris-700: #404040;
+  --color-gris-800: #262626;
+  --color-gris-900: #171717;
+  --color-gris-950: #0a0a0a;
+
+  /* --- Semánticos --- */
+  --color-primario: var(--color-violet-500);
+  --color-primario-hover: var(--color-violet-600);
+  --color-primario-suave: var(--color-violet-100);
+
+  --color-acento: var(--color-dorado-400);
+  --color-acento-suave: var(--color-dorado-300);
+
+  --color-secundario: var(--color-cyan-400);
+  --color-secundario-suave: var(--color-cyan-300);
+
+  /* --- Fondos (tema claro) --- */
+  --color-fondo: #FAFAFA;
+  --color-fondo-tarjeta: #FFFFFF;
+  --color-fondo-elevado: #F5F0FF;
+  --color-fondo-input: #F5F0FF;
+
+  /* --- Textos (tema claro) --- */
+  --color-texto: #2C2926;
+  --color-texto-secundario: #8A8580;
+  --color-texto-terciario: #B3ADA7;
+
+  /* --- Bordes (tema claro) --- */
+  --color-borde: #E8E4E020;
+  --color-borde-hover: #E8E4E040;
+
+  /* --- Estados --- */
+  --color-exito: #22c55e;
+  --color-advertencia: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: var(--color-cyan-400);
+}

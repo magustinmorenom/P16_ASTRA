@@ -1,6 +1,8 @@
 """Rutas de carta natal."""
 
-from fastapi import APIRouter, Depends
+import uuid
+
+from fastapi import APIRouter, Depends, Query
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,12 +24,13 @@ TIPO_CALCULO = "natal"
 @router.post("/natal")
 async def calcular_carta_natal(
     datos: DatosNacimiento,
+    perfil_id: uuid.UUID | None = Query(None),
     db: AsyncSession = Depends(_obtener_db_placeholder),
     redis: Redis = Depends(_obtener_redis_placeholder),
 ):
     """Calcula una carta natal completa.
 
-    Flujo: hash → cache Redis → miss? → geocodificar → zona horaria → cálculo → cache + DB
+    Flujo: hash → cache Redis → DB (por perfil) → miss? → geocodificar → cálculo → cache + DB
     """
     # 1. Hash determinista de parámetros
     hash_params = generar_hash_parametros(
@@ -43,9 +46,35 @@ async def calcular_carta_natal(
     cache = GestorCache(redis)
     resultado_cache = await cache.obtener(hash_params)
     if resultado_cache is not None:
+        # Si viene perfil_id, vincular el cálculo existente al perfil
+        if perfil_id:
+            try:
+                repo = RepositorioCalculo(db)
+                existente = await repo.obtener_por_perfil_y_tipo(perfil_id, TIPO_CALCULO)
+                if not existente:
+                    await repo.guardar(
+                        perfil_id=perfil_id,
+                        tipo=TIPO_CALCULO,
+                        hash_parametros=hash_params,
+                        resultado_json=resultado_cache,
+                    )
+            except Exception as e:
+                logger.warning("Error vinculando cálculo natal a perfil: %s", e)
         return {"exito": True, "datos": resultado_cache, "cache": True}
 
-    # 3. Calcular desde cero
+    # 3. Si hay perfil_id, buscar en DB por perfil
+    if perfil_id:
+        try:
+            repo = RepositorioCalculo(db)
+            calculo_db = await repo.obtener_por_perfil_y_tipo(perfil_id, TIPO_CALCULO)
+            if calculo_db:
+                # Re-cachar en Redis
+                await cache.guardar(hash_params, calculo_db.resultado_json, TIPO_CALCULO)
+                return {"exito": True, "datos": calculo_db.resultado_json, "cache": True}
+        except Exception as e:
+            logger.warning("Error buscando cálculo natal por perfil: %s", e)
+
+    # 4. Calcular desde cero
     geo = await ServicioGeo.geocodificar(
         datos.ciudad_nacimiento,
         datos.pais_nacimiento,
@@ -78,14 +107,14 @@ async def calcular_carta_natal(
         **carta,
     }
 
-    # 4. Guardar en cache Redis
+    # 5. Guardar en cache Redis
     await cache.guardar(hash_params, resultado, TIPO_CALCULO)
 
-    # 5. Persistir en DB (anónimo, sin perfil_id)
+    # 6. Persistir en DB (con perfil_id si se proporcionó)
     try:
         repo = RepositorioCalculo(db)
         await repo.guardar(
-            perfil_id=None,
+            perfil_id=perfil_id,
             tipo=TIPO_CALCULO,
             hash_parametros=hash_params,
             resultado_json=resultado,

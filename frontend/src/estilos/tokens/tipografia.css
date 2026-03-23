@@ -1,0 +1,18 @@
+/* ============================================
+   ASTRA / CosmicEngine — Design Tokens: Tipografía
+   ============================================ */
+
+:root {
+  --font-familia-base: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-familia-mono: 'Geist Mono', ui-monospace, monospace;
+
+  /* Tamaños */
+  --font-xs: 0.75rem;     /* 12px */
+  --font-sm: 0.875rem;    /* 14px */
+  --font-base: 1rem;      /* 16px */
+  --font-lg: 1.125rem;    /* 18px */
+  --font-xl: 1.25rem;     /* 20px */
+  --font-2xl: 1.5rem;     /* 24px */
+  --font-3xl: 1.875rem;   /* 30px */
+  --font-4xl: 2.25rem;    /* 36px */
+}

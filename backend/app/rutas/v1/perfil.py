@@ -5,8 +5,9 @@ import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.datos.repositorio_calculo import RepositorioCalculo
 from app.datos.repositorio_perfil import RepositorioPerfil
-from app.dependencias_auth import obtener_usuario_opcional
+from app.dependencias_auth import obtener_usuario_actual, obtener_usuario_opcional
 from app.esquemas.entrada import DatosNacimiento
 from app.excepciones import PerfilNoEncontrado
 from app.modelos.usuario import Usuario
@@ -61,6 +62,60 @@ async def crear_perfil(
             "zona_horaria": perfil.zona_horaria,
         },
     }
+
+
+@router.get("/profile/me")
+async def obtener_mi_perfil(
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+    usuario: Usuario = Depends(obtener_usuario_actual),
+):
+    """Obtiene el perfil principal del usuario autenticado."""
+    repo = RepositorioPerfil(db)
+    perfil = await repo.obtener_por_usuario(usuario.id)
+
+    if not perfil:
+        return {"exito": True, "datos": None}
+
+    return {
+        "exito": True,
+        "datos": {
+            "id": str(perfil.id),
+            "nombre": perfil.nombre,
+            "fecha_nacimiento": str(perfil.fecha_nacimiento),
+            "hora_nacimiento": str(perfil.hora_nacimiento),
+            "ciudad_nacimiento": perfil.ciudad_nacimiento,
+            "pais_nacimiento": perfil.pais_nacimiento,
+            "latitud": float(perfil.latitud) if perfil.latitud else None,
+            "longitud": float(perfil.longitud) if perfil.longitud else None,
+            "zona_horaria": perfil.zona_horaria,
+        },
+    }
+
+
+@router.get("/profile/me/calculos")
+async def obtener_mis_calculos(
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+    usuario: Usuario = Depends(obtener_usuario_actual),
+):
+    """Obtiene todos los cálculos persistidos del usuario autenticado."""
+    repo_perfil = RepositorioPerfil(db)
+    perfil = await repo_perfil.obtener_por_usuario(usuario.id)
+
+    if not perfil:
+        return {
+            "exito": True,
+            "datos": {
+                "natal": None,
+                "diseno_humano": None,
+                "numerologia": None,
+                "retorno_solar": None,
+            },
+        }
+
+    repo_calculo = RepositorioCalculo(db)
+    calculos = await repo_calculo.obtener_todos_por_perfil(perfil.id)
+
+    return {"exito": True, "datos": calculos}
 
 
 @router.get("/profile/{perfil_id}")

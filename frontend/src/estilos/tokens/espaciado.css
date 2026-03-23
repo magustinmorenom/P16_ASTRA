@@ -1,0 +1,12 @@
+/* ============================================
+   ASTRA / CosmicEngine — Design Tokens: Espaciado
+   ============================================ */
+
+:root {
+  --radio-sm: 0.375rem;   /* 6px */
+  --radio-md: 0.5rem;     /* 8px */
+  --radio-lg: 0.75rem;    /* 12px */
+  --radio-xl: 1rem;       /* 16px */
+  --radio-2xl: 1.5rem;    /* 24px */
+  --radio-full: 9999px;
+}

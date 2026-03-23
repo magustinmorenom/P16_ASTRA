@@ -45,6 +45,16 @@ class RepositorioPerfil:
         await self.sesion.refresh(perfil)
         return perfil
 
+    async def obtener_por_usuario(self, usuario_id: uuid.UUID) -> Perfil | None:
+        """Obtiene el perfil principal (más reciente) de un usuario."""
+        resultado = await self.sesion.execute(
+            select(Perfil)
+            .where(Perfil.usuario_id == usuario_id)
+            .order_by(Perfil.creado_en.desc())
+            .limit(1)
+        )
+        return resultado.scalar_one_or_none()
+
     async def obtener_por_id(self, perfil_id: uuid.UUID) -> Perfil | None:
         """Obtiene un perfil por su ID."""
         resultado = await self.sesion.execute(

@@ -1,0 +1,129 @@
+@import "tailwindcss";
+@import "../estilos/tokens/colores.css";
+@import "../estilos/tokens/tipografia.css";
+@import "../estilos/tokens/espaciado.css";
+
+/* ============================================
+   Tailwind v4 — Theme tokens via @theme inline
+   ============================================ */
+@theme inline {
+  --color-primario: var(--color-primario);
+  --color-primario-hover: var(--color-primario-hover);
+  --color-primario-suave: var(--color-primario-suave);
+
+  --color-acento: var(--color-acento);
+  --color-acento-suave: var(--color-acento-suave);
+
+  --color-secundario: var(--color-secundario);
+  --color-secundario-suave: var(--color-secundario-suave);
+
+  --color-fondo: var(--color-fondo);
+  --color-fondo-tarjeta: var(--color-fondo-tarjeta);
+  --color-fondo-elevado: var(--color-fondo-elevado);
+  --color-fondo-input: var(--color-fondo-input);
+
+  --color-texto: var(--color-texto);
+  --color-texto-secundario: var(--color-texto-secundario);
+  --color-texto-terciario: var(--color-texto-terciario);
+
+  --color-borde: var(--color-borde);
+  --color-borde-hover: var(--color-borde-hover);
+
+  --color-exito: var(--color-exito);
+  --color-advertencia: var(--color-advertencia);
+  --color-error: var(--color-error);
+  --color-info: var(--color-info);
+
+  --color-violet-50: var(--color-violet-50);
+  --color-violet-100: var(--color-violet-100);
+  --color-violet-200: var(--color-violet-200);
+  --color-violet-300: var(--color-violet-300);
+  --color-violet-400: var(--color-violet-400);
+  --color-violet-500: var(--color-violet-500);
+  --color-violet-600: var(--color-violet-600);
+  --color-violet-700: var(--color-violet-700);
+  --color-violet-800: var(--color-violet-800);
+  --color-violet-900: var(--color-violet-900);
+  --color-violet-950: var(--color-violet-950);
+
+  --color-dorado-300: var(--color-dorado-300);
+  --color-dorado-400: var(--color-dorado-400);
+  --color-dorado-500: var(--color-dorado-500);
+
+  --font-sans: var(--font-familia-base);
+  --font-mono: var(--font-familia-mono);
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+body {
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: var(--font-familia-base);
+}
+
+/*
+ * Scrollbar sutil — siempre visible al 20% de opacidad,
+ * mas visible al hacer hover sobre el contenedor.
+ * WebKit no soporta transition en pseudo-elements de scrollbar,
+ * asi que usamos opacidad fija + :hover del contenedor.
+ */
+
+/* --- Firefox --- */
+.scroll-sutil {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(124, 77, 255, 0.2) transparent;
+}
+
+.scroll-sutil:hover {
+  scrollbar-color: rgba(124, 77, 255, 0.4) transparent;
+}
+
+/* --- WebKit (Chrome / Safari / Edge) --- */
+.scroll-sutil::-webkit-scrollbar {
+  width: 5px;
+}
+
+.scroll-sutil::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-sutil::-webkit-scrollbar-thumb {
+  background: rgba(124, 77, 255, 0.2);
+  border-radius: 9999px;
+}
+
+.scroll-sutil:hover::-webkit-scrollbar-thumb {
+  background: rgba(124, 77, 255, 0.4);
+}
+
+/* --- Global: solo html/body para scroll de pagina --- */
+html,
+body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(124, 77, 255, 0.2) transparent;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 5px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background: rgba(124, 77, 255, 0.2);
+  border-radius: 9999px;
+}
+
+/* Focus visible */
+*:focus-visible {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 2px;
+}

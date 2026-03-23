@@ -1,6 +1,8 @@
 """Rutas de revolución solar."""
 
-from fastapi import APIRouter, Depends
+import uuid
+
+from fastapi import APIRouter, Depends, Query
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,6 +25,7 @@ TIPO_CALCULO = "solar-return"
 async def calcular_retorno_solar(
     anio: int,
     datos: DatosNacimiento,
+    perfil_id: uuid.UUID | None = Query(None),
     db: AsyncSession = Depends(_obtener_db_placeholder),
     redis: Redis = Depends(_obtener_redis_placeholder),
 ):
@@ -42,9 +45,34 @@ async def calcular_retorno_solar(
     cache = GestorCache(redis)
     resultado_cache = await cache.obtener(hash_params)
     if resultado_cache is not None:
+        # Si viene perfil_id, vincular el cálculo existente al perfil
+        if perfil_id:
+            try:
+                repo = RepositorioCalculo(db)
+                existente = await repo.obtener_por_perfil_y_tipo(perfil_id, TIPO_CALCULO)
+                if not existente:
+                    await repo.guardar(
+                        perfil_id=perfil_id,
+                        tipo=TIPO_CALCULO,
+                        hash_parametros=hash_params,
+                        resultado_json=resultado_cache,
+                    )
+            except Exception as e:
+                logger.warning("Error vinculando retorno solar a perfil: %s", e)
         return {"exito": True, "datos": resultado_cache, "cache": True}
 
-    # 3. Calcular
+    # 3. Si hay perfil_id, buscar en DB por perfil
+    if perfil_id:
+        try:
+            repo = RepositorioCalculo(db)
+            calculo_db = await repo.obtener_por_perfil_y_tipo(perfil_id, TIPO_CALCULO)
+            if calculo_db:
+                await cache.guardar(hash_params, calculo_db.resultado_json, TIPO_CALCULO)
+                return {"exito": True, "datos": calculo_db.resultado_json, "cache": True}
+        except Exception as e:
+            logger.warning("Error buscando retorno solar en DB: %s", e)
+
+    # 4. Calcular
     geo = await ServicioGeo.geocodificar(
         datos.ciudad_nacimiento,
         datos.pais_nacimiento,
@@ -74,14 +102,14 @@ async def calcular_retorno_solar(
         **retorno,
     }
 
-    # 4. Cache
+    # 5. Cache
     await cache.guardar(hash_params, resultado, TIPO_CALCULO)
 
-    # 5. DB
+    # 6. Persistir en DB (con perfil_id si se proporcionó)
     try:
         repo = RepositorioCalculo(db)
         await repo.guardar(
-            perfil_id=None,
+            perfil_id=perfil_id,
             tipo=TIPO_CALCULO,
             hash_parametros=hash_params,
             resultado_json=resultado,

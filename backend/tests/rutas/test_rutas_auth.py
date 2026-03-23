@@ -1158,3 +1158,196 @@ class TestValidacionesEsquemas:
         """Debe rechazar login sin campos obligatorios."""
         resp = await cliente.post("/api/v1/auth/login", json={})
         assert resp.status_code == 422
+
+
+# ── Plan gratis automático al registrar ──────────────────────
+
+
+class TestPlanGratisAutoRegistro:
+    """Tests de asignación automática de plan gratis al registrar."""
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.auth.RepositorioSuscripcion")
+    @patch("app.rutas.v1.auth.RepositorioPlan")
+    @patch("app.rutas.v1.auth.RepositorioUsuario")
+    async def test_registrar_crea_suscripcion_gratis(
+        self, MockRepoUsuario, MockRepoPlan, MockRepoSus, cliente
+    ):
+        """Al registrar, debe crear suscripción al plan gratis."""
+        uid = uuid.uuid4()
+        usuario_mock = _crear_usuario_mock(
+            uid=uid, email="nuevo@test.com", nombre="Nuevo",
+            hash_contrasena=ServicioAuth.hashear_contrasena("segura12345"),
+        )
+
+        MockRepoUsuario.return_value.obtener_por_email = AsyncMock(return_value=None)
+        MockRepoUsuario.return_value.crear = AsyncMock(return_value=usuario_mock)
+
+        plan_gratis = MagicMock()
+        plan_gratis.id = uuid.uuid4()
+        plan_gratis.slug = "gratis"
+        MockRepoPlan.return_value.obtener_por_slug = AsyncMock(return_value=plan_gratis)
+
+        suscripcion_mock = MagicMock()
+        suscripcion_mock.id = uuid.uuid4()
+        MockRepoSus.return_value.crear = AsyncMock(return_value=suscripcion_mock)
+
+        resp = await cliente.post(
+            "/api/v1/auth/registrar",
+            json={
+                "email": "nuevo@test.com",
+                "nombre": "Nuevo",
+                "contrasena": "segura12345",
+            },
+        )
+
+        assert resp.status_code == 200
+        # Debe haber buscado el plan gratis
+        MockRepoPlan.return_value.obtener_por_slug.assert_called_once_with("gratis")
+        # Debe haber creado la suscripción
+        MockRepoSus.return_value.crear.assert_called_once()
+        call_kwargs = MockRepoSus.return_value.crear.call_args.kwargs
+        assert call_kwargs["usuario_id"] == uid
+        assert call_kwargs["plan_id"] == plan_gratis.id
+        assert call_kwargs["estado"] == "activa"
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.auth.RepositorioSuscripcion")
+    @patch("app.rutas.v1.auth.RepositorioPlan")
+    @patch("app.rutas.v1.auth.RepositorioUsuario")
+    @patch("app.rutas.v1.auth.ServicioGoogleOAuth")
+    async def test_google_callback_nuevo_crea_suscripcion_gratis(
+        self, MockOAuth, MockRepoUsuario, MockRepoPlan, MockRepoSus, cliente
+    ):
+        """Al registrar vía Google, debe crear suscripción al plan gratis."""
+        uid = uuid.uuid4()
+        MockOAuth.obtener_datos_usuario = AsyncMock(return_value={
+            "google_id": "google_plan_test",
+            "email": "google_plan@gmail.com",
+            "nombre": "Google Plan",
+            "verificado": True,
+        })
+
+        usuario_nuevo = _crear_usuario_mock(
+            uid=uid, email="google_plan@gmail.com", proveedor_auth="google",
+        )
+
+        repo_instance = MockRepoUsuario.return_value
+        repo_instance.obtener_por_google_id = AsyncMock(return_value=None)
+        repo_instance.obtener_por_email = AsyncMock(return_value=None)
+        repo_instance.crear = AsyncMock(return_value=usuario_nuevo)
+        repo_instance.actualizar_ultimo_acceso = AsyncMock()
+
+        plan_gratis = MagicMock()
+        plan_gratis.id = uuid.uuid4()
+        plan_gratis.slug = "gratis"
+        MockRepoPlan.return_value.obtener_por_slug = AsyncMock(return_value=plan_gratis)
+        MockRepoSus.return_value.crear = AsyncMock(return_value=MagicMock())
+
+        resp = await cliente.get("/api/v1/auth/google/callback?code=code_plan_test")
+
+        assert resp.status_code == 200
+        MockRepoPlan.return_value.obtener_por_slug.assert_called_once_with("gratis")
+        MockRepoSus.return_value.crear.assert_called_once()
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.auth.RepositorioSuscripcion")
+    @patch("app.rutas.v1.auth.RepositorioPlan")
+    @patch("app.rutas.v1.auth.RepositorioUsuario")
+    @patch("app.rutas.v1.auth.ServicioGoogleOAuth")
+    async def test_google_callback_existente_no_crea_suscripcion(
+        self, MockOAuth, MockRepoUsuario, MockRepoPlan, MockRepoSus, cliente
+    ):
+        """Al autenticar usuario Google existente, NO debe crear suscripción."""
+        uid = uuid.uuid4()
+        MockOAuth.obtener_datos_usuario = AsyncMock(return_value={
+            "google_id": "google_existing",
+            "email": "existing@gmail.com",
+            "nombre": "Existing",
+            "verificado": True,
+        })
+
+        usuario_existente = _crear_usuario_mock(
+            uid=uid, email="existing@gmail.com", proveedor_auth="google",
+        )
+
+        repo_instance = MockRepoUsuario.return_value
+        repo_instance.obtener_por_google_id = AsyncMock(return_value=usuario_existente)
+        repo_instance.actualizar_ultimo_acceso = AsyncMock()
+
+        resp = await cliente.get("/api/v1/auth/google/callback?code=code_existing")
+
+        assert resp.status_code == 200
+        # NO debe crear suscripción (usuario ya existe)
+        MockRepoSus.return_value.crear.assert_not_called()
+
+
+# ── Plan del usuario en /me ──────────────────────────────────
+
+
+class TestMeConPlan:
+    """Tests de GET /auth/me incluyendo datos del plan."""
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.auth.RepositorioPlan")
+    @patch("app.rutas.v1.auth.RepositorioSuscripcion")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_me_retorna_plan_activo(
+        self, MockRepoAuth, MockRepoSus, MockRepoPlan, cliente, redis_falso
+    ):
+        """GET /me debe incluir plan_slug y plan_nombre del usuario."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid, email="plan@test.com", nombre="Plan")
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+
+        plan_mock = MagicMock()
+        plan_mock.id = uuid.uuid4()
+        plan_mock.slug = "premium"
+        plan_mock.nombre = "Premium"
+
+        sus_mock = MagicMock()
+        sus_mock.plan_id = plan_mock.id
+        sus_mock.estado = "activa"
+
+        MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=sus_mock)
+        MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan_mock)
+
+        token = ServicioAuth.crear_token_acceso(uid, "plan@test.com")
+
+        resp = await cliente.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        datos = resp.json()["datos"]
+        assert datos["plan_slug"] == "premium"
+        assert datos["plan_nombre"] == "Premium"
+        assert datos["suscripcion_estado"] == "activa"
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.auth.RepositorioSuscripcion")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_me_sin_suscripcion_retorna_null(
+        self, MockRepoAuth, MockRepoSus, cliente, redis_falso
+    ):
+        """GET /me sin suscripción debe retornar plan_slug=null."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid, email="noplan@test.com")
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=None)
+
+        token = ServicioAuth.crear_token_acceso(uid, "noplan@test.com")
+
+        resp = await cliente.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        datos = resp.json()["datos"]
+        assert datos["plan_slug"] is None
+        assert datos["plan_nombre"] is None
+        assert datos["suscripcion_estado"] is None

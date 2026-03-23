@@ -52,3 +52,36 @@ class RepositorioCalculo:
         query = query.order_by(Calculo.calculado_en.desc())
         resultado = await self.sesion.execute(query)
         return list(resultado.scalars().all())
+
+    async def obtener_por_perfil_y_tipo(
+        self,
+        perfil_id: uuid.UUID,
+        tipo: str,
+    ) -> Calculo | None:
+        """Devuelve el cálculo más reciente de un tipo para un perfil."""
+        resultado = await self.sesion.execute(
+            select(Calculo)
+            .where(Calculo.perfil_id == perfil_id, Calculo.tipo == tipo)
+            .order_by(Calculo.calculado_en.desc())
+            .limit(1)
+        )
+        return resultado.scalar_one_or_none()
+
+    # Mapeo de tipo interno (inglés) a clave de respuesta (español)
+    _MAPA_CLAVES: dict[str, str] = {
+        "natal": "natal",
+        "human-design": "diseno_humano",
+        "numerology": "numerologia",
+        "solar-return": "retorno_solar",
+    }
+
+    async def obtener_todos_por_perfil(
+        self,
+        perfil_id: uuid.UUID,
+    ) -> dict[str, dict | None]:
+        """Devuelve un dict con el cálculo más reciente de cada tipo para un perfil."""
+        resultado: dict[str, dict | None] = {}
+        for tipo, clave in self._MAPA_CLAVES.items():
+            calculo = await self.obtener_por_perfil_y_tipo(perfil_id, tipo)
+            resultado[clave] = calculo.resultado_json if calculo else None
+        return resultado

@@ -1,6 +1,8 @@
 """Rutas de numerología."""
 
-from fastapi import APIRouter, Depends
+import uuid
+
+from fastapi import APIRouter, Depends, Query
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,6 +22,7 @@ TIPO_CALCULO = "numerology"
 @router.post("/numerology")
 async def calcular_numerologia(
     datos: DatosNumerologia,
+    perfil_id: uuid.UUID | None = Query(None),
     db: AsyncSession = Depends(_obtener_db_placeholder),
     redis: Redis = Depends(_obtener_redis_placeholder),
 ):
@@ -36,9 +39,33 @@ async def calcular_numerologia(
     cache = GestorCache(redis)
     resultado_cache = await cache.obtener(hash_params)
     if resultado_cache is not None:
+        if perfil_id:
+            try:
+                repo = RepositorioCalculo(db)
+                existente = await repo.obtener_por_perfil_y_tipo(perfil_id, TIPO_CALCULO)
+                if not existente:
+                    await repo.guardar(
+                        perfil_id=perfil_id,
+                        tipo=TIPO_CALCULO,
+                        hash_parametros=hash_params,
+                        resultado_json=resultado_cache,
+                    )
+            except Exception as e:
+                logger.warning("Error vinculando cálculo numerología a perfil: %s", e)
         return {"exito": True, "datos": resultado_cache, "cache": True}
 
-    # 3. Calcular
+    # 3. Si hay perfil_id, buscar en DB por perfil
+    if perfil_id:
+        try:
+            repo = RepositorioCalculo(db)
+            calculo_db = await repo.obtener_por_perfil_y_tipo(perfil_id, TIPO_CALCULO)
+            if calculo_db:
+                await cache.guardar(hash_params, calculo_db.resultado_json, TIPO_CALCULO)
+                return {"exito": True, "datos": calculo_db.resultado_json, "cache": True}
+        except Exception as e:
+            logger.warning("Error buscando cálculo numerología por perfil: %s", e)
+
+    # 4. Calcular
     carta = ServicioNumerologia.calcular_carta_completa(
         datos.nombre,
         datos.fecha_nacimiento,
@@ -47,14 +74,14 @@ async def calcular_numerologia(
 
     resultado = carta
 
-    # 4. Cache
+    # 5. Cache
     await cache.guardar(hash_params, resultado, TIPO_CALCULO)
 
-    # 5. DB
+    # 6. DB (con perfil_id si se proporcionó)
     try:
         repo = RepositorioCalculo(db)
         await repo.guardar(
-            perfil_id=None,
+            perfil_id=perfil_id,
             tipo=TIPO_CALCULO,
             hash_parametros=hash_params,
             resultado_json=resultado,

@@ -119,6 +119,8 @@ curl -X POST http://localhost:8000/api/v1/auth/registrar \
 }
 ```
 
+> **Nota:** Al registrar, se crea automáticamente una suscripción al plan **Gratis**. Lo mismo aplica al registrar vía Google OAuth.
+
 ### Errores
 
 | Código | Causa |
@@ -315,11 +317,16 @@ curl http://localhost:8000/api/v1/auth/me \
     "activo": true,
     "verificado": false,
     "proveedor_auth": "local",
+    "plan_slug": "premium",
+    "plan_nombre": "Premium",
+    "suscripcion_estado": "activa",
     "ultimo_acceso": "2026-03-21T15:30:00+00:00",
     "creado_en": "2026-03-21T12:00:00+00:00"
   }
 }
 ```
+
+> `plan_slug`, `plan_nombre` y `suscripcion_estado` son `null` si el usuario no tiene suscripción activa.
 
 ### Errores
 
