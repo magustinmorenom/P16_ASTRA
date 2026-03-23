@@ -47,14 +47,15 @@ class RepositorioSuscripcion:
         return suscripcion
 
     async def obtener_activa(self, usuario_id: uuid.UUID) -> Suscripcion | None:
-        """Obtiene la suscripción activa de un usuario."""
+        """Obtiene la suscripción activa/pendiente más reciente de un usuario."""
         resultado = await self.sesion.execute(
             select(Suscripcion).where(
                 Suscripcion.usuario_id == usuario_id,
                 Suscripcion.estado.in_(["activa", "pendiente"]),
             ).order_by(Suscripcion.creado_en.desc())
+            .limit(1)
         )
-        return resultado.scalar_one_or_none()
+        return resultado.scalars().first()
 
     async def obtener_por_id(self, suscripcion_id: uuid.UUID) -> Suscripcion | None:
         """Obtiene una suscripción por su ID."""
@@ -154,6 +155,18 @@ class RepositorioSuscripcion:
                 )
             )
             await self.sesion.commit()
+
+    async def listar_con_mp_por_usuario(
+        self, usuario_id: uuid.UUID
+    ) -> list[Suscripcion]:
+        """Lista todas las suscripciones del usuario que tienen mp_preapproval_id."""
+        resultado = await self.sesion.execute(
+            select(Suscripcion).where(
+                Suscripcion.usuario_id == usuario_id,
+                Suscripcion.mp_preapproval_id.isnot(None),
+            ).order_by(Suscripcion.creado_en.desc())
+        )
+        return list(resultado.scalars().all())
 
     async def listar_paises_activos(self) -> list[ConfigPaisMp]:
         """Lista todos los países activos con configuración de MP."""

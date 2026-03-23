@@ -10,6 +10,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.modelos.config_pais_mp import ConfigPaisMp
+from app.modelos.factura import Factura
 from app.modelos.pago import Pago
 from app.modelos.plan import Plan
 from app.modelos.precio_plan import PrecioPlan
@@ -986,10 +987,11 @@ class TestListarPagos:
     """Tests de GET /suscripcion/pagos."""
 
     @pytest.mark.asyncio
+    @patch("app.rutas.v1.suscripcion.RepositorioFactura")
     @patch("app.rutas.v1.suscripcion.RepositorioPago")
     @patch("app.dependencias_auth.RepositorioUsuario")
     async def test_listar_pagos_exitoso(
-        self, MockRepoAuth, MockRepoPago, cliente, redis_falso
+        self, MockRepoAuth, MockRepoPago, MockRepoFactura, cliente, redis_falso
     ):
         """Debe retornar el historial de pagos del usuario."""
         uid = uuid.uuid4()
@@ -1002,6 +1004,7 @@ class TestListarPagos:
         MockRepoPago.return_value.listar_por_usuario = AsyncMock(
             return_value=[pago1, pago2]
         )
+        MockRepoFactura.return_value.obtener_por_pago_ids = AsyncMock(return_value={})
 
         token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
 
@@ -1014,13 +1017,15 @@ class TestListarPagos:
         datos = resp.json()["datos"]
         assert len(datos) == 2
         assert datos[0]["estado"] == "aprobado"
+        assert datos[0]["factura_id"] is None
         assert datos[1]["estado"] == "rechazado"
 
     @pytest.mark.asyncio
+    @patch("app.rutas.v1.suscripcion.RepositorioFactura")
     @patch("app.rutas.v1.suscripcion.RepositorioPago")
     @patch("app.dependencias_auth.RepositorioUsuario")
     async def test_listar_pagos_vacio(
-        self, MockRepoAuth, MockRepoPago, cliente, redis_falso
+        self, MockRepoAuth, MockRepoPago, MockRepoFactura, cliente, redis_falso
     ):
         """Sin pagos, debe retornar lista vacía."""
         uid = uuid.uuid4()
@@ -1028,6 +1033,7 @@ class TestListarPagos:
 
         MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
         MockRepoPago.return_value.listar_por_usuario = AsyncMock(return_value=[])
+        MockRepoFactura.return_value.obtener_por_pago_ids = AsyncMock(return_value={})
 
         token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
 
@@ -1310,3 +1316,254 @@ class TestMultiPais:
         assert resp.status_code == 200
         datos = resp.json()["datos"]
         assert "mercadopago.com.mx" in datos["init_point"]
+
+
+# ── Tests: POST /suscripcion/sincronizar-pagos ────────────────
+
+
+def _crear_factura_mock(uid=None, pago_id=None, numero="CE-202603-0001"):
+    factura = MagicMock(spec=Factura)
+    factura.id = uid or uuid.uuid4()
+    factura.pago_id = pago_id
+    factura.numero_factura = numero
+    factura.usuario_id = None
+    factura.monto_centavos = 100000
+    factura.moneda = "ARS"
+    factura.concepto = "Test"
+    factura.estado = "emitida"
+    factura.creado_en = datetime.now(timezone.utc)
+    return factura
+
+
+class TestSincronizarPagos:
+    """Tests de POST /suscripcion/sincronizar-pagos."""
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.suscripcion.ServicioMercadoPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioFactura")
+    @patch("app.rutas.v1.suscripcion.RepositorioPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioPlan")
+    @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_sincronizar_sin_suscripciones_mp(
+        self, MockRepoAuth, MockRepoSus, MockRepoPlan, MockRepoPago,
+        MockRepoFactura, MockMP, cliente, redis_falso,
+    ):
+        """Sin suscripciones vinculadas a MP, retorna sincronizados=0."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoSus.return_value.listar_con_mp_por_usuario = AsyncMock(return_value=[])
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.post(
+            "/api/v1/suscripcion/sincronizar-pagos",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        datos = resp.json()["datos"]
+        assert datos["sincronizados"] == 0
+        assert datos["estado_actualizado"] is False
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.suscripcion.ServicioMercadoPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioFactura")
+    @patch("app.rutas.v1.suscripcion.RepositorioPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioPlan")
+    @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_sincronizar_con_pago_aprobado(
+        self, MockRepoAuth, MockRepoSus, MockRepoPlan, MockRepoPago,
+        MockRepoFactura, MockMP, cliente, redis_falso,
+    ):
+        """Con un pago aprobado en MP, debe crear pago + factura y activar suscripción."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+        config_pais = _crear_config_pais_mock()
+        plan_premium = _crear_plan_mock(slug="premium")
+
+        sus = _crear_suscripcion_mock(
+            usuario_id=uid,
+            plan_id=plan_premium.id,
+            estado="cancelada",
+            mp_preapproval_id="preapproval_test_123",
+        )
+
+        pago_creado = _crear_pago_mock()
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoSus.return_value.listar_con_mp_por_usuario = AsyncMock(return_value=[sus])
+        MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
+        MockRepoSus.return_value.actualizar_estado = AsyncMock()
+        MockRepoSus.return_value.cancelar_gratis_usuario = AsyncMock()
+        MockRepoPago.return_value.obtener_por_mp_pago_id = AsyncMock(return_value=None)
+        MockRepoPago.return_value.crear = AsyncMock(return_value=pago_creado)
+        MockRepoFactura.return_value.obtener_por_pago_id = AsyncMock(return_value=None)
+        MockRepoFactura.return_value.crear = AsyncMock(return_value=_crear_factura_mock())
+
+        # MP devuelve preapproval authorized + 1 pago aprobado
+        MockMP.obtener_preapproval = AsyncMock(return_value={
+            "status": "authorized",
+            "id": "preapproval_test_123",
+        })
+        MockMP.buscar_pagos_preapproval = AsyncMock(return_value=[{
+            "preapproval_id": "preapproval_test_123",
+            "id": 7026592884,
+            "status": "processed",
+            "transaction_amount": 1000.0,
+            "currency_id": "ARS",
+            "payment_method_id": "card",
+            "external_reference": f"cosmic_{uid}_premium_AR",
+            "debit_date": "2026-03-23T00:21:03.000-04:00",
+            "payment": {
+                "id": 150811843141,
+                "status": "approved",
+                "status_detail": "accredited",
+            },
+        }])
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.post(
+            "/api/v1/suscripcion/sincronizar-pagos",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        datos = resp.json()["datos"]
+        assert datos["sincronizados"] == 1
+        assert datos["estado_actualizado"] is True
+
+        # Verificar que se creó el pago
+        MockRepoPago.return_value.crear.assert_called_once()
+        args = MockRepoPago.return_value.crear.call_args
+        assert args.kwargs["mp_pago_id"] == "150811843141"
+        assert args.kwargs["estado"] == "aprobado"
+        assert args.kwargs["monto_centavos"] == 100000
+
+        # Verificar que se creó la factura
+        MockRepoFactura.return_value.crear.assert_called_once()
+
+        # Verificar que se actualizó el estado de la suscripción (authorized → activa)
+        MockRepoSus.return_value.actualizar_estado.assert_called()
+
+        # Verificar que se canceló la suscripción gratis
+        MockRepoSus.return_value.cancelar_gratis_usuario.assert_called_with(uid)
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.suscripcion.ServicioMercadoPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioFactura")
+    @patch("app.rutas.v1.suscripcion.RepositorioPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioPlan")
+    @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_sincronizar_pago_ya_existente_no_duplica(
+        self, MockRepoAuth, MockRepoSus, MockRepoPlan, MockRepoPago,
+        MockRepoFactura, MockMP, cliente, redis_falso,
+    ):
+        """Si el pago ya existe en la DB, no lo duplica."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+        config_pais = _crear_config_pais_mock()
+
+        sus = _crear_suscripcion_mock(
+            usuario_id=uid,
+            estado="activa",
+            mp_preapproval_id="preapproval_test_456",
+        )
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoSus.return_value.listar_con_mp_por_usuario = AsyncMock(return_value=[sus])
+        MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
+        MockRepoSus.return_value.actualizar_estado = AsyncMock()
+        MockRepoSus.return_value.cancelar_gratis_usuario = AsyncMock()
+        # El pago YA existe en DB
+        MockRepoPago.return_value.obtener_por_mp_pago_id = AsyncMock(
+            return_value=_crear_pago_mock()
+        )
+
+        MockMP.obtener_preapproval = AsyncMock(return_value={
+            "status": "authorized",
+        })
+        MockMP.buscar_pagos_preapproval = AsyncMock(return_value=[{
+            "id": 999,
+            "status": "processed",
+            "transaction_amount": 1000.0,
+            "currency_id": "ARS",
+            "payment": {"id": 12345, "status": "approved", "status_detail": "accredited"},
+        }])
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.post(
+            "/api/v1/suscripcion/sincronizar-pagos",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        datos = resp.json()["datos"]
+        assert datos["sincronizados"] == 0
+        # No se debe crear pago ni factura
+        MockRepoPago.return_value.crear.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.suscripcion.ServicioMercadoPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioFactura")
+    @patch("app.rutas.v1.suscripcion.RepositorioPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioPlan")
+    @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_sincronizar_actualiza_estado_suscripcion(
+        self, MockRepoAuth, MockRepoSus, MockRepoPlan, MockRepoPago,
+        MockRepoFactura, MockMP, cliente, redis_falso,
+    ):
+        """Si MP dice authorized pero local dice pendiente, actualiza a activa."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+        config_pais = _crear_config_pais_mock()
+
+        sus = _crear_suscripcion_mock(
+            usuario_id=uid,
+            estado="pendiente",
+            mp_preapproval_id="preapproval_pendiente",
+        )
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoSus.return_value.listar_con_mp_por_usuario = AsyncMock(return_value=[sus])
+        MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
+        MockRepoSus.return_value.actualizar_estado = AsyncMock()
+        MockRepoSus.return_value.cancelar_gratis_usuario = AsyncMock()
+
+        # Sin pagos, solo sync de estado
+        MockMP.obtener_preapproval = AsyncMock(return_value={
+            "status": "authorized",
+        })
+        MockMP.buscar_pagos_preapproval = AsyncMock(return_value=[])
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.post(
+            "/api/v1/suscripcion/sincronizar-pagos",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        datos = resp.json()["datos"]
+        assert datos["estado_actualizado"] is True
+
+        # Verificar que actualizó de pendiente → activa
+        MockRepoSus.return_value.actualizar_estado.assert_called_once()
+        args = MockRepoSus.return_value.actualizar_estado.call_args
+        assert args.args[1] == "activa"
+
+        # Verificar que canceló gratis
+        MockRepoSus.return_value.cancelar_gratis_usuario.assert_called_with(uid)
+
+    @pytest.mark.asyncio
+    async def test_sincronizar_sin_token(self, cliente):
+        """Debe retornar 401 sin token."""
+        resp = await cliente.post("/api/v1/suscripcion/sincronizar-pagos")
+        assert resp.status_code == 401

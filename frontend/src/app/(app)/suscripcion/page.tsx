@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Tarjeta } from "@/componentes/ui/tarjeta";
@@ -15,8 +15,8 @@ import {
   usarSuscribirse,
   usarCancelarSuscripcion,
   usarPagos,
-  usarPaises,
-  usarFacturas,
+  usarDetectarPais,
+  usarSincronizarPagos,
 } from "@/lib/hooks";
 import { formatearFechaHora, formatearFecha } from "@/lib/utilidades/formatear-fecha";
 import type { Plan } from "@/lib/tipos";
@@ -103,10 +103,16 @@ export default function PaginaSuscripcion() {
   const suscribirse = usarSuscribirse();
   const cancelar = usarCancelarSuscripcion();
   const { data: pagos, isLoading: cargandoPagos } = usarPagos();
-  const { data: paises, isLoading: cargandoPaises } = usarPaises();
-  const { data: facturas, isLoading: cargandoFacturas } = usarFacturas();
-
+  const { data: paisDetectado, isLoading: cargandoPais } = usarDetectarPais();
+  const sincronizarPagos = usarSincronizarPagos();
   const planActualSlug = miSuscripcion?.plan_slug ?? "gratis";
+
+  // Actualizar país seleccionado cuando se detecte por IP
+  useEffect(() => {
+    if (paisDetectado?.pais_codigo) {
+      setPaisSeleccionado(paisDetectado.pais_codigo);
+    }
+  }, [paisDetectado]);
 
   const planGratis = planes?.find((p) => p.slug === "gratis") ?? null;
   const planPremium = planes?.find((p) => p.slug === "premium") ?? null;
@@ -143,27 +149,19 @@ export default function PaginaSuscripcion() {
       </div>
 
       {/* ---------------------------------------------------------- */}
-      {/* Selector de pais                                           */}
+      {/* País detectado                                             */}
       {/* ---------------------------------------------------------- */}
-      <section className="flex flex-col gap-2">
-        <label htmlFor="selector-pais" className="text-sm font-medium text-texto-secundario">
-          Tu pais
-        </label>
-        {cargandoPaises ? (
-          <Esqueleto className="h-10 w-48" />
+      <section className="flex items-center gap-2 text-sm text-texto-secundario">
+        <Icono nombre="ubicacion" tamaño={18} className="text-acento" />
+        {cargandoPais ? (
+          <Esqueleto className="h-5 w-48" />
         ) : (
-          <select
-            id="selector-pais"
-            value={paisSeleccionado}
-            onChange={(e) => setPaisSeleccionado(e.target.value)}
-            className="w-48 rounded-lg border border-borde bg-fondo-elevado px-3 py-2 text-sm text-texto focus:outline-none focus:ring-2 focus:ring-acento"
-          >
-            {paises?.map((p) => (
-              <option key={p.pais_codigo} value={p.pais_codigo}>
-                {p.pais_nombre} ({p.moneda})
-              </option>
-            ))}
-          </select>
+          <span>
+            Pais detectado:{" "}
+            <span className="font-medium text-texto">
+              {paisDetectado?.pais_nombre ?? "Argentina"} ({paisDetectado?.moneda ?? "ARS"})
+            </span>
+          </span>
         )}
       </section>
 
@@ -454,9 +452,28 @@ export default function PaginaSuscripcion() {
       {/* Seccion: Historial de Pagos                                */}
       {/* ---------------------------------------------------------- */}
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold text-texto">
-          Historial de Pagos
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-texto">
+            Historial de Pagos
+          </h2>
+          <Boton
+            variante="secundario"
+            onClick={() => {
+              sincronizarPagos.mutate(undefined, {
+                onSuccess: () => {
+                  queryClient.invalidateQueries({ queryKey: ["pagos"] });
+                  queryClient.invalidateQueries({ queryKey: ["mi-suscripcion"] });
+                  queryClient.invalidateQueries({ queryKey: ["verificar-estado"] });
+                },
+              });
+            }}
+            cargando={sincronizarPagos.isPending}
+            className="text-xs"
+            icono={<Icono nombre="descarga" tamaño={16} />}
+          >
+            Sincronizar con MP
+          </Boton>
+        </div>
 
         {cargandoPagos ? (
           <div className="flex flex-col gap-2">
@@ -480,6 +497,9 @@ export default function PaginaSuscripcion() {
                   </th>
                   <th className="text-left px-4 py-3 text-texto-terciario font-medium">
                     Metodo
+                  </th>
+                  <th className="text-left px-4 py-3 text-texto-terciario font-medium">
+                    Factura
                   </th>
                 </tr>
               </thead>
@@ -505,6 +525,22 @@ export default function PaginaSuscripcion() {
                     <td className="px-4 py-3 text-texto-secundario">
                       {pago.metodo_pago ?? "\u2014"}
                     </td>
+                    <td className="px-4 py-3">
+                      {pago.factura_id ? (
+                        <a
+                          href={`/api/v1/suscripcion/facturas/${pago.factura_id}/pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-acento hover:text-acento/80 transition-colors"
+                          title={`Descargar ${pago.numero_factura}`}
+                        >
+                          <Icono nombre="descarga" tamaño={16} />
+                          PDF
+                        </a>
+                      ) : (
+                        <span className="text-texto-terciario">{"\u2014"}</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -519,78 +555,6 @@ export default function PaginaSuscripcion() {
         )}
       </section>
 
-      {/* ---------------------------------------------------------- */}
-      {/* Seccion: Facturas                                          */}
-      {/* ---------------------------------------------------------- */}
-      <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold text-texto">
-          Facturas
-        </h2>
-
-        {cargandoFacturas ? (
-          <div className="flex flex-col gap-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Esqueleto key={i} className="h-12" />
-            ))}
-          </div>
-        ) : facturas && facturas.length > 0 ? (
-          <div className="overflow-x-auto rounded-xl border border-borde">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-borde bg-fondo-elevado">
-                  <th className="text-left px-4 py-3 text-texto-terciario font-medium">
-                    Numero
-                  </th>
-                  <th className="text-left px-4 py-3 text-texto-terciario font-medium">
-                    Fecha
-                  </th>
-                  <th className="text-left px-4 py-3 text-texto-terciario font-medium">
-                    Concepto
-                  </th>
-                  <th className="text-left px-4 py-3 text-texto-terciario font-medium">
-                    Monto
-                  </th>
-                  <th className="text-left px-4 py-3 text-texto-terciario font-medium">
-                    Estado
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {facturas.map((factura) => (
-                  <tr
-                    key={factura.id}
-                    className="border-b border-borde last:border-b-0 hover:bg-fondo-elevado/50 transition-colors"
-                  >
-                    <td className="px-4 py-3 text-texto font-mono text-xs">
-                      {factura.numero_factura}
-                    </td>
-                    <td className="px-4 py-3 text-texto">
-                      {factura.creado_en
-                        ? formatearFecha(factura.creado_en)
-                        : "\u2014"}
-                    </td>
-                    <td className="px-4 py-3 text-texto-secundario">
-                      {factura.concepto}
-                    </td>
-                    <td className="px-4 py-3 text-texto">
-                      {formatearMonto(factura.monto_centavos, factura.moneda)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge variante="exito">{factura.estado}</Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <Tarjeta variante="default" padding="md">
-            <p className="text-sm text-texto-terciario">
-              No hay facturas generadas.
-            </p>
-          </Tarjeta>
-        )}
-      </section>
     </div>
   );
 }

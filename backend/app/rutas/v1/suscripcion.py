@@ -1,9 +1,13 @@
 """Rutas de suscripción y pagos."""
 
+import io
 import logging
 import uuid
+from datetime import datetime, timezone
 
+import httpx
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.configuracion import obtener_configuracion
@@ -29,6 +33,89 @@ from app.servicios.servicio_mercadopago import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/suscripcion", tags=["Suscripciones"])
+
+
+def _parsear_fecha(valor: str | None) -> datetime | None:
+    """Convierte un string ISO 8601 de MP a datetime. Retorna None si falla."""
+    if not valor:
+        return None
+    try:
+        return datetime.fromisoformat(valor)
+    except (ValueError, TypeError):
+        return None
+
+# Países soportados por MercadoPago
+PAISES_SOPORTADOS = {"AR", "BR", "MX"}
+PAIS_FALLBACK = "AR"
+
+
+async def _detectar_pais_por_ip(ip: str) -> str:
+    """Detecta el código de país a partir de una IP usando ip-api.com.
+
+    Retorna el código ISO de 2 letras si es un país soportado,
+    o el fallback 'AR' si no se puede determinar.
+    """
+    # IPs locales → fallback
+    if ip in ("127.0.0.1", "::1", "localhost", "testclient"):
+        return PAIS_FALLBACK
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(
+                f"http://ip-api.com/json/{ip}",
+                params={"fields": "countryCode"},
+            )
+            if resp.status_code == 200:
+                codigo = resp.json().get("countryCode", "")
+                if codigo in PAISES_SOPORTADOS:
+                    return codigo
+    except Exception:
+        logger.warning("Error detectando país por IP %s", ip)
+
+    return PAIS_FALLBACK
+
+
+def _obtener_ip_cliente(request: Request) -> str:
+    """Extrae la IP del cliente considerando proxies (X-Forwarded-For)."""
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        # El primer valor es la IP original del cliente
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "127.0.0.1"
+
+
+@router.get("/detectar-pais")
+async def detectar_pais(
+    request: Request,
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+):
+    """Detecta el país del usuario por IP para mostrar precios locales."""
+    ip = _obtener_ip_cliente(request)
+    pais_codigo = await _detectar_pais_por_ip(ip)
+
+    # Obtener datos del país desde la DB
+    repo = RepositorioSuscripcion(db)
+    config_pais = await repo.obtener_config_pais(pais_codigo)
+
+    if config_pais:
+        return {
+            "exito": True,
+            "datos": {
+                "pais_codigo": config_pais.pais_codigo,
+                "pais_nombre": config_pais.pais_nombre,
+                "moneda": config_pais.moneda,
+            },
+        }
+
+    # Fallback absoluto
+    return {
+        "exito": True,
+        "datos": {
+            "pais_codigo": PAIS_FALLBACK,
+            "pais_nombre": "Argentina",
+            "moneda": "ARS",
+        },
+    }
 
 
 @router.get("/paises")
@@ -167,6 +254,7 @@ async def mi_suscripcion(
 
 @router.post("/suscribirse")
 async def suscribirse(
+    request: Request,
     datos: EsquemaSuscribirse,
     usuario: Usuario = Depends(obtener_usuario_actual),
     db: AsyncSession = Depends(_obtener_db_placeholder),
@@ -175,6 +263,11 @@ async def suscribirse(
     config = obtener_configuracion()
     repo_plan = RepositorioPlan(db)
     repo_sus = RepositorioSuscripcion(db)
+
+    # Auto-detectar país si no se envió
+    if not datos.pais_codigo:
+        ip = _obtener_ip_cliente(request)
+        datos.pais_codigo = await _detectar_pais_por_ip(ip)
 
     # Validar plan
     plan = await repo_plan.obtener_por_id(uuid.UUID(datos.plan_id))
@@ -491,7 +584,7 @@ async def _procesar_pago(
         detalle_estado=datos_pago.get("status_detail"),
         referencia_externa=referencia,
         datos_mp=datos_pago,
-        fecha_pago=datos_pago.get("date_approved"),
+        fecha_pago=_parsear_fecha(datos_pago.get("date_approved")),
     )
 
     # Si pago aprobado y hay suscripción, activarla y cancelar gratis
@@ -515,6 +608,126 @@ async def _procesar_pago(
             )
 
 
+@router.post("/sincronizar-pagos")
+async def sincronizar_pagos(
+    usuario: Usuario = Depends(obtener_usuario_actual),
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+):
+    """Sincroniza pagos y estado de suscripción desde MercadoPago.
+
+    Recorre TODAS las suscripciones del usuario que tengan mp_preapproval_id
+    (no solo la activa), sincroniza el estado del preapproval y crea los
+    registros de pago/factura que falten. Útil en desarrollo donde los
+    webhooks no llegan a localhost.
+    """
+    repo_sus = RepositorioSuscripcion(db)
+    repo_pago = RepositorioPago(db)
+    repo_factura = RepositorioFactura(db)
+    repo_plan = RepositorioPlan(db)
+
+    # Buscar TODAS las suscripciones con MP (no solo la activa)
+    suscripciones = await repo_sus.listar_con_mp_por_usuario(usuario.id)
+    if not suscripciones:
+        return {"exito": True, "datos": {"sincronizados": 0, "estado_actualizado": False},
+                "mensaje": "Sin suscripciones vinculadas a MercadoPago"}
+
+    sincronizados = 0
+    estado_actualizado = False
+
+    for suscripcion in suscripciones:
+        config_pais = await repo_sus.obtener_config_pais(suscripcion.pais_codigo)
+        if not config_pais:
+            continue
+
+        # 1. Sincronizar estado del preapproval
+        try:
+            datos_preapproval = await ServicioMercadoPago.obtener_preapproval(
+                config_pais.mp_access_token, suscripcion.mp_preapproval_id
+            )
+            estado_mp = datos_preapproval.get("status", "")
+            estado_local = MAPA_ESTADOS_SUSCRIPCION.get(estado_mp, suscripcion.estado)
+
+            if estado_local != suscripcion.estado:
+                await repo_sus.actualizar_estado(
+                    suscripcion.id, estado_local, datos_mp=datos_preapproval
+                )
+                estado_actualizado = True
+
+                # Si se activó premium, cancelar la gratis
+                if estado_local == "activa":
+                    await repo_sus.cancelar_gratis_usuario(usuario.id)
+        except ErrorPasarelaPago:
+            logger.warning(
+                "No se pudo consultar preapproval %s", suscripcion.mp_preapproval_id
+            )
+
+        # 2. Sincronizar pagos autorizados
+        pagos_mp = await ServicioMercadoPago.buscar_pagos_preapproval(
+            config_pais.mp_access_token, suscripcion.mp_preapproval_id
+        )
+
+        for datos_pago in pagos_mp:
+            # authorized_payments: { id, payment: { id, status, status_detail } }
+            payment_info = datos_pago.get("payment", {})
+            pago_id_mp = str(payment_info.get("id") or datos_pago.get("id", ""))
+            if not pago_id_mp:
+                continue
+
+            existente = await repo_pago.obtener_por_mp_pago_id(pago_id_mp)
+            if existente:
+                continue
+
+            estado_pago_mp = payment_info.get("status") or datos_pago.get("status", "")
+            estado_pago = MAPA_ESTADOS_PAGO.get(estado_pago_mp, "pendiente")
+            monto = int(datos_pago.get("transaction_amount", 0) * 100)
+            moneda = datos_pago.get("currency_id", config_pais.moneda)
+
+            pago = await repo_pago.crear(
+                monto_centavos=monto,
+                moneda=moneda,
+                suscripcion_id=suscripcion.id,
+                usuario_id=usuario.id,
+                mp_pago_id=pago_id_mp,
+                estado=estado_pago,
+                metodo_pago=datos_pago.get("payment_method_id"),
+                detalle_estado=payment_info.get("status_detail"),
+                referencia_externa=datos_pago.get("external_reference", ""),
+                datos_mp=datos_pago,
+                fecha_pago=_parsear_fecha(
+                    datos_pago.get("debit_date") or datos_pago.get("date_created")
+                ),
+            )
+
+            if estado_pago == "aprobado":
+                factura_existente = await repo_factura.obtener_por_pago_id(pago.id)
+                if not factura_existente:
+                    await repo_factura.crear(
+                        usuario_id=usuario.id,
+                        pago_id=pago.id,
+                        suscripcion_id=suscripcion.id,
+                        monto_centavos=monto,
+                        moneda=moneda,
+                        concepto=f"Suscripción CosmicEngine — Pago {pago_id_mp[:8]}",
+                        pais_codigo=config_pais.pais_codigo,
+                        email_cliente=usuario.email,
+                        nombre_cliente=usuario.nombre,
+                    )
+
+                # Si el pago está aprobado y la suscripción no está activa, activarla
+                if suscripcion.estado != "activa":
+                    await repo_sus.actualizar_estado(suscripcion.id, "activa")
+                    await repo_sus.cancelar_gratis_usuario(usuario.id)
+                    estado_actualizado = True
+
+            sincronizados += 1
+
+    return {
+        "exito": True,
+        "datos": {"sincronizados": sincronizados, "estado_actualizado": estado_actualizado},
+        "mensaje": f"Se sincronizaron {sincronizados} pagos desde MercadoPago",
+    }
+
+
 @router.get("/pagos")
 async def listar_pagos(
     usuario: Usuario = Depends(obtener_usuario_actual),
@@ -522,12 +735,18 @@ async def listar_pagos(
     limite: int = 50,
     offset: int = 0,
 ):
-    """Lista el historial de pagos del usuario."""
+    """Lista el historial de pagos del usuario con factura asociada."""
     repo = RepositorioPago(db)
+    repo_factura = RepositorioFactura(db)
     pagos = await repo.listar_por_usuario(usuario.id, limite=limite, offset=offset)
+
+    # Obtener facturas en batch
+    pago_ids = [pago.id for pago in pagos]
+    facturas_por_pago = await repo_factura.obtener_por_pago_ids(pago_ids)
 
     resultado = []
     for pago in pagos:
+        factura = facturas_por_pago.get(pago.id)
         resultado.append({
             "id": str(pago.id),
             "estado": pago.estado,
@@ -537,6 +756,8 @@ async def listar_pagos(
             "detalle_estado": pago.detalle_estado,
             "fecha_pago": pago.fecha_pago.isoformat() if pago.fecha_pago else None,
             "creado_en": pago.creado_en.isoformat() if pago.creado_en else None,
+            "factura_id": str(factura.id) if factura else None,
+            "numero_factura": factura.numero_factura if factura else None,
         })
 
     return {"exito": True, "datos": resultado}
@@ -571,3 +792,138 @@ async def listar_facturas(
         })
 
     return {"exito": True, "datos": resultado}
+
+
+@router.get("/facturas/{factura_id}/pdf")
+async def descargar_factura_pdf(
+    factura_id: str,
+    usuario: Usuario = Depends(obtener_usuario_actual),
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+):
+    """Genera y descarga la factura en formato PDF."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    repo = RepositorioFactura(db)
+    factura = await repo.obtener_por_id(uuid.UUID(factura_id))
+
+    if not factura or factura.usuario_id != usuario.id:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+
+    # Generar PDF en memoria
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=20 * mm,
+        rightMargin=20 * mm,
+        topMargin=20 * mm,
+        bottomMargin=20 * mm,
+    )
+
+    estilos = getSampleStyleSheet()
+    titulo = ParagraphStyle(
+        "Titulo",
+        parent=estilos["Title"],
+        fontSize=22,
+        spaceAfter=6 * mm,
+        textColor=colors.HexColor("#4A00E0"),
+    )
+    subtitulo = ParagraphStyle(
+        "Sub",
+        parent=estilos["Normal"],
+        fontSize=10,
+        textColor=colors.grey,
+    )
+    normal = estilos["Normal"]
+
+    elementos = []
+
+    # Encabezado
+    elementos.append(Paragraph("CosmicEngine", titulo))
+    elementos.append(Paragraph("Plataforma de cálculo esotérico-astronómico", subtitulo))
+    elementos.append(Spacer(1, 10 * mm))
+
+    # Datos de factura
+    fecha_emision = factura.creado_en.strftime("%d/%m/%Y") if factura.creado_en else "—"
+    datos_factura = [
+        ["FACTURA", ""],
+        ["Número:", factura.numero_factura],
+        ["Fecha de emisión:", fecha_emision],
+        ["Estado:", factura.estado.capitalize()],
+    ]
+
+    if factura.email_cliente:
+        datos_factura.append(["Cliente:", factura.email_cliente])
+    if factura.nombre_cliente:
+        datos_factura.append(["Nombre:", factura.nombre_cliente])
+
+    tabla_info = Table(datos_factura, colWidths=[50 * mm, 110 * mm])
+    tabla_info.setStyle(TableStyle([
+        ("FONTNAME", (0, 0), (1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (1, 0), 14),
+        ("TEXTCOLOR", (0, 0), (1, 0), colors.HexColor("#4A00E0")),
+        ("BOTTOMPADDING", (0, 0), (1, 0), 8),
+        ("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 1), (-1, -1), 10),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    elementos.append(tabla_info)
+    elementos.append(Spacer(1, 10 * mm))
+
+    # Detalle
+    monto_str = f"${factura.monto_centavos / 100:.2f} {factura.moneda}"
+    detalle = [
+        ["Concepto", "Monto"],
+        [factura.concepto, monto_str],
+    ]
+
+    tabla_detalle = Table(detalle, colWidths=[120 * mm, 40 * mm])
+    tabla_detalle.setStyle(TableStyle([
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 10),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#F0EAFF")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#4A00E0")),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.lightgrey),
+        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+    ]))
+    elementos.append(tabla_detalle)
+    elementos.append(Spacer(1, 10 * mm))
+
+    # Total
+    total = [["", f"TOTAL: {monto_str}"]]
+    tabla_total = Table(total, colWidths=[120 * mm, 40 * mm])
+    tabla_total.setStyle(TableStyle([
+        ("FONTNAME", (1, 0), (1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (1, 0), (1, 0), 12),
+        ("ALIGN", (1, 0), (1, 0), "RIGHT"),
+        ("TEXTCOLOR", (1, 0), (1, 0), colors.HexColor("#4A00E0")),
+    ]))
+    elementos.append(tabla_total)
+    elementos.append(Spacer(1, 15 * mm))
+
+    # Pie
+    elementos.append(Paragraph(
+        "Este documento es un comprobante generado automáticamente por CosmicEngine.",
+        ParagraphStyle("Pie", parent=normal, fontSize=8, textColor=colors.grey),
+    ))
+
+    doc.build(elementos)
+    buffer.seek(0)
+
+    nombre_archivo = f"factura_{factura.numero_factura}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"inline; filename={nombre_archivo}"},
+    )

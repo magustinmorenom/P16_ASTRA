@@ -85,6 +85,7 @@ export type {
   RespuestaCheckout,
   EsquemaSuscribirse,
   PaisDisponible,
+  PaisDetectado,
   Factura,
   EstadoVerificacion,
 } from "./suscripcion";

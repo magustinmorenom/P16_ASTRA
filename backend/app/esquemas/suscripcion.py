@@ -9,7 +9,7 @@ class EsquemaSuscribirse(BaseModel):
     """Datos para suscribirse a un plan."""
 
     plan_id: str
-    pais_codigo: str = Field(default="AR", pattern="^(AR|BR|MX)$")
+    pais_codigo: str | None = Field(default=None, pattern="^(AR|BR|MX)$")
 
 
 class RespuestaPlan(BaseModel):

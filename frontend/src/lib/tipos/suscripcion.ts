@@ -82,6 +82,10 @@ export interface Pago {
   fecha_pago?: string | null;
   /** Fecha ISO 8601 de creación del registro. */
   creado_en?: string | null;
+  /** ID de la factura asociada (si existe). */
+  factura_id?: string | null;
+  /** Número de factura asociada. */
+  numero_factura?: string | null;
 }
 
 /** Respuesta del checkout de MercadoPago. */
@@ -123,6 +127,13 @@ export interface Factura {
   periodo_inicio?: string | null;
   periodo_fin?: string | null;
   creado_en?: string | null;
+}
+
+/** País detectado automáticamente por IP. */
+export interface PaisDetectado {
+  pais_codigo: string;
+  pais_nombre: string;
+  moneda: string;
 }
 
 /** Estado de verificación post-checkout (polling). */

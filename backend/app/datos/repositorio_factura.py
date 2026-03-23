@@ -88,3 +88,22 @@ class RepositorioFactura:
             select(Factura).where(Factura.pago_id == pago_id)
         )
         return resultado.scalar_one_or_none()
+
+    async def obtener_por_pago_ids(
+        self, pago_ids: list[uuid.UUID]
+    ) -> dict[uuid.UUID, Factura]:
+        """Obtiene facturas en batch por sus pago_ids. Retorna dict[pago_id → Factura]."""
+        if not pago_ids:
+            return {}
+        resultado = await self.sesion.execute(
+            select(Factura).where(Factura.pago_id.in_(pago_ids))
+        )
+        facturas = resultado.scalars().all()
+        return {f.pago_id: f for f in facturas if f.pago_id}
+
+    async def obtener_por_id(self, factura_id: uuid.UUID) -> Factura | None:
+        """Obtiene una factura por su ID."""
+        resultado = await self.sesion.execute(
+            select(Factura).where(Factura.id == factura_id)
+        )
+        return resultado.scalar_one_or_none()

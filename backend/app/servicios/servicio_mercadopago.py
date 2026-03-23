@@ -23,6 +23,7 @@ MAPA_ESTADOS_SUSCRIPCION = {
 
 MAPA_ESTADOS_PAGO = {
     "approved": "aprobado",
+    "processed": "aprobado",
     "pending": "pendiente",
     "in_process": "en_proceso",
     "rejected": "rechazado",
@@ -179,6 +180,34 @@ class ServicioMercadoPago:
 
         except httpx.HTTPError as e:
             raise ErrorPasarelaPago(f"Error de conexión con MercadoPago: {str(e)}")
+
+    @staticmethod
+    async def buscar_pagos_preapproval(
+        access_token: str, preapproval_id: str
+    ) -> list[dict]:
+        """Busca pagos autorizados de una suscripción (preapproval) en MercadoPago."""
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as cliente:
+                respuesta = await cliente.get(
+                    f"{BASE_URL_MP}/authorized_payments/search",
+                    headers=ServicioMercadoPago._headers(access_token),
+                    params={"preapproval_id": preapproval_id},
+                )
+
+                if respuesta.status_code != 200:
+                    logger.warning(
+                        "Error buscando pagos de preapproval %s: %s",
+                        preapproval_id,
+                        respuesta.status_code,
+                    )
+                    return []
+
+                datos = respuesta.json()
+                return datos.get("results", [])
+
+        except httpx.HTTPError as e:
+            logger.error("Error buscando pagos en MP: %s", str(e))
+            return []
 
     @staticmethod
     def verificar_firma_webhook(

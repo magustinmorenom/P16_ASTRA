@@ -8,6 +8,7 @@ import type {
   Pago,
   RespuestaCheckout,
   PaisDisponible,
+  PaisDetectado,
   Factura,
   EstadoVerificacion,
 } from "@/lib/tipos";
@@ -85,6 +86,17 @@ export function usarPaises() {
 }
 
 /**
+ * Hook para detectar el país del usuario automáticamente por IP.
+ */
+export function usarDetectarPais() {
+  return useQuery({
+    queryKey: ["detectar-pais"],
+    queryFn: () => clienteApi.get<PaisDetectado>("/suscripcion/detectar-pais"),
+    staleTime: 1000 * 60 * 30, // 30 min — la ubicación no cambia frecuentemente
+  });
+}
+
+/**
  * Hook para verificar el estado de la suscripción (polling post-checkout).
  * @param habilitado - Si es true, hace polling cada 3 segundos.
  */
@@ -105,5 +117,21 @@ export function usarFacturas() {
   return useQuery({
     queryKey: ["facturas"],
     queryFn: () => clienteApi.get<Factura[]>("/suscripcion/facturas"),
+  });
+}
+
+/** Respuesta de sincronización de pagos. */
+interface RespuestaSincronizar {
+  sincronizados: number;
+}
+
+/**
+ * Hook para sincronizar pagos desde MercadoPago.
+ * Útil cuando los webhooks no llegan (desarrollo local).
+ */
+export function usarSincronizarPagos() {
+  return useMutation({
+    mutationFn: () =>
+      clienteApi.post<RespuestaSincronizar>("/suscripcion/sincronizar-pagos"),
   });
 }
