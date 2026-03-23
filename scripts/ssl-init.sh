@@ -59,15 +59,9 @@ sleep 3
 
 # --- Paso 4: Obtener certificado ---
 info "Solicitando certificado SSL para $DOMINIO..."
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" run --rm certbot \
-    certbot certonly \
-    --webroot \
-    --webroot-path=/var/www/certbot \
-    --email "$EMAIL" \
-    --agree-tos \
-    --no-eff-email \
-    -d "$DOMINIO" \
-    -d "www.$DOMINIO"
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" run --rm \
+    --entrypoint "certbot certonly --webroot --webroot-path=/var/www/certbot --email $EMAIL --agree-tos --no-eff-email -d $DOMINIO -d www.$DOMINIO" \
+    certbot
 
 # --- Paso 5: Restaurar configuración completa ---
 info "Restaurando configuración nginx completa..."

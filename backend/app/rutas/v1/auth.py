@@ -9,6 +9,7 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.datos.repositorio_perfil import RepositorioPerfil
+from app.servicios.servicio_email import ServicioEmail
 from app.datos.repositorio_plan import RepositorioPlan
 from app.datos.repositorio_suscripcion import RepositorioSuscripcion
 from app.datos.repositorio_usuario import RepositorioUsuario
@@ -74,6 +75,12 @@ async def registrar(
 
     # Asignar plan gratis automáticamente
     await _asignar_plan_gratis(usuario.id, db)
+
+    # Email de bienvenida (fire-and-forget)
+    try:
+        await ServicioEmail.enviar_bienvenida(usuario.email, usuario.nombre)
+    except Exception:
+        logger.warning("No se pudo enviar email de bienvenida a %s", usuario.email)
 
     # Generar tokens
     tokens = ServicioAuth.generar_tokens(usuario.id, usuario.email)
@@ -245,6 +252,12 @@ async def google_callback(
 
         # Asignar plan gratis automáticamente
         await _asignar_plan_gratis(usuario.id, db)
+
+        # Email de bienvenida (fire-and-forget)
+        try:
+            await ServicioEmail.enviar_bienvenida(usuario.email, usuario.nombre)
+        except Exception:
+            logger.warning("No se pudo enviar email de bienvenida a %s", usuario.email)
 
     if not usuario.activo:
         raise ErrorAutenticacion("Usuario desactivado")

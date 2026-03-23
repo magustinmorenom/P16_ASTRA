@@ -1,4 +1,4 @@
-"""Tests para las rutas de perfil, incluyendo el endpoint PDF."""
+"""Tests para las rutas de perfil, incluyendo el endpoint PDF y actualización."""
 
 import uuid
 from datetime import date, time
@@ -9,6 +9,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.modelos.perfil import Perfil
 from app.modelos.usuario import Usuario
+from app.nucleo.servicio_geo import ResultadoGeo
 from app.principal import (
     _obtener_db_placeholder,
     _obtener_redis_placeholder,
@@ -127,10 +128,19 @@ def redis_falso():
     async def fake_exists(clave):
         return 1 if clave in almacen else 0
 
+    async def fake_delete(*claves):
+        eliminadas = 0
+        for clave in claves:
+            if clave in almacen:
+                del almacen[clave]
+                eliminadas += 1
+        return eliminadas
+
     redis.get = AsyncMock(side_effect=fake_get)
     redis.set = AsyncMock(side_effect=fake_set)
     redis.setex = AsyncMock(side_effect=fake_setex)
     redis.exists = AsyncMock(side_effect=fake_exists)
+    redis.delete = AsyncMock(side_effect=fake_delete)
     redis._almacen = almacen
 
     return redis
@@ -442,3 +452,329 @@ class TestObtenerPerfilPorId:
         resp = await cliente.get(f"/api/v1/profile/{perfil_id}")
 
         assert resp.status_code == 404
+
+
+# ── Constantes para tests de actualización ────────────────────
+
+GEO_CORDOBA = ResultadoGeo(
+    latitud=-31.4201,
+    longitud=-64.1888,
+    direccion_completa="Córdoba, Argentina",
+)
+
+
+# ── Tests: PUT /profile/me ───────────────────────────────────
+
+
+class TestActualizarMiPerfil:
+    """Tests de PUT /profile/me."""
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.perfil.RepositorioPerfil")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_actualizar_solo_nombre_sin_recalculo(
+        self, MockRepoAuth, MockRepoPerfil, cliente, redis_falso
+    ):
+        """Cambiar solo el nombre no debe disparar recálculo."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+        perfil = _crear_perfil_mock(usuario_id=uid, nombre="Lucía García")
+
+        perfil_actualizado = _crear_perfil_mock(usuario_id=uid, nombre="Lucía López")
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoPerfil.return_value.obtener_por_usuario = AsyncMock(return_value=perfil)
+        MockRepoPerfil.return_value.actualizar = AsyncMock(return_value=perfil_actualizado)
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.put(
+            "/api/v1/profile/me",
+            json={"nombre": "Lucía López"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        datos = resp.json()["datos"]
+        assert datos["nombre"] == "Lucía López"
+        assert datos["datos_nacimiento_cambiaron"] is False
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.perfil.GestorCache")
+    @patch("app.rutas.v1.perfil.RepositorioCalculo")
+    @patch("app.rutas.v1.perfil.ServicioZonaHoraria")
+    @patch("app.rutas.v1.perfil.ServicioGeo")
+    @patch("app.rutas.v1.perfil.RepositorioPerfil")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_cambiar_ciudad_re_geocodifica_y_elimina_calculos(
+        self,
+        MockRepoAuth,
+        MockRepoPerfil,
+        MockGeo,
+        MockZona,
+        MockRepoCalculo,
+        MockCache,
+        cliente,
+        redis_falso,
+    ):
+        """Cambiar ciudad debe re-geocodificar, eliminar cálculos e invalidar cache."""
+        uid = uuid.uuid4()
+        perfil_id = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+        perfil = _crear_perfil_mock(uid=perfil_id, usuario_id=uid)
+
+        perfil_nuevo = _crear_perfil_mock(uid=perfil_id, usuario_id=uid)
+        perfil_nuevo.ciudad_nacimiento = "Córdoba"
+        perfil_nuevo.latitud = -31.4201
+        perfil_nuevo.longitud = -64.1888
+        perfil_nuevo.zona_horaria = "America/Argentina/Cordoba"
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoPerfil.return_value.obtener_por_usuario = AsyncMock(return_value=perfil)
+        MockRepoPerfil.return_value.actualizar = AsyncMock(return_value=perfil_nuevo)
+
+        MockGeo.geocodificar = AsyncMock(return_value=GEO_CORDOBA)
+        MockZona.obtener_zona_horaria = MagicMock(return_value="America/Argentina/Cordoba")
+
+        MockRepoCalculo.return_value.eliminar_todos_por_perfil = AsyncMock(
+            return_value=["hash_natal_abc", "hash_hd_def"]
+        )
+        MockCache.return_value.invalidar_multiples = AsyncMock()
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.put(
+            "/api/v1/profile/me",
+            json={"ciudad_nacimiento": "Córdoba"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        datos = resp.json()["datos"]
+        assert datos["datos_nacimiento_cambiaron"] is True
+        assert datos["ciudad_nacimiento"] == "Córdoba"
+
+        # Verificar que se geocodificó
+        MockGeo.geocodificar.assert_called_once_with("Córdoba", "Argentina")
+        MockZona.obtener_zona_horaria.assert_called_once()
+
+        # Verificar que se eliminaron cálculos
+        MockRepoCalculo.return_value.eliminar_todos_por_perfil.assert_called_once_with(perfil_id)
+
+        # Verificar que se invalidó cache
+        MockCache.return_value.invalidar_multiples.assert_called_once_with(
+            ["hash_natal_abc", "hash_hd_def"]
+        )
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.perfil.RepositorioCalculo")
+    @patch("app.rutas.v1.perfil.RepositorioPerfil")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_cambiar_hora_nacimiento_detecta_cambio(
+        self, MockRepoAuth, MockRepoPerfil, MockRepoCalculo, cliente, redis_falso
+    ):
+        """Cambiar hora_nacimiento debe detectar cambio y eliminar cálculos."""
+        uid = uuid.uuid4()
+        perfil_id = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+        perfil = _crear_perfil_mock(uid=perfil_id, usuario_id=uid)
+        # perfil tiene hora_nacimiento = time(14, 30) → "14:30"
+
+        perfil_nuevo = _crear_perfil_mock(uid=perfil_id, usuario_id=uid)
+        perfil_nuevo.hora_nacimiento = time(10, 0)
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoPerfil.return_value.obtener_por_usuario = AsyncMock(return_value=perfil)
+        MockRepoPerfil.return_value.actualizar = AsyncMock(return_value=perfil_nuevo)
+        MockRepoCalculo.return_value.eliminar_todos_por_perfil = AsyncMock(return_value=[])
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.put(
+            "/api/v1/profile/me",
+            json={"hora_nacimiento": "10:00"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["datos"]["datos_nacimiento_cambiaron"] is True
+        MockRepoCalculo.return_value.eliminar_todos_por_perfil.assert_called_once()
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.perfil.RepositorioPerfil")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_enviar_misma_hora_no_detecta_cambio(
+        self, MockRepoAuth, MockRepoPerfil, cliente, redis_falso
+    ):
+        """Enviar la misma hora no debe disparar recálculo."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+        perfil = _crear_perfil_mock(usuario_id=uid)
+        # perfil tiene hora_nacimiento = time(14, 30)
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoPerfil.return_value.obtener_por_usuario = AsyncMock(return_value=perfil)
+        MockRepoPerfil.return_value.actualizar = AsyncMock(return_value=perfil)
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.put(
+            "/api/v1/profile/me",
+            json={"hora_nacimiento": "14:30"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["datos"]["datos_nacimiento_cambiaron"] is False
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.perfil.RepositorioCalculo")
+    @patch("app.rutas.v1.perfil.RepositorioPerfil")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_cambiar_fecha_nacimiento_detecta_cambio(
+        self, MockRepoAuth, MockRepoPerfil, MockRepoCalculo, cliente, redis_falso
+    ):
+        """Cambiar fecha_nacimiento debe detectar cambio."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+        perfil = _crear_perfil_mock(usuario_id=uid)
+        # perfil.fecha_nacimiento = date(1990, 1, 15)
+
+        perfil_nuevo = _crear_perfil_mock(usuario_id=uid)
+        perfil_nuevo.fecha_nacimiento = date(1991, 5, 20)
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoPerfil.return_value.obtener_por_usuario = AsyncMock(return_value=perfil)
+        MockRepoPerfil.return_value.actualizar = AsyncMock(return_value=perfil_nuevo)
+        MockRepoCalculo.return_value.eliminar_todos_por_perfil = AsyncMock(return_value=[])
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.put(
+            "/api/v1/profile/me",
+            json={"fecha_nacimiento": "1991-05-20"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["datos"]["datos_nacimiento_cambiaron"] is True
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.perfil.RepositorioPerfil")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_sin_perfil_retorna_404(
+        self, MockRepoAuth, MockRepoPerfil, cliente, redis_falso
+    ):
+        """Debe retornar 404 si el usuario no tiene perfil."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoPerfil.return_value.obtener_por_usuario = AsyncMock(return_value=None)
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.put(
+            "/api/v1/profile/me",
+            json={"nombre": "Otro Nombre"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_sin_auth_retorna_401(self, cliente):
+        """Debe retornar 401 sin token de autenticación."""
+        resp = await cliente.put(
+            "/api/v1/profile/me",
+            json={"nombre": "Test"},
+        )
+        assert resp.status_code == 401
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.perfil.RepositorioPerfil")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_sin_campos_retorna_422(
+        self, MockRepoAuth, MockRepoPerfil, cliente, redis_falso
+    ):
+        """Debe retornar 422 si no se proporcionan campos."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+        perfil = _crear_perfil_mock(usuario_id=uid)
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoPerfil.return_value.obtener_por_usuario = AsyncMock(return_value=perfil)
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.put(
+            "/api/v1/profile/me",
+            json={},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 422
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.perfil.RepositorioCalculo")
+    @patch("app.rutas.v1.perfil.RepositorioPerfil")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_sin_hashes_no_invalida_cache(
+        self, MockRepoAuth, MockRepoPerfil, MockRepoCalculo, cliente, redis_falso
+    ):
+        """Si no hay cálculos previos, no debe intentar invalidar cache."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+        perfil = _crear_perfil_mock(usuario_id=uid)
+
+        perfil_nuevo = _crear_perfil_mock(usuario_id=uid)
+        perfil_nuevo.fecha_nacimiento = date(2000, 6, 1)
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoPerfil.return_value.obtener_por_usuario = AsyncMock(return_value=perfil)
+        MockRepoPerfil.return_value.actualizar = AsyncMock(return_value=perfil_nuevo)
+        MockRepoCalculo.return_value.eliminar_todos_por_perfil = AsyncMock(return_value=[])
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.put(
+            "/api/v1/profile/me",
+            json={"fecha_nacimiento": "2000-06-01"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["datos"]["datos_nacimiento_cambiaron"] is True
+        # eliminar_todos_por_perfil fue llamado, pero retornó lista vacía
+        MockRepoCalculo.return_value.eliminar_todos_por_perfil.assert_called_once()
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.perfil.RepositorioPerfil")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_actualizar_multiples_campos_a_la_vez(
+        self, MockRepoAuth, MockRepoPerfil, cliente, redis_falso
+    ):
+        """Debe poder actualizar nombre y otros campos sin nacimiento."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+        perfil = _crear_perfil_mock(usuario_id=uid)
+
+        perfil_nuevo = _crear_perfil_mock(usuario_id=uid, nombre="Nombre Nuevo")
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoPerfil.return_value.obtener_por_usuario = AsyncMock(return_value=perfil)
+        MockRepoPerfil.return_value.actualizar = AsyncMock(return_value=perfil_nuevo)
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.put(
+            "/api/v1/profile/me",
+            json={"nombre": "Nombre Nuevo"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        datos = resp.json()["datos"]
+        assert datos["nombre"] == "Nombre Nuevo"
+        assert datos["datos_nacimiento_cambiaron"] is False
+        MockRepoPerfil.return_value.actualizar.assert_called_once()

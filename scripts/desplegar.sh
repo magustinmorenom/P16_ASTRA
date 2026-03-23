@@ -48,7 +48,7 @@ build() {
 # Ejecutar migraciones de BD
 migrate() {
     info "Ejecutando migraciones de base de datos..."
-    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" run --rm backend \
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -e PYTHONPATH=/app backend \
         alembic upgrade head
     ok "Migraciones aplicadas"
 }

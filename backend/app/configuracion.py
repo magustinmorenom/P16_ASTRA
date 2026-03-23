@@ -78,6 +78,10 @@ class Configuracion(BaseSettings):
     minio_bucket: str = "astra-podcasts"
     minio_secure: bool = False
 
+    # Resend (email transaccional)
+    resend_api_key: str = ""
+    resend_from: str = "ASTRA <noreply@theastra.xyz>"
+
     # MercadoPago — webhook y URLs
     mp_webhook_secret: str = ""
     mp_notification_url: str = "http://localhost:8000/api/v1/suscripcion/webhook"

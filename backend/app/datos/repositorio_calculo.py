@@ -2,7 +2,7 @@
 
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modelos.calculo import Calculo
@@ -66,6 +66,19 @@ class RepositorioCalculo:
             .limit(1)
         )
         return resultado.scalar_one_or_none()
+
+    async def eliminar_todos_por_perfil(self, perfil_id: uuid.UUID) -> list[str]:
+        """Elimina todos los cálculos de un perfil. Retorna los hash_parametros para invalidar cache."""
+        resultado = await self.sesion.execute(
+            select(Calculo.hash_parametros).where(Calculo.perfil_id == perfil_id)
+        )
+        hashes = list(resultado.scalars().all())
+
+        await self.sesion.execute(
+            delete(Calculo).where(Calculo.perfil_id == perfil_id)
+        )
+        await self.sesion.commit()
+        return hashes
 
     # Mapeo de tipo interno (inglés) a clave de respuesta (español)
     _MAPA_CLAVES: dict[str, str] = {

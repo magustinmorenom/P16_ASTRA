@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { clienteApi } from "@/lib/api/cliente";
 import type { DatosNacimiento } from "@/lib/tipos";
 import type { Perfil } from "@/lib/tipos";
@@ -26,6 +26,35 @@ export function usarMiPerfil() {
     queryKey: ["perfil", "me"],
     queryFn: () => clienteApi.get<Perfil | null>("/profile/me"),
     staleTime: 5 * 60 * 1000, // 5 minutos
+  });
+}
+
+/** Datos opcionales para actualizar el perfil. */
+export interface DatosActualizarPerfil {
+  nombre?: string;
+  fecha_nacimiento?: string;
+  hora_nacimiento?: string;
+  ciudad_nacimiento?: string;
+  pais_nacimiento?: string;
+}
+
+/** Respuesta del PUT /profile/me. */
+interface RespuestaActualizarPerfil extends Perfil {
+  datos_nacimiento_cambiaron: boolean;
+}
+
+/**
+ * Hook para actualizar el perfil del usuario autenticado.
+ * Invalida la query de perfil al tener exito.
+ */
+export function usarActualizarPerfil() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (datos: DatosActualizarPerfil) =>
+      clienteApi.put<RespuestaActualizarPerfil>("/profile/me", datos),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["perfil", "me"] });
+    },
   });
 }
 

@@ -12,7 +12,9 @@ from app.datos.repositorio_perfil import RepositorioPerfil
 from app.datos.repositorio_podcast import RepositorioPodcast
 from app.modelos.podcast import PodcastEpisodio
 from app.registro import logger
+from app.datos.repositorio_usuario import RepositorioUsuario
 from app.servicios.servicio_almacenamiento import ServicioAlmacenamiento
+from app.servicios.servicio_email import ServicioEmail
 from app.servicios.servicio_oraculo import ServicioOraculo
 from app.servicios.servicio_transitos import ServicioTransitos
 from app.servicios.servicio_tts import ServicioTTS
@@ -301,6 +303,18 @@ class ServicioPodcast:
                 "Podcast generado: usuario=%s fecha=%s tipo=%s duracion=%.1fs",
                 usuario_id, fecha_clave, tipo, duracion,
             )
+
+            # Notificar por email (fire-and-forget)
+            try:
+                repo_usuario = RepositorioUsuario(db)
+                usuario = await repo_usuario.obtener_por_id(usuario_id)
+                if usuario:
+                    await ServicioEmail.enviar_podcast_listo(
+                        usuario.email, usuario.nombre, episodio.titulo,
+                    )
+            except Exception:
+                logger.warning("No se pudo enviar email de podcast listo")
+
             return episodio
 
         except Exception as e:

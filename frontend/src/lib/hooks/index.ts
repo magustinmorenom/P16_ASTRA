@@ -20,7 +20,7 @@ export { usarTransitos } from "./usar-transitos";
 
 export { usarTransitosDia, usarTransitosRango } from "./usar-calendario-cosmico";
 
-export { usarCrearPerfil, usarMiPerfil, usarObtenerPerfil } from "./usar-perfil";
+export { usarCrearPerfil, usarMiPerfil, usarObtenerPerfil, usarActualizarPerfil } from "./usar-perfil";
 
 export { usarMisCalculos } from "./usar-mis-calculos";
 

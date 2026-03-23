@@ -11,26 +11,7 @@ import { Esqueleto } from "@/componentes/ui/esqueleto";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { useStoreUI } from "@/lib/stores/store-ui";
 import { usarMiPerfil, usarMisCalculos } from "@/lib/hooks";
-import { obtenerSimbolo } from "@/lib/utilidades/formatear-grado";
 import { generarMarkdownPerfil } from "@/lib/utilidades/generar-markdown-perfil";
-
-// ---------------------------------------------------------------------------
-// Mapa de signo zodiacal a icono SVG
-// ---------------------------------------------------------------------------
-const ICONO_SIGNO: Record<string, string> = {
-  Aries: "/img/icons/004-aries.svg",
-  Tauro: "/img/icons/005-taurus.svg",
-  "Géminis": "/img/icons/006-gemini.svg",
-  "Cáncer": "/img/icons/007-cancer.svg",
-  Leo: "/img/icons/008-leo.svg",
-  Virgo: "/img/icons/009-virgo.svg",
-  Libra: "/img/icons/010-libra.svg",
-  Escorpio: "/img/icons/011-scorpio.svg",
-  Sagitario: "/img/icons/017-sagittarius.svg",
-  Capricornio: "/img/icons/001-capricorn.svg",
-  Acuario: "/img/icons/002-aquarius.svg",
-  Piscis: "/img/icons/003-pisces.svg",
-};
 
 // ---------------------------------------------------------------------------
 // Enlaces de navegacion
@@ -63,20 +44,11 @@ export default function SidebarNavegacion({
   const { usuario } = useStoreAuth();
   const { sidebarAbierto, cerrarSidebar } = useStoreUI();
 
-  const { data: perfil, isLoading: cargandoPerfil } = usarMiPerfil();
+  const { data: perfil } = usarMiPerfil();
   const { data: calculos, isLoading: cargandoCalculos } = usarMisCalculos();
 
   const sol = calculos?.natal?.planetas?.find((p: { nombre: string }) => p.nombre === "Sol");
   const luna = calculos?.natal?.planetas?.find((p: { nombre: string }) => p.nombre === "Luna");
-  const ascendente = calculos?.natal?.ascendente;
-
-  const nombreUsuario = perfil?.nombre ?? usuario?.nombre ?? "Usuario";
-  const inicialesUsuario = nombreUsuario
-    .split(" ")
-    .map((p: string) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 
   const esMaestro = (n: number) => [11, 22, 33].includes(n);
 
@@ -183,54 +155,6 @@ export default function SidebarNavegacion({
       {/* Separador */}
       <div className="mx-4 my-2 h-px bg-[#E8E4E0]" />
 
-      {/* Perfil cosmico compacto */}
-      <div className="px-3 pb-2">
-        <div className="rounded-xl bg-gradient-to-b from-[#2D1B69] to-[#4A2D8C] p-4 flex flex-col items-center gap-3">
-          <div className="h-12 w-12 rounded-full bg-gradient-to-b from-[#7C4DFF] to-[#B388FF] flex items-center justify-center text-white text-base font-semibold shrink-0">
-            {inicialesUsuario}
-          </div>
-          <p className="text-white font-semibold text-sm">{nombreUsuario}</p>
-
-          {/* Sol / Luna / Ascendente en fila */}
-          <div className="flex items-center justify-around w-full">
-            {cargandoCalculos ? (
-              <>
-                <Esqueleto className="h-8 w-12 bg-white/20" />
-                <Esqueleto className="h-8 w-12 bg-white/20" />
-                <Esqueleto className="h-8 w-12 bg-white/20" />
-              </>
-            ) : (
-              <>
-                <div className="flex flex-col items-center gap-0.5">
-                  {sol && ICONO_SIGNO[sol.signo] ? (
-                    <Image src={ICONO_SIGNO[sol.signo]} alt={sol.signo} width={22} height={22} className="brightness-150 opacity-90" />
-                  ) : (
-                    <p className="text-[#F0D68A] text-sm">{sol ? obtenerSimbolo(sol.signo) : "—"}</p>
-                  )}
-                  <p className="text-[#B388FF] text-[9px]">Sol</p>
-                </div>
-                <div className="flex flex-col items-center gap-0.5">
-                  {luna && ICONO_SIGNO[luna.signo] ? (
-                    <Image src={ICONO_SIGNO[luna.signo]} alt={luna.signo} width={22} height={22} className="brightness-150 opacity-90" />
-                  ) : (
-                    <p className="text-[#F0D68A] text-sm">{luna ? obtenerSimbolo(luna.signo) : "—"}</p>
-                  )}
-                  <p className="text-[#B388FF] text-[9px]">Luna</p>
-                </div>
-                <div className="flex flex-col items-center gap-0.5">
-                  {ascendente && ICONO_SIGNO[ascendente.signo] ? (
-                    <Image src={ICONO_SIGNO[ascendente.signo]} alt={ascendente.signo} width={22} height={22} className="brightness-150 opacity-90" />
-                  ) : (
-                    <p className="text-[#F0D68A] text-sm">{ascendente ? obtenerSimbolo(ascendente.signo) : "—"}</p>
-                  )}
-                  <p className="text-[#B388FF] text-[9px]">Asc</p>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Cards resumen compactas */}
       <div className="px-3 flex flex-col gap-2 pb-3">
         {/* Card Astrologia mini */}
@@ -332,7 +256,7 @@ export default function SidebarNavegacion({
             className="lg:hidden fixed inset-0 bg-black/40 z-40"
             onClick={cerrarSidebar}
           />
-          <aside className="lg:hidden fixed top-[56px] left-0 bottom-0 w-[280px] z-50 shadow-xl overflow-y-auto">
+          <aside className="lg:hidden fixed top-[62px] left-0 bottom-0 w-[280px] z-50 shadow-xl overflow-y-auto">
             {contenidoSidebar}
           </aside>
         </>

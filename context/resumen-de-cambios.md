@@ -261,3 +261,43 @@ Configuracion completa de infraestructura GCP (VM, IP estatica, firewall) y crea
 3. **Nginx**: HTTP→HTTPS redirect, rate limiting diferenciado (auth mas estricto), cache de assets, security headers (HSTS, X-Frame-Options)
 4. **Certbot**: renovacion automatica cada 12h via container dedicado
 5. **Puertos expuestos**: solo 80 y 443. PostgreSQL, Redis, MinIO solo accesibles dentro de la red Docker interna
+
+
+---
+
+## Sesion: Editar Datos de Nacimiento en Perfil + Recalcular Cartas
+**Fecha:** 2026-03-23 ~16:00 (ARG)
+
+### Que se hizo
+Se implemento la funcionalidad para que los usuarios puedan ver y editar sus datos de nacimiento desde la pagina de perfil. Al modificar datos que afectan calculos (fecha, hora, ciudad, pais), se eliminan los calculos viejos y se recalculan automaticamente las 4 cartas (natal, diseno humano, numerologia, retorno solar).
+
+### Backend — Archivos modificados
+| Archivo | Descripcion |
+|---------|-------------|
+| `backend/app/esquemas/entrada.py` | Nuevo schema `DatosActualizarPerfil` con campos opcionales |
+| `backend/app/datos/repositorio_perfil.py` | Nuevo metodo `actualizar()` para update parcial de perfil |
+| `backend/app/datos/repositorio_calculo.py` | Nuevo metodo `eliminar_todos_por_perfil()` — elimina calculos y retorna hashes para invalidar cache |
+| `backend/app/cache/gestor_cache.py` | Nuevo metodo `invalidar_multiples()` para borrar varias claves Redis |
+| `backend/app/rutas/v1/perfil.py` | Nuevo endpoint `PUT /profile/me` — actualiza perfil, re-geocodifica si cambia ciudad/pais, elimina calculos viejos |
+
+### Frontend — Archivos modificados
+| Archivo | Descripcion |
+|---------|-------------|
+| `frontend/src/lib/hooks/usar-perfil.ts` | Nuevo hook `usarActualizarPerfil()` con mutation PUT + invalidacion de query |
+| `frontend/src/lib/hooks/index.ts` | Export del nuevo hook |
+| `frontend/src/app/(app)/perfil/page.tsx` | Nueva seccion "Datos de Nacimiento" con modo vista/edicion + recalculo automatico |
+
+### Tests
+- 464 tests pasando, 1 skipped (sin cambios en tests)
+
+### Como funciona
+1. En `/perfil`, entre la info de usuario y suscripcion, se muestra una tarjeta "Datos de Nacimiento" con nombre, fecha, hora, ciudad, pais y zona horaria en modo lectura
+2. Al hacer click en "Editar", los campos se convierten en inputs pre-populados con los valores actuales
+3. Al guardar, se envia `PUT /profile/me` al backend que:
+   - Compara los datos nuevos vs los actuales para detectar si cambiaron datos de nacimiento
+   - Si cambio ciudad/pais → re-geocodifica con Nominatim y resuelve timezone
+   - Actualiza el perfil en DB
+   - Si cambiaron datos de nacimiento → elimina todos los calculos viejos de DB + invalida claves Redis
+   - Retorna el perfil actualizado + flag `datos_nacimiento_cambiaron`
+4. Si el flag es true, el frontend dispara los 4 calculos en paralelo (carta natal, diseno humano, numerologia, retorno solar) usando los mismos hooks del onboarding, e invalida la query de calculos
+5. Si solo cambio el nombre, no se recalcula nada
