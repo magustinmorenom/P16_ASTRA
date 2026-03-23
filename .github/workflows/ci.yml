@@ -36,7 +36,7 @@ jobs:
           cache-dependency-path: backend/pyproject.toml
 
       - name: Instalar dependencias del sistema
-        run: sudo apt-get update && sudo apt-get install -y build-essential
+        run: sudo apt-get update && sudo apt-get install -y build-essential ffmpeg
 
       - name: Instalar dependencias Python
         run: pip install ".[dev]"
