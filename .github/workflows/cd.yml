@@ -1,0 +1,45 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy a producción
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via SSH
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
+            "cd /opt/astra && git pull origin main && ./scripts/desplegar.sh full"
+
+      - name: Health check
+        run: |
+          echo "Esperando que el servidor responda..."
+          for i in $(seq 1 30); do
+            if curl -sf --max-time 5 https://theastra.xyz/health; then
+              echo ""
+              echo "Health check OK"
+              exit 0
+            fi
+            echo "Intento $i/30 — esperando 10s..."
+            sleep 10
+          done
+          echo "Health check falló después de 5 minutos"
+          exit 1
