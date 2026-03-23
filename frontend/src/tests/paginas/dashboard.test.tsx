@@ -14,11 +14,15 @@ vi.mock("next/image", () => ({
   },
 }));
 
-// Mock de hooks — el dashboard actual solo usa usarTransitos
+// Mock de hooks
 const mockUsarTransitos = vi.fn();
+const mockUsarPodcastHoy = vi.fn();
+const mockUsarGenerarPodcast = vi.fn();
 
 vi.mock("@/lib/hooks", () => ({
   usarTransitos: () => mockUsarTransitos(),
+  usarPodcastHoy: () => mockUsarPodcastHoy(),
+  usarGenerarPodcast: () => mockUsarGenerarPodcast(),
 }));
 
 vi.mock("@/lib/stores/store-auth", () => ({
@@ -30,6 +34,8 @@ import PaginaDashboard from "@/app/(app)/dashboard/page";
 describe("PaginaDashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUsarPodcastHoy.mockReturnValue({ data: [], isLoading: false });
+    mockUsarGenerarPodcast.mockReturnValue({ mutate: vi.fn(), isPending: false });
   });
 
   it("muestra tránsito lunar desde usarTransitos", () => {
