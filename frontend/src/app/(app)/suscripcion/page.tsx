@@ -23,6 +23,7 @@ import {
 } from "@/lib/hooks";
 import { formatearFechaHora, formatearFecha } from "@/lib/utilidades/formatear-fecha";
 import type { Plan } from "@/lib/tipos";
+import type { RespuestaSincronizar } from "@/lib/hooks/usar-suscripcion";
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                            */
@@ -115,6 +116,7 @@ export default function PaginaSuscripcion() {
   const generarCodigo = usarGenerarCodigo();
   const desvincular = usarDesvincular();
   const [codigoGenerado, setCodigoGenerado] = useState<string | null>(null);
+  const [mensajeSync, setMensajeSync] = useState<{ texto: string; tipo: "exito" | "info" | "error" } | null>(null);
 
   // Actualizar país seleccionado cuando se detecte por IP
   useEffect(() => {
@@ -565,11 +567,25 @@ export default function PaginaSuscripcion() {
           <Boton
             variante="secundario"
             onClick={() => {
+              setMensajeSync(null);
               sincronizarPagos.mutate(undefined, {
-                onSuccess: () => {
+                onSuccess: (datos: RespuestaSincronizar) => {
                   queryClient.invalidateQueries({ queryKey: ["pagos"] });
                   queryClient.invalidateQueries({ queryKey: ["mi-suscripcion"] });
                   queryClient.invalidateQueries({ queryKey: ["verificar-estado"] });
+                  const resp = datos;
+                  if (resp.sincronizados > 0) {
+                    setMensajeSync({ texto: `Se sincronizaron ${resp.sincronizados} pagos`, tipo: "exito" });
+                  } else if (resp.errores && resp.errores.length > 0) {
+                    setMensajeSync({ texto: resp.errores.join(". "), tipo: "error" });
+                  } else {
+                    setMensajeSync({ texto: "No se encontraron pagos nuevos", tipo: "info" });
+                  }
+                  setTimeout(() => setMensajeSync(null), 6000);
+                },
+                onError: () => {
+                  setMensajeSync({ texto: "Error al conectar con MercadoPago", tipo: "error" });
+                  setTimeout(() => setMensajeSync(null), 6000);
                 },
               });
             }}
@@ -580,6 +596,15 @@ export default function PaginaSuscripcion() {
             Sincronizar con MP
           </Boton>
         </div>
+        {mensajeSync && (
+          <div className={`text-xs px-3 py-2 rounded-lg ${
+            mensajeSync.tipo === "exito" ? "bg-green-50 text-green-700 border border-green-200" :
+            mensajeSync.tipo === "error" ? "bg-red-50 text-red-700 border border-red-200" :
+            "bg-blue-50 text-blue-700 border border-blue-200"
+          }`}>
+            {mensajeSync.texto}
+          </div>
+        )}
 
         {cargandoPagos ? (
           <div className="flex flex-col gap-2">

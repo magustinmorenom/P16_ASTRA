@@ -255,7 +255,7 @@ class ServicioPodcast:
             if not config.anthropic_api_key:
                 raise ValueError("ANTHROPIC_API_KEY no configurada")
 
-            max_tokens_por_tipo = {"dia": 1024, "semana": 1536, "mes": 2048}
+            max_tokens_por_tipo = {"dia": 2048, "semana": 3072, "mes": 4096}
 
             cliente = anthropic.AsyncAnthropic(api_key=config.anthropic_api_key)
             respuesta = await cliente.messages.create(

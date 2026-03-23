@@ -109,11 +109,16 @@ def crear_aplicacion() -> FastAPI:
     # Excepciones
     app.add_exception_handler(CosmicEngineError, manejar_error_cosmic)
 
+    # CORS — dinámico según entorno
+    origenes_cors = ["*"]
+    if config.cors_origins:
+        origenes_cors = [o.strip() for o in config.cors_origins.split(",")]
+
     # Middleware
     app.add_middleware(MiddlewareTiempoRespuesta)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=origenes_cors,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

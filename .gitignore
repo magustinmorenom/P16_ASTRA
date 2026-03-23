@@ -17,6 +17,13 @@ env/
 .env.*
 !.env.ejemplo*
 
+# Archivos de entorno (NUNCA commitear)
+.env.prod
+*.env.local
+
+# Certificados SSL
+certbot/
+
 # IDE
 .vscode/
 .idea/

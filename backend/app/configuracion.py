@@ -31,6 +31,10 @@ class Configuracion(BaseSettings):
     log_level: str = "INFO"
     version: str = "1.0.0"
 
+    # Dominio y CORS (producción)
+    dominio: str = ""
+    cors_origins: str = ""
+
     # Cache TTLs (segundos)
     cache_ttl_transitos: int = 600
     cache_ttl_determinista: int = 0
