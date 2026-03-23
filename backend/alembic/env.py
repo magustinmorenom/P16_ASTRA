@@ -1,5 +1,6 @@
 """Configuración de Alembic para migraciones."""
 
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -10,6 +11,12 @@ from app.modelos.calculo import Calculo  # noqa: F401
 from app.modelos.perfil import Perfil  # noqa: F401
 
 config = context.config
+
+# En producción (Docker), leer DATABASE_URL_SYNC desde env var
+database_url_sync = os.environ.get("DATABASE_URL_SYNC")
+if database_url_sync:
+    config.set_main_option("sqlalchemy.url", database_url_sync)
+
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 

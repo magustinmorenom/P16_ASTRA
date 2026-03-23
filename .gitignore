@@ -1,0 +1,10 @@
+# Archivos de entorno (NUNCA commitear)
+.env.prod
+*.env.local
+
+# Certificados SSL
+certbot/
+
+# OS
+.DS_Store
+Thumbs.db

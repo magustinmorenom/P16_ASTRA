@@ -1,0 +1,10 @@
+node_modules
+.next
+.env*
+*.md
+.git
+.gitignore
+tests
+src/tests
+vitest.config.ts
+coverage

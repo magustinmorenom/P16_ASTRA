@@ -205,3 +205,59 @@ Migracion de podcasts de modelo **cron automatico** (3 momentos/dia) a modelo **
 3. Frontend hace polling cada 5s mostrando estados progresivos (generando_guion → generando_audio → listo)
 4. Si ya existe el episodio para esa fecha/semana/mes, se reproduce directo sin regenerar
 5. `_calcular_fecha_clave()`: dia=misma fecha, semana=lunes de esa semana, mes=dia 1
+
+---
+
+## Sesion: Infraestructura GCP + Archivos de Despliegue
+**Fecha:** 2026-03-23 ~14:00 (ARG)
+
+### Que se hizo
+Configuracion completa de infraestructura GCP (VM, IP estatica, firewall) y creacion de todos los archivos necesarios para deploy en produccion con Docker Compose, Nginx reverse proxy, SSL via Certbot, y scripts de despliegue automatizado.
+
+### Infraestructura GCP creada
+| Recurso | Detalle |
+|---------|---------|
+| Proyecto | `gen-lang-client-0712332397` (Astra-Oracle) |
+| VM | `astra-prod` — e2-standard-2 (2 vCPU, 8GB RAM), Ubuntu 24.04 LTS, SSD 50GB |
+| Zona | `southamerica-east1-a` (Sao Paulo) |
+| IP estatica | `34.39.245.98` (reservada como `astra-ip`) |
+| Firewall | `allow-http` (tcp:80), `allow-https` (tcp:443) |
+| Docker | v29.3.0 + Compose v5.1.1 instalados en VM |
+| Dominio | `theastra.xyz` (pendiente configurar DNS A record → 34.39.245.98) |
+
+### Archivos creados (9)
+| Archivo | Proposito |
+|---------|-----------|
+| `docker-compose.prod.yml` | Stack produccion: postgres, redis, minio, backend, frontend, nginx, certbot (7 servicios) |
+| `frontend/Dockerfile` | Multi-stage build Next.js standalone (deps → build → runner, usuario non-root) |
+| `frontend/.dockerignore` | Excluir node_modules, .next, tests |
+| `backend/.dockerignore` | Excluir .env, .venv, __pycache__, tests |
+| `.env.ejemplo.prod` | Plantilla documentada de todas las variables de entorno para produccion |
+| `nginx/astra.conf` | Reverse proxy HTTPS con rate limiting (10r/s API, 5r/s auth), SSL hardening, gzip, cache estaticos |
+| `scripts/desplegar.sh` | Script de despliegue: full/build/deploy/migrate/logs/status |
+| `scripts/ssl-init.sh` | Inicializacion Certbot: genera cert SSL con challenge HTTP, renovacion automatica |
+| `.gitignore` | Root gitignore: .env.prod, certbot/, .DS_Store |
+
+### Archivos modificados (5)
+| Archivo | Cambios |
+|---------|---------|
+| `backend/Dockerfile` | Multi-stage build, ffmpeg (podcasts TTS), curl (healthcheck), efemerides de kerykeion, usuario non-root, healthcheck |
+| `frontend/next.config.ts` | `output: "standalone"` en produccion, BACKEND_URL configurable (default localhost:8000), rewrite /health |
+| `backend/app/configuracion.py` | Nuevas variables: `dominio`, `cors_origins` |
+| `backend/app/principal.py` | CORS dinamico: si `cors_origins` definido usa esa lista, sino wildcard (dev) |
+| `backend/alembic/env.py` | Lee `DATABASE_URL_SYNC` desde env var (para migraciones en Docker sin alembic.ini hardcoded) |
+
+### Tests
+- Sin tests nuevos (cambios de infraestructura/config)
+- Tests existentes no afectados (CORS default sigue siendo wildcard, config nuevos campos opcionales)
+
+### Como funciona
+1. **Desarrollo local**: sin cambios, `docker-compose.yml` para infra + uvicorn/next dev directo
+2. **Deploy produccion**:
+   - Copiar `.env.ejemplo.prod` → `.env.prod`, completar credenciales
+   - Clonar repo en VM (`/opt/astra/`)
+   - `./scripts/ssl-init.sh theastra.xyz email@ejemplo.com` → obtiene cert SSL
+   - `./scripts/desplegar.sh full` → build imagenes + migraciones + levantar stack
+3. **Nginx**: HTTP→HTTPS redirect, rate limiting diferenciado (auth mas estricto), cache de assets, security headers (HSTS, X-Frame-Options)
+4. **Certbot**: renovacion automatica cada 12h via container dedicado
+5. **Puertos expuestos**: solo 80 y 443. PostgreSQL, Redis, MinIO solo accesibles dentro de la red Docker interna
