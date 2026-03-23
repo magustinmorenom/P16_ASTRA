@@ -121,8 +121,10 @@ export function usarFacturas() {
 }
 
 /** Respuesta de sincronización de pagos. */
-interface RespuestaSincronizar {
+export interface RespuestaSincronizar {
   sincronizados: number;
+  estado_actualizado: boolean;
+  errores?: string[];
 }
 
 /**

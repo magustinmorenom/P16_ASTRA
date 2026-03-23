@@ -632,11 +632,14 @@ async def sincronizar_pagos(
                 "mensaje": "Sin suscripciones vinculadas a MercadoPago"}
 
     sincronizados = 0
+    consultados_ok = 0
     estado_actualizado = False
+    errores: list[str] = []
 
     for suscripcion in suscripciones:
         config_pais = await repo_sus.obtener_config_pais(suscripcion.pais_codigo)
         if not config_pais:
+            errores.append(f"Sin config para país {suscripcion.pais_codigo}")
             continue
 
         # 1. Sincronizar estado del preapproval
@@ -656,10 +659,18 @@ async def sincronizar_pagos(
                 # Si se activó premium, cancelar la gratis
                 if estado_local == "activa":
                     await repo_sus.cancelar_gratis_usuario(usuario.id)
-        except ErrorPasarelaPago:
+        except ErrorPasarelaPago as e:
             logger.warning(
-                "No se pudo consultar preapproval %s", suscripcion.mp_preapproval_id
+                "No se pudo consultar preapproval %s: %s",
+                suscripcion.mp_preapproval_id, str(e),
             )
+            errores.append(
+                f"Suscripción {suscripcion.mp_preapproval_id[:8]}… "
+                f"no encontrada en MercadoPago"
+            )
+            continue
+
+        consultados_ok += 1
 
         # 2. Sincronizar pagos autorizados
         pagos_mp = await ServicioMercadoPago.buscar_pagos_preapproval(
@@ -721,10 +732,23 @@ async def sincronizar_pagos(
 
             sincronizados += 1
 
+    partes_mensaje: list[str] = []
+    if sincronizados > 0:
+        partes_mensaje.append(f"Se sincronizaron {sincronizados} pagos")
+    elif consultados_ok > 0:
+        partes_mensaje.append("Todo al día, sin pagos nuevos")
+    if errores:
+        partes_mensaje.append(f"{len(errores)} suscripciones no encontradas en MP")
+    mensaje = ". ".join(partes_mensaje) if partes_mensaje else "Sin cambios"
+
     return {
         "exito": True,
-        "datos": {"sincronizados": sincronizados, "estado_actualizado": estado_actualizado},
-        "mensaje": f"Se sincronizaron {sincronizados} pagos desde MercadoPago",
+        "datos": {
+            "sincronizados": sincronizados,
+            "estado_actualizado": estado_actualizado,
+            "errores": errores,
+        },
+        "mensaje": mensaje,
     }
 
 
