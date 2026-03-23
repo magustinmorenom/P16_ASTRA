@@ -8,6 +8,7 @@
 
 import { create } from "zustand";
 import type { NombreIcono } from "@/componentes/ui/icono";
+import type { SegmentoLetra } from "@/lib/tipos/podcast";
 
 /** Paneles disponibles en la interfaz principal. */
 type PanelActivo = "info" | "chat";
@@ -21,6 +22,8 @@ export interface PistaReproduccion {
   duracionSegundos: number;
   icono: NombreIcono;
   gradiente: string;
+  url?: string;
+  segmentos?: SegmentoLetra[];
 }
 
 interface EstadoUI {
@@ -43,6 +46,8 @@ interface EstadoUI {
   volumen: number;
   /** Indica si el volumen esta silenciado. */
   silenciado: boolean;
+  /** Indice del segmento de lyrics activo. */
+  segmentoActual: number;
 
   /** Cambia el panel lateral activo. */
   setPanelActivo: (panel: PanelActivo) => void;
@@ -65,6 +70,8 @@ interface EstadoUI {
   setVolumen: (volumen: number) => void;
   /** Alterna silencio. */
   toggleSilencio: () => void;
+  /** Establece el segmento de lyrics activo. */
+  setSegmentoActual: (idx: number) => void;
 }
 
 export const useStoreUI = create<EstadoUI>((set) => ({
@@ -78,6 +85,7 @@ export const useStoreUI = create<EstadoUI>((set) => ({
   progresoSegundos: 0,
   volumen: 70,
   silenciado: false,
+  segmentoActual: 0,
 
   setPanelActivo: (panel) => set({ panelActivo: panel }),
   setPasoOnboarding: (paso) => set({ pasoOnboarding: paso }),
@@ -87,11 +95,12 @@ export const useStoreUI = create<EstadoUI>((set) => ({
   cerrarSidebar: () => set({ sidebarAbierto: false }),
 
   setPistaActual: (pista) =>
-    set({ pistaActual: pista, progresoSegundos: 0, reproduciendo: !!pista }),
+    set({ pistaActual: pista, progresoSegundos: 0, reproduciendo: !!pista, segmentoActual: 0 }),
   toggleReproduccion: () =>
     set((estado) => ({ reproduciendo: !estado.reproduciendo })),
   setProgreso: (segundos) => set({ progresoSegundos: segundos }),
   setVolumen: (volumen) => set({ volumen }),
   toggleSilencio: () =>
     set((estado) => ({ silenciado: !estado.silenciado })),
+  setSegmentoActual: (idx) => set({ segmentoActual: idx }),
 }));

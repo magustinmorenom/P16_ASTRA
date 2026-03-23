@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Configuracion(BaseSettings):
-    """Configuración de la aplicación cargada desde variables de entorno."""
+    """Configuración de la aplicación cargada desde variables de entorno / .env."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -13,12 +13,12 @@ class Configuracion(BaseSettings):
         case_sensitive=False,
     )
 
-    # Base de datos
-    database_url: str = "postgresql+asyncpg://cosmic:cosmic123@localhost:5434/cosmicengine"
-    database_url_sync: str = "postgresql+psycopg2://cosmic:cosmic123@localhost:5434/cosmicengine"
+    # Base de datos (obligatorias)
+    database_url: str
+    database_url_sync: str
 
-    # Redis
-    redis_url: str = "redis://localhost:6380/0"
+    # Redis (obligatoria)
+    redis_url: str
 
     # Efemérides
     ephe_path: str = "./datos_efemerides"
@@ -33,13 +33,13 @@ class Configuracion(BaseSettings):
 
     # Cache TTLs (segundos)
     cache_ttl_transitos: int = 600
-    cache_ttl_determinista: int = 0  # 0 = sin expiración
+    cache_ttl_determinista: int = 0
 
-    # JWT
-    clave_secreta: str = "CAMBIAR-EN-PRODUCCION-generar-con-openssl-rand-hex-32"
+    # JWT (clave_secreta obligatoria)
+    clave_secreta: str
     algoritmo_jwt: str = "HS256"
-    expiracion_token_acceso: int = 30  # minutos
-    expiracion_token_refresco: int = 10080  # 7 días en minutos
+    expiracion_token_acceso: int = 30
+    expiracion_token_refresco: int = 10080
 
     # Google OAuth
     google_client_id: str = ""
@@ -54,7 +54,7 @@ class Configuracion(BaseSettings):
     mp_access_token_mx: str = ""
     mp_public_key_mx: str = ""
 
-    # MercadoPago — email del comprador test (para sandbox con test accounts)
+    # MercadoPago — email del comprador test
     mp_payer_email_test: str = ""
 
     # Telegram Bot
@@ -63,6 +63,16 @@ class Configuracion(BaseSettings):
     # Anthropic (Claude API)
     anthropic_api_key: str = ""
     anthropic_modelo: str = "claude-opus-4-6"
+
+    # Gemini (opcional)
+    gemini_api_key: str = ""
+
+    # MinIO / S3
+    minio_endpoint: str = "localhost:9002"
+    minio_access_key: str = "cosmicminio"
+    minio_secret_key: str = "cosmicminio123"
+    minio_bucket: str = "astra-podcasts"
+    minio_secure: bool = False
 
     # MercadoPago — webhook y URLs
     mp_webhook_secret: str = ""

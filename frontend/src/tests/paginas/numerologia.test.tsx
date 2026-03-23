@@ -32,6 +32,14 @@ const NUMEROLOGIA_MOCK = {
   personalidad: { numero: 4, descripcion: "Practicidad" },
   numero_nacimiento: { numero: 6, descripcion: "Responsabilidad" },
   anio_personal: { numero: 9, descripcion: "Cierre de ciclo" },
+  mes_personal: { numero: 3, descripcion: "Expresión creativa" },
+  dia_personal: { numero: 7, descripcion: "Introspección" },
+  etapas_de_la_vida: [
+    { numero: 8, descripcion: "Logro material", edad_inicio: 0, edad_fin: 29 },
+    { numero: 5, descripcion: "Libertad", edad_inicio: 29, edad_fin: 38 },
+    { numero: 4, descripcion: "Estabilidad", edad_inicio: 38, edad_fin: 47 },
+    { numero: 1, descripcion: "Liderazgo", edad_inicio: 47, edad_fin: null },
+  ],
   numeros_maestros_presentes: [22],
 };
 
@@ -50,13 +58,16 @@ describe("PaginaNumerologia", () => {
 
     renderConProveedores(<PaginaNumerologia />);
 
-    expect(screen.getByText("Carta Numerologica de Test")).toBeInTheDocument();
-    expect(screen.getByText("7")).toBeInTheDocument();
-    expect(screen.getByText("22")).toBeInTheDocument();
+    // Hero card muestra nombre
+    expect(screen.getByText(/Carta Numerológica de Test/)).toBeInTheDocument();
+    // Números aparecen en chips y grid
+    expect(screen.getAllByText("7").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("22").length).toBeGreaterThanOrEqual(1);
+    // Descripción del número seleccionado por defecto (Camino de Vida) en panel derecho
     expect(screen.getByText("El buscador")).toBeInTheDocument();
   });
 
-  it("muestra badge de número maestro cuando corresponde", () => {
+  it("muestra banner de números maestros cuando corresponde", () => {
     mockUsarMisCalculos.mockReturnValue({
       data: { natal: null, diseno_humano: null, numerologia: NUMEROLOGIA_MOCK, retorno_solar: null },
       isLoading: false,
@@ -64,7 +75,7 @@ describe("PaginaNumerologia", () => {
 
     renderConProveedores(<PaginaNumerologia />);
 
-    expect(screen.getByText("Numeros Maestros presentes")).toBeInTheDocument();
+    expect(screen.getByText(/Números Maestros/)).toBeInTheDocument();
   });
 
   it("muestra formulario cuando no hay datos", () => {
@@ -75,7 +86,7 @@ describe("PaginaNumerologia", () => {
 
     renderConProveedores(<PaginaNumerologia />);
 
-    expect(screen.getByText("Calcula tu carta numerologica completa con camino de vida, expresion, impulso del alma y mas.")).toBeInTheDocument();
+    expect(screen.getByText(/Calculá tu carta numerológica/)).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Nombre completo")).toBeInTheDocument();
   });
 
@@ -87,10 +98,10 @@ describe("PaginaNumerologia", () => {
 
     renderConProveedores(<PaginaNumerologia />);
 
-    expect(screen.getByText("Cargando tu carta numerologica...")).toBeInTheDocument();
+    expect(screen.getByText(/Cargando tu carta numerológica/)).toBeInTheDocument();
   });
 
-  it("botón 'Nuevo calculo' muestra formulario", async () => {
+  it("botón 'Nuevo cálculo' muestra formulario", async () => {
     mockUsarMisCalculos.mockReturnValue({
       data: { natal: null, diseno_humano: null, numerologia: NUMEROLOGIA_MOCK, retorno_solar: null },
       isLoading: false,
@@ -98,7 +109,7 @@ describe("PaginaNumerologia", () => {
 
     renderConProveedores(<PaginaNumerologia />);
 
-    await user.click(screen.getByText("Nuevo calculo"));
+    await user.click(screen.getByText("Nuevo cálculo"));
 
     expect(screen.getByPlaceholderText("Nombre completo")).toBeInTheDocument();
   });

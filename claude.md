@@ -15,8 +15,38 @@ IMPORTANTE IDIOMA: TODO LO QUE PROGRAMES DEBE SER EN ESPAÑOL (salvo nombres esp
 | Archivo | Contenido |
 |---------|-----------|
 | `context/ADR-0.md` | Architecture Requirements Document — CosmicEngine v1.0. Define stack, servicios, modelos de datos, endpoints, dependencias y roadmap. |
+| `context/resumen-de-cambios.md` | Changelog de sesiones de desarrollo. Cada sesion documentada con fecha, archivos creados/modificados, y explicacion funcional. |
 
 > Cuando se agreguen nuevos archivos a `context/`, los agentes deben leerlos todos antes de actuar.
+
+### Regla de Changelog — OBLIGATORIO al final de cada sesion
+
+Al terminar cada sesion de desarrollo donde se implemente una feature nueva o cambio significativo, **se DEBE agregar una entrada** en `context/resumen-de-cambios.md` con el siguiente formato:
+
+```markdown
+## Sesion: [Nombre descriptivo de la feature]
+**Fecha:** YYYY-MM-DD ~HH:MM (ARG)
+
+### Que se hizo
+[1-2 oraciones resumiendo el cambio principal]
+
+### Backend/Frontend — Archivos creados/modificados
+[Tabla con archivos y descripcion de cambios]
+
+### Tests
+[Cantidad de tests nuevos/modificados, total pasando]
+
+### Como funciona
+[Explicacion funcional del flujo para que alguien nuevo entienda que se hizo]
+```
+
+**Reglas:**
+- Siempre incluir fecha y hora aproximada (zona ARG)
+- Documentar TODOS los archivos creados y modificados con descripcion breve
+- Incluir estado de tests (cuantos pasan)
+- La seccion "Como funciona" es obligatoria — debe explicar el flujo end-to-end
+- NUNCA incluir credenciales, API keys, tokens o passwords en este archivo
+- Agregar al final del archivo, manteniendo el orden cronologico
 
 ---
 

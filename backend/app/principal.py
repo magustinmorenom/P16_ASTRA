@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.configuracion import obtener_configuracion
 from app.datos.sesion import crear_motor_async, crear_sesion_factory
+from app.dependencias import obtener_db as _dep_obtener_db, obtener_redis as _dep_obtener_redis
 from app.excepciones import CosmicEngineError, manejar_error_cosmic
 from app.middleware.tiempo_respuesta import MiddlewareTiempoRespuesta
 from app.registro import logger
@@ -78,6 +79,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     app.state.redis = redis
     logger.info("Conexión Redis establecida")
 
+    # MinIO — inicializar bucket de podcasts
+    try:
+        from app.servicios.servicio_almacenamiento import ServicioAlmacenamiento
+        ServicioAlmacenamiento.inicializar_bucket()
+    except Exception as e:
+        logger.warning("No se pudo inicializar MinIO: %s", e)
+
     yield
 
     # Limpieza
@@ -119,6 +127,10 @@ def crear_aplicacion() -> FastAPI:
     async def obtener_redis_dep() -> Redis:
         return app.state.redis
 
+    app.dependency_overrides[_dep_obtener_db] = obtener_db
+    app.dependency_overrides[_dep_obtener_redis] = obtener_redis_dep
+
+    # Mantener aliases para dependencias_auth (retrocompat)
     app.dependency_overrides[_obtener_db_placeholder] = obtener_db
     app.dependency_overrides[_obtener_redis_placeholder] = obtener_redis_dep
 
@@ -148,6 +160,7 @@ def _registrar_rutas(app: FastAPI) -> None:
         numerologia,
         oraculo,
         perfil,
+        podcast,
         retorno_solar,
         suscripcion,
         transitos,
@@ -164,6 +177,7 @@ def _registrar_rutas(app: FastAPI) -> None:
     app.include_router(perfil.router, prefix=prefijo, tags=["Perfiles"])
     app.include_router(suscripcion.router, prefix=prefijo)
     app.include_router(oraculo.router, prefix=prefijo)
+    app.include_router(podcast.router, prefix=prefijo, tags=["Podcasts"])
 
     @app.get("/health", tags=["Sistema"])
     async def health_check():

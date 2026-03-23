@@ -42,3 +42,10 @@ export {
   usarEstadoVinculacion,
   usarDesvincular,
 } from "./usar-oraculo";
+
+export {
+  usarPodcastHoy,
+  usarPodcastEpisodio,
+  usarPodcastHistorial,
+  usarGenerarPodcast,
+} from "./usar-podcast";

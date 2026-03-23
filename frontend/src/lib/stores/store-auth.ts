@@ -11,6 +11,7 @@
 import { create } from "zustand";
 
 import { clienteApi } from "@/lib/api/cliente";
+import { useStoreUI } from "@/lib/stores/store-ui";
 import type { UsuarioConSuscripcion } from "@/lib/tipos";
 
 interface EstadoAuth {
@@ -64,5 +65,12 @@ export const useStoreAuth = create<EstadoAuth>((set) => ({
       localStorage.removeItem("token_refresco");
     }
     set({ usuario: null, autenticado: false });
+    // Limpiar reproductor y lyrics al cerrar sesión
+    useStoreUI.setState({
+      pistaActual: null,
+      reproduciendo: false,
+      progresoSegundos: 0,
+      segmentoActual: 0,
+    });
   },
 }));

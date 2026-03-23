@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/componentes/layouts/navbar";
 import SidebarNavegacion from "@/componentes/layouts/sidebar-navegacion";
 import ReproductorCosmico from "@/componentes/layouts/reproductor-cosmico";
+import PanelLyrics from "@/componentes/layouts/panel-lyrics";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { useStoreUI } from "@/lib/stores/store-ui";
 
@@ -47,6 +48,7 @@ export default function LayoutApp({
         <main className={`flex-1 overflow-y-auto scroll-sutil ${alturaContenido}`}>
           {children}
         </main>
+        <PanelLyrics />
       </div>
       <ReproductorCosmico />
     </div>

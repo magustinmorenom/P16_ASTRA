@@ -77,30 +77,8 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Centro: Barra de busqueda */}
-        <div className="flex-1 max-w-[480px] hidden sm:block">
-          <div className="relative">
-            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40">
-              <Icono nombre="buscar" tamaño={18} />
-            </div>
-            <input
-              type="text"
-              placeholder="¿Qué quieres explorar?"
-              className="w-full h-10 rounded-full bg-white/[0.08] pl-10 pr-4 text-sm text-white placeholder:text-white/40 outline-none focus:bg-white/[0.12] transition-colors border border-transparent focus:border-white/20"
-              readOnly
-            />
-          </div>
-        </div>
-
-        {/* Derecha: buscar mobile + campana + avatar */}
+        {/* Derecha: campana + avatar */}
         <div className="flex items-center gap-2">
-          <button
-            className="sm:hidden p-2 text-violet-300 hover:text-white transition-colors"
-            aria-label="Buscar"
-          >
-            <Icono nombre="buscar" tamaño={20} />
-          </button>
-
           <button
             className="relative p-2 text-violet-300 hover:text-white transition-colors"
             aria-label="Notificaciones"

@@ -56,47 +56,44 @@ class ServicioMercadoPago:
         frecuencia: int = 1,
         tipo_frecuencia: str = "months",
     ) -> dict:
-        """Crea un preapproval (suscripción) en MercadoPago.
+        """Crea una suscripción en MercadoPago usando preapproval_plan.
 
-        Retorna la respuesta de MP incluyendo init_point para redirigir al usuario.
+        Flujo actual de MP:
+        1. Crear un plan (/preapproval_plan) con monto, moneda y frecuencia
+        2. El plan devuelve init_point para que el usuario complete el checkout
+
+        Retorna dict con id, init_point y sandbox_init_point.
         """
-        config = obtener_configuracion()
+        # back_url: MP no acepta localhost
+        if url_retorno and "localhost" not in url_retorno and "127.0.0.1" not in url_retorno:
+            back_url = url_retorno
+        else:
+            back_url = "https://cosmicengine.app/suscripcion/exito"
 
-        # En sandbox con test accounts, usar el email del comprador test
-        # para evitar error "Both payer and collector must be real or test users"
-        email_para_mp = config.mp_payer_email_test or email_pagador
-
-        payload = {
+        payload_plan = {
             "reason": motivo,
             "auto_recurring": {
                 "frequency": frecuencia,
                 "frequency_type": tipo_frecuencia,
                 "transaction_amount": monto,
                 "currency_id": moneda,
+                "billing_day": 10,
+                "billing_day_proportional": True,
             },
-            "payer_email": email_para_mp,
-            "external_reference": referencia_externa,
-            "status": "pending",
+            "back_url": back_url,
         }
-
-        # MP requiere back_url con URL válida (no acepta localhost).
-        # En desarrollo, usar placeholder — el usuario vuelve manualmente.
-        if url_retorno and "localhost" not in url_retorno and "127.0.0.1" not in url_retorno:
-            payload["back_url"] = url_retorno
-        else:
-            payload["back_url"] = "https://cosmicengine.app/suscripcion/exito"
 
         try:
             async with httpx.AsyncClient(timeout=30.0) as cliente:
                 respuesta = await cliente.post(
-                    f"{BASE_URL_MP}/preapproval",
+                    f"{BASE_URL_MP}/preapproval_plan",
                     headers=ServicioMercadoPago._headers(access_token),
-                    json=payload,
+                    json=payload_plan,
                 )
 
                 if respuesta.status_code not in (200, 201):
                     logger.error(
-                        "Error al crear preapproval en MP: %s %s",
+                        "Error al crear plan de suscripción en MP: %s %s",
                         respuesta.status_code,
                         respuesta.text,
                     )
@@ -104,7 +101,17 @@ class ServicioMercadoPago:
                         f"Error al crear suscripción en MercadoPago: {respuesta.status_code}"
                     )
 
-                return respuesta.json()
+                datos_plan = respuesta.json()
+                # Incluir datos que espera la ruta (id, init_point)
+                return {
+                    "id": datos_plan["id"],
+                    "init_point": datos_plan.get("init_point"),
+                    "sandbox_init_point": datos_plan.get("sandbox_init_point"),
+                    "status": datos_plan.get("status"),
+                    "external_reference": referencia_externa,
+                    "payer_email": email_pagador,
+                    "plan_data": datos_plan,
+                }
 
         except httpx.HTTPError as e:
             logger.error("Error de conexión con MercadoPago: %s", str(e))

@@ -1,162 +1,207 @@
-Ronda 1 de implementacion facturación y mercado pago
+# Resumen de Cambios — CosmicEngine / P16_ASTRA
 
-  Resumen de cambios
+> Este archivo es un changelog de sesiones de desarrollo. Se actualiza al final de cada sesión con fecha, hora, y descripción de lo implementado.
 
-  Backend — Archivos creados (4)
+---
 
-  - backend/app/modelos/factura.py — Modelo Factura con
-  campos: usuario_id, pago_id, suscripcion_id,
-  numero_factura (auto CE-YYYYMM-XXXX), estado, monto,
-  moneda, concepto, etc.
-  - backend/alembic/versions/006_crear_tabla_facturas.py
-  — Migración para tabla facturas con índices
-  - backend/app/datos/repositorio_factura.py — CRUD:
-  crear (con número auto-secuencial), listar_por_usuario,
-   obtener_por_pago_id
-  - scripts/configurar_mp.py — Script interactivo para
-  configurar credenciales test de MP en BD y .env
+## Sesion: Backend Core + Infraestructura
+**Fecha:** 2026-03-21 ~17:00 — 20:00 (ARG)
+**Commits:** `25fc47a` → `5ba0f47`
 
-  Backend — Archivos modificados (5)
+### Que se hizo
+Primera version completa del backend: modelos, servicios de calculo astronomico, endpoints REST, y cache Redis.
 
-  - backend/app/rutas/v1/suscripcion.py — 4 endpoints
-  nuevos:
-    - GET /paises — Lista países activos con moneda y
-  tipo de cambio
-    - GET /planes — Ahora incluye precios_por_pais con
-  todos los precios
-    - GET /verificar-estado — Polling post-checkout
-  (es_premium, plan_slug)
-    - GET /facturas — Lista facturas del usuario
-    - Fix webhook: itera países activos para inferir
-  credenciales (no hardcodea "AR")
-    - Auto-factura: crea factura al aprobar pago via
-  webhook
-  - backend/app/datos/repositorio_suscripcion.py — Nuevo
-  listar_paises_activos()
-  - backend/app/modelos/__init__.py — Registrado modelo
-  Factura
-  - backend/app/esquemas/suscripcion.py — Nuevo
-  RespuestaFactura
-  - backend/.env.ejemplo — Variables de MP con
-  comentarios
+### Detalle
+- **Backend completo**: FastAPI + pyswisseph + SQLAlchemy async + PostgreSQL + Redis
+- **5 servicios de calculo**: ServicioAstro (carta natal), ServicioDisenoHumano (body graph), ServicioNumerologia (pitagorico/caldeo), ServicioRetornoSolar, ServicioTransitos
+- **Servicios auxiliares**: ServicioGeo (Nominatim), ServicioZonaHoraria (pytz historico), ServicioEfemerides (pyswisseph)
+- **Infraestructura Docker**: PostgreSQL puerto 5434, Redis puerto 6380 (puertos no-default para evitar colision con P15)
+- **Cache Redis** integrado en las 5 rutas de calculo (datos deterministicos)
+- **Tests**: ~97 archivos, todos pasando
 
-  Frontend — Archivos modificados (6)
+---
 
-  - frontend/src/lib/tipos/suscripcion.ts — Tipos:
-  PaisDisponible, Factura, EstadoVerificacion,
-  PrecioPais, precios_por_pais en Plan
-  - frontend/src/lib/tipos/index.ts — Re-exports nuevos
-  - frontend/src/lib/hooks/usar-suscripcion.ts — 3 hooks
-  nuevos: usarPaises(), usarVerificarEstado(habilitado),
-  usarFacturas()
-  - frontend/src/lib/hooks/index.ts — Re-exports hooks
-  - frontend/src/app/(app)/suscripcion/page.tsx —
-  Selector de país, precios dinámicos por país, sección
-  de facturas
-  - frontend/src/app/(app)/suscripcion/exito/page.tsx — 3
-   estados visuales (verificando/confirmado/timeout) con
-  polling cada 3s
+## Sesion: Multi-usuario (Auth JWT + OAuth Google)
+**Fecha:** 2026-03-21 ~21:00 — 22:50 (ARG)
+**Commits:** `f2b3d5c` → `58e9bca`
 
-  Tests (1 creado, 1 corregido)
+### Que se hizo
+Sistema completo de autenticacion: registro, login, JWT stateless, OAuth2 Google, blacklist Redis.
 
-  - backend/tests/test_flujo_suscripcion.py — 8 tests:
-  listar_paises, planes_con_precios, suscribirse,
-  webhook_con_factura, verificar_estado_premium,
-  verificar_estado_sin_suscripcion, listar_facturas,
-  cancelar_degrada_a_gratis
-  - backend/tests/rutas/test_rutas_suscripcion.py —
-  Corregido test existente para incluir mock de
-  RepositorioFactura
+### Detalle
+- **Modelo Usuario**: email, hash_contrasena, nombre, activo, verificado, proveedor_auth, google_id
+- **JWT**: access token 30min, refresh token 7d, HS256, blacklist Redis con TTL
+- **Hashing**: bcrypt directo (passlib incompatible con bcrypt>=5.0)
+- **OAuth Google**: authlib, flujo completo con callback
+- **Endpoints**: `/auth/registrar`, `/login`, `/logout`, `/renovar`, `/cambiar-contrasena`, `/google/url`, `/google/callback`, `/me`
+- **Dependencias**: `obtener_usuario_actual` (obligatorio), `obtener_usuario_opcional` (retrocompat anonimos)
+- **FK**: perfiles.usuario_id nullable → usuarios.id (ON DELETE SET NULL)
+- **Migraciones**: 003 (tabla usuarios), 004 (FK usuario_id en perfiles)
+- **48 tests** nuevos para auth
 
-  Tests: 335 passed, 1 skipped (0 failures)
+---
 
-  Para probar end-to-end:
+## Sesion: Suscripciones + MercadoPago + Facturacion
+**Fecha:** 2026-03-22 ~00:00 — 2026-03-23 ~03:30 (ARG)
+**Commits:** `dea3810` → `cded324`
 
-  1. cd backend && alembic upgrade head
-  2. python scripts/configurar_mp.py
-  3. Levantar backend + frontend
-  4. Registrar → /suscripcion → seleccionar país →
-  "Actualizar a Premium"
-  5. Tarjeta test: 5031 7557 3453 0604 | CVV: 123 |
-  Titular: APRO
+### Que se hizo
+Sistema completo de suscripciones con MercadoPago: planes Gratis/Premium, checkout, webhooks, facturacion automatica, multi-pais (AR/BR/MX).
 
-## Active el entorno TEST de MP
+### Backend — Archivos creados (4)
+| Archivo | Proposito |
+|---------|-----------|
+| `app/modelos/factura.py` | Modelo Factura: usuario_id, pago_id, suscripcion_id, numero_factura auto (CE-YYYYMM-XXXX), estado, monto, moneda, concepto |
+| `alembic/versions/006_crear_tabla_facturas.py` | Migracion tabla facturas con indices |
+| `app/datos/repositorio_factura.py` | CRUD: crear (numero auto-secuencial), listar_por_usuario, obtener_por_pago_id |
+| `scripts/configurar_mp.py` | Script interactivo para configurar credenciales test de MP en BD y .env |
 
-╔══════════════════════════════════════════════════════════════════╗
-║           Configuración de MercadoPago — Credenciales Test      ║
-╠══════════════════════════════════════════════════════════════════╣
-║                                                                  ║
-║  1. Ir a https://www.mercadopago.com/developers/panel/app       ║
-║  2. Crear una aplicación de prueba                               ║
-║  3. En "Credenciales de prueba" copiar:                          ║
-║     - Access Token (TEST-xxxx...)                                ║
-║     - Public Key (TEST-xxxx...)                                  ║
-║                                                                  ║
-║  Nota: Para testing usar tarjeta:                                ║
-║    Número: 5031 7557 3453 0604                                   ║
-║    Vencimiento: 11/25                                            ║
-║    CVV: 123                                                      ║
-║    Titular: APRO (aprueba el pago)                               ║
-║                                                                  ║
-╚══════════════════════════════════════════════════════════════════╝
+### Backend — Archivos modificados (5)
+| Archivo | Cambios |
+|---------|---------|
+| `app/rutas/v1/suscripcion.py` | 4 endpoints nuevos: GET /paises, GET /planes (con precios_por_pais), GET /verificar-estado (polling post-checkout), GET /facturas. Fix webhook: itera paises activos. Auto-factura al aprobar pago. |
+| `app/datos/repositorio_suscripcion.py` | Nuevo `listar_paises_activos()` |
+| `app/modelos/__init__.py` | Registrado modelo Factura |
+| `app/esquemas/suscripcion.py` | Nuevo `RespuestaFactura` |
+| `app/servicios/servicio_mercadopago.py` | httpx async, preapproval API, verificacion HMAC webhook, multi-pais |
 
-Países configurados en BD: 3
+### Frontend — Archivos modificados (6)
+| Archivo | Cambios |
+|---------|---------|
+| `lib/tipos/suscripcion.ts` | Tipos: PaisDisponible, Factura, EstadoVerificacion, PrecioPais, precios_por_pais en Plan |
+| `lib/tipos/index.ts` | Re-exports nuevos |
+| `lib/hooks/usar-suscripcion.ts` | 3 hooks nuevos: usarPaises(), usarVerificarEstado(habilitado), usarFacturas() |
+| `lib/hooks/index.ts` | Re-exports hooks |
+| `app/(app)/suscripcion/page.tsx` | Selector de pais, precios dinamicos por pais, seccion de facturas |
+| `app/(app)/suscripcion/exito/page.tsx` | 3 estados visuales (verificando/confirmado/timeout) con polling cada 3s |
 
-¿Para qué país querés configurar? (AR/BR/MX) [AR]        : 
+### Frontend — Paginas conectadas al backend (5)
+| Archivo | Cambios |
+|---------|---------|
+| `app/(app)/carta-natal/page.tsx` | Conectado a API real |
+| `app/(app)/diseno-humano/page.tsx` | Conectado a API real |
+| `app/(app)/numerologia/page.tsx` | Conectado a API real |
+| `app/(app)/retorno-solar/page.tsx` | Conectado a API real |
+| `app/(app)/transitos/page.tsx` | Conectado a API real |
 
-Access Token de prueba para AR: TEST-2185702783918243-032222-c0f688bfcbd1f360935e32b67dc6e6ed-67724397
-Public Key de prueba para AR: TEST-546515f9-b76f-4324-ae59-e70c0e97ff27
+### Tests
+- `tests/test_flujo_suscripcion.py` — 8 tests: listar_paises, planes_con_precios, suscribirse, webhook_con_factura, verificar_estado_premium, verificar_estado_sin_suscripcion, listar_facturas, cancelar_degrada_a_gratis
+- `tests/rutas/test_rutas_suscripcion.py` — Corregido para incluir mock de RepositorioFactura
+- **335 tests passed**, 1 skipped (0 failures)
 
-Verificando credenciales para AR...
-  ✓ Conexión exitosa — 20 métodos de pago disponibles
+### Como funciona el flujo
+1. Usuario se registra → se crea plan Gratis automaticamente
+2. Va a `/suscripcion` → selecciona pais → ve precio en moneda local
+3. Click "Actualizar a Premium" → redirige a checkout MercadoPago
+4. Paga → MP envia webhook → backend valida HMAC, sincroniza estado, crea factura
+5. Frontend en `/suscripcion/exito` hace polling cada 3s hasta confirmar
+6. `requiere_plan("premium")` como dependency factory protege endpoints premium
 
-Actualizando credenciales de AR en la BD...
-  ✓ Credenciales de AR actualizadas correctamente
+### Datos de test MercadoPago (Argentina)
+- **Vendedor**: User ID 3285675537, TESTUSER5136416883931640791
+- **Comprador**: User ID 3285675535, TESTUSER3739889284689218308
+- **Tarjeta test**: 5031 7557 3453 0604 | CVV: 123 | Titular: APRO
 
-¿Escribir también en archivo .env? (s/N): s
-  ✓ Archivo .env actualizado
+---
 
-✓ Configuración completada.
+## Sesion: Chatbot Antropic + Telegram
+**Fecha:** 2026-03-23 ~03:30 (ARG)
+**Commit:** `7aa0c40`
 
-Próximos pasos:
-  1. Levantar backend: cd backend && uvicorn app.principal:app --reload
-  2. Levantar frontend: cd frontend && npm run dev
-  3. Registrar usuario → ir a /suscripcion → click 'Actualizar a Premium'
-  4. Usar tarjeta de test: 5031 7557 3453 0604 | CVV: 123 | Titular: APRO
+### Que se hizo
+Integracion de chatbot conectado a API de Anthropic y bot de Telegram. (Detalles pendientes de documentar en proxima sesion.)
 
- Nuevo usuario de prueba creado. Usá estas    
-  credenciales en el checkout de MercadoPago:
-                                             
-  - Email:                                     
-  test_user_8341153124094724086@testuser.com
-  - Contraseña: 41QGTA5NmI  
+---
 
-    Reiniciá el backend y probá de nuevo:
-  1. En incógnito, hacé el checkout
-  2. Logueate con test_user_8341153124094
-  724086@testuser.com / 41QGTA5NmI
-  3. Tarjeta: 5031 7557 3453 0604, CVV
-  123, titular APRO, cualquier fecha
-  futura
+## Sesion: Podcasts Astrologicos — Implementacion inicial
+**Fecha:** 2026-03-23 ~04:00 — ~08:00 (ARG)
 
-  ## Cuentas de Test MercadoPago (Argentina)
+### Que se hizo
+Sistema completo de podcasts astrologicos generados por IA: pipeline Claude → Gemini TTS → MinIO storage, con reproductor integrado y panel de lyrics sincronizado.
 
-  ### Vendedor (Astra-Vendedor)
-  | Campo                  | Valor                          |
-  |------------------------|--------------------------------|
-  | User ID                | 3285675537                     |
-  | Usuario                | TESTUSER5136416883931640791    |
-  | Contraseña             | ***REMOVED***                     |
-  | Código de verificación | 675537                         |
+### Backend — Archivos creados (8)
+| Archivo | Proposito |
+|---------|-----------|
+| `app/modelos/podcast.py` | Modelo PodcastEpisodio con unique constraint (usuario, fecha, momento) |
+| `alembic/versions/008_podcast_episodios.py` | Migracion tabla podcast_episodios |
+| `app/datos/repositorio_podcast.py` | CRUD: crear, obtener, actualizar, historial |
+| `app/servicios/servicio_almacenamiento.py` | MinIO wrapper (bucket init, upload, presigned URLs) |
+| `app/servicios/servicio_tts.py` | Gemini TTS (PCM→WAV→MP3, voz Zephyr) |
+| `app/servicios/servicio_podcast.py` | Pipeline orquestador (contexto→Claude→TTS→MinIO→segmentos) |
+| `app/oraculo/prompt_podcast.md` | System prompt para generacion de podcast |
+| `app/rutas/v1/podcast.py` | 6 endpoints: /hoy, /fecha/{}, /episodio/{}, /audio/{}, /historial, /generar |
 
-  ### Comprador (Astra-Comprador)
-  | Campo                  | Valor                          |
-  |------------------------|--------------------------------|
-  | User ID                | 3285675535                     |
-  | Usuario                | TESTUSER3739889284689218308    |
-  | Contraseña             | ***REMOVED***                     |
-  | Código de verificación | 675535                         |
+### Backend — Archivos modificados (4)
+| Archivo | Cambios |
+|---------|---------|
+| `docker-compose.yml` | Servicio MinIO (puertos 9002/9003) |
+| `app/configuracion.py` | Variables de config MinIO |
+| `pyproject.toml` | Deps: minio, google-genai, pydub |
+| `app/principal.py` | Router podcast, MinIO init, cron task (6/12/20h ARG) |
 
-  FASE DE AGENTES:
-ANTHROPIC_API_KEY=***REMOVED***
-TELEGRAM_BOT_TOKEN=***REMOVED***
+### Frontend — Archivos creados (4)
+| Archivo | Proposito |
+|---------|-----------|
+| `lib/tipos/podcast.ts` | Tipos TypeScript (PodcastEpisodio, SegmentoLetra) |
+| `lib/hooks/usar-podcast.ts` | React Query hooks (hoy, episodio, historial, generar) |
+| `componentes/layouts/panel-lyrics.tsx` | Panel de lyrics con highlighting sincronizado |
+| `app/(app)/podcast/page.tsx` | Pagina de podcast con cards por dia + historial |
+
+### Frontend — Archivos modificados (6)
+| Archivo | Cambios |
+|---------|---------|
+| `lib/tipos/index.ts` | Re-export tipos podcast |
+| `lib/hooks/index.ts` | Re-export hooks podcast |
+| `lib/stores/store-ui.ts` | url, segmentos en PistaReproduccion + segmentoActual |
+| `componentes/ui/icono.tsx` | Icono microfono (Microphone) |
+| `componentes/layouts/reproductor-cosmico.tsx` | Audio real con timeUpdate/seek/volume |
+| `componentes/layouts/layout-app.tsx` | PanelLyrics en layout |
+
+### Tests creados (3)
+- `test_servicio_podcast.py` — 11 tests (segmentos, prompts, momentos)
+- `test_servicio_tts.py` — 2 tests (PCM→WAV, API key validation)
+- `test_servicio_almacenamiento.py` — 5 tests (upload, presigned, bucket init)
+- **430 tests pasando**, build frontend limpio
+
+### Como funciona
+1. Cron genera 3 episodios/dia (manana 6h, mediodia 12h, noche 20h ARG)
+2. Pipeline: contexto astrologico del usuario → prompt a Claude → guion → Gemini TTS → MP3 → MinIO
+3. Frontend: cards por episodio, play en reproductor cosmico, lyrics sincronizadas
+
+---
+
+## Sesion: Podcasts On-Demand (Dia / Semana / Mes)
+**Fecha:** 2026-03-23 ~09:00 — ~11:00 (ARG)
+
+### Que se hizo
+Migracion de podcasts de modelo **cron automatico** (3 momentos/dia) a modelo **on-demand** con 3 tipos: **dia**, **semana** y **mes**. El usuario genera cada podcast al hacer click. Si ya existe para esa fecha/semana/mes, se reproduce sin regenerar.
+
+### Backend — Archivos modificados (5)
+| Archivo | Cambios |
+|---------|---------|
+| `app/servicios/servicio_podcast.py` | `MOMENTOS` → `TIPOS_PODCAST` (dia/semana/mes). Nueva `_calcular_fecha_clave()` normaliza fecha por tipo. Nuevos `_construir_titulo()` y `_construir_mensaje_usuario()`. Max tokens por tipo (dia=1024, semana=1536, mes=2048). Eliminados `ejecutar_cron()` y `generar_episodios_dia()`. |
+| `app/rutas/v1/podcast.py` | `POST /generar?tipo=dia\|semana\|mes`. `GET /hoy` busca por fecha clave de cada tipo (hasta 3). Eliminado `GET /fecha/{fecha}`. Campo `momento` → `tipo` en JSON. |
+| `app/principal.py` | Eliminada funcion `_cron_podcasts()` completa. Eliminados `create_task()` y `cancel()` del lifespan. Limpiados imports. |
+| `app/oraculo/prompt_podcast.md` | Adaptado a tipo generico. Duraciones: dia ~400 palabras, semana ~600, mes ~800. |
+| `app/datos/repositorio_podcast.py` | `obtener_episodios_dia()` → `obtener_episodios_usuario()`. |
+
+**Sin migracion de BD** — el campo `momento` (String(20)) ahora almacena `"dia"|"semana"|"mes"` en vez de `"manana"|"mediodia"|"noche"`. La unique constraint sigue funcionando.
+
+### Frontend — Archivos modificados (4)
+| Archivo | Cambios |
+|---------|---------|
+| `lib/tipos/podcast.ts` | `momento` → `tipo: TipoPodcast`. Nuevo type `TipoPodcast = "dia" \| "semana" \| "mes"`. |
+| `lib/hooks/usar-podcast.ts` | `usarGenerarPodcast(tipo)`. `usarPodcastHoy(refetchRapido)` con polling 5s durante generacion. |
+| `app/(app)/podcast/page.tsx` | Cards on-demand: boton "Generar" / spinner / play / "Reintentar". Polling automatico. |
+| `app/(app)/dashboard/page.tsx` | Eliminado array estatico demo. Conectado a datos reales via hooks. |
+
+### Tests modificados (1)
+- `tests/servicios/test_servicio_podcast.py` — 18 tests: TestGenerarSegmentos (4), TestConstruirPrompt (5), TestTiposPodcast (2), **nuevo** TestCalcularFechaClave (4), **nuevo** TestConstruirTitulo (3)
+- **437 tests pasando**, build frontend limpio
+
+### Como funciona ahora
+1. Usuario va a `/podcast` → ve 3 cards (Dia, Semana, Mes)
+2. Click "Generar" → backend genera guion → TTS → almacena → retorna
+3. Frontend hace polling cada 5s mostrando estados progresivos (generando_guion → generando_audio → listo)
+4. Si ya existe el episodio para esa fecha/semana/mes, se reproduce directo sin regenerar
+5. `_calcular_fecha_clave()`: dia=misma fecha, semana=lunes de esa semana, mes=dia 1

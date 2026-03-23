@@ -38,6 +38,9 @@ class ServicioNumerologia:
         personalidad = cls._numero_personalidad(nombre, tabla)
         numero_nacimiento = cls._numero_nacimiento(fecha_nacimiento)
         anio_personal = cls._anio_personal(fecha_nacimiento)
+        mes_personal = cls._mes_personal(fecha_nacimiento)
+        dia_personal = cls._dia_personal(fecha_nacimiento)
+        etapas = cls._etapas_de_la_vida(fecha_nacimiento)
 
         return {
             "nombre": nombre,
@@ -67,6 +70,15 @@ class ServicioNumerologia:
                 "numero": anio_personal,
                 "descripcion": cls._descripcion_numero(anio_personal),
             },
+            "mes_personal": {
+                "numero": mes_personal,
+                "descripcion": cls._descripcion_numero(mes_personal),
+            },
+            "dia_personal": {
+                "numero": dia_personal,
+                "descripcion": cls._descripcion_numero(dia_personal),
+            },
+            "etapas_de_la_vida": etapas,
             "numeros_maestros_presentes": cls._detectar_maestros(
                 [camino_vida, expresion, impulso_alma, personalidad]
             ),
@@ -130,6 +142,73 @@ class ServicioNumerologia:
         mes = cls._reducir_numero(fecha_nacimiento.month)
         anio = cls._reducir_numero(sum(int(d) for d in str(anio_actual)))
         return cls._reducir_numero(dia + mes + anio)
+
+    @classmethod
+    def _mes_personal(cls, fecha_nacimiento: date) -> int:
+        """Calcula el Mes Personal: año personal + mes actual, reducido."""
+        anio_personal = cls._anio_personal(fecha_nacimiento)
+        mes_actual = date.today().month
+        return cls._reducir_numero(anio_personal + mes_actual)
+
+    @classmethod
+    def _dia_personal(cls, fecha_nacimiento: date) -> int:
+        """Calcula el Día Personal: mes personal + día actual, reducido."""
+        mes_personal = cls._mes_personal(fecha_nacimiento)
+        dia_actual = date.today().day
+        return cls._reducir_numero(mes_personal + dia_actual)
+
+    @classmethod
+    def _etapas_de_la_vida(cls, fecha_nacimiento: date) -> list[dict]:
+        """Calcula los 4 pináculos (etapas de la vida).
+
+        - 1ra: mes + día de nacimiento, hasta edad 36 - camino_vida
+        - 2da: día + año de nacimiento, 9 años
+        - 3ra: suma 1ra + 2da, 9 años
+        - 4ta: mes + año de nacimiento, resto de la vida
+        """
+        camino_vida = cls._camino_de_vida(fecha_nacimiento)
+
+        dia = cls._reducir_numero(fecha_nacimiento.day)
+        mes = cls._reducir_numero(fecha_nacimiento.month)
+        anio = cls._reducir_numero(sum(int(d) for d in str(fecha_nacimiento.year)))
+
+        etapa1 = cls._reducir_numero(mes + dia)
+        etapa2 = cls._reducir_numero(dia + anio)
+        etapa3 = cls._reducir_numero(etapa1 + etapa2)
+        etapa4 = cls._reducir_numero(mes + anio)
+
+        # Para el timing, reducir maestros a un dígito
+        cv_reducido = camino_vida
+        while cv_reducido > 9:
+            cv_reducido = sum(int(d) for d in str(cv_reducido))
+        edad_fin_1 = max(36 - cv_reducido, 27)
+
+        return [
+            {
+                "numero": etapa1,
+                "descripcion": cls._descripcion_numero(etapa1),
+                "edad_inicio": 0,
+                "edad_fin": edad_fin_1,
+            },
+            {
+                "numero": etapa2,
+                "descripcion": cls._descripcion_numero(etapa2),
+                "edad_inicio": edad_fin_1,
+                "edad_fin": edad_fin_1 + 9,
+            },
+            {
+                "numero": etapa3,
+                "descripcion": cls._descripcion_numero(etapa3),
+                "edad_inicio": edad_fin_1 + 9,
+                "edad_fin": edad_fin_1 + 18,
+            },
+            {
+                "numero": etapa4,
+                "descripcion": cls._descripcion_numero(etapa4),
+                "edad_inicio": edad_fin_1 + 18,
+                "edad_fin": None,
+            },
+        ]
 
     @staticmethod
     def _detectar_maestros(numeros: list[int]) -> list[int]:

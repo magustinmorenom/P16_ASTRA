@@ -9,6 +9,14 @@ export interface NumeroRespuesta {
   descripcion: string;
 }
 
+/** Una etapa (pináculo) de la vida con rango de edad. */
+export interface EtapaVida {
+  numero: number;
+  descripcion: string;
+  edad_inicio: number;
+  edad_fin: number | null;
+}
+
 /** Respuesta completa de carta numerológica. */
 export interface Numerologia {
   nombre: string;
@@ -21,6 +29,9 @@ export interface Numerologia {
   personalidad: NumeroRespuesta;
   numero_nacimiento: NumeroRespuesta;
   anio_personal: NumeroRespuesta;
+  mes_personal: NumeroRespuesta;
+  dia_personal: NumeroRespuesta;
+  etapas_de_la_vida: EtapaVida[];
   /** Números maestros presentes en la carta (11, 22, 33). */
   numeros_maestros_presentes: number[];
 }
