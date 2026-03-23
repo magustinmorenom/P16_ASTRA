@@ -2,7 +2,6 @@
 
 from datetime import date, time
 
-import pytest
 
 from app.nucleo.servicio_zona_horaria import ServicioZonaHoraria
 

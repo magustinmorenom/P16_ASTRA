@@ -7,7 +7,6 @@ from app.utilidades.constantes import (
     DOMICILIO,
     EXALTACION,
     EXILIO,
-    IDS_TODOS_LOS_CUERPOS,
     SISTEMA_CASAS_PLACIDUS,
 )
 from app.utilidades.convertidores import (

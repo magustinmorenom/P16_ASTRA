@@ -23,7 +23,7 @@ class RepositorioConversacion:
             select(ConversacionOraculo).where(
                 ConversacionOraculo.usuario_id == usuario_id,
                 ConversacionOraculo.telegram_id == telegram_id,
-                ConversacionOraculo.activa == True,
+                ConversacionOraculo.activa.is_(True),
             ).order_by(ConversacionOraculo.creado_en.desc()).limit(1)
         )
         conversacion = resultado.scalar_one_or_none()
@@ -93,7 +93,7 @@ class RepositorioConversacion:
             .where(
                 ConversacionOraculo.usuario_id == usuario_id,
                 ConversacionOraculo.telegram_id == telegram_id,
-                ConversacionOraculo.activa == True,
+                ConversacionOraculo.activa.is_(True),
             )
             .values(activa=False)
         )

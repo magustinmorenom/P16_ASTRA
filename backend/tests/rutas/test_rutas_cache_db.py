@@ -4,9 +4,7 @@ Verifica el flujo: hash → Redis GET → miss → compute → Redis SET → DB 
 y que cache hits retornan sin recalcular.
 """
 
-import json
-from datetime import date
-from unittest.mock import ANY, AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient

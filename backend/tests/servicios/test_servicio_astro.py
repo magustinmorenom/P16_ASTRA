@@ -1,6 +1,5 @@
 """Tests para el servicio astrológico."""
 
-import pytest
 
 from app.servicios.servicio_astro import ServicioAstro
 

@@ -1,18 +1,16 @@
 """Modelo de episodios de podcast cósmico."""
 
 import uuid
-from datetime import date, datetime
+from datetime import date
 
 from sqlalchemy import (
     Date,
-    DateTime,
     Float,
     ForeignKey,
     Integer,
     String,
     Text,
     UniqueConstraint,
-    func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column

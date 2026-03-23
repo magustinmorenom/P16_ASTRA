@@ -3,7 +3,6 @@
 from app.nucleo.servicio_efemerides import ServicioEfemerides
 from app.registro import logger
 from app.servicios.servicio_astro import ServicioAstro
-from app.utilidades.constantes import ID_SOL
 from app.utilidades.convertidores import diferencia_angular
 
 import swisseph as swe

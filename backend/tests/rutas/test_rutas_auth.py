@@ -1,6 +1,5 @@
 """Tests para las rutas de autenticación."""
 
-import time as time_mod
 import uuid
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch

@@ -2,7 +2,6 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 from app.servicios.servicio_almacenamiento import ServicioAlmacenamiento
 

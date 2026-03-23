@@ -1,7 +1,6 @@
 """Tests para ServicioPodcast."""
 
-import pytest
-from datetime import date, timedelta
+from datetime import date
 
 from app.servicios.servicio_podcast import (
     ServicioPodcast,

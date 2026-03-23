@@ -67,7 +67,7 @@ class RepositorioTelegram:
         resultado = await self.sesion.execute(
             select(VinculoTelegram).where(
                 VinculoTelegram.telegram_id == telegram_id,
-                VinculoTelegram.activo == True,
+                VinculoTelegram.activo.is_(True),
             )
         )
         return resultado.scalar_one_or_none()

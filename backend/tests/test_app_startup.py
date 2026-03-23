@@ -2,7 +2,7 @@
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 from app.principal import crear_aplicacion, _obtener_db_placeholder, _obtener_redis_placeholder
 from app.dependencias import obtener_db, obtener_redis

@@ -1,6 +1,5 @@
 """Tests para el servicio de generación de PDF del perfil."""
 
-import pytest
 
 from app.servicios.servicio_pdf_perfil import ServicioPDFPerfil
 
