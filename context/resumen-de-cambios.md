@@ -261,3 +261,26 @@ Configuracion completa de infraestructura GCP (VM, IP estatica, firewall) y crea
 3. **Nginx**: HTTP→HTTPS redirect, rate limiting diferenciado (auth mas estricto), cache de assets, security headers (HSTS, X-Frame-Options)
 4. **Certbot**: renovacion automatica cada 12h via container dedicado
 5. **Puertos expuestos**: solo 80 y 443. PostgreSQL, Redis, MinIO solo accesibles dentro de la red Docker interna
+
+---
+
+## Sesion: CI/CD con GitHub Actions
+**Fecha:** 2026-03-23 ~18:00 (ARG)
+
+### Que se hizo
+Se implementaron pipelines de CI (integración continua) y CD (deploy continuo) con GitHub Actions para automatizar tests, lint y deploy a producción.
+
+### Archivos creados
+| Archivo | Descripcion |
+|---------|-------------|
+| `.github/workflows/ci.yml` | Pipeline CI: 2 jobs paralelos (backend + frontend). Backend: ruff lint + pytest. Frontend: eslint + vitest + next build. Se ejecuta en push a `dev` y PRs a `main`. |
+| `.github/workflows/cd.yml` | Pipeline CD: deploy automático a VM GCP via SSH cuando se mergea a `main`. Incluye health check con reintentos (hasta 5 min). |
+
+### Tests
+Sin cambios a tests existentes. El pipeline CI ejecuta los 430+ tests de backend y los tests de frontend automáticamente.
+
+### Como funciona
+1. **CI (push a `dev` o PR a `main`)**: Se ejecutan 2 jobs en paralelo — backend (Python 3.11, ruff check, pytest) y frontend (Node 22, eslint, vitest, next build). Los tests de backend usan env vars dummy porque están 100% mockeados (no necesitan PostgreSQL/Redis reales). Tiene `cancel-in-progress: true` para ahorrar minutos en pushes rápidos.
+2. **CD (push a `main`)**: Tras merge, se conecta por SSH a la VM de GCP (`astra-prod`), hace `git pull` y ejecuta `./scripts/desplegar.sh full`. Luego hace health check contra `https://theastra.xyz/health` con hasta 30 reintentos (5 min). Tiene `cancel-in-progress: false` para nunca interrumpir un deploy en curso.
+3. **Secrets necesarios**: `GCP_SSH_PRIVATE_KEY`, `VM_HOST`, `VM_USER` — se configuran en GitHub repo settings.
+4. **Recomendación**: configurar branch protection en `main` para requerir que CI pase antes de permitir merge.
