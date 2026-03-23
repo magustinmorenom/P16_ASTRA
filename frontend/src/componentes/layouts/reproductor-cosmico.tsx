@@ -118,8 +118,28 @@ export default function ReproductorCosmico() {
         />
       )}
 
-      {/* Izquierda: Cover + info */}
+      {/* Izquierda: Cover + info + cerrar */}
       <div className="flex items-center gap-3 w-[25%] min-w-0">
+        <button
+          onClick={() => {
+            if (audioRef.current) {
+              audioRef.current.pause();
+              audioRef.current.src = "";
+            }
+            setAudioUrl(null);
+            ultimoPistaId.current = null;
+            useStoreUI.setState({
+              pistaActual: null,
+              reproduciendo: false,
+              progresoSegundos: 0,
+              segmentoActual: 0,
+            });
+          }}
+          className="text-[#B388FF]/60 hover:text-[#F5F0FF] transition-colors shrink-0"
+          title="Cerrar reproductor"
+        >
+          <Icono nombre="x" tamaño={16} />
+        </button>
         <div
           className={`h-14 w-14 shrink-0 rounded-lg bg-gradient-to-br ${pistaActual.gradiente} flex items-center justify-center`}
         >
@@ -138,9 +158,6 @@ export default function ReproductorCosmico() {
             {pistaActual.subtitulo}
           </p>
         </div>
-        <button className="hidden sm:block text-[#B388FF] hover:text-[#F5F0FF] transition-colors shrink-0">
-          <Icono nombre="corazon" tamaño={16} />
-        </button>
       </div>
 
       {/* Centro: Controles + barra progreso */}

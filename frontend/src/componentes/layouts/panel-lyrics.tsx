@@ -2,6 +2,7 @@
 
 import { useRef, useEffect } from "react";
 import { useStoreUI } from "@/lib/stores/store-ui";
+import { Icono } from "@/componentes/ui/icono";
 import { cn } from "@/lib/utilidades/cn";
 
 /**
@@ -30,19 +31,28 @@ export default function PanelLyrics() {
   return (
     <aside className="hidden lg:flex w-[320px] flex-shrink-0 flex-col bg-[#1A1128] border-l border-white/5 overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-white/5">
-        <p className="text-xs font-semibold text-[#B388FF] uppercase tracking-wider">
-          Transcripción
-        </p>
-        <p className="text-sm text-[#F5F0FF]/70 truncate mt-0.5">
-          {pistaActual.titulo}
-        </p>
+      <div className="px-5 py-4 border-b border-white/5 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-[#B388FF] uppercase tracking-wider">
+            Transcripción
+          </p>
+          <p className="text-sm text-[#F5F0FF]/70 truncate mt-0.5">
+            {pistaActual.titulo}
+          </p>
+        </div>
+        <button
+          onClick={() => useStoreUI.setState({ pistaActual: null, reproduciendo: false, progresoSegundos: 0, segmentoActual: 0 })}
+          className="text-[#B388FF]/60 hover:text-[#F5F0FF] transition-colors shrink-0 mt-0.5"
+          title="Cerrar transcripción"
+        >
+          <Icono nombre="x" tamaño={16} />
+        </button>
       </div>
 
       {/* Lyrics */}
       <div
         ref={contenedorRef}
-        className="flex-1 overflow-y-auto scroll-sutil px-5 py-6 space-y-4"
+        className="flex-1 overflow-y-auto scroll-sutil px-5 py-6 pb-24 space-y-4"
       >
         {segmentos.map((seg, idx) => (
           <div

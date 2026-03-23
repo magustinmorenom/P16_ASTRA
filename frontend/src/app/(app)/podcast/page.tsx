@@ -10,7 +10,24 @@ import {
   usarGenerarPodcast,
 } from "@/lib/hooks";
 import { useStoreUI, type PistaReproduccion } from "@/lib/stores/store-ui";
+import { clienteApi } from "@/lib/api/cliente";
 import type { PodcastEpisodio, TipoPodcast } from "@/lib/tipos";
+
+/** Descarga el audio de un episodio obteniendo la URL presigned. */
+async function descargarAudio(episodioId: string, titulo: string) {
+  try {
+    const data = await clienteApi.get<{ url: string }>(`/podcast/audio/${episodioId}`);
+    const a = document.createElement("a");
+    a.href = data.url;
+    a.download = `${titulo.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ ]/g, "")}.mp3`;
+    a.target = "_blank";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch {
+    // silenciar error
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Config visual por tipo
@@ -112,20 +129,29 @@ function CardEpisodio({
           <span className="text-xs text-[#8A8580]">
             {Math.floor((episodio!.duracion_segundos ?? 0) / 60)} min
           </span>
-          <button
-            onClick={reproducir}
-            className={`h-10 w-10 rounded-full flex items-center justify-center transition-all ${
-              enReproduccion
-                ? "bg-[#7C4DFF] text-white scale-110"
-                : "bg-[#F5F0FF] text-[#7C4DFF] hover:bg-[#7C4DFF] hover:text-white"
-            }`}
-          >
-            <Icono
-              nombre={enReproduccion ? "pausar" : "reproducir"}
-              tamaño={18}
-              peso="fill"
-            />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => descargarAudio(episodio!.id, episodio!.titulo)}
+              className="h-10 w-10 rounded-full flex items-center justify-center bg-[#F5F0FF] text-[#7C4DFF] hover:bg-[#E8E4F5] transition-all"
+              title="Descargar audio"
+            >
+              <Icono nombre="descarga" tamaño={16} />
+            </button>
+            <button
+              onClick={reproducir}
+              className={`h-10 w-10 rounded-full flex items-center justify-center transition-all ${
+                enReproduccion
+                  ? "bg-[#7C4DFF] text-white scale-110"
+                  : "bg-[#F5F0FF] text-[#7C4DFF] hover:bg-[#7C4DFF] hover:text-white"
+              }`}
+            >
+              <Icono
+                nombre={enReproduccion ? "pausar" : "reproducir"}
+                tamaño={18}
+                peso="fill"
+              />
+            </button>
+          </div>
         </div>
       ) : estado === "error" ? (
         <div className="flex items-center justify-between">
@@ -305,6 +331,16 @@ export default function PaginaPodcast() {
                       {Math.floor((ep.duracion_segundos ?? 0) / 60)} min
                     </p>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      descargarAudio(ep.id, ep.titulo);
+                    }}
+                    className="text-[#8A8580] hover:text-[#7C4DFF] transition-colors shrink-0"
+                    title="Descargar audio"
+                  >
+                    <Icono nombre="descarga" tamaño={16} />
+                  </button>
                 </button>
               );
             })}
