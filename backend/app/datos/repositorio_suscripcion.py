@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modelos.config_pais_mp import ConfigPaisMp
 from app.modelos.evento_webhook import EventoWebhook
+from app.modelos.plan import Plan
 from app.modelos.suscripcion import Suscripcion
 
 
@@ -112,6 +113,55 @@ class RepositorioSuscripcion:
             )
         )
         await self.sesion.commit()
+
+    async def cancelar_pendientes_usuario(self, usuario_id: uuid.UUID) -> None:
+        """Cancela solo suscripciones pendientes de un usuario (no la gratis activa)."""
+        await self.sesion.execute(
+            update(Suscripcion)
+            .where(
+                Suscripcion.usuario_id == usuario_id,
+                Suscripcion.estado == "pendiente",
+            )
+            .values(
+                estado="cancelada",
+                fecha_fin=datetime.now(timezone.utc),
+                actualizado_en=datetime.now(timezone.utc),
+            )
+        )
+        await self.sesion.commit()
+
+    async def cancelar_gratis_usuario(self, usuario_id: uuid.UUID) -> None:
+        """Cancela la suscripción gratis activa de un usuario (al activarse premium)."""
+        # Buscar suscripciones activas cuyo plan sea "gratis"
+        resultado = await self.sesion.execute(
+            select(Suscripcion)
+            .join(Plan, Suscripcion.plan_id == Plan.id)
+            .where(
+                Suscripcion.usuario_id == usuario_id,
+                Suscripcion.estado == "activa",
+                Plan.slug == "gratis",
+            )
+        )
+        gratis_ids = [s.id for s in resultado.scalars().all()]
+        if gratis_ids:
+            await self.sesion.execute(
+                update(Suscripcion)
+                .where(Suscripcion.id.in_(gratis_ids))
+                .values(
+                    estado="cancelada",
+                    fecha_fin=datetime.now(timezone.utc),
+                    actualizado_en=datetime.now(timezone.utc),
+                )
+            )
+            await self.sesion.commit()
+
+    async def listar_paises_activos(self) -> list[ConfigPaisMp]:
+        """Lista todos los países activos con configuración de MP."""
+        resultado = await self.sesion.execute(
+            select(ConfigPaisMp).where(ConfigPaisMp.activo.is_(True))
+            .order_by(ConfigPaisMp.pais_codigo)
+        )
+        return list(resultado.scalars().all())
 
     async def obtener_config_pais(self, pais_codigo: str) -> ConfigPaisMp | None:
         """Obtiene la configuración de MP para un país."""

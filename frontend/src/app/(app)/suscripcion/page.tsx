@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Tarjeta } from "@/componentes/ui/tarjeta";
@@ -14,6 +15,8 @@ import {
   usarSuscribirse,
   usarCancelarSuscripcion,
   usarPagos,
+  usarPaises,
+  usarFacturas,
 } from "@/lib/hooks";
 import { formatearFechaHora, formatearFecha } from "@/lib/utilidades/formatear-fecha";
 import type { Plan } from "@/lib/tipos";
@@ -51,13 +54,24 @@ function formatearMonto(centavos: number, moneda: string): string {
   return `$${valor} ${moneda}`;
 }
 
-function formatearPrecio(plan: Plan): { principal: string; detalle: string } {
+function formatearPrecioPlan(plan: Plan, paisCodigo: string): { principal: string; detalle: string } {
   if (plan.precio_usd_centavos === 0) {
     return { principal: "$0", detalle: "para siempre" };
   }
 
   const usd = (plan.precio_usd_centavos / 100).toFixed(0);
 
+  // Intentar precio del país seleccionado desde precios_por_pais
+  const precioPais = plan.precios_por_pais?.[paisCodigo];
+  if (precioPais) {
+    const local = (precioPais.precio_local / 100).toFixed(0);
+    return {
+      principal: `$${local} ${precioPais.moneda}`,
+      detalle: `~USD $${usd}/${plan.intervalo === "months" ? "mes" : plan.intervalo}`,
+    };
+  }
+
+  // Fallback al precio_local del plan (retrocompat)
   if (plan.precio_local && plan.moneda_local) {
     const local = (plan.precio_local / 100).toFixed(0);
     return {
@@ -82,12 +96,15 @@ function formatearLimite(valor: number): string {
 
 export default function PaginaSuscripcion() {
   const queryClient = useQueryClient();
+  const [paisSeleccionado, setPaisSeleccionado] = useState("AR");
 
   const { data: planes, isLoading: cargandoPlanes } = usarPlanes();
   const { data: miSuscripcion, isLoading: cargandoSuscripcion } = usarMiSuscripcion();
   const suscribirse = usarSuscribirse();
   const cancelar = usarCancelarSuscripcion();
   const { data: pagos, isLoading: cargandoPagos } = usarPagos();
+  const { data: paises, isLoading: cargandoPaises } = usarPaises();
+  const { data: facturas, isLoading: cargandoFacturas } = usarFacturas();
 
   const planActualSlug = miSuscripcion?.plan_slug ?? "gratis";
 
@@ -96,7 +113,7 @@ export default function PaginaSuscripcion() {
 
   function manejarSuscribirse(plan: Plan) {
     suscribirse.mutate(
-      { plan_id: plan.id, pais_codigo: "AR" },
+      { plan_id: plan.id, pais_codigo: paisSeleccionado },
       {
         onSuccess: (resp) => {
           window.location.href = resp.init_point;
@@ -126,6 +143,31 @@ export default function PaginaSuscripcion() {
       </div>
 
       {/* ---------------------------------------------------------- */}
+      {/* Selector de pais                                           */}
+      {/* ---------------------------------------------------------- */}
+      <section className="flex flex-col gap-2">
+        <label htmlFor="selector-pais" className="text-sm font-medium text-texto-secundario">
+          Tu pais
+        </label>
+        {cargandoPaises ? (
+          <Esqueleto className="h-10 w-48" />
+        ) : (
+          <select
+            id="selector-pais"
+            value={paisSeleccionado}
+            onChange={(e) => setPaisSeleccionado(e.target.value)}
+            className="w-48 rounded-lg border border-borde bg-fondo-elevado px-3 py-2 text-sm text-texto focus:outline-none focus:ring-2 focus:ring-acento"
+          >
+            {paises?.map((p) => (
+              <option key={p.pais_codigo} value={p.pais_codigo}>
+                {p.pais_nombre} ({p.moneda})
+              </option>
+            ))}
+          </select>
+        )}
+      </section>
+
+      {/* ---------------------------------------------------------- */}
       {/* Seccion: Planes disponibles                                */}
       {/* ---------------------------------------------------------- */}
       <section className="flex flex-col gap-4">
@@ -151,10 +193,10 @@ export default function PaginaSuscripcion() {
                   {planGratis && (
                     <>
                       <p className="text-3xl font-bold text-texto mt-2">
-                        {formatearPrecio(planGratis).principal}
+                        {formatearPrecioPlan(planGratis, paisSeleccionado).principal}
                       </p>
                       <p className="text-sm text-texto-terciario">
-                        {formatearPrecio(planGratis).detalle}
+                        {formatearPrecioPlan(planGratis, paisSeleccionado).detalle}
                       </p>
                     </>
                   )}
@@ -212,8 +254,13 @@ export default function PaginaSuscripcion() {
                     Plan actual
                   </Badge>
                 ) : (
-                  <Boton variante="secundario" disabled className="w-full">
-                    Plan Gratis
+                  <Boton
+                    variante="secundario"
+                    onClick={manejarCancelar}
+                    cargando={cancelar.isPending}
+                    className="w-full"
+                  >
+                    Volver al plan Gratis
                   </Boton>
                 )}
               </div>
@@ -233,10 +280,10 @@ export default function PaginaSuscripcion() {
                   {planPremium ? (
                     <>
                       <p className="text-3xl font-bold text-texto mt-2">
-                        {formatearPrecio(planPremium).principal}
+                        {formatearPrecioPlan(planPremium, paisSeleccionado).principal}
                       </p>
                       <p className="text-sm text-texto-terciario">
-                        {formatearPrecio(planPremium).detalle}
+                        {formatearPrecioPlan(planPremium, paisSeleccionado).detalle}
                       </p>
                     </>
                   ) : (
@@ -467,6 +514,79 @@ export default function PaginaSuscripcion() {
           <Tarjeta variante="default" padding="md">
             <p className="text-sm text-texto-terciario">
               No hay pagos registrados.
+            </p>
+          </Tarjeta>
+        )}
+      </section>
+
+      {/* ---------------------------------------------------------- */}
+      {/* Seccion: Facturas                                          */}
+      {/* ---------------------------------------------------------- */}
+      <section className="flex flex-col gap-4">
+        <h2 className="text-xl font-semibold text-texto">
+          Facturas
+        </h2>
+
+        {cargandoFacturas ? (
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Esqueleto key={i} className="h-12" />
+            ))}
+          </div>
+        ) : facturas && facturas.length > 0 ? (
+          <div className="overflow-x-auto rounded-xl border border-borde">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-borde bg-fondo-elevado">
+                  <th className="text-left px-4 py-3 text-texto-terciario font-medium">
+                    Numero
+                  </th>
+                  <th className="text-left px-4 py-3 text-texto-terciario font-medium">
+                    Fecha
+                  </th>
+                  <th className="text-left px-4 py-3 text-texto-terciario font-medium">
+                    Concepto
+                  </th>
+                  <th className="text-left px-4 py-3 text-texto-terciario font-medium">
+                    Monto
+                  </th>
+                  <th className="text-left px-4 py-3 text-texto-terciario font-medium">
+                    Estado
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {facturas.map((factura) => (
+                  <tr
+                    key={factura.id}
+                    className="border-b border-borde last:border-b-0 hover:bg-fondo-elevado/50 transition-colors"
+                  >
+                    <td className="px-4 py-3 text-texto font-mono text-xs">
+                      {factura.numero_factura}
+                    </td>
+                    <td className="px-4 py-3 text-texto">
+                      {factura.creado_en
+                        ? formatearFecha(factura.creado_en)
+                        : "\u2014"}
+                    </td>
+                    <td className="px-4 py-3 text-texto-secundario">
+                      {factura.concepto}
+                    </td>
+                    <td className="px-4 py-3 text-texto">
+                      {formatearMonto(factura.monto_centavos, factura.moneda)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variante="exito">{factura.estado}</Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <Tarjeta variante="default" padding="md">
+            <p className="text-sm text-texto-terciario">
+              No hay facturas generadas.
             </p>
           </Tarjeta>
         )}

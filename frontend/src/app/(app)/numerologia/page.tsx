@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { Tarjeta } from "@/componentes/ui/tarjeta";
 import { Badge } from "@/componentes/ui/badge";
 import { Icono } from "@/componentes/ui/icono";
+import { IconoAstral } from "@/componentes/ui/icono-astral";
 import { Boton } from "@/componentes/ui/boton";
 import { Input } from "@/componentes/ui/input";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
@@ -12,6 +13,16 @@ import type { Numerologia, NumeroRespuesta, DatosNumerologia } from "@/lib/tipos
 
 /** Numeros maestros que reciben tarjeta dorada */
 const NUMEROS_MAESTROS = [11, 22, 33];
+
+/** Iconos para cada numero numerologico */
+const ICONO_NUMERO: Record<string, { nombre: string; clase: string }> = {
+  "Camino de Vida": { nombre: "suerte", clase: "text-acento" },
+  "Expresion": { nombre: "emocion", clase: "text-primario" },
+  "Impulso del Alma": { nombre: "salud", clase: "text-secundario" },
+  "Personalidad": { nombre: "personal", clase: "text-acento" },
+  "Numero de Nacimiento": { nombre: "astrologia", clase: "text-primario" },
+  "Ano Personal": { nombre: "horoscopo", clase: "text-secundario" },
+};
 
 /** Tarjeta individual de un numero numerologico */
 function TarjetaNumero({
@@ -23,9 +34,20 @@ function TarjetaNumero({
   dato: NumeroRespuesta;
   esMaestro: boolean;
 }) {
+  const iconoConfig = ICONO_NUMERO[titulo];
+
   return (
     <Tarjeta variante={esMaestro ? "dorado" : "default"} padding="md">
       <div className="text-center space-y-3">
+        {iconoConfig && (
+          <div className="flex justify-center">
+            <IconoAstral
+              nombre={iconoConfig.nombre as Parameters<typeof IconoAstral>[0]["nombre"]}
+              tamaño={28}
+              className={iconoConfig.clase}
+            />
+          </div>
+        )}
         <p className="text-5xl font-bold text-primario">{dato.numero}</p>
         <p className="text-sm font-semibold text-texto uppercase tracking-wider">
           {titulo}
@@ -86,7 +108,7 @@ export default function PaginaNumerologia() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-texto flex items-center gap-3">
-            <Icono nombre="numeral" tamaño={32} className="text-acento" />
+            <IconoAstral nombre="numerologia" tamaño={32} className="text-acento" />
             Numerologia
           </h1>
         </div>
@@ -109,7 +131,7 @@ export default function PaginaNumerologia() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-texto flex items-center gap-3">
-            <Icono nombre="numeral" tamaño={32} className="text-acento" />
+            <IconoAstral nombre="numerologia" tamaño={32} className="text-acento" />
             Numerologia
           </h1>
           <p className="mt-2 text-texto-secundario">
@@ -175,7 +197,7 @@ export default function PaginaNumerologia() {
               variante="primario"
               tamaño="lg"
               cargando={mutacion.isPending}
-              icono={<Icono nombre="estrella" tamaño={20} />}
+              icono={<IconoAstral nombre="numerologia" tamaño={20} className="text-current" />}
               className="w-full mt-2"
             >
               Calcular
@@ -209,7 +231,8 @@ export default function PaginaNumerologia() {
       {/* Encabezado */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-texto">
+          <h1 className="text-3xl font-bold text-texto flex items-center gap-3">
+            <IconoAstral nombre="numerologia" tamaño={32} className="text-acento" />
             Carta Numerologica de {datos.nombre}
           </h1>
           <div className="flex items-center gap-3 mt-2">
@@ -238,7 +261,7 @@ export default function PaginaNumerologia() {
       {datos.numeros_maestros_presentes.length > 0 && (
         <Tarjeta variante="dorado" padding="md">
           <div className="flex items-center gap-3">
-            <Icono nombre="corona" tamaño={24} className="text-yellow-400" />
+            <IconoAstral nombre="suerte" tamaño={24} className="text-yellow-400" />
             <div>
               <p className="font-semibold text-texto">
                 Numeros Maestros presentes

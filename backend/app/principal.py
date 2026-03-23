@@ -17,6 +17,41 @@ from app.middleware.tiempo_respuesta import MiddlewareTiempoRespuesta
 from app.registro import logger
 
 
+async def _sincronizar_credenciales_mp(sesion_factory, config) -> None:
+    """Sincroniza credenciales de MP desde variables de entorno a la BD.
+
+    Esto evita que los placeholders de la migración bloqueen los pagos
+    cuando se recrea la BD (ej: `levantar.sh reiniciar`).
+    """
+    from sqlalchemy import text
+
+    paises = {
+        "AR": (config.mp_access_token_ar, config.mp_public_key_ar),
+        "BR": (config.mp_access_token_br, config.mp_public_key_br),
+        "MX": (config.mp_access_token_mx, config.mp_public_key_mx),
+    }
+
+    try:
+        async with sesion_factory() as sesion:
+            for pais_codigo, (access_token, public_key) in paises.items():
+                if not access_token or access_token == "":
+                    continue
+                await sesion.execute(
+                    text("""
+                        UPDATE config_pais_mp
+                        SET mp_access_token = :token, mp_public_key = :pk
+                        WHERE pais_codigo = :pais
+                          AND (mp_access_token LIKE '%%placeholder%%'
+                               OR mp_access_token != :token)
+                    """),
+                    {"token": access_token, "pk": public_key, "pais": pais_codigo},
+                )
+            await sesion.commit()
+            logger.info("Credenciales MP sincronizadas desde .env")
+    except Exception as e:
+        logger.warning("No se pudieron sincronizar credenciales MP: %s", e)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Ciclo de vida de la aplicación."""
@@ -34,6 +69,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     app.state.motor_db = motor
     app.state.sesion_factory = sesion_factory
     logger.info("Motor de base de datos creado")
+
+    # Sincronizar credenciales MP desde .env → config_pais_mp
+    await _sincronizar_credenciales_mp(sesion_factory, config)
 
     # Redis
     redis = Redis.from_url(config.redis_url, decode_responses=True)

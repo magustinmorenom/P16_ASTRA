@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Tarjeta } from "@/componentes/ui/tarjeta";
 import { Badge } from "@/componentes/ui/badge";
 import { Icono } from "@/componentes/ui/icono";
+import { IconoAstral } from "@/componentes/ui/icono-astral";
 import { Separador } from "@/componentes/ui/separador";
 import { Boton } from "@/componentes/ui/boton";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
@@ -62,7 +63,7 @@ export default function PaginaDisenoHumano() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-texto flex items-center gap-3">
-            <Icono nombre="cerebro" tamaño={32} className="text-acento" />
+            <IconoAstral nombre="personal" tamaño={32} className="text-acento" />
             Diseno Humano
           </h1>
         </div>
@@ -84,7 +85,7 @@ export default function PaginaDisenoHumano() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-texto flex items-center gap-3">
-            <Icono nombre="cerebro" tamaño={32} className="text-acento" />
+            <IconoAstral nombre="personal" tamaño={32} className="text-acento" />
             Diseno Humano
           </h1>
           <p className="mt-2 text-texto-secundario">
@@ -119,7 +120,8 @@ export default function PaginaDisenoHumano() {
       {/* Encabezado */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-texto">
+          <h1 className="text-3xl font-bold text-texto flex items-center gap-3">
+            <IconoAstral nombre="personal" tamaño={32} className="text-acento" />
             Diseno Humano de {nombrePersona}
           </h1>
           <p className="mt-1 text-texto-secundario">
@@ -147,7 +149,7 @@ export default function PaginaDisenoHumano() {
           </div>
         </Tarjeta>
 
-        <Tarjeta variante="violeta" padding="md">
+        <Tarjeta variante="acento" padding="md">
           <div className="text-center">
             <p className="text-sm text-texto-secundario uppercase tracking-wider mb-1">
               Autoridad
@@ -156,7 +158,7 @@ export default function PaginaDisenoHumano() {
           </div>
         </Tarjeta>
 
-        <Tarjeta variante="violeta" padding="md">
+        <Tarjeta variante="cyan" padding="md">
           <div className="text-center">
             <p className="text-sm text-texto-secundario uppercase tracking-wider mb-1">
               Perfil
@@ -178,10 +180,10 @@ export default function PaginaDisenoHumano() {
       {/* Cruz de Encarnacion */}
       <section>
         <h2 className="text-xl font-bold text-texto mb-4 flex items-center gap-2">
-          <Icono nombre="estrella" tamaño={24} className="text-acento" />
+          <IconoAstral nombre="astrologia" tamaño={24} className="text-acento" />
           Cruz de Encarnacion
         </h2>
-        <Tarjeta padding="md">
+        <Tarjeta variante="acento" padding="md">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
             <div>
               <p className="text-xs text-texto-terciario uppercase tracking-wider">
@@ -229,7 +231,7 @@ export default function PaginaDisenoHumano() {
       {/* Centros */}
       <section>
         <h2 className="text-xl font-bold text-texto mb-4 flex items-center gap-2">
-          <Icono nombre="rayo" tamaño={24} className="text-acento" />
+          <IconoAstral nombre="salud" tamaño={24} className="text-acento" />
           Centros
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -263,7 +265,7 @@ export default function PaginaDisenoHumano() {
       {/* Canales */}
       <section>
         <h2 className="text-xl font-bold text-texto mb-4 flex items-center gap-2">
-          <Icono nombre="grafico" tamaño={24} className="text-acento" />
+          <IconoAstral nombre="compatibilidad" tamaño={24} className="text-acento" />
           Canales Definidos
         </h2>
         {datos.canales.length === 0 ? (
@@ -275,7 +277,7 @@ export default function PaginaDisenoHumano() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {datos.canales.map((canal) => (
-              <Tarjeta key={`${canal.puertas[0]}-${canal.puertas[1]}`} padding="sm">
+              <Tarjeta key={`${canal.puertas[0]}-${canal.puertas[1]}`} variante="cyan" padding="sm">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium text-texto">{canal.nombre}</p>
@@ -298,7 +300,7 @@ export default function PaginaDisenoHumano() {
       {/* Activaciones */}
       <section>
         <h2 className="text-xl font-bold text-texto mb-4 flex items-center gap-2">
-          <Icono nombre="sol" tamaño={24} className="text-acento" />
+          <IconoAstral nombre="suerte" tamaño={24} className="text-acento" />
           Activaciones
         </h2>
         <Tarjeta padding="sm">

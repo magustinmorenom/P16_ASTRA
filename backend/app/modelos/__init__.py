@@ -3,6 +3,7 @@
 from app.modelos.base import Base, ModeloBase
 from app.modelos.calculo import Calculo
 from app.modelos.config_pais_mp import ConfigPaisMp
+from app.modelos.factura import Factura
 from app.modelos.evento_webhook import EventoWebhook
 from app.modelos.pago import Pago
 from app.modelos.perfil import Perfil
@@ -16,6 +17,7 @@ __all__ = [
     "ModeloBase",
     "Calculo",
     "ConfigPaisMp",
+    "Factura",
     "EventoWebhook",
     "Pago",
     "Perfil",

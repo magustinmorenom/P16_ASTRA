@@ -4,13 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import { Tarjeta } from "@/componentes/ui/tarjeta";
 import { Badge } from "@/componentes/ui/badge";
 import { Icono } from "@/componentes/ui/icono";
+import { IconoAstral, IconoSigno } from "@/componentes/ui/icono-astral";
 import { Separador } from "@/componentes/ui/separador";
 import { Boton } from "@/componentes/ui/boton";
 import { Input } from "@/componentes/ui/input";
 import { FormularioNacimiento } from "@/componentes/compuestos/formulario-nacimiento";
 import { usarRetornoSolar, usarMiPerfil, usarMisCalculos } from "@/lib/hooks";
 import { perfilADatosNacimiento } from "@/lib/utilidades/perfil-a-datos";
-import { formatearGrado, obtenerSimbolo } from "@/lib/utilidades/formatear-grado";
+import { formatearGrado } from "@/lib/utilidades/formatear-grado";
 import type { DatosNacimiento, RetornoSolar } from "@/lib/tipos";
 
 /** Colores segun el tipo de aspecto */
@@ -93,7 +94,7 @@ export default function PaginaRetornoSolar() {
     return (
       <div className="max-w-2xl mx-auto flex flex-col items-center justify-center py-20 gap-4">
         <div className="animate-spin rounded-full h-10 w-10 border-2 border-acento border-t-transparent" />
-        <p className="text-texto-secundario">Cargando tu revolución solar...</p>
+        <p className="text-texto-secundario">Cargando tu revolucion solar...</p>
       </div>
     );
   }
@@ -113,7 +114,7 @@ export default function PaginaRetornoSolar() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-texto flex items-center gap-3">
-            <Icono nombre="sol" tamaño={32} className="text-acento" />
+            <IconoAstral nombre="astrologia" tamaño={32} className="text-acento" />
             Revolucion Solar
           </h1>
           <p className="mt-2 text-texto-secundario">
@@ -159,7 +160,8 @@ export default function PaginaRetornoSolar() {
       {/* Encabezado */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-texto">
+          <h1 className="text-3xl font-bold text-texto flex items-center gap-3">
+            <IconoAstral nombre="astrologia" tamaño={32} className="text-acento" />
             Revolucion Solar {datos.anio} de {datos.nombre}
           </h1>
           <p className="mt-1 text-texto-secundario">
@@ -194,7 +196,7 @@ export default function PaginaRetornoSolar() {
       </div>
 
       {/* Fecha exacta del retorno */}
-      <Tarjeta variante="violeta" padding="lg">
+      <Tarjeta variante="acento" padding="lg">
         <div className="text-center space-y-2">
           <p className="text-sm text-texto-secundario uppercase tracking-wider">
             Fecha exacta del retorno solar
@@ -233,9 +235,10 @@ export default function PaginaRetornoSolar() {
             <p className="text-sm text-texto-secundario uppercase tracking-wider mb-1">
               Ascendente del Retorno
             </p>
-            <p className="text-2xl font-bold text-texto">
-              {obtenerSimbolo(carta.ascendente.signo)} {carta.ascendente.signo}
-            </p>
+            <div className="flex items-center justify-center gap-2">
+              <IconoSigno signo={carta.ascendente.signo} tamaño={28} className="text-acento" />
+              <p className="text-2xl font-bold text-texto">{carta.ascendente.signo}</p>
+            </div>
             <p className="text-sm text-acento mt-1">
               {carta.ascendente.grado_en_signo.toFixed(2)}°
             </p>
@@ -247,9 +250,10 @@ export default function PaginaRetornoSolar() {
             <p className="text-sm text-texto-secundario uppercase tracking-wider mb-1">
               Medio Cielo del Retorno
             </p>
-            <p className="text-2xl font-bold text-texto">
-              {obtenerSimbolo(carta.medio_cielo.signo)} {carta.medio_cielo.signo}
-            </p>
+            <div className="flex items-center justify-center gap-2">
+              <IconoSigno signo={carta.medio_cielo.signo} tamaño={28} className="text-acento" />
+              <p className="text-2xl font-bold text-texto">{carta.medio_cielo.signo}</p>
+            </div>
             <p className="text-sm text-acento mt-1">
               {carta.medio_cielo.grado_en_signo.toFixed(2)}°
             </p>
@@ -260,7 +264,7 @@ export default function PaginaRetornoSolar() {
       {/* Seccion Planetas del Retorno */}
       <section>
         <h2 className="text-xl font-bold text-texto mb-4 flex items-center gap-2">
-          <Icono nombre="planeta" tamaño={24} className="text-acento" />
+          <IconoAstral nombre="horoscopo" tamaño={24} className="text-acento" />
           Planetas del Retorno
         </h2>
         <Tarjeta padding="sm">
@@ -286,7 +290,10 @@ export default function PaginaRetornoSolar() {
                       {planeta.nombre}
                     </td>
                     <td className="py-3 px-4 text-texto">
-                      {obtenerSimbolo(planeta.signo)} {planeta.signo}
+                      <div className="flex items-center gap-1.5">
+                        <IconoSigno signo={planeta.signo} tamaño={18} className="text-acento" />
+                        <span>{planeta.signo}</span>
+                      </div>
                     </td>
                     <td className="py-3 px-4 text-acento font-mono">
                       {planeta.grado_en_signo.toFixed(2)}°
@@ -317,19 +324,19 @@ export default function PaginaRetornoSolar() {
       {/* Seccion Casas del Retorno */}
       <section>
         <h2 className="text-xl font-bold text-texto mb-4 flex items-center gap-2">
-          <Icono nombre="casa" tamaño={24} className="text-acento" />
+          <IconoAstral nombre="bola-cristal" tamaño={24} className="text-acento" />
           Casas del Retorno
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {carta.casas.map((casa) => (
-            <Tarjeta key={casa.numero} padding="sm">
+            <Tarjeta key={casa.numero} variante={[1, 4, 7, 10].includes(casa.numero) ? "violeta" : "default"} padding="sm">
               <div className="text-center">
                 <p className="text-xs text-texto-terciario uppercase tracking-wider">
                   Casa {casa.numero}
                 </p>
-                <p className="text-lg font-bold text-texto mt-1">
-                  {obtenerSimbolo(casa.signo)}
-                </p>
+                <div className="flex justify-center mt-1">
+                  <IconoSigno signo={casa.signo} tamaño={24} className="text-acento" />
+                </div>
                 <p className="text-sm text-texto-secundario">{casa.signo}</p>
                 <p className="text-xs text-acento font-mono mt-1">
                   {casa.grado_en_signo.toFixed(2)}°
@@ -345,7 +352,7 @@ export default function PaginaRetornoSolar() {
       {/* Seccion Aspectos del Retorno */}
       <section>
         <h2 className="text-xl font-bold text-texto mb-4 flex items-center gap-2">
-          <Icono nombre="grafico" tamaño={24} className="text-acento" />
+          <IconoAstral nombre="compatibilidad" tamaño={24} className="text-acento" />
           Aspectos del Retorno
         </h2>
         <Tarjeta padding="sm">
@@ -391,7 +398,7 @@ export default function PaginaRetornoSolar() {
           <Separador />
           <section>
             <h2 className="text-xl font-bold text-texto mb-4 flex items-center gap-2">
-              <Icono nombre="grafico" tamaño={24} className="text-acento" />
+              <IconoAstral nombre="compatibilidad" tamaño={24} className="text-acento" />
               Aspectos Natal &#8596; Retorno
             </h2>
             <Tarjeta padding="sm">

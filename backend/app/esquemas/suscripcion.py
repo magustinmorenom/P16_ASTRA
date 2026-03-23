@@ -56,6 +56,23 @@ class RespuestaPago(BaseModel):
     creado_en: datetime | None = None
 
 
+class RespuestaFactura(BaseModel):
+    """Datos de una factura."""
+
+    id: str
+    numero_factura: str
+    estado: str
+    monto_centavos: int
+    moneda: str
+    concepto: str
+    pais_codigo: str
+    email_cliente: str | None = None
+    nombre_cliente: str | None = None
+    periodo_inicio: datetime | None = None
+    periodo_fin: datetime | None = None
+    creado_en: datetime | None = None
+
+
 class RespuestaCheckout(BaseModel):
     """URL de checkout de MercadoPago."""
 

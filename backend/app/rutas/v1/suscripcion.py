@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.configuracion import obtener_configuracion
+from app.datos.repositorio_factura import RepositorioFactura
 from app.datos.repositorio_pago import RepositorioPago
 from app.datos.repositorio_plan import RepositorioPlan
 from app.datos.repositorio_suscripcion import RepositorioSuscripcion
@@ -30,20 +31,50 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/suscripcion", tags=["Suscripciones"])
 
 
+@router.get("/paises")
+async def listar_paises(
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+):
+    """Lista los países disponibles con configuración de MercadoPago."""
+    repo = RepositorioSuscripcion(db)
+    paises = await repo.listar_paises_activos()
+
+    resultado = []
+    for p in paises:
+        resultado.append({
+            "pais_codigo": p.pais_codigo,
+            "pais_nombre": p.pais_nombre,
+            "moneda": p.moneda,
+            "tipo_cambio_usd": float(p.tipo_cambio_usd),
+        })
+
+    return {"exito": True, "datos": resultado}
+
+
 @router.get("/planes")
 async def listar_planes(
     pais_codigo: str = "AR",
     db: AsyncSession = Depends(_obtener_db_placeholder),
 ):
-    """Lista los planes disponibles con precios del país solicitado."""
+    """Lista los planes disponibles con precios del país solicitado y de todos los países."""
     repo = RepositorioPlan(db)
     planes = await repo.listar_activos()
 
     resultado = []
     for plan in planes:
+        # Precio del país solicitado (retrocompat)
         precios = await repo.obtener_precios_por_plan(plan.id, pais_codigo)
         precio_local = precios[0].precio_local if precios else None
         moneda_local = precios[0].moneda if precios else None
+
+        # Precios de todos los países
+        todos_precios = await repo.obtener_precios_por_plan(plan.id)
+        precios_por_pais = {}
+        for pp in todos_precios:
+            precios_por_pais[pp.pais_codigo] = {
+                "precio_local": pp.precio_local,
+                "moneda": pp.moneda,
+            }
 
         resultado.append({
             "id": str(plan.id),
@@ -57,9 +88,45 @@ async def listar_planes(
             "features": plan.features or [],
             "precio_local": precio_local,
             "moneda_local": moneda_local,
+            "precios_por_pais": precios_por_pais,
         })
 
     return {"exito": True, "datos": resultado}
+
+
+@router.get("/verificar-estado")
+async def verificar_estado(
+    usuario: Usuario = Depends(obtener_usuario_actual),
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+):
+    """Verifica el estado actual de la suscripción (polling post-checkout)."""
+    repo_sus = RepositorioSuscripcion(db)
+    repo_plan = RepositorioPlan(db)
+
+    suscripcion = await repo_sus.obtener_activa(usuario.id)
+    if not suscripcion:
+        return {
+            "exito": True,
+            "datos": {
+                "estado": "sin_suscripcion",
+                "es_premium": False,
+                "plan_slug": None,
+                "plan_nombre": None,
+            },
+        }
+
+    plan = await repo_plan.obtener_por_id(suscripcion.plan_id)
+    plan_slug = plan.slug if plan else None
+
+    return {
+        "exito": True,
+        "datos": {
+            "estado": suscripcion.estado,
+            "es_premium": plan_slug == "premium" and suscripcion.estado == "activa",
+            "plan_slug": plan_slug,
+            "plan_nombre": plan.nombre if plan else None,
+        },
+    }
 
 
 @router.get("/mi-suscripcion")
@@ -134,8 +201,8 @@ async def suscribirse(
     # Referencia externa única
     referencia = f"cosmic_{usuario.id}_{plan.slug}_{datos.pais_codigo}"
 
-    # Cancelar suscripciones activas previas (solo las locales)
-    await repo_sus.cancelar_activas_usuario(usuario.id)
+    # Cancelar solo suscripciones pendientes previas (la gratis se cancela al confirmar pago)
+    await repo_sus.cancelar_pendientes_usuario(usuario.id)
 
     # Crear preapproval en MP
     monto = precio.precio_local / 100  # centavos → unidad
@@ -163,10 +230,13 @@ async def suscribirse(
         datos_mp=respuesta_mp,
     )
 
+    # Usar sandbox_init_point si existe, sino init_point
+    url_checkout = respuesta_mp.get("sandbox_init_point") or respuesta_mp.get("init_point")
+
     return {
         "exito": True,
         "datos": {
-            "init_point": respuesta_mp.get("init_point"),
+            "init_point": url_checkout,
             "suscripcion_id": str(suscripcion.id),
             "mp_preapproval_id": respuesta_mp.get("id"),
         },
@@ -230,6 +300,7 @@ async def webhook_mercadopago(
     repo_sus = RepositorioSuscripcion(db)
     repo_pago = RepositorioPago(db)
     repo_plan = RepositorioPlan(db)
+    repo_factura = RepositorioFactura(db)
 
     try:
         body = await request.json()
@@ -269,9 +340,9 @@ async def webhook_mercadopago(
         if tipo == "subscription_preapproval":
             await _procesar_preapproval(data_id, repo_sus, repo_plan, db)
         elif tipo == "subscription_authorized_payment":
-            await _procesar_pago_suscripcion(data_id, repo_sus, repo_pago, db)
+            await _procesar_pago_suscripcion(data_id, repo_sus, repo_pago, repo_factura, db)
         elif tipo == "payment":
-            await _procesar_pago(data_id, repo_sus, repo_pago, db)
+            await _procesar_pago(data_id, repo_sus, repo_pago, repo_factura, db)
     except Exception as e:
         logger.error("Error procesando webhook: %s", str(e))
 
@@ -311,6 +382,10 @@ async def _procesar_preapproval(
 
     await repo_sus.actualizar_estado(suscripcion.id, estado_local, datos_mp=datos_mp)
 
+    # Si se activó la premium, cancelar la suscripción gratis
+    if estado_local == "activa":
+        await repo_sus.cancelar_gratis_usuario(suscripcion.usuario_id)
+
     # Si fue cancelada, degradar a plan gratis
     if estado_local == "cancelada":
         plan_gratis = await repo_plan.obtener_por_slug("gratis")
@@ -327,16 +402,36 @@ async def _procesar_pago_suscripcion(
     pago_id: str,
     repo_sus: RepositorioSuscripcion,
     repo_pago: RepositorioPago,
+    repo_factura: RepositorioFactura,
     db: AsyncSession,
 ) -> None:
     """Procesa un pago de suscripción recurrente."""
-    await _procesar_pago(pago_id, repo_sus, repo_pago, db)
+    await _procesar_pago(pago_id, repo_sus, repo_pago, repo_factura, db)
+
+
+async def _obtener_config_pais_para_pago(
+    pago_id: str,
+    repo_sus: RepositorioSuscripcion,
+) -> "ConfigPaisMp | None":
+    """Intenta obtener config de país iterando países activos hasta encontrar credenciales válidas."""
+    paises = await repo_sus.listar_paises_activos()
+    for config_pais in paises:
+        try:
+            datos = await ServicioMercadoPago.obtener_pago(
+                config_pais.mp_access_token, pago_id
+            )
+            if datos:
+                return config_pais
+        except ErrorPasarelaPago:
+            continue
+    return None
 
 
 async def _procesar_pago(
     pago_id: str,
     repo_sus: RepositorioSuscripcion,
     repo_pago: RepositorioPago,
+    repo_factura: RepositorioFactura,
     db: AsyncSession,
 ) -> None:
     """Procesa una notificación de pago."""
@@ -345,19 +440,26 @@ async def _procesar_pago(
     if pago_existente:
         return
 
-    # Obtener datos del pago — necesitamos las credenciales
-    # Por ahora usamos AR como fallback; en producción se inferiría del pago
-    config_pais = await repo_sus.obtener_config_pais("AR")
-    if not config_pais:
-        logger.warning("Sin configuración de país para procesar pago %s", pago_id)
-        return
+    # Intentar inferir país: primero buscar suscripción por preapproval
+    # Si no se puede, iterar países activos hasta encontrar credenciales válidas
+    config_pais = None
+    datos_pago = None
 
-    try:
-        datos_pago = await ServicioMercadoPago.obtener_pago(
-            config_pais.mp_access_token, pago_id
-        )
-    except ErrorPasarelaPago:
-        logger.warning("No se pudo obtener datos del pago %s", pago_id)
+    # Intento 1: obtener pago con cada país activo
+    paises = await repo_sus.listar_paises_activos()
+    for cp in paises:
+        try:
+            datos_pago = await ServicioMercadoPago.obtener_pago(
+                cp.mp_access_token, pago_id
+            )
+            if datos_pago:
+                config_pais = cp
+                break
+        except ErrorPasarelaPago:
+            continue
+
+    if not config_pais or not datos_pago:
+        logger.warning("No se pudo obtener datos del pago %s con ningún país", pago_id)
         return
 
     estado_mp = datos_pago.get("status", "")
@@ -378,7 +480,7 @@ async def _procesar_pago(
     monto = int(datos_pago.get("transaction_amount", 0) * 100)
     moneda = datos_pago.get("currency_id", "ARS")
 
-    await repo_pago.crear(
+    pago = await repo_pago.crear(
         monto_centavos=monto,
         moneda=moneda,
         suscripcion_id=suscripcion.id if suscripcion else None,
@@ -391,6 +493,26 @@ async def _procesar_pago(
         datos_mp=datos_pago,
         fecha_pago=datos_pago.get("date_approved"),
     )
+
+    # Si pago aprobado y hay suscripción, activarla y cancelar gratis
+    if estado_local == "aprobado" and suscripcion and suscripcion.estado != "activa":
+        await repo_sus.actualizar_estado(suscripcion.id, "activa", datos_mp=datos_pago)
+        await repo_sus.cancelar_gratis_usuario(suscripcion.usuario_id)
+
+    # Auto-crear factura si el pago fue aprobado y hay usuario
+    if estado_local == "aprobado" and usuario_id:
+        # Idempotencia: verificar que no exista factura para este pago
+        factura_existente = await repo_factura.obtener_por_pago_id(pago.id)
+        if not factura_existente:
+            await repo_factura.crear(
+                usuario_id=usuario_id,
+                pago_id=pago.id,
+                suscripcion_id=suscripcion.id if suscripcion else None,
+                monto_centavos=monto,
+                moneda=moneda,
+                concepto=f"Suscripción CosmicEngine — Pago {pago_id[:8]}",
+                pais_codigo=config_pais.pais_codigo,
+            )
 
 
 @router.get("/pagos")
@@ -415,6 +537,37 @@ async def listar_pagos(
             "detalle_estado": pago.detalle_estado,
             "fecha_pago": pago.fecha_pago.isoformat() if pago.fecha_pago else None,
             "creado_en": pago.creado_en.isoformat() if pago.creado_en else None,
+        })
+
+    return {"exito": True, "datos": resultado}
+
+
+@router.get("/facturas")
+async def listar_facturas(
+    usuario: Usuario = Depends(obtener_usuario_actual),
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+    limite: int = 50,
+    offset: int = 0,
+):
+    """Lista las facturas del usuario."""
+    repo = RepositorioFactura(db)
+    facturas = await repo.listar_por_usuario(usuario.id, limite=limite, offset=offset)
+
+    resultado = []
+    for f in facturas:
+        resultado.append({
+            "id": str(f.id),
+            "numero_factura": f.numero_factura,
+            "estado": f.estado,
+            "monto_centavos": f.monto_centavos,
+            "moneda": f.moneda,
+            "concepto": f.concepto,
+            "pais_codigo": f.pais_codigo,
+            "email_cliente": f.email_cliente,
+            "nombre_cliente": f.nombre_cliente,
+            "periodo_inicio": f.periodo_inicio.isoformat() if f.periodo_inicio else None,
+            "periodo_fin": f.periodo_fin.isoformat() if f.periodo_fin else None,
+            "creado_en": f.creado_en.isoformat() if f.creado_en else None,
         })
 
     return {"exito": True, "datos": resultado}

@@ -54,6 +54,9 @@ class Configuracion(BaseSettings):
     mp_access_token_mx: str = ""
     mp_public_key_mx: str = ""
 
+    # MercadoPago — email del comprador test (para sandbox con test accounts)
+    mp_payer_email_test: str = ""
+
     # MercadoPago — webhook y URLs
     mp_webhook_secret: str = ""
     mp_notification_url: str = "http://localhost:8000/api/v1/suscripcion/webhook"

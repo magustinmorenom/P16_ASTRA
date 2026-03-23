@@ -28,4 +28,7 @@ export {
   usarSuscribirse,
   usarCancelarSuscripcion,
   usarPagos,
+  usarPaises,
+  usarVerificarEstado,
+  usarFacturas,
 } from "./usar-suscripcion";

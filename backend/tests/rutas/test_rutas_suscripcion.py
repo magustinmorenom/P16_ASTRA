@@ -353,7 +353,7 @@ class TestSuscribirse:
         MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
         MockRepoPlan.return_value.obtener_precio = AsyncMock(return_value=precio)
         MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
-        MockRepoSus.return_value.cancelar_activas_usuario = AsyncMock()
+        MockRepoSus.return_value.cancelar_pendientes_usuario = AsyncMock()
 
         suscripcion_creada = _crear_suscripcion_mock(
             usuario_id=uid, plan_id=plan.id, estado="pendiente"
@@ -931,11 +931,12 @@ class TestWebhook:
         MockRepoPago.return_value.crear.assert_not_called()
 
     @pytest.mark.asyncio
+    @patch("app.rutas.v1.suscripcion.RepositorioFactura")
     @patch("app.rutas.v1.suscripcion.RepositorioPlan")
     @patch("app.rutas.v1.suscripcion.RepositorioPago")
     @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
     async def test_webhook_subscription_authorized_payment(
-        self, MockRepoSus, MockRepoPago, MockRepoPlan, cliente
+        self, MockRepoSus, MockRepoPago, MockRepoPlan, MockRepoFactura, cliente
     ):
         """Debe procesar webhook tipo subscription_authorized_payment."""
         config_pais = _crear_config_pais_mock()
@@ -943,10 +944,12 @@ class TestWebhook:
 
         MockRepoSus.return_value.evento_ya_procesado = AsyncMock(return_value=False)
         MockRepoSus.return_value.registrar_evento = AsyncMock()
-        MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
+        MockRepoSus.return_value.listar_paises_activos = AsyncMock(return_value=[config_pais])
         MockRepoSus.return_value.obtener_por_preapproval_id = AsyncMock(return_value=suscripcion)
         MockRepoPago.return_value.obtener_por_mp_pago_id = AsyncMock(return_value=None)
         MockRepoPago.return_value.crear = AsyncMock(return_value=_crear_pago_mock())
+        MockRepoFactura.return_value.obtener_por_pago_id = AsyncMock(return_value=None)
+        MockRepoFactura.return_value.crear = AsyncMock()
 
         with patch.object(
             ServicioMercadoPago, "obtener_pago",
@@ -1236,7 +1239,7 @@ class TestMultiPais:
         MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
         MockRepoPlan.return_value.obtener_precio = AsyncMock(return_value=precio_br)
         MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_br)
-        MockRepoSus.return_value.cancelar_activas_usuario = AsyncMock()
+        MockRepoSus.return_value.cancelar_pendientes_usuario = AsyncMock()
         MockRepoSus.return_value.crear = AsyncMock(
             return_value=_crear_suscripcion_mock(
                 usuario_id=uid, plan_id=plan.id, estado="pendiente", pais="BR"
@@ -1283,7 +1286,7 @@ class TestMultiPais:
         MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
         MockRepoPlan.return_value.obtener_precio = AsyncMock(return_value=precio_mx)
         MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_mx)
-        MockRepoSus.return_value.cancelar_activas_usuario = AsyncMock()
+        MockRepoSus.return_value.cancelar_pendientes_usuario = AsyncMock()
         MockRepoSus.return_value.crear = AsyncMock(
             return_value=_crear_suscripcion_mock(
                 usuario_id=uid, plan_id=plan.id, estado="pendiente", pais="MX"

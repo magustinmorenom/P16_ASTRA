@@ -7,6 +7,9 @@ import type {
   Suscripcion,
   Pago,
   RespuestaCheckout,
+  PaisDisponible,
+  Factura,
+  EstadoVerificacion,
 } from "@/lib/tipos";
 
 /**
@@ -68,5 +71,39 @@ export function usarPagos() {
   return useQuery({
     queryKey: ["pagos"],
     queryFn: () => clienteApi.get<Pago[]>("/suscripcion/pagos"),
+  });
+}
+
+/**
+ * Hook para obtener la lista de países disponibles con MP configurado.
+ */
+export function usarPaises() {
+  return useQuery({
+    queryKey: ["paises"],
+    queryFn: () => clienteApi.get<PaisDisponible[]>("/suscripcion/paises"),
+  });
+}
+
+/**
+ * Hook para verificar el estado de la suscripción (polling post-checkout).
+ * @param habilitado - Si es true, hace polling cada 3 segundos.
+ */
+export function usarVerificarEstado(habilitado: boolean) {
+  return useQuery({
+    queryKey: ["verificar-estado"],
+    queryFn: () =>
+      clienteApi.get<EstadoVerificacion>("/suscripcion/verificar-estado"),
+    enabled: habilitado,
+    refetchInterval: habilitado ? 3000 : false,
+  });
+}
+
+/**
+ * Hook para obtener las facturas del usuario.
+ */
+export function usarFacturas() {
+  return useQuery({
+    queryKey: ["facturas"],
+    queryFn: () => clienteApi.get<Factura[]>("/suscripcion/facturas"),
   });
 }

@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { Icono } from "@/componentes/ui/icono";
+import { IconoAstral, IconoSigno } from "@/componentes/ui/icono-astral";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
 import { Tarjeta } from "@/componentes/ui/tarjeta";
 import { FormularioNacimiento } from "@/componentes/compuestos/formulario-nacimiento";
 import RuedaZodiacal from "@/componentes/visualizaciones/rueda-zodiacal";
 import { usarCartaNatal, usarMisCalculos } from "@/lib/hooks";
-import { obtenerSimbolo } from "@/lib/utilidades/formatear-grado";
 import type { DatosNacimiento, CartaNatal, Planeta, Aspecto } from "@/lib/tipos";
 
 // ---------------------------------------------------------------------------
@@ -107,7 +107,7 @@ export default function PaginaCartaNatal() {
       <div className="max-w-2xl mx-auto p-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#2C2926] flex items-center gap-3">
-            <Icono nombre="estrella" tamaño={28} peso="fill" className="text-[#7C4DFF]" />
+            <IconoAstral nombre="astrologia" tamaño={28} className="text-[#7C4DFF]" />
             Carta Natal
           </h1>
           <p className="mt-2 text-sm text-[#8A8580]">
@@ -231,7 +231,10 @@ export default function PaginaCartaNatal() {
                             </div>
                           </td>
                           <td className="py-3 px-4 text-[#2C2926]">
-                            {planeta.signo}
+                            <div className="flex items-center gap-1.5">
+                              <IconoSigno signo={planeta.signo} tamaño={16} className="text-[#7C4DFF]" />
+                              <span>{planeta.signo}</span>
+                            </div>
                           </td>
                           <td className="py-3 px-4 text-[#7C4DFF] font-mono text-[13px]">
                             {planeta.grado_en_signo.toFixed(2)}°
@@ -262,7 +265,7 @@ export default function PaginaCartaNatal() {
             {/* Aspectos */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Icono nombre="grafico" tamaño={18} className="text-[#7C4DFF]" />
+                <IconoAstral nombre="compatibilidad" tamaño={18} className="text-[#7C4DFF]" />
                 <h3 className="text-[15px] font-semibold text-[#2C2926]">Aspectos</h3>
               </div>
               <div className="flex flex-col gap-2">
@@ -298,7 +301,7 @@ export default function PaginaCartaNatal() {
             {/* Casas */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Icono nombre="casa" tamaño={18} className="text-[#7C4DFF]" />
+                <IconoAstral nombre="bola-cristal" tamaño={18} className="text-[#7C4DFF]" />
                 <h3 className="text-[15px] font-semibold text-[#2C2926]">Casas</h3>
               </div>
               <div className="grid grid-cols-3 gap-1.5">
@@ -316,9 +319,10 @@ export default function PaginaCartaNatal() {
                       <p className={`text-[11px] font-semibold ${esAngular ? "text-white/70" : "text-[#8A8580]"}`}>
                         {ROMANO[casa.numero]}
                       </p>
-                      <p className={`text-[13px] font-medium mt-0.5 ${esAngular ? "" : ""}`}>
-                        {obtenerSimbolo(casa.signo)} {Math.floor(casa.grado_en_signo)}°
-                      </p>
+                      <div className={`flex items-center justify-center gap-1 mt-0.5 ${esAngular ? "" : ""}`}>
+                        <IconoSigno signo={casa.signo} tamaño={14} className={esAngular ? "text-white" : "text-[#7C4DFF]"} />
+                        <span className="text-[13px] font-medium">{Math.floor(casa.grado_en_signo)}°</span>
+                      </div>
                     </div>
                   );
                 })}
@@ -344,7 +348,7 @@ export default function PaginaCartaNatal() {
           ) : (
             <div className="flex flex-col items-center justify-center h-full p-6 text-center">
               <div className="h-16 w-16 rounded-full bg-[#F5F0FF] flex items-center justify-center mb-4">
-                <Icono nombre="estrella" tamaño={28} peso="fill" className="text-[#B388FF]" />
+                <IconoAstral nombre="astrologia" tamaño={28} className="text-[#B388FF]" />
               </div>
               <p className="text-[15px] font-medium text-[#2C2926]">Selecciona un planeta</p>
               <p className="text-[12px] text-[#8A8580] mt-1">
@@ -441,11 +445,9 @@ function PanelDetallePlaneta({
       <div className="flex flex-col items-center mb-5">
         <div
           className="h-14 w-14 rounded-full flex items-center justify-center mb-3"
-          style={{ backgroundColor: `${colorPlaneta}20`, border: `2px solid ${colorPlaneta}` }}
+          style={{ backgroundColor: `${colorPlaneta}20`, border: `2px solid ${colorPlaneta}`, color: colorPlaneta }}
         >
-          <span className="text-2xl" style={{ color: colorPlaneta }}>
-            {obtenerSimbolo(planeta.signo)}
-          </span>
+          <IconoSigno signo={planeta.signo} tamaño={28} />
         </div>
         <h2 className="text-lg font-bold text-[#2C2926]">
           {planeta.nombre} en {planeta.signo}

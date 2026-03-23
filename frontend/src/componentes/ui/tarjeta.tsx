@@ -9,6 +9,9 @@ const variantes = cva("rounded-xl border transition-colors duration-200", {
       violeta:
         "bg-gradient-to-br from-violet-900/60 to-fondo-tarjeta border-violet-700/40",
       dorado: "bg-fondo-tarjeta border-dorado-400/40",
+      cyan: "bg-gradient-to-br from-cyan-500/10 to-fondo-tarjeta border-cyan-400/30",
+      acento:
+        "bg-gradient-to-br from-dorado-400/15 to-fondo-tarjeta border-dorado-400/30",
     },
     padding: {
       sm: "p-3",

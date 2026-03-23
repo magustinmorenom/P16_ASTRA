@@ -70,3 +70,22 @@ Base: `/api/v1/`
 - Todo código nuevo debe seguir el stack definido en `context/ADR-0.md`
 - No introducir dependencias fuera del stack sin aprobación explícita del usuario
 - Los cálculos astronómicos son deterministas: mismo input = mismo output (aprovechar cache)
+
+### Iconografía — Regla obligatoria
+
+**NUNCA usar emojis ni símbolos Unicode zodiacales (♈♉♊♋♌♍♎♏♐♑♒♓) en la interfaz.**
+
+Siempre usar los iconos SVG de `frontend/public/img/icons/` a través de los componentes:
+
+- **`<IconoAstral nombre="..." />`** — Para iconos temáticos de sección (astrologia, numerologia, horoscopo, personal, compatibilidad, bola-cristal, suerte, salud, emocion, libro, carrera, tarot).
+- **`<IconoSigno signo="Aries" />`** — Para representar signos zodiacales. Acepta el nombre del signo en español.
+
+Ambos componentes están en `@/componentes/ui/icono-astral`. Usan CSS `mask-image` + `bg-current`, por lo que heredan el color del texto del padre (usar `className="text-acento"`, `text-primario`, etc.).
+
+| Contexto | Usar | NO usar |
+|----------|------|---------|
+| Header de sección | `<IconoAstral nombre="astrologia">` | `<Icono nombre="estrella">` |
+| Signo zodiacal en tabla/tarjeta | `<IconoSigno signo="Aries">` | `♈` / `obtenerSimbolo()` |
+| Iconos de UI genéricos (flechas, menú, cerrar) | `<Icono nombre="...">` (Phosphor) | — |
+
+Los iconos Phosphor (`<Icono>`) siguen disponibles para UI genérica (navegación, formularios, acciones). Los iconos SVG astrales son obligatorios para contenido esotérico/astrológico.

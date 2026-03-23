@@ -78,9 +78,13 @@ export type {
 // Suscripciones y Pagos
 export type {
   Plan,
+  PrecioPais,
   PrecioPlan,
   Suscripcion,
   Pago,
   RespuestaCheckout,
   EsquemaSuscribirse,
+  PaisDisponible,
+  Factura,
+  EstadoVerificacion,
 } from "./suscripcion";

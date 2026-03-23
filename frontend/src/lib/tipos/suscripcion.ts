@@ -3,6 +3,12 @@
  * Integración con MercadoPago: planes, checkout, webhooks.
  */
 
+/** Precio de un plan en un país específico (dentro de precios_por_pais). */
+export interface PrecioPais {
+  precio_local: number;
+  moneda: string;
+}
+
 /** Plan de suscripción con precios locales opcionales. */
 export interface Plan {
   id: string;
@@ -23,6 +29,8 @@ export interface Plan {
   precio_local: number | null;
   /** Código de moneda local (ej. "ARS", "BRL", "MXN"). null para plan gratis. */
   moneda_local: string | null;
+  /** Precios por país (clave: código ISO, ej. "AR"). */
+  precios_por_pais?: Record<string, PrecioPais>;
 }
 
 /** Precio de un plan en un país específico. */
@@ -91,4 +99,36 @@ export interface EsquemaSuscribirse {
   plan_id: string;
   /** Código ISO del país: "AR", "BR" o "MX". Por defecto: "AR". */
   pais_codigo?: string;
+}
+
+/** País disponible con configuración de MercadoPago. */
+export interface PaisDisponible {
+  pais_codigo: string;
+  pais_nombre: string;
+  moneda: string;
+  tipo_cambio_usd: number;
+}
+
+/** Factura generada automáticamente al aprobarse un pago. */
+export interface Factura {
+  id: string;
+  numero_factura: string;
+  estado: string;
+  monto_centavos: number;
+  moneda: string;
+  concepto: string;
+  pais_codigo: string;
+  email_cliente?: string | null;
+  nombre_cliente?: string | null;
+  periodo_inicio?: string | null;
+  periodo_fin?: string | null;
+  creado_en?: string | null;
+}
+
+/** Estado de verificación post-checkout (polling). */
+export interface EstadoVerificacion {
+  estado: string;
+  es_premium: boolean;
+  plan_slug: string | null;
+  plan_nombre: string | null;
 }

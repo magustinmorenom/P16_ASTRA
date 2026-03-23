@@ -60,6 +60,11 @@ class ServicioMercadoPago:
         Retorna la respuesta de MP incluyendo init_point para redirigir al usuario.
         """
         config = obtener_configuracion()
+
+        # En sandbox con test accounts, usar el email del comprador test
+        # para evitar error "Both payer and collector must be real or test users"
+        email_para_mp = config.mp_payer_email_test or email_pagador
+
         payload = {
             "reason": motivo,
             "auto_recurring": {
@@ -68,11 +73,17 @@ class ServicioMercadoPago:
                 "transaction_amount": monto,
                 "currency_id": moneda,
             },
-            "payer_email": email_pagador,
+            "payer_email": email_para_mp,
             "external_reference": referencia_externa,
-            "back_url": url_retorno,
             "status": "pending",
         }
+
+        # MP requiere back_url con URL válida (no acepta localhost).
+        # En desarrollo, usar placeholder — el usuario vuelve manualmente.
+        if url_retorno and "localhost" not in url_retorno and "127.0.0.1" not in url_retorno:
+            payload["back_url"] = url_retorno
+        else:
+            payload["back_url"] = "https://cosmicengine.app/suscripcion/exito"
 
         try:
             async with httpx.AsyncClient(timeout=30.0) as cliente:
