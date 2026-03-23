@@ -50,6 +50,7 @@ import {
   Compass,
   ShootingStar,
   SunHorizon,
+  Microphone,
   type IconProps as PhosphorIconProps,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utilidades/cn";
@@ -106,6 +107,7 @@ const mapaIconos: Record<string, ComponentType<PhosphorIconProps>> = {
   brujula: Compass,
   estrellaFugaz: ShootingStar,
   retornoSolar: SunHorizon,
+  microfono: Microphone,
 };
 
 export type NombreIcono = keyof typeof mapaIconos;

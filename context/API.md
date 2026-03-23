@@ -35,6 +35,9 @@
 | `GET` | `/api/v1/transits` | No | Posiciones planetarias actuales |
 | **Perfiles** | | | |
 | `POST` | `/api/v1/profile` | Opcional | Crear perfil (vincula a usuario si hay token) |
+| `GET` | `/api/v1/profile/me` | Sí | Perfil del usuario autenticado |
+| `GET` | `/api/v1/profile/me/calculos` | Sí | Cálculos persistidos del usuario |
+| `GET` | `/api/v1/profile/me/pdf` | Sí | Descargar perfil cósmico completo en PDF |
 | `GET` | `/api/v1/profile/{perfil_id}` | No | Obtener perfil por ID |
 | **Suscripciones** | | | |
 | `GET` | `/api/v1/suscripcion/planes` | No | Lista planes con precios por país |
@@ -799,6 +802,126 @@ curl -X POST http://localhost:8000/api/v1/profile \
   }
 }
 ```
+
+---
+
+## GET /api/v1/profile/me — Mi Perfil
+
+Retorna el perfil de nacimiento del usuario autenticado.
+
+### Request
+
+```bash
+curl http://localhost:8000/api/v1/profile/me \
+  -H "Authorization: Bearer <token_acceso>"
+```
+
+### Response (200) — Con perfil
+
+```json
+{
+  "exito": true,
+  "datos": {
+    "id": "uuid",
+    "nombre": "Agustín",
+    "fecha_nacimiento": "1990-01-15",
+    "hora_nacimiento": "14:30:00",
+    "ciudad_nacimiento": "Buenos Aires",
+    "pais_nacimiento": "Argentina",
+    "latitud": -34.6037,
+    "longitud": -58.3816,
+    "zona_horaria": "America/Argentina/Buenos_Aires"
+  }
+}
+```
+
+### Response (200) — Sin perfil
+
+```json
+{
+  "exito": true,
+  "datos": null
+}
+```
+
+### Errores
+
+| Código | Causa |
+|--------|-------|
+| 401 | Sin token o token inválido |
+
+---
+
+## GET /api/v1/profile/me/calculos — Mis Cálculos
+
+Retorna todos los cálculos persistidos del usuario autenticado, agrupados por tipo.
+
+### Request
+
+```bash
+curl http://localhost:8000/api/v1/profile/me/calculos \
+  -H "Authorization: Bearer <token_acceso>"
+```
+
+### Response (200)
+
+```json
+{
+  "exito": true,
+  "datos": {
+    "natal": { ... },
+    "diseno_humano": { ... },
+    "numerologia": { ... },
+    "retorno_solar": { ... }
+  }
+}
+```
+
+> Cada clave contiene el resultado completo del cálculo más reciente, o `null` si no se ha calculado.
+
+### Errores
+
+| Código | Causa |
+|--------|-------|
+| 401 | Sin token o token inválido |
+
+---
+
+## GET /api/v1/profile/me/pdf — Descargar Perfil PDF
+
+Genera y descarga el perfil cósmico completo del usuario en formato PDF con branding ASTRA. Incluye portada, carta astral (planetas, casas, aspectos), diseño humano (tipo, autoridad, centros, canales, activaciones) y numerología.
+
+### Request
+
+```bash
+curl http://localhost:8000/api/v1/profile/me/pdf \
+  -H "Authorization: Bearer <token_acceso>" \
+  -o perfil_cosmico.pdf
+```
+
+### Response (200)
+
+- **Content-Type:** `application/pdf`
+- **Content-Disposition:** `attachment; filename=perfil_cosmico_{nombre}.pdf`
+- **Body:** Archivo PDF binario (múltiples páginas, formato A4)
+
+### Secciones del PDF
+
+| Página | Contenido |
+|--------|-----------|
+| Portada | Logo ASTRA, nombre, datos de nacimiento, fecha de generación |
+| Carta Astral | Ascendente/MC, tabla de planetas (signo, grado, casa, retrógrado, dignidad), casas, aspectos |
+| Diseño Humano | Tipo, autoridad, perfil, definición, cruz de encarnación, centros, canales, activaciones conscientes/inconscientes |
+| Numerología | Sistema, tabla de números (camino de vida, expresión, alma, personalidad, nacimiento, año personal), números maestros |
+
+> Si algún cálculo no está disponible, la sección aparece con el mensaje "Datos no disponibles".
+
+### Errores
+
+| Código | Causa |
+|--------|-------|
+| 401 | Sin token o token inválido |
+| 404 | El usuario no tiene perfil creado |
 
 ---
 

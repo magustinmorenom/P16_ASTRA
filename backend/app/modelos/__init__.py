@@ -12,6 +12,7 @@ from app.modelos.plan import Plan
 from app.modelos.precio_plan import PrecioPlan
 from app.modelos.suscripcion import Suscripcion
 from app.modelos.usuario import Usuario
+from app.modelos.podcast import PodcastEpisodio
 from app.modelos.vinculo_telegram import VinculoTelegram
 
 __all__ = [
@@ -23,6 +24,7 @@ __all__ = [
     "Factura",
     "EventoWebhook",
     "Pago",
+    "PodcastEpisodio",
     "Perfil",
     "Plan",
     "PrecioPlan",

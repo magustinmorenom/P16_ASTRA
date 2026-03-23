@@ -47,6 +47,7 @@ export type {
 // Numerologia
 export type {
   NumeroRespuesta,
+  EtapaVida,
   Numerologia,
 } from "./numerologia";
 
@@ -102,3 +103,10 @@ export type {
   CodigoVinculacion,
   EstadoVinculacion,
 } from "./oraculo";
+
+// Podcasts
+export type {
+  TipoPodcast,
+  SegmentoLetra,
+  PodcastEpisodio,
+} from "./podcast";

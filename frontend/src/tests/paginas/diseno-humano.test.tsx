@@ -67,7 +67,9 @@ describe("PaginaDisenoHumano", () => {
 
     renderConProveedores(<PaginaDisenoHumano />);
 
-    expect(screen.getByText("Diseno Humano de Test")).toBeInTheDocument();
+    // Hero card muestra nombre
+    expect(screen.getByText(/Diseño Humano de Test/)).toBeInTheDocument();
+    // Atributos principales en chips
     expect(screen.getByText("Generador")).toBeInTheDocument();
     // "Sacral" aparece como autoridad y como nombre de centro
     expect(screen.getAllByText("Sacral").length).toBeGreaterThanOrEqual(1);
@@ -94,10 +96,10 @@ describe("PaginaDisenoHumano", () => {
 
     renderConProveedores(<PaginaDisenoHumano />);
 
-    expect(screen.getByText("Cargando tu diseno humano...")).toBeInTheDocument();
+    expect(screen.getByText(/Cargando tu Diseño Humano/)).toBeInTheDocument();
   });
 
-  it("botón 'Nuevo calculo' cambia a formulario", async () => {
+  it("botón 'Nuevo cálculo' cambia a formulario", async () => {
     mockUsarMisCalculos.mockReturnValue({
       data: { natal: null, diseno_humano: HD_MOCK, numerologia: null, retorno_solar: null },
       isLoading: false,
@@ -105,7 +107,7 @@ describe("PaginaDisenoHumano", () => {
 
     renderConProveedores(<PaginaDisenoHumano />);
 
-    await user.click(screen.getByText("Nuevo calculo"));
+    await user.click(screen.getByText("Nuevo cálculo"));
 
     expect(screen.getByTestId("formulario-nacimiento")).toBeInTheDocument();
   });

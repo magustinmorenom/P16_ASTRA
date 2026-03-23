@@ -177,6 +177,8 @@ export function generarMarkdownPerfil(
       ["Personalidad", "personalidad"],
       ["Número de Nacimiento", "numero_nacimiento"],
       ["Año Personal", "anio_personal"],
+      ["Mes Personal", "mes_personal"],
+      ["Día Personal", "dia_personal"],
     ];
 
     lineas.push("| Número | Valor | Descripción |");
@@ -191,6 +193,19 @@ export function generarMarkdownPerfil(
 
     if (num.numeros_maestros_presentes?.length) {
       lineas.push(`**Números Maestros presentes:** ${num.numeros_maestros_presentes.join(", ")}`);
+      lineas.push("");
+    }
+
+    if (num.etapas_de_la_vida?.length) {
+      lineas.push("### Etapas de la Vida (Pináculos)");
+      lineas.push("");
+      lineas.push("| Etapa | Número | Edad | Descripción |");
+      lineas.push("|-------|--------|------|-------------|");
+      for (let i = 0; i < num.etapas_de_la_vida.length; i++) {
+        const e = num.etapas_de_la_vida[i];
+        const rango = e.edad_fin != null ? `${e.edad_inicio}–${e.edad_fin}` : `${e.edad_inicio}+`;
+        lineas.push(`| ${i + 1} | ${e.numero} | ${rango} | ${e.descripcion} |`);
+      }
       lineas.push("");
     }
   }

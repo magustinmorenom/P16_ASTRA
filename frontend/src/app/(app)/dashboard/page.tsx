@@ -4,8 +4,9 @@ import { useMemo } from "react";
 
 import { Icono } from "@/componentes/ui/icono";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
-import { usarTransitos } from "@/lib/hooks";
+import { usarTransitos, usarPodcastHoy, usarGenerarPodcast } from "@/lib/hooks";
 import { useStoreUI, type PistaReproduccion } from "@/lib/stores/store-ui";
+import type { PodcastEpisodio, TipoPodcast } from "@/lib/tipos";
 
 // ---------------------------------------------------------------------------
 // Colores por planeta para transitos rapidos
@@ -21,43 +22,51 @@ const COLORES_PLANETA: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Pistas de podcast estaticas (demo)
+// Config visual de podcasts por tipo
 // ---------------------------------------------------------------------------
-const PISTAS_PODCAST: PistaReproduccion[] = [
+const TIPO_CONFIG: Record<
+  TipoPodcast,
   {
-    id: "podcast-dia",
-    titulo: "Momento Clave de tu Día",
-    subtitulo: "Tu podcast diario para arrancar la mañana con claridad cósmica",
-    tipo: "podcast",
-    duracionSegundos: 720,
+    etiqueta: string;
+    subtitulo: string;
+    icono: "sol" | "destello" | "luna";
+    gradiente: string;
+  }
+> = {
+  dia: {
+    etiqueta: "Momento Clave de tu Día",
+    subtitulo: "Tu podcast diario para arrancar con claridad cósmica",
     icono: "sol",
     gradiente: "from-[#7C4DFF] to-[#D4A234]",
   },
-  {
-    id: "lectura-semana",
-    titulo: "Tu Semana Cósmica",
-    subtitulo: "Lectura y audio con las energías y tránsitos clave de tu semana",
-    tipo: "lectura",
-    duracionSegundos: 480,
+  semana: {
+    etiqueta: "Tu Semana Cósmica",
+    subtitulo: "Energías y tránsitos clave de tu semana",
     icono: "destello",
     gradiente: "from-[#4A2D8C] to-[#B388FF]",
   },
-  {
-    id: "podcast-mes",
-    titulo: "Tu Mes Cósmico",
-    subtitulo: "Resumen mensual profundo con las claves astrológicas de tu ciclo",
-    tipo: "podcast",
-    duracionSegundos: 900,
+  mes: {
+    etiqueta: "Tu Mes Cósmico",
+    subtitulo: "Resumen mensual profundo con las claves de tu ciclo",
     icono: "luna",
     gradiente: "from-[#2D1B69] to-[#7C4DFF]",
   },
-];
+};
+
+const TIPOS: TipoPodcast[] = ["dia", "semana", "mes"];
 
 // ---------------------------------------------------------------------------
 // Componente principal: Dashboard
 // ---------------------------------------------------------------------------
 export default function PaginaDashboard() {
   const { data: transitos, isLoading: cargandoTransitos } = usarTransitos();
+  const generarMutation = usarGenerarPodcast();
+
+  // Polling rápido si hay episodios generándose
+  const { data: episodiosHoy, isLoading: cargandoPodcasts } = usarPodcastHoy(
+    generarMutation.isPending
+  );
+
   const { setPistaActual, pistaActual, reproduciendo, toggleReproduccion } =
     useStoreUI();
 
@@ -74,12 +83,49 @@ export default function PaginaDashboard() {
     (p: { nombre: string }) => p.nombre === "Luna"
   );
 
-  function manejarPlayPodcast(pista: PistaReproduccion) {
-    if (pistaActual?.id === pista.id) {
-      toggleReproduccion();
-    } else {
-      setPistaActual(pista);
+  const mapaEpisodios = useMemo(
+    () => new Map((episodiosHoy ?? []).map((ep) => [ep.tipo, ep])),
+    [episodiosHoy]
+  );
+
+  // Polling rápido si hay episodios en proceso
+  const hayEnProceso = (episodiosHoy ?? []).some(
+    (ep) => ep.estado === "generando_guion" || ep.estado === "generando_audio"
+  );
+  const { data: _ } = usarPodcastHoy(hayEnProceso);
+
+  function manejarPlayPodcast(tipo: TipoPodcast) {
+    const ep = mapaEpisodios.get(tipo);
+    const config = TIPO_CONFIG[tipo];
+
+    if (ep && ep.estado === "listo") {
+      if (pistaActual?.id === ep.id) {
+        toggleReproduccion();
+      } else {
+        const pista: PistaReproduccion = {
+          id: ep.id,
+          titulo: ep.titulo,
+          subtitulo: `Podcast ${config.etiqueta}`,
+          tipo: "podcast",
+          duracionSegundos: ep.duracion_segundos ?? 0,
+          icono: config.icono,
+          gradiente: config.gradiente,
+          url: ep.url_audio,
+          segmentos: ep.segmentos,
+        };
+        setPistaActual(pista);
+      }
+    } else if (!ep || ep.estado === "error") {
+      generarMutation.mutate(tipo);
     }
+  }
+
+  function obtenerEstadoCard(tipo: TipoPodcast) {
+    const ep = mapaEpisodios.get(tipo);
+    if (!ep) return "disponible";
+    if (ep.estado === "listo") return "listo";
+    if (ep.estado === "error") return "error";
+    return "generando";
   }
 
   return (
@@ -140,67 +186,100 @@ export default function PaginaDashboard() {
             Podcasts y Lecturas
           </h2>
           <div className="flex flex-col gap-4">
-            {PISTAS_PODCAST.map((pista) => {
-              const estaReproduciendo =
-                pistaActual?.id === pista.id && reproduciendo;
+            {cargandoPodcasts
+              ? [1, 2, 3].map((i) => (
+                  <Esqueleto key={i} className="h-[88px] rounded-[16px]" />
+                ))
+              : TIPOS.map((tipo) => {
+                  const ep = mapaEpisodios.get(tipo);
+                  const config = TIPO_CONFIG[tipo];
+                  const estado = obtenerEstadoCard(tipo);
+                  const estaReproduciendo =
+                    ep && pistaActual?.id === ep.id && reproduciendo;
+                  const estaGenerandoEste =
+                    generarMutation.isPending &&
+                    generarMutation.variables === tipo;
 
-              return (
-                <div
-                  key={pista.id}
-                  className="bg-white rounded-[16px] p-3.5 flex items-center gap-3.5 group"
-                >
-                  {/* Cover con boton play */}
-                  <button
-                    onClick={() => manejarPlayPodcast(pista)}
-                    className="relative h-[72px] w-[72px] shrink-0 rounded-xl overflow-hidden"
-                  >
+                  return (
                     <div
-                      className={`absolute inset-0 bg-gradient-to-br ${pista.gradiente} flex items-center justify-center`}
+                      key={tipo}
+                      className="bg-white rounded-[16px] p-3.5 flex items-center gap-3.5 group"
                     >
-                      <Icono
-                        nombre={pista.icono}
-                        tamaño={28}
-                        peso="fill"
-                        className="text-white/80 group-hover:opacity-0 transition-opacity"
-                      />
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center">
-                        <Icono
-                          nombre={estaReproduciendo ? "pausar" : "reproducir"}
-                          tamaño={18}
-                          peso="fill"
-                          className="text-[#1A1128]"
-                        />
+                      {/* Cover con boton play */}
+                      <button
+                        onClick={() => manejarPlayPodcast(tipo)}
+                        className="relative h-[72px] w-[72px] shrink-0 rounded-xl overflow-hidden"
+                        disabled={
+                          estado === "generando" || estaGenerandoEste
+                        }
+                      >
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-br ${config.gradiente} flex items-center justify-center`}
+                        >
+                          {estado === "generando" || estaGenerandoEste ? (
+                            <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          ) : (
+                            <Icono
+                              nombre={config.icono}
+                              tamaño={28}
+                              peso="fill"
+                              className="text-white/80 group-hover:opacity-0 transition-opacity"
+                            />
+                          )}
+                        </div>
+                        {estado !== "generando" && !estaGenerandoEste && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center">
+                              <Icono
+                                nombre={
+                                  estado === "listo"
+                                    ? estaReproduciendo
+                                      ? "pausar"
+                                      : "reproducir"
+                                    : "destello"
+                                }
+                                tamaño={18}
+                                peso="fill"
+                                className="text-[#1A1128]"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </button>
+
+                      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                        <p className="text-[15px] font-semibold text-[#2C2926] leading-tight">
+                          {ep?.titulo ?? config.etiqueta}
+                        </p>
+                        <p className="text-xs text-[#8A8580] leading-snug">
+                          {estado === "generando" || estaGenerandoEste
+                            ? ep?.estado === "generando_audio"
+                              ? "Generando audio..."
+                              : "Escribiendo guión..."
+                            : estado === "error"
+                              ? "Error al generar — tocá para reintentar"
+                              : estado === "listo"
+                                ? config.subtitulo
+                                : "Tocá para generar tu podcast"}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-violet-100 text-violet-600">
+                            Podcast
+                          </span>
+                          <span className="text-[10px] text-[#B3ADA7]">
+                            {ep?.duracion_segundos
+                              ? `${Math.floor(ep.duracion_segundos / 60)} min`
+                              : tipo === "dia"
+                                ? "~3 min"
+                                : tipo === "semana"
+                                  ? "~5 min"
+                                  : "~7 min"}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </button>
-
-                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                    <p className="text-[15px] font-semibold text-[#2C2926] leading-tight">
-                      {pista.titulo}
-                    </p>
-                    <p className="text-xs text-[#8A8580] leading-snug">
-                      {pista.subtitulo}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                          pista.tipo === "podcast"
-                            ? "bg-violet-100 text-violet-600"
-                            : "bg-amber-100 text-amber-700"
-                        }`}
-                      >
-                        {pista.tipo === "podcast" ? "Podcast" : "Lectura"}
-                      </span>
-                      <span className="text-[10px] text-[#B3ADA7]">
-                        {Math.floor(pista.duracionSegundos / 60)} min
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })}
           </div>
         </div>
 
@@ -220,28 +299,34 @@ export default function PaginaDashboard() {
             ) : transitos?.planetas ? (
               transitos.planetas
                 .slice(0, 4)
-                .map((p: { nombre: string; grado_en_signo: number; signo: string }) => (
-                  <div
-                    key={p.nombre}
-                    className="flex items-center justify-between bg-[#F5F0FF] rounded-xl px-4 py-3"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="h-2 w-2 rounded-full shrink-0"
-                        style={{
-                          backgroundColor:
-                            COLORES_PLANETA[p.nombre] ?? "#9E9E9E",
-                        }}
-                      />
-                      <span className="text-[13px] font-medium text-[#2C2926]">
-                        {p.nombre}
+                .map(
+                  (p: {
+                    nombre: string;
+                    grado_en_signo: number;
+                    signo: string;
+                  }) => (
+                    <div
+                      key={p.nombre}
+                      className="flex items-center justify-between bg-[#F5F0FF] rounded-xl px-4 py-3"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-2 w-2 rounded-full shrink-0"
+                          style={{
+                            backgroundColor:
+                              COLORES_PLANETA[p.nombre] ?? "#9E9E9E",
+                          }}
+                        />
+                        <span className="text-[13px] font-medium text-[#2C2926]">
+                          {p.nombre}
+                        </span>
+                      </div>
+                      <span className="text-xs text-[#4A2D8C]">
+                        {Math.floor(p.grado_en_signo)}° {p.signo}
                       </span>
                     </div>
-                    <span className="text-xs text-[#4A2D8C]">
-                      {Math.floor(p.grado_en_signo)}° {p.signo}
-                    </span>
-                  </div>
-                ))
+                  )
+                )
             ) : (
               <p className="text-sm text-[#8A8580]">
                 No hay datos de tránsitos disponibles.

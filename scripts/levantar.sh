@@ -79,12 +79,12 @@ verificar_requisitos() {
     fi
 }
 
-# ── Levantar Docker (Postgres + Redis) ──
+# ── Levantar Docker (Postgres + Redis + MinIO) ──
 levantar_docker() {
-    titulo "Levantando Docker (PostgreSQL + Redis)"
+    titulo "Levantando Docker (PostgreSQL + Redis + MinIO)"
 
     cd "$BACKEND_DIR"
-    docker compose up -d postgres redis
+    docker compose up -d postgres redis minio
     ok "Contenedores iniciados"
 
     # Esperar a que Postgres acepte conexiones
@@ -110,6 +110,13 @@ levantar_docker() {
         ok "Redis listo"
     else
         warn "Redis no respondió al ping, pero puede estar inicializándose"
+    fi
+
+    # Verificar MinIO
+    if curl -s --max-time 3 http://localhost:9002/minio/health/live &>/dev/null; then
+        ok "MinIO listo (API: localhost:9002, Console: localhost:9003)"
+    else
+        warn "MinIO puede estar inicializándose — el bucket se crea al iniciar el backend"
     fi
 }
 

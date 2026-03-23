@@ -9,6 +9,14 @@ class NumeroRespuesta(BaseModel):
     descripcion: str
 
 
+class EtapaVida(BaseModel):
+    """Una etapa (pináculo) de la vida con rango de edad."""
+    numero: int
+    descripcion: str
+    edad_inicio: int
+    edad_fin: int | None
+
+
 class NumerologiaRespuesta(BaseModel):
     """Respuesta completa de carta numerológica."""
     nombre: str
@@ -20,4 +28,7 @@ class NumerologiaRespuesta(BaseModel):
     personalidad: NumeroRespuesta
     numero_nacimiento: NumeroRespuesta
     anio_personal: NumeroRespuesta
+    mes_personal: NumeroRespuesta
+    dia_personal: NumeroRespuesta
+    etapas_de_la_vida: list[EtapaVida]
     numeros_maestros_presentes: list[int]

@@ -48,6 +48,7 @@ const enlacesNavegacion: EnlaceNav[] = [
   { etiqueta: "Numerología", ruta: "/numerologia", icono: "numeral" },
   { etiqueta: "Calendario", ruta: "/calendario-cosmico", icono: "planeta" },
   { etiqueta: "Retorno Solar", ruta: "/retorno-solar", icono: "retornoSolar" },
+  { etiqueta: "Podcasts", ruta: "/podcast", icono: "microfono" },
 ];
 
 // ---------------------------------------------------------------------------
