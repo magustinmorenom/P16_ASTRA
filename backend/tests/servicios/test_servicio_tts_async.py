@@ -237,4 +237,4 @@ class TestMercadoPagoPreapprovalPlan:
 
         payload = mock_instance.post.call_args.kwargs["json"]
         assert "localhost" not in payload["back_url"]
-        assert "cosmicengine" in payload["back_url"]
+        assert "theastra.xyz" in payload["back_url"]
