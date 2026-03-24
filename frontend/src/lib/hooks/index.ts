@@ -49,3 +49,6 @@ export {
   usarPodcastHistorial,
   usarGenerarPodcast,
 } from "./usar-podcast";
+
+export { usarEsMobile } from "./usar-es-mobile";
+export { usarAudio } from "./usar-audio";

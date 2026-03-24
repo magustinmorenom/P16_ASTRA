@@ -7,8 +7,10 @@ import Navbar from "@/componentes/layouts/navbar";
 import SidebarNavegacion from "@/componentes/layouts/sidebar-navegacion";
 import ReproductorCosmico from "@/componentes/layouts/reproductor-cosmico";
 import PanelLyrics from "@/componentes/layouts/panel-lyrics";
+import LayoutMobile from "@/componentes/layouts/layout-mobile";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { useStoreUI } from "@/lib/stores/store-ui";
+import { usarEsMobile } from "@/lib/hooks/usar-es-mobile";
 
 export default function LayoutApp({
   children,
@@ -18,6 +20,7 @@ export default function LayoutApp({
   const router = useRouter();
   const { autenticado, cargando, usuario } = useStoreAuth();
   const { pistaActual } = useStoreUI();
+  const esMobile = usarEsMobile();
 
   useEffect(() => {
     if (!cargando && !autenticado) {
@@ -36,6 +39,12 @@ export default function LayoutApp({
     );
   }
 
+  /* ======= MOBILE LAYOUT ======= */
+  if (esMobile) {
+    return <LayoutMobile>{children}</LayoutMobile>;
+  }
+
+  /* ======= DESKTOP LAYOUT (sin cambios) ======= */
   const alturaContenido = pistaActual
     ? "h-[calc(100vh-62px-80px)]"
     : "h-[calc(100vh-62px)]";

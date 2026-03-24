@@ -10,6 +10,7 @@ import BodyGraph from "@/componentes/visualizaciones/body-graph";
 import { usarDisenoHumano, usarMisCalculos, usarMiPerfil } from "@/lib/hooks";
 import { cn } from "@/lib/utilidades/cn";
 import type { DatosNacimiento, DisenoHumano } from "@/lib/tipos";
+import HeaderMobile from "@/componentes/layouts/header-mobile";
 
 // ---------------------------------------------------------------------------
 // Mapeo de claves de centros a nombres legibles
@@ -64,7 +65,8 @@ export default function PaginaDisenoHumano() {
   // -------------------------------------------------------------------------
   if (cargandoCalculos && !modoManual) {
     return (
-      <div className="flex h-full min-h-0 overflow-hidden">
+      <><HeaderMobile titulo="Diseno Humano" mostrarAtras />
+      <div className="flex flex-col lg:flex-row h-full min-h-0 lg:overflow-hidden">
         <section className="flex-1 scroll-sutil bg-[#FAFAFA] p-5 lg:p-[28px_32px] flex flex-col gap-6 overflow-y-auto">
           <h1 className="text-[22px] font-semibold text-[#2C2926] tracking-tight flex items-center gap-3">
             <IconoAstral
@@ -89,6 +91,7 @@ export default function PaginaDisenoHumano() {
           </div>
         </section>
       </div>
+      </>
     );
   }
 
@@ -97,7 +100,8 @@ export default function PaginaDisenoHumano() {
   // -------------------------------------------------------------------------
   if (!datos || modoManual) {
     return (
-      <div className="flex h-full min-h-0 overflow-hidden">
+      <><HeaderMobile titulo="Diseno Humano" mostrarAtras />
+      <div className="flex flex-col lg:flex-row h-full min-h-0 lg:overflow-hidden">
         <section className="flex-1 scroll-sutil bg-[#FAFAFA] p-5 lg:p-[28px_32px] flex flex-col gap-6 overflow-y-auto">
           <div>
             <h1 className="text-[22px] font-semibold text-[#2C2926] tracking-tight flex items-center gap-3">
@@ -133,6 +137,7 @@ export default function PaginaDisenoHumano() {
           </div>
         </section>
       </div>
+      </>
     );
   }
 
@@ -167,7 +172,8 @@ export default function PaginaDisenoHumano() {
   ];
 
   return (
-    <div className="flex h-full min-h-0 overflow-hidden">
+    <><HeaderMobile titulo="Diseno Humano" mostrarAtras />
+    <div className="flex flex-col lg:flex-row h-full min-h-0 lg:overflow-hidden">
       {/* ----------------------------------------------------------------- */}
       {/* Panel Central                                                      */}
       {/* ----------------------------------------------------------------- */}
@@ -419,5 +425,6 @@ export default function PaginaDisenoHumano() {
         </div>
       </aside>
     </div>
+    </>
   );
 }

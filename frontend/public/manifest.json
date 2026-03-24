@@ -1,0 +1,29 @@
+{
+  "name": "ASTRA — Tu mapa cosmico personal",
+  "short_name": "ASTRA",
+  "description": "Carta Astral, Diseno Humano, Numerologia y mas. Tu guia cosmica personalizada.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#2D1B69",
+  "theme_color": "#2D1B69",
+  "orientation": "portrait",
+  "categories": ["lifestyle", "wellness"],
+  "icons": [
+    {
+      "src": "/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

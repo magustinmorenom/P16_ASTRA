@@ -324,3 +324,60 @@ Sin cambios a tests existentes. El pipeline CI ejecuta los 430+ tests de backend
 2. **CD (push a `main`)**: Tras merge, se conecta por SSH a la VM de GCP (`astra-prod`), hace `git pull` y ejecuta `./scripts/desplegar.sh full`. Luego hace health check contra `https://theastra.xyz/health` con hasta 30 reintentos (5 min). Tiene `cancel-in-progress: false` para nunca interrumpir un deploy en curso.
 3. **Secrets necesarios**: `GCP_SSH_PRIVATE_KEY`, `VM_HOST`, `VM_USER` — se configuran en GitHub repo settings.
 4. **Recomendación**: configurar branch protection en `main` para requerir que CI pase antes de permitir merge.
+
+---
+
+## Sesion: Interfaz Mobile App-Like (branch mobile)
+**Fecha:** 2026-03-24 ~02:00 (ARG)
+
+### Que se hizo
+Se creo una interfaz mobile completa que simula una app nativa (estilo Headspace/Co-Star). El layout desktop queda intacto — en viewports < 1024px se activa automaticamente el layout mobile con bottom tab bar, headers contextuales por pagina, mini reproductor flotante y configuracion PWA.
+
+### Archivos creados
+
+| Archivo | Descripcion |
+|---------|-------------|
+| `frontend/src/lib/hooks/usar-es-mobile.ts` | Hook con useSyncExternalStore para detectar viewport mobile (< 1024px) sin hydration mismatch |
+| `frontend/src/lib/hooks/usar-audio.ts` | Hook compartido para gestion del elemento audio (extraido de reproductor-cosmico) |
+| `frontend/src/componentes/layouts/layout-mobile.tsx` | Shell mobile: contenido + mini player + bottom tabs, con safe areas y 100dvh |
+| `frontend/src/componentes/layouts/barra-navegacion-inferior.tsx` | Bottom tab bar con 5 tabs (Inicio, Astral, Descubrir, Podcasts, Perfil), touch targets 44px |
+| `frontend/src/componentes/layouts/header-mobile.tsx` | Header contextual por pagina (titulo, boton atras, transparente, accion derecha) con safe-area-top |
+| `frontend/src/componentes/layouts/mini-reproductor.tsx` | Mini player 56px encima del tab bar + reproductor full-screen expandible con controles completos |
+| `frontend/src/app/(app)/descubrir/page.tsx` | Pagina hub "Descubrir" con grid de cards hacia HD, Numerologia, Calendario, Retorno Solar, Transitos |
+| `frontend/public/manifest.json` | Manifest PWA: standalone, portrait, theme violet, iconos 192/512 |
+| `frontend/public/img/icon-192.png` | Icono PWA 192x192 (placeholder violeta) |
+| `frontend/public/img/icon-512.png` | Icono PWA 512x512 (placeholder violeta) |
+
+### Archivos modificados
+
+| Archivo | Descripcion |
+|---------|-------------|
+| `frontend/src/componentes/layouts/layout-app.tsx` | Condicional: si esMobile renderiza LayoutMobile, si no desktop sin cambios |
+| `frontend/src/componentes/layouts/reproductor-cosmico.tsx` | Refactorizado para usar usarAudio() hook compartido |
+| `frontend/src/lib/stores/store-ui.ts` | Agregado miniReproductorExpandido + toggleMiniReproductor |
+| `frontend/src/app/globals.css` | CSS: safe areas, animaciones (fade-in, slide-up), touch-feedback, mobile-scroll |
+| `frontend/src/app/layout.tsx` | Meta tags PWA: viewport-fit=cover, theme-color, apple-mobile-web-app-capable, manifest |
+| `frontend/src/lib/hooks/index.ts` | Re-exports de usarEsMobile y usarAudio |
+| `frontend/src/app/(app)/dashboard/page.tsx` | HeaderMobile custom con saludo personalizado + avatar |
+| `frontend/src/app/(app)/carta-natal/page.tsx` | HeaderMobile "Carta Astral" con mostrarAtras en 3 returns |
+| `frontend/src/app/(app)/diseno-humano/page.tsx` | HeaderMobile "Diseno Humano" con mostrarAtras |
+| `frontend/src/app/(app)/numerologia/page.tsx` | HeaderMobile "Numerologia" con mostrarAtras |
+| `frontend/src/app/(app)/calendario-cosmico/page.tsx` | HeaderMobile "Calendario Cosmico" con mostrarAtras |
+| `frontend/src/app/(app)/retorno-solar/page.tsx` | HeaderMobile "Retorno Solar" con mostrarAtras |
+| `frontend/src/app/(app)/podcast/page.tsx` | HeaderMobile "Podcasts" (sin back, es tab destination) |
+| `frontend/src/app/(app)/perfil/page.tsx` | HeaderMobile "Mi Perfil" |
+| `frontend/src/app/(app)/suscripcion/page.tsx` | HeaderMobile "Suscripcion" con mostrarAtras |
+| `frontend/src/app/(app)/transitos/page.tsx` | HeaderMobile "Transitos" con mostrarAtras |
+
+### Tests
+No se agregaron tests nuevos. Build pasa limpio (`npm run build` exitoso, 22 paginas generadas incluyendo /descubrir).
+
+### Como funciona
+1. El hook `usarEsMobile()` usa `matchMedia("(max-width: 1023px)")` con `useSyncExternalStore` para detectar mobile de forma SSR-safe
+2. `layout-app.tsx` condiciona: si mobile → renderiza `<LayoutMobile>`, si desktop → layout 3 columnas original sin cambios
+3. `LayoutMobile` estructura: contenido full-height con `100dvh`, mini reproductor flotante encima del tab bar, bottom tab bar fijo con 5 tabs
+4. Cada pagina incluye un `<HeaderMobile>` con `lg:hidden` que solo aparece en mobile — con titulo y boton atras contextual
+5. La pagina `/descubrir` es un hub con cards grandes que enlazan a las secciones secundarias (HD, Numerologia, Calendario, Retorno Solar, Transitos)
+6. El reproductor de audio se extrajo a un hook compartido `usarAudio()` que usan tanto el reproductor desktop como el mini reproductor mobile
+7. El mini reproductor se expande a full-screen con controles completos, cover grande, barra de progreso y volumen
+8. PWA configurada con manifest.json, viewport-fit=cover para safe areas en iPhone, e iconos placeholder

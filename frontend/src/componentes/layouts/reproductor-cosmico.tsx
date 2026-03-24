@@ -1,9 +1,7 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState } from "react";
-import { useStoreUI } from "@/lib/stores/store-ui";
 import { Icono } from "@/componentes/ui/icono";
-import { clienteApi } from "@/lib/api/cliente";
+import { usarAudio } from "@/lib/hooks/usar-audio";
 
 function formatearTiempo(segundos: number): string {
   const min = Math.floor(segundos / 60);
@@ -13,97 +11,27 @@ function formatearTiempo(segundos: number): string {
 
 export default function ReproductorCosmico() {
   const {
+    audioRef,
+    audioUrl,
+    tieneAudio,
     pistaActual,
     reproduciendo,
     progresoSegundos,
     volumen,
     silenciado,
-    segmentoActual,
+    porcentaje,
     toggleReproduccion,
-    setProgreso,
     setVolumen,
     toggleSilencio,
-    setSegmentoActual,
-  } = useStoreUI();
-
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const ultimoPistaId = useRef<string | null>(null);
-
-  // Obtener URL presigned cuando cambia la pista
-  useEffect(() => {
-    if (!pistaActual?.url || pistaActual.id === ultimoPistaId.current) return;
-    ultimoPistaId.current = pistaActual.id;
-    setAudioUrl(null);
-
-    clienteApi
-      .get<{ url: string }>(`/podcast/audio/${pistaActual.id}`)
-      .then((data) => setAudioUrl(data.url))
-      .catch(() => setAudioUrl(null));
-  }, [pistaActual?.id, pistaActual?.url]);
-
-  const tieneAudio = !!audioUrl;
-
-  // Sincronizar play/pause con el elemento audio
-  useEffect(() => {
-    if (!audioRef.current || !tieneAudio) return;
-    if (reproduciendo) {
-      audioRef.current.play().catch(() => {});
-    } else {
-      audioRef.current.pause();
-    }
-  }, [reproduciendo, tieneAudio]);
-
-  // Sincronizar volumen
-  useEffect(() => {
-    if (!audioRef.current) return;
-    audioRef.current.volume = silenciado ? 0 : volumen / 100;
-  }, [volumen, silenciado]);
-
-  // Manejar timeUpdate del audio
-  const handleTimeUpdate = useCallback(() => {
-    if (!audioRef.current) return;
-    const tiempo = audioRef.current.currentTime;
-    setProgreso(tiempo);
-
-    // Calcular segmento activo
-    if (pistaActual?.segmentos) {
-      const idx = pistaActual.segmentos.findIndex(
-        (s) => tiempo >= s.inicio_seg && tiempo < s.fin_seg
-      );
-      if (idx !== -1 && idx !== segmentoActual) {
-        setSegmentoActual(idx);
-      }
-    }
-  }, [pistaActual, segmentoActual, setProgreso, setSegmentoActual]);
-
-  // Manejar fin del audio
-  const handleEnded = useCallback(() => {
-    setProgreso(0);
-    setSegmentoActual(0);
-    useStoreUI.setState({ reproduciendo: false });
-  }, [setProgreso, setSegmentoActual]);
-
-  // Manejar seek en la barra de progreso
-  const handleSeek = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const valor = Number(e.target.value);
-      setProgreso(valor);
-      if (audioRef.current && tieneAudio) {
-        audioRef.current.currentTime = valor;
-      }
-    },
-    [setProgreso, tieneAudio]
-  );
+    manejarSeek,
+    manejarCerrar,
+    handleTimeUpdate,
+    handleEnded,
+  } = usarAudio();
 
   if (!pistaActual) {
     return null;
   }
-
-  const porcentaje =
-    pistaActual.duracionSegundos > 0
-      ? (progresoSegundos / pistaActual.duracionSegundos) * 100
-      : 0;
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-50 h-[80px] bg-[#1A1128] flex items-center px-4 lg:px-6 gap-4">
@@ -111,7 +39,7 @@ export default function ReproductorCosmico() {
       {tieneAudio && (
         <audio
           ref={audioRef}
-          src={audioUrl}
+          src={audioUrl!}
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleEnded}
           preload="auto"
@@ -121,20 +49,7 @@ export default function ReproductorCosmico() {
       {/* Izquierda: Cover + info + cerrar */}
       <div className="flex items-center gap-3 w-[25%] min-w-0">
         <button
-          onClick={() => {
-            if (audioRef.current) {
-              audioRef.current.pause();
-              audioRef.current.src = "";
-            }
-            setAudioUrl(null);
-            ultimoPistaId.current = null;
-            useStoreUI.setState({
-              pistaActual: null,
-              reproduciendo: false,
-              progresoSegundos: 0,
-              segmentoActual: 0,
-            });
-          }}
+          onClick={manejarCerrar}
           className="text-[#B388FF]/60 hover:text-[#F5F0FF] transition-colors shrink-0"
           title="Cerrar reproductor"
         >
@@ -205,7 +120,7 @@ export default function ReproductorCosmico() {
               min={0}
               max={pistaActual.duracionSegundos}
               value={progresoSegundos}
-              onChange={handleSeek}
+              onChange={(e) => manejarSeek(Number(e.target.value))}
               className="absolute inset-0 w-full opacity-0 cursor-pointer"
             />
           </div>

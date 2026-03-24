@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import HeaderMobile from "@/componentes/layouts/header-mobile";
 import { Icono } from "@/componentes/ui/icono";
 import { IconoAstral, IconoSigno } from "@/componentes/ui/icono-astral";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
@@ -92,18 +93,23 @@ export default function PaginaCartaNatal() {
   // --- Estado de carga ---
   if (cargandoCalculos && !modoManual) {
     return (
+      <>
+      <HeaderMobile titulo="Carta Astral" mostrarAtras />
       <div className="flex items-center justify-center h-full">
         <div className="text-center space-y-4">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#7C4DFF] border-t-transparent mx-auto" />
           <p className="text-[#8A8580]">Cargando tu carta natal...</p>
         </div>
       </div>
+      </>
     );
   }
 
   // --- Sin datos: formulario ---
   if (!datos || modoManual) {
     return (
+      <>
+      <HeaderMobile titulo="Carta Astral" mostrarAtras />
       <div className="max-w-2xl mx-auto p-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#2C2926] flex items-center gap-3">
@@ -130,6 +136,7 @@ export default function PaginaCartaNatal() {
           </div>
         )}
       </div>
+      </>
     );
   }
 
@@ -142,7 +149,9 @@ export default function PaginaCartaNatal() {
 
   // --- Vista con resultados ---
   return (
-    <div className="flex h-full min-h-0 overflow-hidden">
+    <>
+    <HeaderMobile titulo="Carta Astral" mostrarAtras />
+    <div className="flex flex-col lg:flex-row h-full min-h-0 lg:overflow-hidden">
       {/* ================================================================ */}
       {/* Panel Central                                                     */}
       {/* ================================================================ */}
@@ -403,6 +412,7 @@ export default function PaginaCartaNatal() {
         </div>
       </aside>
     </div>
+    </>
   );
 }
 

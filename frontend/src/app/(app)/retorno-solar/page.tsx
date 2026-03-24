@@ -13,6 +13,7 @@ import { usarRetornoSolar, usarMiPerfil, usarMisCalculos } from "@/lib/hooks";
 import { perfilADatosNacimiento } from "@/lib/utilidades/perfil-a-datos";
 import { formatearGrado } from "@/lib/utilidades/formatear-grado";
 import type { DatosNacimiento, RetornoSolar } from "@/lib/tipos";
+import HeaderMobile from "@/componentes/layouts/header-mobile";
 
 /** Colores segun el tipo de aspecto */
 function colorAspecto(tipo: string): string {
@@ -92,10 +93,12 @@ export default function PaginaRetornoSolar() {
   // Estado de carga: esperando perfil/calculos o calculando automaticamente
   if (cargandoPerfil || cargandoCalculos || (perfil && !datos && mutacion.isPending)) {
     return (
+      <><HeaderMobile titulo="Retorno Solar" mostrarAtras />
       <div className="max-w-2xl mx-auto flex flex-col items-center justify-center py-20 gap-4">
         <div className="animate-spin rounded-full h-10 w-10 border-2 border-acento border-t-transparent" />
         <p className="text-texto-secundario">Cargando tu revolucion solar...</p>
       </div>
+      </>
     );
   }
 
@@ -111,6 +114,7 @@ export default function PaginaRetornoSolar() {
   // Estado inicial: formulario (fallback cuando no hay perfil o se reseteo)
   if (!datos) {
     return (
+      <><HeaderMobile titulo="Retorno Solar" mostrarAtras />
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-texto flex items-center gap-3">
@@ -150,12 +154,14 @@ export default function PaginaRetornoSolar() {
           </div>
         )}
       </div>
+      </>
     );
   }
 
   const carta = datos.carta_retorno;
 
   return (
+    <><HeaderMobile titulo="Retorno Solar" mostrarAtras />
     <div className="max-w-5xl mx-auto space-y-8">
       {/* Encabezado */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -444,5 +450,6 @@ export default function PaginaRetornoSolar() {
         </>
       )}
     </div>
+    </>
   );
 }

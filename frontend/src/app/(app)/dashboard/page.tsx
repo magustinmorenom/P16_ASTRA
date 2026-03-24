@@ -4,8 +4,10 @@ import { useMemo } from "react";
 
 import { Icono } from "@/componentes/ui/icono";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
+import HeaderMobile from "@/componentes/layouts/header-mobile";
 import { usarTransitos, usarPodcastHoy, usarGenerarPodcast } from "@/lib/hooks";
 import { useStoreUI, type PistaReproduccion } from "@/lib/stores/store-ui";
+import { useStoreAuth } from "@/lib/stores/store-auth";
 import type { PodcastEpisodio, TipoPodcast } from "@/lib/tipos";
 
 // ---------------------------------------------------------------------------
@@ -59,6 +61,7 @@ const TIPOS: TipoPodcast[] = ["dia", "semana", "mes"];
 // Componente principal: Dashboard
 // ---------------------------------------------------------------------------
 export default function PaginaDashboard() {
+  const { usuario } = useStoreAuth();
   const { data: transitos, isLoading: cargandoTransitos } = usarTransitos();
   const generarMutation = usarGenerarPodcast();
 
@@ -128,14 +131,42 @@ export default function PaginaDashboard() {
     return "generando";
   }
 
+  const nombreSaludo = (usuario?.nombre ?? "Viajero")
+    .split(" ")[0]
+    .toLowerCase()
+    .replace(/^\w/, (c: string) => c.toUpperCase());
+
+  const horaActual = new Date().getHours();
+  const saludo =
+    horaActual < 12
+      ? "Buenos dias"
+      : horaActual < 19
+        ? "Buenas tardes"
+        : "Buenas noches";
+
   return (
-    <div className="flex h-full min-h-0 overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-full min-h-0 lg:overflow-hidden">
+      {/* Header mobile — saludo personalizado */}
+      <HeaderMobile>
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            {nombreSaludo[0]}
+          </div>
+          <div>
+            <p className="text-[15px] font-semibold text-[#2C2926]">
+              {saludo}, {nombreSaludo}
+            </p>
+            <p className="text-[11px] text-[#8A8580] capitalize">{fechaHoy}</p>
+          </div>
+        </div>
+      </HeaderMobile>
+
       {/* ================================================================ */}
       {/* Panel Central                                                     */}
       {/* ================================================================ */}
       <section className="flex-1 scroll-sutil bg-[#FAFAFA] p-5 lg:p-[28px_32px] flex flex-col gap-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+        {/* Header desktop */}
+        <div className="hidden lg:flex items-center justify-between">
           <h1 className="text-[22px] font-semibold text-[#2C2926] tracking-tight">
             Influencias Cósmicas de Hoy
           </h1>
