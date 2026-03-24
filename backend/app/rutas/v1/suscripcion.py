@@ -3,7 +3,7 @@
 import io
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import httpx
 from fastapi import APIRouter, Depends, Request
@@ -238,6 +238,12 @@ async def mi_suscripcion(
     repo_plan = RepositorioPlan(db)
     plan = await repo_plan.obtener_por_id(suscripcion.plan_id)
 
+    # Cancelación programada: suscripción activa con fecha_fin seteada
+    cancelacion_programada = (
+        suscripcion.estado == "activa"
+        and suscripcion.fecha_fin is not None
+    )
+
     return {
         "exito": True,
         "datos": {
@@ -251,6 +257,7 @@ async def mi_suscripcion(
             "fecha_inicio": suscripcion.fecha_inicio.isoformat() if suscripcion.fecha_inicio else None,
             "fecha_fin": suscripcion.fecha_fin.isoformat() if suscripcion.fecha_fin else None,
             "creado_en": suscripcion.creado_en.isoformat() if suscripcion.creado_en else None,
+            "cancelacion_programada": cancelacion_programada,
         },
     }
 
@@ -345,18 +352,41 @@ async def cancelar_suscripcion(
     usuario: Usuario = Depends(obtener_usuario_actual),
     db: AsyncSession = Depends(_obtener_db_placeholder),
 ):
-    """Cancela la suscripción activa del usuario."""
+    """Cancela la suscripción activa del usuario.
+
+    Programa la cancelación para fin del período pagado (gracia).
+    El usuario mantiene acceso premium hasta que venza el período.
+    La degradación a gratis ocurre automáticamente vía lazy-expire.
+    """
     repo_sus = RepositorioSuscripcion(db)
-    repo_plan = RepositorioPlan(db)
 
     suscripcion = await repo_sus.obtener_activa(usuario.id)
     if not suscripcion:
         raise SuscripcionNoEncontrada("No tiene una suscripción activa para cancelar")
 
-    # Si tiene preapproval en MP, cancelar allí
+    # Calcular fecha fin de período
+    fecha_fin_periodo = None
+
+    # Si tiene preapproval en MP, obtener next_payment_date y cancelar
     if suscripcion.mp_preapproval_id:
         config_pais = await repo_sus.obtener_config_pais(suscripcion.pais_codigo)
         if config_pais:
+            # Intentar obtener next_payment_date antes de cancelar
+            try:
+                datos_mp = await ServicioMercadoPago.obtener_preapproval(
+                    config_pais.mp_access_token,
+                    suscripcion.mp_preapproval_id,
+                )
+                next_payment = _parsear_fecha(datos_mp.get("next_payment_date"))
+                if next_payment:
+                    fecha_fin_periodo = next_payment
+            except ErrorPasarelaPago:
+                logger.warning(
+                    "No se pudo obtener datos de preapproval %s",
+                    suscripcion.mp_preapproval_id,
+                )
+
+            # Cancelar preapproval en MP
             try:
                 await ServicioMercadoPago.cancelar_preapproval(
                     access_token=config_pais.mp_access_token,
@@ -368,18 +398,16 @@ async def cancelar_suscripcion(
                     suscripcion.mp_preapproval_id,
                 )
 
-    # Cancelar localmente
-    await repo_sus.actualizar_estado(suscripcion.id, "cancelada")
+    # Fallback: fecha_inicio + 30 días
+    if not fecha_fin_periodo and suscripcion.fecha_inicio:
+        fecha_fin_periodo = suscripcion.fecha_inicio + timedelta(days=30)
 
-    # Crear suscripción gratis automáticamente
-    plan_gratis = await repo_plan.obtener_por_slug("gratis")
-    if plan_gratis:
-        await repo_sus.crear(
-            usuario_id=usuario.id,
-            plan_id=plan_gratis.id,
-            pais_codigo=suscripcion.pais_codigo,
-            estado="activa",
-        )
+    # Último recurso: ahora (cancelación inmediata)
+    if not fecha_fin_periodo:
+        fecha_fin_periodo = datetime.now(timezone.utc)
+
+    # Mantener activa con fecha_fin programada (gracia)
+    await repo_sus.programar_cancelacion(suscripcion.id, fecha_fin_periodo)
 
     # Email de cancelación (fire-and-forget)
     try:
@@ -389,7 +417,11 @@ async def cancelar_suscripcion(
     except Exception:
         logger.warning("No se pudo enviar email de cancelación a %s", usuario.email)
 
-    return {"exito": True, "mensaje": "Suscripción cancelada correctamente"}
+    fecha_str = fecha_fin_periodo.strftime("%d/%m/%Y")
+    return {
+        "exito": True,
+        "mensaje": f"Cancelación programada. Tu plan Premium sigue activo hasta el {fecha_str}.",
+    }
 
 
 @router.post("/webhook")
@@ -512,6 +544,19 @@ async def _procesar_preapproval(
     )
     estado_mp = datos_mp.get("status", "")
     estado_local = MAPA_ESTADOS_SUSCRIPCION.get(estado_mp, suscripcion.estado)
+
+    # Si tiene cancelación con gracia programada, no procesar cancelación desde MP
+    if (
+        estado_local == "cancelada"
+        and suscripcion.estado == "activa"
+        and suscripcion.fecha_fin is not None
+    ):
+        logger.info(
+            "Preapproval %s cancelado en MP, gracia activa hasta %s — ignorando",
+            preapproval_id,
+            suscripcion.fecha_fin,
+        )
+        return
 
     await repo_sus.actualizar_estado(suscripcion.id, estado_local, datos_mp=datos_mp)
 

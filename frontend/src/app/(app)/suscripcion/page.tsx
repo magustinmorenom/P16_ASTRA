@@ -22,7 +22,7 @@ import {
   usarGenerarCodigo,
   usarDesvincular,
 } from "@/lib/hooks";
-import { formatearFechaHora, formatearFecha } from "@/lib/utilidades/formatear-fecha";
+import { formatearFechaHora, formatearFecha, formatearFechaCorta } from "@/lib/utilidades/formatear-fecha";
 import type { Plan } from "@/lib/tipos";
 import type { RespuestaSincronizar } from "@/lib/hooks/usar-suscripcion";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
@@ -479,8 +479,38 @@ export default function PaginaSuscripcion() {
                 <span className="font-semibold text-texto">
                   Plan: {miSuscripcion.plan_nombre ?? "Gratis"}
                 </span>
-                {badgeEstado(miSuscripcion.estado)}
+                {miSuscripcion.cancelacion_programada ? (
+                  <Badge variante="advertencia">
+                    Activo hasta {miSuscripcion.fecha_fin ? formatearFechaCorta(miSuscripcion.fecha_fin) : "—"}
+                  </Badge>
+                ) : (
+                  badgeEstado(miSuscripcion.estado)
+                )}
               </div>
+
+              {/* Banner informativo de cancelación programada */}
+              {miSuscripcion.cancelacion_programada && (
+                <div className="flex flex-col gap-2 rounded-lg border border-advertencia/30 bg-advertencia/5 p-4">
+                  <p className="text-sm text-texto">
+                    Tu suscripcion Premium sigue activa hasta el{" "}
+                    <span className="font-semibold">
+                      {miSuscripcion.fecha_fin ? formatearFecha(miSuscripcion.fecha_fin) : "—"}
+                    </span>.
+                    Despues de esa fecha, tu plan cambiara automaticamente a Gratis.
+                  </p>
+                  <p className="text-xs text-texto-terciario">
+                    Podes verificar la cancelacion en{" "}
+                    <a
+                      href="https://www.mercadopago.com.ar/subscriptions"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-acento underline"
+                    >
+                      mercadopago.com.ar &gt; Suscripciones
+                    </a>
+                  </p>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-texto-secundario">
                 <div>
@@ -501,8 +531,10 @@ export default function PaginaSuscripcion() {
                 </div>
               </div>
 
+              {/* Botón cancelar: solo si activa, premium, y NO tiene cancelación programada */}
               {miSuscripcion.estado === "activa" &&
-                miSuscripcion.plan_slug !== "gratis" && (
+                miSuscripcion.plan_slug !== "gratis" &&
+                !miSuscripcion.cancelacion_programada && (
                   <div className="pt-2">
                     {!mostrarConfirmacionCancelar ? (
                       <Boton
@@ -517,7 +549,9 @@ export default function PaginaSuscripcion() {
                           Estas seguro que queres cancelar tu suscripcion Premium?
                         </p>
                         <p className="text-xs text-texto-secundario">
-                          Se cancelara el cobro recurrente en MercadoPago y volveras al plan Gratis.
+                          Se cancelara el cobro recurrente en MercadoPago.
+                          Seguiras con acceso Premium hasta fin del periodo pagado,
+                          luego tu plan cambiara a Gratis automaticamente.
                           Podes volver a suscribirte en cualquier momento.
                         </p>
                         <div className="flex items-center gap-3">

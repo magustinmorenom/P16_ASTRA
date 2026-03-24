@@ -51,6 +51,9 @@ class RepositorioSuscripcion:
 
         Prioriza 'activa' sobre 'pendiente' para que /me muestre el plan
         real del usuario y no una suscripción pendiente de checkout.
+
+        Lazy-expire: si la suscripción activa tiene fecha_fin y ya venció,
+        la marca como cancelada y crea una gratis automáticamente.
         """
         from sqlalchemy import case as sql_case
 
@@ -67,7 +70,44 @@ class RepositorioSuscripcion:
             )
             .limit(1)
         )
-        return resultado.scalars().first()
+        suscripcion = resultado.scalars().first()
+
+        # Lazy-expire: si tiene fecha_fin y ya pasó, cancelar y crear gratis
+        if (
+            suscripcion
+            and suscripcion.estado == "activa"
+            and suscripcion.fecha_fin
+            and suscripcion.fecha_fin < datetime.now(timezone.utc)
+        ):
+            await self.sesion.execute(
+                update(Suscripcion)
+                .where(Suscripcion.id == suscripcion.id)
+                .values(
+                    estado="cancelada",
+                    actualizado_en=datetime.now(timezone.utc),
+                )
+            )
+            # Crear suscripción gratis
+            resultado_plan = await self.sesion.execute(
+                select(Plan).where(Plan.slug == "gratis")
+            )
+            plan_gratis = resultado_plan.scalar_one_or_none()
+            if plan_gratis:
+                nueva_gratis = Suscripcion(
+                    usuario_id=usuario_id,
+                    plan_id=plan_gratis.id,
+                    pais_codigo=suscripcion.pais_codigo,
+                    estado="activa",
+                    fecha_inicio=datetime.now(timezone.utc),
+                )
+                self.sesion.add(nueva_gratis)
+                await self.sesion.commit()
+                await self.sesion.refresh(nueva_gratis)
+                return nueva_gratis
+            await self.sesion.commit()
+            return None
+
+        return suscripcion
 
     async def obtener_por_id(self, suscripcion_id: uuid.UUID) -> Suscripcion | None:
         """Obtiene una suscripción por su ID."""
@@ -107,6 +147,26 @@ class RepositorioSuscripcion:
             update(Suscripcion)
             .where(Suscripcion.id == suscripcion_id)
             .values(mp_preapproval_id=mp_preapproval_id)
+        )
+        await self.sesion.commit()
+
+    async def programar_cancelacion(
+        self,
+        suscripcion_id: uuid.UUID,
+        fecha_fin: datetime,
+    ) -> None:
+        """Programa la cancelación de una suscripción sin cambiar su estado.
+
+        Setea fecha_fin para que el lazy-expire en obtener_activa() la
+        degrade a gratis cuando venza el período pagado.
+        """
+        await self.sesion.execute(
+            update(Suscripcion)
+            .where(Suscripcion.id == suscripcion_id)
+            .values(
+                fecha_fin=fecha_fin,
+                actualizado_en=datetime.now(timezone.utc),
+            )
         )
         await self.sesion.commit()
 

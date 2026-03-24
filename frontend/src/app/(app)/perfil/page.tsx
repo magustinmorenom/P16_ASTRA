@@ -25,6 +25,7 @@ import {
 } from "@/lib/hooks";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import type { DatosNacimiento } from "@/lib/tipos";
+import { formatearFechaCorta } from "@/lib/utilidades/formatear-fecha";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
 
 export default function PaginaPerfil() {
@@ -586,9 +587,15 @@ export default function PaginaPerfil() {
             <p className="text-xs text-texto-terciario uppercase tracking-wider mb-1">
               Estado de suscripcion
             </p>
-            <Badge variante={badgeSuscripcion.variante}>
-              {badgeSuscripcion.texto}
-            </Badge>
+            {miSuscripcion?.cancelacion_programada ? (
+              <Badge variante="advertencia">
+                Activo hasta {miSuscripcion.fecha_fin ? formatearFechaCorta(miSuscripcion.fecha_fin) : "—"}
+              </Badge>
+            ) : (
+              <Badge variante={badgeSuscripcion.variante}>
+                {badgeSuscripcion.texto}
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -709,8 +716,8 @@ export default function PaginaPerfil() {
             </div>
           )}
 
-          {/* --- Cancelar suscripción (solo premium activa) --- */}
-          {esPremium && miSuscripcion?.estado === "activa" && miSuscripcion?.plan_slug !== "gratis" && (
+          {/* --- Cancelar suscripción (solo premium activa sin cancelación programada) --- */}
+          {esPremium && miSuscripcion?.estado === "activa" && miSuscripcion?.plan_slug !== "gratis" && !miSuscripcion?.cancelacion_programada && (
             <div>
               <button
                 type="button"
@@ -733,7 +740,9 @@ export default function PaginaPerfil() {
                   {!mostrarConfirmacionCancelar ? (
                     <div className="flex flex-col gap-3">
                       <p className="text-sm text-texto-secundario">
-                        Se cancelara el cobro recurrente en MercadoPago y volveras al plan Gratis.
+                        Se cancelara el cobro recurrente en MercadoPago.
+                        Seguiras con acceso Premium hasta fin del periodo pagado,
+                        luego tu plan cambiara a Gratis automaticamente.
                         Podes volver a suscribirte en cualquier momento.
                       </p>
                       <Boton

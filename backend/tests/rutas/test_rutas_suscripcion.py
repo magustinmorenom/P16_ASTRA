@@ -542,17 +542,15 @@ class TestCancelar:
 
     @pytest.mark.asyncio
     @patch("app.rutas.v1.suscripcion.ServicioMercadoPago")
-    @patch("app.rutas.v1.suscripcion.RepositorioPlan")
     @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
     @patch("app.dependencias_auth.RepositorioUsuario")
     async def test_cancelar_exitoso(
-        self, MockRepoAuth, MockRepoSus, MockRepoPlan, MockMP,
+        self, MockRepoAuth, MockRepoSus, MockMP,
         cliente, redis_falso
     ):
-        """Debe cancelar la suscripción y crear plan gratis."""
+        """Debe cancelar en MP y programar gracia (no degradar inmediatamente)."""
         uid = uuid.uuid4()
         usuario = _crear_usuario_mock(uid=uid)
-        plan_gratis = _crear_plan_mock(nombre="Gratis", slug="gratis", precio_usd=0)
 
         suscripcion = _crear_suscripcion_mock(
             usuario_id=uid, mp_preapproval_id="mp_123"
@@ -562,11 +560,9 @@ class TestCancelar:
         MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
         MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=suscripcion)
         MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
-        MockRepoSus.return_value.actualizar_estado = AsyncMock()
-        MockRepoSus.return_value.crear = AsyncMock(
-            return_value=_crear_suscripcion_mock(plan_id=plan_gratis.id)
-        )
-        MockRepoPlan.return_value.obtener_por_slug = AsyncMock(return_value=plan_gratis)
+        MockRepoSus.return_value.programar_cancelacion = AsyncMock()
+
+        MockMP.obtener_preapproval = AsyncMock(return_value={"status": "authorized"})
         MockMP.cancelar_preapproval = AsyncMock(return_value={"status": "cancelled"})
 
         token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
@@ -578,6 +574,7 @@ class TestCancelar:
 
         assert resp.status_code == 200
         assert resp.json()["exito"] is True
+        MockRepoSus.return_value.programar_cancelacion.assert_called_once()
 
     @pytest.mark.asyncio
     @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
@@ -603,17 +600,15 @@ class TestCancelar:
 
     @pytest.mark.asyncio
     @patch("app.rutas.v1.suscripcion.ServicioMercadoPago")
-    @patch("app.rutas.v1.suscripcion.RepositorioPlan")
     @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
     @patch("app.dependencias_auth.RepositorioUsuario")
     async def test_cancelar_fallo_mp_continua(
-        self, MockRepoAuth, MockRepoSus, MockRepoPlan, MockMP,
+        self, MockRepoAuth, MockRepoSus, MockMP,
         cliente, redis_falso
     ):
-        """Si MP falla, debe cancelar localmente de todos modos."""
+        """Si MP falla al cancelar, debe programar gracia de todos modos."""
         uid = uuid.uuid4()
         usuario = _crear_usuario_mock(uid=uid)
-        plan_gratis = _crear_plan_mock(nombre="Gratis", slug="gratis", precio_usd=0)
         suscripcion = _crear_suscripcion_mock(
             usuario_id=uid, mp_preapproval_id="mp_456"
         )
@@ -622,13 +617,12 @@ class TestCancelar:
         MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
         MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=suscripcion)
         MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
-        MockRepoSus.return_value.actualizar_estado = AsyncMock()
-        MockRepoSus.return_value.crear = AsyncMock(
-            return_value=_crear_suscripcion_mock(plan_id=plan_gratis.id)
-        )
-        MockRepoPlan.return_value.obtener_por_slug = AsyncMock(return_value=plan_gratis)
+        MockRepoSus.return_value.programar_cancelacion = AsyncMock()
 
         from app.excepciones import ErrorPasarelaPago
+        MockMP.obtener_preapproval = AsyncMock(
+            side_effect=ErrorPasarelaPago("Error MP")
+        )
         MockMP.cancelar_preapproval = AsyncMock(
             side_effect=ErrorPasarelaPago("Error MP")
         )
@@ -642,18 +636,17 @@ class TestCancelar:
 
         # Debe ser exitoso a pesar del fallo de MP
         assert resp.status_code == 200
+        MockRepoSus.return_value.programar_cancelacion.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch("app.rutas.v1.suscripcion.RepositorioPlan")
     @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
     @patch("app.dependencias_auth.RepositorioUsuario")
     async def test_cancelar_sin_preapproval_no_llama_mp(
-        self, MockRepoAuth, MockRepoSus, MockRepoPlan, cliente, redis_falso
+        self, MockRepoAuth, MockRepoSus, cliente, redis_falso
     ):
         """Suscripción local sin preapproval no debe llamar a MP."""
         uid = uuid.uuid4()
         usuario = _crear_usuario_mock(uid=uid)
-        plan_gratis = _crear_plan_mock(nombre="Gratis", slug="gratis", precio_usd=0)
 
         # Suscripción sin mp_preapproval_id (plan gratis local)
         suscripcion = _crear_suscripcion_mock(
@@ -662,11 +655,7 @@ class TestCancelar:
 
         MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
         MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=suscripcion)
-        MockRepoSus.return_value.actualizar_estado = AsyncMock()
-        MockRepoSus.return_value.crear = AsyncMock(
-            return_value=_crear_suscripcion_mock(plan_id=plan_gratis.id)
-        )
-        MockRepoPlan.return_value.obtener_por_slug = AsyncMock(return_value=plan_gratis)
+        MockRepoSus.return_value.programar_cancelacion = AsyncMock()
 
         token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
 
@@ -676,11 +665,13 @@ class TestCancelar:
                 headers={"Authorization": f"Bearer {token}"},
             )
 
-            # No debe haber llamado a cancelar_preapproval
+            # No debe haber llamado a cancelar_preapproval ni obtener_preapproval
             MockMP.cancelar_preapproval.assert_not_called()
+            MockMP.obtener_preapproval.assert_not_called()
 
         assert resp.status_code == 200
         assert resp.json()["exito"] is True
+        MockRepoSus.return_value.programar_cancelacion.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_cancelar_sin_token(self, cliente):

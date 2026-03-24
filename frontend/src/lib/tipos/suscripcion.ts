@@ -63,6 +63,8 @@ export interface Suscripcion {
   fecha_fin?: string | null;
   /** Fecha ISO 8601 de creación del registro. */
   creado_en?: string | null;
+  /** True si la suscripción está activa pero con cancelación programada (gracia). */
+  cancelacion_programada?: boolean;
 }
 
 /** Registro de un pago procesado. */

@@ -358,3 +358,155 @@ No se agregaron tests nuevos. Build pasa limpio (`npm run build` exitoso, 22 pag
 7. El mini reproductor se expande a full-screen con controles completos, cover grande, barra de progreso y volumen
 8. PWA configurada con manifest.json, viewport-fit=cover para safe areas en iPhone, e iconos placeholder
 5. Si solo cambio el nombre, no se recalcula nada
+
+---
+
+## Sesion: Setup proyecto React Native (Expo) — App mobile
+**Fecha:** 2026-03-24 ~12:00 (ARG)
+
+### Que se hizo
+Inicializacion del proyecto React Native con Expo SDK 55 dentro de `mobile/` en el monorepo existente. Estructura base con expo-router (file-based routing), 5 tabs, cliente API con JWT auto-refresh, paleta de colores ASTRA y todas las dependencias core instaladas.
+
+### mobile/ — Archivos creados (10)
+| Archivo | Proposito |
+|---------|-----------|
+| `mobile/app.json` | Config Expo: nombre ASTRA, scheme deep linking, bundleIdentifier iOS/Android, dark mode, plugins |
+| `mobile/package.json` | Dependencias: expo 55, react 19.2, expo-router, react-query, zustand, axios, nativewind, expo-av, react-native-svg, expo-secure-store |
+| `mobile/src/app/_layout.tsx` | Layout raiz: SafeAreaProvider, GestureHandler, QueryClientProvider, Stack navigator dark |
+| `mobile/src/app/(tabs)/_layout.tsx` | Tab navigator con 5 tabs (Inicio, Astral, Descubrir, Podcasts, Perfil), estilo ASTRA |
+| `mobile/src/app/(tabs)/index.tsx` | Pantalla Inicio placeholder |
+| `mobile/src/app/(tabs)/astral.tsx` | Pantalla Carta Astral placeholder |
+| `mobile/src/app/(tabs)/descubrir.tsx` | Pantalla Descubrir placeholder |
+| `mobile/src/app/(tabs)/podcast.tsx` | Pantalla Podcasts placeholder |
+| `mobile/src/app/(tabs)/perfil.tsx` | Pantalla Perfil placeholder |
+| `mobile/src/constants/colores.ts` | Paleta de colores ASTRA (coherente con frontend web) |
+| `mobile/src/lib/api/cliente.ts` | Cliente axios con interceptors JWT (auto-refresh token, SecureStore) |
+
+### Archivos modificados (1)
+| Archivo | Cambios |
+|---------|---------|
+| `.gitignore` | Agregadas reglas para React Native/Expo: .expo/, ios/, android/, .metro-health-check, keystores, provisioning profiles, EAS build |
+
+### Estructura de carpetas
+```
+mobile/
+├── src/
+│   ├── app/              # Rutas (expo-router file-based)
+│   │   ├── _layout.tsx   # Layout raiz
+│   │   ├── (tabs)/       # Tab navigator
+│   │   └── (auth)/       # Auth screens (pendiente)
+│   ├── componentes/      # Componentes reutilizables
+│   │   ├── ui/
+│   │   └── layouts/
+│   ├── lib/
+│   │   ├── api/          # Cliente HTTP + endpoints
+│   │   ├── hooks/        # React Query hooks
+│   │   ├── stores/       # Zustand stores
+│   │   ├── tipos/        # TypeScript types
+│   │   └── utilidades/
+│   └── constants/        # Colores, config
+├── assets/               # Iconos, splash, fuentes
+├── app.json              # Config Expo
+└── package.json
+```
+
+### Dependencias instaladas
+- **Core**: expo 55, react 19.2, react-native 0.83
+- **Navegacion**: expo-router, react-native-screens, react-native-safe-area-context
+- **UI**: nativewind 4, tailwindcss 3.4, react-native-reanimated, react-native-gesture-handler, react-native-svg
+- **Audio**: expo-av
+- **Auth**: expo-secure-store, expo-auth-session, expo-web-browser
+- **Estado**: zustand, @tanstack/react-query
+- **HTTP**: axios
+
+### Tests
+- TypeScript compila limpio (`npx tsc --noEmit` sin errores)
+- Sin tests unitarios aun (setup inicial)
+
+### Como funciona
+1. El proyecto vive en `mobile/` dentro del monorepo P16_ASTRA (junto a `backend/` y `frontend/`)
+2. Usa expo-router con file-based routing en `src/app/` — misma filosofia que Next.js en el frontend web
+3. El cliente API (`src/lib/api/cliente.ts`) apunta al mismo backend FastAPI, con auto-refresh JWT via SecureStore
+4. La paleta de colores es identica al frontend web (dark theme ASTRA)
+5. Para correr: `cd mobile && npx expo start` → escanear QR con Expo Go o usar simulador
+
+---
+
+## Sesion: Suscripciones MP — fixes producción + perfil refactor
+**Fecha:** 2026-03-24 ~14:00 — 18:00 (ARG)
+**Commits:** varios en `dev` → merge a `main` (`0f87a77`)
+
+### Que se hizo
+Correcciones al flujo de suscripción MercadoPago en producción y reestructuración completa de la página de perfil.
+
+### Backend — Archivos modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `app/servicios/servicio_mercadopago.py` | Quitar `billing_day`/`billing_day_proportional`, renombrar motivo a "ASTRA - Plan Premium" |
+| `app/rutas/v1/suscripcion.py` | Factura concepto "Suscripción ASTRA", PDF titulo/footer ASTRA |
+| `app/configuracion.py` | back_urls de `/suscripcion/*` a `/checkout/*` |
+| `app/datos/repositorio_suscripcion.py` | `obtener_activa()` prioriza "activa" sobre "pendiente" con SQL CASE |
+| `tests/test_flujo_suscripcion.py` | Actualizar concepto a "Suscripción ASTRA" |
+
+### Frontend — Archivos creados/modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/app/(checkout)/layout.tsx` | **Nuevo** — Layout público sin auth para post-checkout |
+| `src/app/(checkout)/checkout/exito/page.tsx` | **Nuevo** — Página éxito pública |
+| `src/app/(checkout)/checkout/fallo/page.tsx` | **Nuevo** — Página fallo pública |
+| `src/app/(checkout)/checkout/pendiente/page.tsx` | **Nuevo** — Página pendiente pública |
+| `src/app/(app)/suscripcion/page.tsx` | sessionStorage checkout tracking, polling verificación, visibilitychange, banners estado, confirmación cancelar |
+| `src/app/(app)/perfil/page.tsx` | Reestructuración completa: sección Configuración con acordeón (contraseña, Google info, cancelar suscripción, cerrar sesión) |
+| `src/componentes/ui/icono.tsx` | Agregar CaretDown, CaretUp, PencilSimple |
+
+### Producción — Cambios directos
+
+| Cambio | Detalle |
+|--------|---------|
+| DB `precios_plan` | `precio_local=110000`, `frecuencia=30`, `intervalo='days'` (AR, ARS $1100/30 días) |
+| `.env.prod` | `MP_URL_EXITO/FALLO/PENDIENTE` → `/checkout/*` |
+
+### Tests
+- 483 tests backend pasando
+- Frontend compila sin errores TypeScript
+
+### Como funciona
+1. **Checkout MP**: Al suscribirse, se guarda flag en `sessionStorage`. MP abre back_url en su in-app browser → páginas públicas `/checkout/exito|fallo|pendiente` sin auth. Al volver al browser original, `visibilitychange` + polling detectan el pago y muestran banner de confirmación.
+2. **Cancelación**: Desde perfil → Configuración → "Cancelar suscripción" con doble confirmación. Llama API que cancela en MP vía preapproval API (sin redirect a MP).
+3. **Prioridad estado**: `obtener_activa()` usa SQL CASE para devolver la suscripción "activa" antes que "pendiente", evitando confusión cuando coexisten ambas.
+4. **Perfil refactorizado**: Sección plan muestra "Mejorar plan" o "Gestionar suscripción" según estado. Sección Configuración agrupa contraseña (solo auth local), info Google (solo OAuth), cancelar suscripción (solo premium activa), y cerrar sesión en acordeón expandible.
+
+---
+
+## Sesion: Cancelacion Premium con gracia hasta fin de periodo
+**Fecha:** 2026-03-24 ~15:00 (ARG)
+
+### Que se hizo
+Implementacion de periodo de gracia al cancelar suscripcion Premium: el usuario mantiene acceso hasta fin del periodo pagado en vez de perderlo inmediatamente.
+
+### Backend — Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `backend/app/rutas/v1/suscripcion.py` | Endpoint `/cancelar`: obtiene `next_payment_date` de MP, mantiene estado "activa" con `fecha_fin` programada. Endpoint `/mi-suscripcion`: agrega `cancelacion_programada` al response. Webhook `_procesar_preapproval`: ignora cancelacion de MP si hay gracia activa. |
+| `backend/app/datos/repositorio_suscripcion.py` | Nuevo metodo `programar_cancelacion()` (setea fecha_fin sin cambiar estado). `obtener_activa()` con lazy-expire: si fecha_fin vencio, cancela y crea gratis automaticamente. |
+
+### Frontend — Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/lib/tipos/suscripcion.ts` | Agregado campo `cancelacion_programada?: boolean` a interfaz Suscripcion. |
+| `frontend/src/app/(app)/suscripcion/page.tsx` | Badge "Activo hasta [fecha]" si cancelacion programada. Banner informativo con link a MP. Oculta boton cancelar si ya programada. Dialogo de cancelacion explica gracia. |
+| `frontend/src/app/(app)/perfil/page.tsx` | Badge "Activo hasta [fecha]" en estado de suscripcion. Oculta opcion "Cancelar suscripcion" si ya programada. Texto de confirmacion actualizado con info de gracia. |
+
+### Tests
+- 2 tests nuevos en `test_flujo_suscripcion.py`: `test_cancelar_programa_gracia` y `test_cancelar_fallback_30_dias`
+- 3 tests actualizados en `test_rutas_suscripcion.py`: adaptados al nuevo flujo de gracia
+- 482 tests pasando (2 pre-existentes fallando en podcast/TTS no relacionados)
+
+### Como funciona
+1. **Cancelacion**: El usuario cancela desde la UI. El backend obtiene `next_payment_date` de MP (o usa fecha_inicio + 30 dias como fallback), cancela el preapproval en MP, pero mantiene la suscripcion local como "activa" con `fecha_fin` seteada.
+2. **Gracia**: Mientras `fecha_fin` no haya pasado, el usuario sigue con acceso Premium. La UI muestra badge "Activo hasta [fecha]" y oculta el boton de cancelar.
+3. **Lazy-expire**: Cada vez que se consulta `obtener_activa()`, si la suscripcion tiene `fecha_fin` vencida, se marca como "cancelada" y se crea automaticamente una suscripcion Gratis.
+4. **Proteccion webhook**: Si MP envia webhook de cancelacion pero la suscripcion tiene gracia activa, se ignora para no degradar prematuramente.
+5. **UI coherente**: Ambas paginas (suscripcion y perfil) muestran el mismo badge de advertencia y ocultan la opcion de cancelar si ya esta programada.
