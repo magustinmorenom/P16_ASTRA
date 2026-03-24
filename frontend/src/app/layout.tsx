@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ProveedorQuery } from "@/proveedores/proveedor-query";
@@ -9,10 +9,28 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#2D1B69",
+};
+
 export const metadata: Metadata = {
   title: "ASTRA — Tu mapa cósmico personal",
   description:
     "Plataforma de cálculo esotérico-astronómico: Carta Astral, Diseño Humano, Numerología, Revolución Solar y Tránsitos.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "ASTRA",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export default function RootLayout({
@@ -23,6 +41,7 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${inter.variable} h-full antialiased`}>
       <head>
+        <link rel="apple-touch-icon" href="/img/icon-192.png" />
         <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
       </head>
       <body className="min-h-full flex flex-col font-sans">

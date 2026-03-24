@@ -127,3 +127,86 @@ body::-webkit-scrollbar-thumb {
   outline: 2px solid var(--color-primario);
   outline-offset: 2px;
 }
+
+/* ============================================
+   Mobile App — Safe Areas & Variables
+   ============================================ */
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --tab-bar-height: 56px;
+  --mini-player-height: 56px;
+}
+
+/* ============================================
+   Mobile App — Page Transitions
+   ============================================ */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.animate-slide-down {
+  animation: slide-down 0.25s ease-in;
+}
+
+/* ============================================
+   Mobile App — Touch Feedback
+   ============================================ */
+.touch-feedback {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.touch-feedback:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease-out;
+}
+
+/* ============================================
+   Mobile App — Scroll oculto (mobile)
+   ============================================ */
+.mobile-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mobile-scroll::-webkit-scrollbar {
+  display: none;
+}

@@ -48,6 +48,8 @@ interface EstadoUI {
   silenciado: boolean;
   /** Indice del segmento de lyrics activo. */
   segmentoActual: number;
+  /** Indica si el mini reproductor mobile esta expandido a full-screen. */
+  miniReproductorExpandido: boolean;
 
   /** Cambia el panel lateral activo. */
   setPanelActivo: (panel: PanelActivo) => void;
@@ -72,6 +74,8 @@ interface EstadoUI {
   toggleSilencio: () => void;
   /** Establece el segmento de lyrics activo. */
   setSegmentoActual: (idx: number) => void;
+  /** Alterna el mini reproductor expandido/colapsado en mobile. */
+  toggleMiniReproductor: () => void;
 }
 
 export const useStoreUI = create<EstadoUI>((set) => ({
@@ -86,6 +90,7 @@ export const useStoreUI = create<EstadoUI>((set) => ({
   volumen: 70,
   silenciado: false,
   segmentoActual: 0,
+  miniReproductorExpandido: false,
 
   setPanelActivo: (panel) => set({ panelActivo: panel }),
   setPasoOnboarding: (paso) => set({ pasoOnboarding: paso }),
@@ -103,4 +108,6 @@ export const useStoreUI = create<EstadoUI>((set) => ({
   toggleSilencio: () =>
     set((estado) => ({ silenciado: !estado.silenciado })),
   setSegmentoActual: (idx) => set({ segmentoActual: idx }),
+  toggleMiniReproductor: () =>
+    set((estado) => ({ miniReproductorExpandido: !estado.miniReproductorExpandido })),
 }));

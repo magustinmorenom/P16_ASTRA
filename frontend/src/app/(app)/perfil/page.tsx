@@ -22,6 +22,7 @@ import {
 } from "@/lib/hooks";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import type { DatosNacimiento } from "@/lib/tipos";
+import HeaderMobile from "@/componentes/layouts/header-mobile";
 
 export default function PaginaPerfil() {
   const { usuario } = useStoreAuth();
@@ -269,6 +270,7 @@ export default function PaginaPerfil() {
   const badgeSuscripcion = obtenerBadgeSuscripcion();
 
   return (
+    <><HeaderMobile titulo="Mi Perfil" />
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-texto mb-6">Mi Perfil</h1>
 
@@ -671,5 +673,6 @@ export default function PaginaPerfil() {
         </Tarjeta>
       )}
     </div>
+    </>
   );
 }

@@ -11,6 +11,7 @@ import {
   CalendarioMes,
   PanelDetalleDia,
 } from "./_componentes";
+import HeaderMobile from "@/componentes/layouts/header-mobile";
 
 export default function PaginaCalendarioCosmico() {
   const hoy = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
@@ -58,7 +59,8 @@ export default function PaginaCalendarioCosmico() {
   const detalleParaMostrar = datosDetalle ?? datosDetalleFetch;
 
   return (
-    <div className="flex h-full min-h-0 overflow-hidden">
+    <><HeaderMobile titulo="Calendario Cosmico" mostrarAtras />
+    <div className="flex flex-col lg:flex-row h-full min-h-0 lg:overflow-hidden">
       {/* Panel Central */}
       <section className="flex-1 scroll-sutil bg-[#FAFAFA] p-5 lg:p-[28px_32px] flex flex-col gap-6 overflow-y-auto">
         {/* Header */}
@@ -101,5 +103,6 @@ export default function PaginaCalendarioCosmico() {
         onCerrar={() => setDiaSeleccionado(null)}
       />
     </div>
+    </>
   );
 }

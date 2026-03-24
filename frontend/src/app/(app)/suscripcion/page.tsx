@@ -24,6 +24,7 @@ import {
 import { formatearFechaHora, formatearFecha } from "@/lib/utilidades/formatear-fecha";
 import type { Plan } from "@/lib/tipos";
 import type { RespuestaSincronizar } from "@/lib/hooks/usar-suscripcion";
+import HeaderMobile from "@/componentes/layouts/header-mobile";
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                            */
@@ -148,6 +149,7 @@ export default function PaginaSuscripcion() {
   }
 
   return (
+    <><HeaderMobile titulo="Suscripcion" mostrarAtras />
     <div className="flex flex-col gap-10">
       {/* Encabezado */}
       <div>
@@ -687,5 +689,6 @@ export default function PaginaSuscripcion() {
       </section>
 
     </div>
+    </>
   );
 }

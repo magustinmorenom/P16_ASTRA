@@ -9,6 +9,7 @@ import { Esqueleto } from "@/componentes/ui/esqueleto";
 import { usarNumerologia, usarMisCalculos } from "@/lib/hooks";
 import { cn } from "@/lib/utilidades/cn";
 import type { Numerologia, NumeroRespuesta, DatosNumerologia } from "@/lib/tipos";
+import HeaderMobile from "@/componentes/layouts/header-mobile";
 
 // ---------------------------------------------------------------------------
 // Constantes
@@ -101,7 +102,8 @@ export default function PaginaNumerologia() {
   // -------------------------------------------------------------------------
   if (cargandoCalculos && !modoManual) {
     return (
-      <div className="flex h-full min-h-0 overflow-hidden">
+      <><HeaderMobile titulo="Numerologia" mostrarAtras />
+      <div className="flex flex-col lg:flex-row h-full min-h-0 lg:overflow-hidden">
         <section className="flex-1 scroll-sutil bg-fondo p-5 lg:p-[28px_32px] flex flex-col gap-6 overflow-y-auto">
           <h1 className="text-[22px] font-semibold text-texto tracking-tight flex items-center gap-3">
             <IconoAstral nombre="numerologia" tamaño={28} className="text-acento" />
@@ -121,6 +123,7 @@ export default function PaginaNumerologia() {
           </div>
         </section>
       </div>
+      </>
     );
   }
 
@@ -129,7 +132,8 @@ export default function PaginaNumerologia() {
   // -------------------------------------------------------------------------
   if (!datos || modoManual) {
     return (
-      <div className="flex h-full min-h-0 overflow-hidden">
+      <><HeaderMobile titulo="Numerologia" mostrarAtras />
+      <div className="flex flex-col lg:flex-row h-full min-h-0 lg:overflow-hidden">
         <section className="flex-1 scroll-sutil bg-fondo p-5 lg:p-[28px_32px] flex flex-col gap-6 overflow-y-auto">
           <div>
             <h1 className="text-[22px] font-semibold text-texto tracking-tight flex items-center gap-3">
@@ -222,6 +226,7 @@ export default function PaginaNumerologia() {
           </div>
         </section>
       </div>
+      </>
     );
   }
 
@@ -248,7 +253,8 @@ export default function PaginaNumerologia() {
     : false;
 
   return (
-    <div className="flex h-full min-h-0 overflow-hidden">
+    <><HeaderMobile titulo="Numerologia" mostrarAtras />
+    <div className="flex flex-col lg:flex-row h-full min-h-0 lg:overflow-hidden">
       {/* ----------------------------------------------------------------- */}
       {/* Panel Central                                                      */}
       {/* ----------------------------------------------------------------- */}
@@ -562,5 +568,6 @@ export default function PaginaNumerologia() {
         )}
       </aside>
     </div>
+    </>
   );
 }

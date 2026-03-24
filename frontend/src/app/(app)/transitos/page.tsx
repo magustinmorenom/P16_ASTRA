@@ -8,6 +8,7 @@ import { IconoAstral, IconoSigno } from "@/componentes/ui/icono-astral";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
 import { usarTransitos } from "@/lib/hooks";
 import { formatearFechaHora } from "@/lib/utilidades/formatear-fecha";
+import HeaderMobile from "@/componentes/layouts/header-mobile";
 
 /** Mapa de elemento por signo para colorear tarjetas */
 const ELEMENTO_SIGNO: Record<string, "fuego" | "tierra" | "aire" | "agua"> = {
@@ -34,6 +35,7 @@ export default function PaginaTransitos() {
   const { data: datos, isLoading, isError, error, refetch } = usarTransitos();
 
   return (
+    <><HeaderMobile titulo="Transitos" mostrarAtras />
     <div className="flex flex-col gap-8">
       {/* Encabezado */}
       <div className="flex flex-col gap-2">
@@ -134,5 +136,6 @@ export default function PaginaTransitos() {
         </div>
       )}
     </div>
+    </>
   );
 }
