@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 
 import { Tarjeta } from "@/componentes/ui/tarjeta";
 import { Avatar } from "@/componentes/ui/avatar";
@@ -19,6 +20,8 @@ import {
   usarDisenoHumano,
   usarNumerologia,
   usarRetornoSolar,
+  usarCancelarSuscripcion,
+  usarMiSuscripcion,
 } from "@/lib/hooks";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import type { DatosNacimiento } from "@/lib/tipos";
@@ -62,6 +65,28 @@ export default function PaginaPerfil() {
   } | null>(null);
 
   const esProveedorLocal = usuario?.proveedor_auth === "local";
+  const esPremium = usuario?.plan_slug === "premium";
+
+  // Suscripción y cancelación
+  const { data: miSuscripcion } = usarMiSuscripcion();
+  const cancelar = usarCancelarSuscripcion();
+  const [mostrarConfirmacionCancelar, setMostrarConfirmacionCancelar] = useState(false);
+  const [seccionAbierta, setSeccionAbierta] = useState<string | null>(null);
+
+  function toggleSeccion(seccion: string) {
+    setSeccionAbierta(seccionAbierta === seccion ? null : seccion);
+  }
+
+  function manejarCancelarSuscripcion() {
+    cancelar.mutate(undefined, {
+      onSuccess: () => {
+        setMostrarConfirmacionCancelar(false);
+        setSeccionAbierta(null);
+        queryClient.invalidateQueries({ queryKey: ["mi-suscripcion"] });
+        queryClient.invalidateQueries({ queryKey: ["planes"] });
+      },
+    });
+  }
 
   function iniciarEdicion() {
     if (!perfil) return;
@@ -537,7 +562,7 @@ export default function PaginaPerfil() {
       </Tarjeta>
 
       {/* ================================================================ */}
-      {/* Suscripcion y plan                                               */}
+      {/* Plan y Suscripcion                                               */}
       {/* ================================================================ */}
       <Tarjeta className="mb-6">
         <div className="flex items-center gap-2 mb-4">
@@ -567,126 +592,200 @@ export default function PaginaPerfil() {
           </div>
         </div>
 
-        {usuario?.plan_slug !== "premium" && (
-          <>
-            <Separador className="my-4" />
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-texto-secundario">
-                Mejora tu plan para acceder a todas las funcionalidades.
-              </p>
-              <a href="/suscripcion">
-                <Boton variante="primario" tamaño="sm">
-                  <Icono nombre="corona" tamaño={16} />
-                  Mejorar plan
-                </Boton>
-              </a>
-            </div>
-          </>
+        <Separador className="my-4" />
+
+        {esPremium ? (
+          <Link href="/suscripcion" className="flex items-center justify-between group">
+            <p className="text-sm text-texto-secundario">
+              Gestionar mi suscripcion
+            </p>
+            <Icono nombre="caretDerecha" tamaño={18} className="text-texto-terciario group-hover:text-acento transition-colors" />
+          </Link>
+        ) : (
+          <Link href="/suscripcion">
+            <Boton variante="primario" tamaño="sm" className="w-full sm:w-auto" icono={<Icono nombre="corona" tamaño={16} />}>
+              Mejorar plan
+            </Boton>
+          </Link>
         )}
       </Tarjeta>
 
       {/* ================================================================ */}
-      {/* Cambiar contrasena (solo proveedor local)                        */}
+      {/* Configuracion                                                    */}
       {/* ================================================================ */}
-      {esProveedorLocal && (
-        <Tarjeta className="mb-6">
-          <h2 className="text-lg font-semibold text-texto mb-1">
-            Cambiar Contrasena
+      <Tarjeta className="mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Icono nombre="configuracion" tamaño={20} className="text-acento" />
+          <h2 className="text-lg font-semibold text-texto">
+            Configuracion
           </h2>
-          <p className="text-sm text-texto-secundario mb-5">
-            Actualiza tu contrasena de acceso. La nueva contrasena debe tener
-            al menos 8 caracteres.
-          </p>
+        </div>
 
-          <div className="space-y-4">
-            <Input
-              etiqueta="Contrasena actual"
-              type="password"
-              name="contrasena_actual"
-              placeholder="Ingresa tu contrasena actual"
-              value={contrasenaActual}
-              onChange={(e) => setContrasenaActual(e.target.value)}
-              icono={<Icono nombre="candado" tamaño={16} />}
-            />
-
-            <Separador />
-
-            <Input
-              etiqueta="Nueva contrasena"
-              type="password"
-              name="contrasena_nueva"
-              placeholder="Minimo 8 caracteres"
-              value={contrasenaNueva}
-              onChange={(e) => setContrasenaNueva(e.target.value)}
-              icono={<Icono nombre="candado" tamaño={16} />}
-            />
-
-            <Input
-              etiqueta="Confirmar nueva contrasena"
-              type="password"
-              name="contrasena_confirmar"
-              placeholder="Repite la nueva contrasena"
-              value={contrasenaConfirmar}
-              onChange={(e) => setContrasenaConfirmar(e.target.value)}
-              icono={<Icono nombre="candado" tamaño={16} />}
-            />
-
-            {mensaje && (
-              <div
-                className={`rounded-lg px-4 py-3 text-sm ${
-                  mensaje.tipo === "exito"
-                    ? "bg-exito/10 text-exito border border-exito/20"
-                    : "bg-error/10 text-error border border-error/20"
-                }`}
-                role="alert"
-              >
-                {mensaje.texto}
-              </div>
-            )}
-
-            <Boton
-              onClick={manejarCambioContrasena}
-              cargando={cambiarContrasena.isPending}
-              icono={<Icono nombre="check" tamaño={16} />}
-            >
-              Cambiar contrasena
-            </Boton>
-          </div>
-        </Tarjeta>
-      )}
-
-      {/* Mensaje para usuarios con Google OAuth */}
-      {!esProveedorLocal && usuario && (
-        <Tarjeta className="mb-6">
-          <div className="flex items-center gap-3">
-            <Icono nombre="google" tamaño={24} className="text-texto-secundario" />
+        <div className="flex flex-col divide-y divide-borde">
+          {/* --- Cambiar contraseña (solo proveedor local) --- */}
+          {esProveedorLocal && (
             <div>
-              <h2 className="text-base font-semibold text-texto">
-                Cuenta vinculada con Google
-              </h2>
-              <p className="text-sm text-texto-secundario">
-                Tu cuenta esta vinculada con Google. La contrasena se gestiona
-                desde tu cuenta de Google.
-              </p>
-            </div>
-          </div>
-        </Tarjeta>
-      )}
+              <button
+                type="button"
+                onClick={() => toggleSeccion("contrasena")}
+                className="flex items-center justify-between w-full py-3 text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <Icono nombre="candado" tamaño={18} className="text-texto-secundario" />
+                  <span className="text-sm text-texto">Cambiar contrasena</span>
+                </div>
+                <Icono
+                  nombre={seccionAbierta === "contrasena" ? "caretArriba" : "caretAbajo"}
+                  tamaño={16}
+                  className="text-texto-terciario"
+                />
+              </button>
 
-      {/* ================================================================ */}
-      {/* Cerrar sesion                                                    */}
-      {/* ================================================================ */}
-      <Boton
-        variante="secundario"
-        className="w-full"
-        onClick={() => {
-          const { cerrarSesion } = useStoreAuth.getState();
-          cerrarSesion();
-        }}
-        icono={<Icono nombre="salir" tamaño={16} />}
-      >
-        Cerrar sesion
-      </Boton>
+              {seccionAbierta === "contrasena" && (
+                <div className="pb-4 space-y-4">
+                  <Input
+                    etiqueta="Contrasena actual"
+                    type="password"
+                    name="contrasena_actual"
+                    placeholder="Ingresa tu contrasena actual"
+                    value={contrasenaActual}
+                    onChange={(e) => setContrasenaActual(e.target.value)}
+                    icono={<Icono nombre="candado" tamaño={16} />}
+                  />
+                  <Input
+                    etiqueta="Nueva contrasena"
+                    type="password"
+                    name="contrasena_nueva"
+                    placeholder="Minimo 8 caracteres"
+                    value={contrasenaNueva}
+                    onChange={(e) => setContrasenaNueva(e.target.value)}
+                    icono={<Icono nombre="candado" tamaño={16} />}
+                  />
+                  <Input
+                    etiqueta="Confirmar nueva contrasena"
+                    type="password"
+                    name="contrasena_confirmar"
+                    placeholder="Repite la nueva contrasena"
+                    value={contrasenaConfirmar}
+                    onChange={(e) => setContrasenaConfirmar(e.target.value)}
+                    icono={<Icono nombre="candado" tamaño={16} />}
+                  />
+
+                  {mensaje && (
+                    <div
+                      className={`rounded-lg px-4 py-3 text-sm ${
+                        mensaje.tipo === "exito"
+                          ? "bg-exito/10 text-exito border border-exito/20"
+                          : "bg-error/10 text-error border border-error/20"
+                      }`}
+                      role="alert"
+                    >
+                      {mensaje.texto}
+                    </div>
+                  )}
+
+                  <Boton
+                    onClick={manejarCambioContrasena}
+                    cargando={cambiarContrasena.isPending}
+                    icono={<Icono nombre="check" tamaño={16} />}
+                  >
+                    Cambiar contrasena
+                  </Boton>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* --- Cuenta Google --- */}
+          {!esProveedorLocal && usuario && (
+            <div className="flex items-center gap-3 py-3">
+              <Icono nombre="google" tamaño={18} className="text-texto-secundario" />
+              <div>
+                <p className="text-sm text-texto">Cuenta vinculada con Google</p>
+                <p className="text-xs text-texto-terciario">
+                  La contrasena se gestiona desde tu cuenta de Google.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* --- Cancelar suscripción (solo premium activa) --- */}
+          {esPremium && miSuscripcion?.estado === "activa" && miSuscripcion?.plan_slug !== "gratis" && (
+            <div>
+              <button
+                type="button"
+                onClick={() => toggleSeccion("cancelar")}
+                className="flex items-center justify-between w-full py-3 text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <Icono nombre="x" tamaño={18} className="text-texto-secundario" />
+                  <span className="text-sm text-texto">Cancelar suscripcion</span>
+                </div>
+                <Icono
+                  nombre={seccionAbierta === "cancelar" ? "caretArriba" : "caretAbajo"}
+                  tamaño={16}
+                  className="text-texto-terciario"
+                />
+              </button>
+
+              {seccionAbierta === "cancelar" && (
+                <div className="pb-4">
+                  {!mostrarConfirmacionCancelar ? (
+                    <div className="flex flex-col gap-3">
+                      <p className="text-sm text-texto-secundario">
+                        Se cancelara el cobro recurrente en MercadoPago y volveras al plan Gratis.
+                        Podes volver a suscribirte en cualquier momento.
+                      </p>
+                      <Boton
+                        variante="secundario"
+                        onClick={() => setMostrarConfirmacionCancelar(true)}
+                        className="self-start"
+                      >
+                        Cancelar suscripcion
+                      </Boton>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3 rounded-lg border border-error/30 bg-error/5 p-4">
+                      <p className="text-sm font-medium text-texto">
+                        Estas seguro que queres cancelar tu suscripcion Premium?
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <Boton
+                          variante="primario"
+                          onClick={manejarCancelarSuscripcion}
+                          cargando={cancelar.isPending}
+                          className="bg-error hover:bg-error/80"
+                        >
+                          Si, cancelar
+                        </Boton>
+                        <Boton
+                          variante="secundario"
+                          onClick={() => setMostrarConfirmacionCancelar(false)}
+                        >
+                          No, mantener
+                        </Boton>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* --- Cerrar sesión --- */}
+          <button
+            type="button"
+            onClick={() => {
+              const { cerrarSesion } = useStoreAuth.getState();
+              cerrarSesion();
+            }}
+            className="flex items-center gap-3 py-3 text-left"
+          >
+            <Icono nombre="salir" tamaño={18} className="text-error" />
+            <span className="text-sm text-error">Cerrar sesion</span>
+          </button>
+        </div>
+      </Tarjeta>
     </div>
     </>
   );
