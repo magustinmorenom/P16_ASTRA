@@ -17,6 +17,7 @@ import {
   usarPagos,
   usarDetectarPais,
   usarSincronizarPagos,
+  usarVerificarEstado,
   usarEstadoVinculacion,
   usarGenerarCodigo,
   usarDesvincular,
@@ -102,6 +103,13 @@ function formatearLimite(valor: number): string {
 export default function PaginaSuscripcion() {
   const queryClient = useQueryClient();
   const [paisSeleccionado, setPaisSeleccionado] = useState("AR");
+  const [checkoutEnCurso, setCheckoutEnCurso] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("astra_checkout_en_curso") === "1";
+    }
+    return false;
+  });
+  const [premiumConfirmado, setPremiumConfirmado] = useState(false);
 
   const { data: planes, isLoading: cargandoPlanes } = usarPlanes();
   const { data: miSuscripcion, isLoading: cargandoSuscripcion } = usarMiSuscripcion();
@@ -111,6 +119,44 @@ export default function PaginaSuscripcion() {
   const { data: paisDetectado, isLoading: cargandoPais } = usarDetectarPais();
   const sincronizarPagos = usarSincronizarPagos();
   const planActualSlug = miSuscripcion?.plan_slug ?? "gratis";
+
+  // Polling post-checkout: cuando el usuario vuelve del checkout de MP,
+  // hacemos polling activo para detectar cuándo el webhook activa la suscripción
+  const { data: estadoVerificacion } = usarVerificarEstado(checkoutEnCurso && !premiumConfirmado);
+
+  // Detectar que el usuario volvió del checkout (tab se hizo visible de nuevo)
+  useEffect(() => {
+    function manejarVisibilidad() {
+      if (document.visibilityState === "visible" && checkoutEnCurso) {
+        // Invalidar para refrescar inmediatamente
+        queryClient.invalidateQueries({ queryKey: ["mi-suscripcion"] });
+      }
+    }
+    document.addEventListener("visibilitychange", manejarVisibilidad);
+    return () => document.removeEventListener("visibilitychange", manejarVisibilidad);
+  }, [checkoutEnCurso, queryClient]);
+
+  // Cuando el polling detecta que es premium, confirmar y detener
+  useEffect(() => {
+    if (estadoVerificacion?.es_premium && checkoutEnCurso) {
+      setPremiumConfirmado(true);
+      setCheckoutEnCurso(false);
+      sessionStorage.removeItem("astra_checkout_en_curso");
+      queryClient.invalidateQueries({ queryKey: ["mi-suscripcion"] });
+      queryClient.invalidateQueries({ queryKey: ["planes"] });
+      queryClient.invalidateQueries({ queryKey: ["pagos"] });
+      queryClient.invalidateQueries({ queryKey: ["facturas"] });
+    }
+  }, [estadoVerificacion, checkoutEnCurso, queryClient]);
+
+  // Si miSuscripcion ya dice premium (refetch on window focus), confirmar también
+  useEffect(() => {
+    if (checkoutEnCurso && miSuscripcion?.plan_slug === "premium" && miSuscripcion?.estado === "activa") {
+      setPremiumConfirmado(true);
+      setCheckoutEnCurso(false);
+      sessionStorage.removeItem("astra_checkout_en_curso");
+    }
+  }, [miSuscripcion, checkoutEnCurso]);
 
   // Oráculo ASTRA
   const { data: vinculacion, isLoading: cargandoVinculacion } = usarEstadoVinculacion();
@@ -134,6 +180,9 @@ export default function PaginaSuscripcion() {
       { plan_id: plan.id, pais_codigo: paisSeleccionado },
       {
         onSuccess: (resp) => {
+          sessionStorage.setItem("astra_checkout_en_curso", "1");
+          setCheckoutEnCurso(true);
+          setPremiumConfirmado(false);
           window.location.href = resp.init_point;
         },
       }
@@ -151,6 +200,38 @@ export default function PaginaSuscripcion() {
   return (
     <><HeaderMobile titulo="Suscripcion" mostrarAtras />
     <div className="flex flex-col gap-10">
+      {/* Banner de confirmación post-checkout */}
+      {premiumConfirmado && (
+        <div className="flex items-center gap-4 rounded-xl border border-exito/30 bg-exito/10 p-5">
+          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-exito/20">
+            <Icono nombre="check" tamaño={24} className="text-exito" />
+          </div>
+          <div>
+            <p className="font-semibold text-texto">
+              Tu plan Premium esta activo
+            </p>
+            <p className="text-sm text-texto-secundario">
+              Ya podes disfrutar de todas las funcionalidades avanzadas de ASTRA.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Banner de verificación en curso */}
+      {checkoutEnCurso && !premiumConfirmado && (
+        <div className="flex items-center gap-4 rounded-xl border border-acento/30 bg-acento/10 p-5">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-acento border-t-transparent" />
+          <div>
+            <p className="font-semibold text-texto">
+              Verificando tu pago...
+            </p>
+            <p className="text-sm text-texto-secundario">
+              Estamos confirmando tu pago con MercadoPago. Esto puede tomar unos segundos.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Encabezado */}
       <div>
         <h1 className="text-3xl font-bold text-texto">
