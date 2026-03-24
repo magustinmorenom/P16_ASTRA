@@ -56,11 +56,10 @@ class ServicioMercadoPago:
         frecuencia: int = 1,
         tipo_frecuencia: str = "months",
     ) -> dict:
-        """Crea una suscripción en MercadoPago usando preapproval_plan.
+        """Crea una suscripción directa en MercadoPago usando /preapproval.
 
-        Flujo actual de MP:
-        1. Crear un plan (/preapproval_plan) con monto, moneda y frecuencia
-        2. El plan devuelve init_point para que el usuario complete el checkout
+        Usa /preapproval (no /preapproval_plan) para que el ID devuelto
+        sea el mismo que MP envía en los webhooks.
 
         Retorna dict con id, init_point y sandbox_init_point.
         """
@@ -70,8 +69,10 @@ class ServicioMercadoPago:
         else:
             back_url = "https://theastra.xyz/checkout/exito"
 
-        payload_plan = {
+        payload = {
             "reason": motivo,
+            "external_reference": referencia_externa,
+            "payer_email": email_pagador,
             "auto_recurring": {
                 "frequency": frecuencia,
                 "frequency_type": tipo_frecuencia,
@@ -82,19 +83,19 @@ class ServicioMercadoPago:
         }
 
         if notification_url and "localhost" not in notification_url:
-            payload_plan["notification_url"] = notification_url
+            payload["notification_url"] = notification_url
 
         try:
             async with httpx.AsyncClient(timeout=30.0) as cliente:
                 respuesta = await cliente.post(
-                    f"{BASE_URL_MP}/preapproval_plan",
+                    f"{BASE_URL_MP}/preapproval",
                     headers=ServicioMercadoPago._headers(access_token),
-                    json=payload_plan,
+                    json=payload,
                 )
 
                 if respuesta.status_code not in (200, 201):
                     logger.error(
-                        "Error al crear plan de suscripción en MP: %s %s",
+                        "Error al crear suscripción en MP: %s %s",
                         respuesta.status_code,
                         respuesta.text,
                     )
@@ -102,16 +103,14 @@ class ServicioMercadoPago:
                         f"Error al crear suscripción en MercadoPago: {respuesta.status_code}"
                     )
 
-                datos_plan = respuesta.json()
-                # Incluir datos que espera la ruta (id, init_point)
+                datos = respuesta.json()
                 return {
-                    "id": datos_plan["id"],
-                    "init_point": datos_plan.get("init_point"),
-                    "sandbox_init_point": datos_plan.get("sandbox_init_point"),
-                    "status": datos_plan.get("status"),
+                    "id": datos["id"],
+                    "init_point": datos.get("init_point"),
+                    "sandbox_init_point": datos.get("sandbox_init_point"),
+                    "status": datos.get("status"),
                     "external_reference": referencia_externa,
                     "payer_email": email_pagador,
-                    "plan_data": datos_plan,
                 }
 
         except httpx.HTTPError as e:
