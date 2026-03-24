@@ -47,12 +47,24 @@ class RepositorioSuscripcion:
         return suscripcion
 
     async def obtener_activa(self, usuario_id: uuid.UUID) -> Suscripcion | None:
-        """Obtiene la suscripción activa/pendiente más reciente de un usuario."""
+        """Obtiene la suscripción activa/pendiente más reciente de un usuario.
+
+        Prioriza 'activa' sobre 'pendiente' para que /me muestre el plan
+        real del usuario y no una suscripción pendiente de checkout.
+        """
+        from sqlalchemy import case as sql_case
+
         resultado = await self.sesion.execute(
             select(Suscripcion).where(
                 Suscripcion.usuario_id == usuario_id,
                 Suscripcion.estado.in_(["activa", "pendiente"]),
-            ).order_by(Suscripcion.creado_en.desc())
+            ).order_by(
+                sql_case(
+                    (Suscripcion.estado == "activa", 0),
+                    (Suscripcion.estado == "pendiente", 1),
+                ),
+                Suscripcion.creado_en.desc(),
+            )
             .limit(1)
         )
         return resultado.scalars().first()
