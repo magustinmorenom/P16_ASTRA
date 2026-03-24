@@ -85,9 +85,9 @@ class Configuracion(BaseSettings):
     # MercadoPago — webhook y URLs
     mp_webhook_secret: str = ""
     mp_notification_url: str = "http://localhost:8000/api/v1/suscripcion/webhook"
-    mp_url_exito: str = "http://localhost:3000/suscripcion/exito"
-    mp_url_fallo: str = "http://localhost:3000/suscripcion/fallo"
-    mp_url_pendiente: str = "http://localhost:3000/suscripcion/pendiente"
+    mp_url_exito: str = "http://localhost:3000/checkout/exito"
+    mp_url_fallo: str = "http://localhost:3000/checkout/fallo"
+    mp_url_pendiente: str = "http://localhost:3000/checkout/pendiente"
 
 
 @lru_cache

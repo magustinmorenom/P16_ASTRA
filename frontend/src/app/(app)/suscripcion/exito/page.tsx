@@ -75,8 +75,8 @@ export default function PaginaSuscripcionExito() {
             Pago exitoso
           </h1>
           <p className="text-texto-secundario max-w-md">
-            Tu suscripcion Premium esta activa. Ya puedes disfrutar de todas las
-            funcionalidades avanzadas de CosmicEngine.
+            Tu suscripcion Premium esta activa. Ya podes disfrutar de todas las
+            funcionalidades avanzadas de ASTRA.
           </p>
 
           <div className="flex items-center gap-4">
