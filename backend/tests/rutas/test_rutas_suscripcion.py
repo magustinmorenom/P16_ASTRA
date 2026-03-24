@@ -980,6 +980,314 @@ class TestWebhook:
         MockRepoPago.return_value.crear.assert_called_once()
 
 
+# ── Tests: Producción — init_point, notification_url, facturas, HMAC ──
+
+
+class TestProduccion:
+    """Tests para cambios de preparación a producción de MercadoPago."""
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.suscripcion.ServicioMercadoPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
+    @patch("app.rutas.v1.suscripcion.RepositorioPlan")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_suscribirse_prefiere_init_point_sobre_sandbox(
+        self, MockRepoAuth, MockRepoPlan, MockRepoSus, MockMP, cliente, redis_falso
+    ):
+        """En producción, init_point debe preferirse sobre sandbox_init_point."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+        plan = _crear_plan_mock()
+        precio = _crear_precio_mock(plan_id=plan.id)
+        config_pais = _crear_config_pais_mock()
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
+        MockRepoPlan.return_value.obtener_precio = AsyncMock(return_value=precio)
+        MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
+        MockRepoSus.return_value.cancelar_pendientes_usuario = AsyncMock()
+        MockRepoSus.return_value.crear = AsyncMock(
+            return_value=_crear_suscripcion_mock(usuario_id=uid, plan_id=plan.id, estado="pendiente")
+        )
+
+        MockMP.crear_preapproval = AsyncMock(return_value={
+            "id": "mp_prod_123",
+            "init_point": "https://www.mercadopago.com.ar/subscriptions/checkout?id=prod",
+            "sandbox_init_point": "https://sandbox.mercadopago.com.ar/subscriptions/checkout?id=sandbox",
+            "status": "pending",
+        })
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.post(
+            "/api/v1/suscripcion/suscribirse",
+            json={"plan_id": str(plan.id), "pais_codigo": "AR"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        datos = resp.json()["datos"]
+        # Debe ser la URL de producción, no la sandbox
+        assert "sandbox" not in datos["init_point"]
+        assert datos["init_point"] == "https://www.mercadopago.com.ar/subscriptions/checkout?id=prod"
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.suscripcion.ServicioMercadoPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
+    @patch("app.rutas.v1.suscripcion.RepositorioPlan")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_suscribirse_fallback_sandbox_si_no_hay_init_point(
+        self, MockRepoAuth, MockRepoPlan, MockRepoSus, MockMP, cliente, redis_falso
+    ):
+        """Si no hay init_point, debe usar sandbox_init_point como fallback."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+        plan = _crear_plan_mock()
+        precio = _crear_precio_mock(plan_id=plan.id)
+        config_pais = _crear_config_pais_mock()
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
+        MockRepoPlan.return_value.obtener_precio = AsyncMock(return_value=precio)
+        MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
+        MockRepoSus.return_value.cancelar_pendientes_usuario = AsyncMock()
+        MockRepoSus.return_value.crear = AsyncMock(
+            return_value=_crear_suscripcion_mock(usuario_id=uid, plan_id=plan.id, estado="pendiente")
+        )
+
+        MockMP.crear_preapproval = AsyncMock(return_value={
+            "id": "mp_sandbox_123",
+            "init_point": None,
+            "sandbox_init_point": "https://sandbox.mercadopago.com.ar/checkout?id=sb",
+            "status": "pending",
+        })
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        resp = await cliente.post(
+            "/api/v1/suscripcion/suscribirse",
+            json={"plan_id": str(plan.id), "pais_codigo": "AR"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        datos = resp.json()["datos"]
+        assert datos["init_point"] == "https://sandbox.mercadopago.com.ar/checkout?id=sb"
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.suscripcion.ServicioMercadoPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
+    @patch("app.rutas.v1.suscripcion.RepositorioPlan")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_suscribirse_pasa_notification_url(
+        self, MockRepoAuth, MockRepoPlan, MockRepoSus, MockMP, cliente, redis_falso
+    ):
+        """Debe pasar notification_url al crear preapproval."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid)
+        plan = _crear_plan_mock()
+        precio = _crear_precio_mock(plan_id=plan.id)
+        config_pais = _crear_config_pais_mock()
+
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+        MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
+        MockRepoPlan.return_value.obtener_precio = AsyncMock(return_value=precio)
+        MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
+        MockRepoSus.return_value.cancelar_pendientes_usuario = AsyncMock()
+        MockRepoSus.return_value.crear = AsyncMock(
+            return_value=_crear_suscripcion_mock(usuario_id=uid, plan_id=plan.id, estado="pendiente")
+        )
+
+        MockMP.crear_preapproval = AsyncMock(return_value={
+            "id": "mp_notif_123",
+            "init_point": "https://mp.com/checkout",
+            "status": "pending",
+        })
+
+        token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
+
+        await cliente.post(
+            "/api/v1/suscripcion/suscribirse",
+            json={"plan_id": str(plan.id), "pais_codigo": "AR"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        # Verificar que notification_url se pasó como argumento
+        call_kwargs = MockMP.crear_preapproval.call_args.kwargs
+        assert "notification_url" in call_kwargs
+        assert call_kwargs["notification_url"] != ""
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.suscripcion.RepositorioUsuario")
+    @patch("app.rutas.v1.suscripcion.RepositorioFactura")
+    @patch("app.rutas.v1.suscripcion.RepositorioPlan")
+    @patch("app.rutas.v1.suscripcion.RepositorioPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
+    async def test_webhook_pago_crea_factura_con_datos_cliente(
+        self, MockRepoSus, MockRepoPago, MockRepoPlan, MockRepoFactura,
+        MockRepoUsuario, cliente
+    ):
+        """Factura creada vía webhook debe incluir email_cliente y nombre_cliente."""
+        uid = uuid.uuid4()
+        config_pais = _crear_config_pais_mock()
+        suscripcion = _crear_suscripcion_mock(
+            usuario_id=uid, mp_preapproval_id="preapp_factura"
+        )
+        pago_creado = _crear_pago_mock()
+
+        usuario = _crear_usuario_mock(uid=uid, email="factura@test.com", nombre="Juan Pérez")
+
+        MockRepoSus.return_value.evento_ya_procesado = AsyncMock(return_value=False)
+        MockRepoSus.return_value.registrar_evento = AsyncMock()
+        MockRepoSus.return_value.listar_paises_activos = AsyncMock(return_value=[config_pais])
+        MockRepoSus.return_value.obtener_por_preapproval_id = AsyncMock(return_value=suscripcion)
+        MockRepoSus.return_value.actualizar_estado = AsyncMock()
+        MockRepoSus.return_value.cancelar_gratis_usuario = AsyncMock()
+        MockRepoPago.return_value.obtener_por_mp_pago_id = AsyncMock(return_value=None)
+        MockRepoPago.return_value.crear = AsyncMock(return_value=pago_creado)
+        MockRepoFactura.return_value.obtener_por_pago_id = AsyncMock(return_value=None)
+        MockRepoFactura.return_value.crear = AsyncMock()
+        MockRepoUsuario.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+
+        with patch.object(
+            ServicioMercadoPago, "obtener_pago",
+            new_callable=AsyncMock,
+            return_value={
+                "status": "approved",
+                "transaction_amount": 10800.0,
+                "currency_id": "ARS",
+                "payment_method_id": "credit_card",
+                "status_detail": "accredited",
+                "external_reference": "cosmic_ref",
+                "preapproval_id": "preapp_factura",
+            },
+        ):
+            resp = await cliente.post(
+                "/api/v1/suscripcion/webhook",
+                json={
+                    "id": "evt_factura_cliente",
+                    "type": "payment",
+                    "action": "payment.created",
+                    "data": {"id": "pay_factura_001"},
+                },
+            )
+
+        assert resp.status_code == 200
+
+        # Verificar que la factura se creó con email y nombre del cliente
+        factura_call = MockRepoFactura.return_value.crear.call_args
+        assert factura_call.kwargs["email_cliente"] == "factura@test.com"
+        assert factura_call.kwargs["nombre_cliente"] == "Juan Pérez"
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.suscripcion.obtener_configuracion")
+    @patch("app.rutas.v1.suscripcion.RepositorioPlan")
+    @patch("app.rutas.v1.suscripcion.RepositorioPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
+    async def test_webhook_firma_hmac_valida_acepta(
+        self, MockRepoSus, MockRepoPago, MockRepoPlan, mock_config, cliente
+    ):
+        """Con webhook_secret configurado, firma HMAC válida debe ser aceptada."""
+        secreto = "mi_secreto_webhook"
+        config = MagicMock()
+        config.mp_webhook_secret = secreto
+        mock_config.return_value = config
+
+        data_id = "12345"
+        request_id = "req_test_hmac"
+        ts = "1711234567"
+
+        # Calcular firma válida
+        manifest = f"id:{data_id};request-id:{request_id};ts:{ts};"
+        firma = hmac.new(
+            secreto.encode(), manifest.encode(), hashlib.sha256
+        ).hexdigest()
+
+        MockRepoSus.return_value.evento_ya_procesado = AsyncMock(return_value=False)
+        MockRepoSus.return_value.registrar_evento = AsyncMock()
+
+        resp = await cliente.post(
+            "/api/v1/suscripcion/webhook",
+            json={
+                "id": "evt_hmac_ok",
+                "type": "unknown_type",
+                "data": {"id": data_id},
+            },
+            headers={
+                "x-signature": f"ts={ts},v1={firma}",
+                "x-request-id": request_id,
+            },
+        )
+
+        assert resp.status_code == 200
+        # No debe decir "firma inválida" — el evento debe procesarse
+        assert "inválida" not in resp.json().get("mensaje", "").lower()
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.suscripcion.RepositorioFactura")
+    @patch("app.rutas.v1.suscripcion.RepositorioPlan")
+    @patch("app.rutas.v1.suscripcion.RepositorioPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
+    async def test_webhook_pago_aprobado_activa_suscripcion_y_crea_factura(
+        self, MockRepoSus, MockRepoPago, MockRepoPlan, MockRepoFactura, cliente
+    ):
+        """Pago aprobado debe activar suscripción pendiente y crear factura."""
+        uid = uuid.uuid4()
+        config_pais = _crear_config_pais_mock()
+        suscripcion = _crear_suscripcion_mock(
+            usuario_id=uid, mp_preapproval_id="preapp_activar",
+            estado="pendiente",
+        )
+        pago_creado = _crear_pago_mock()
+
+        MockRepoSus.return_value.evento_ya_procesado = AsyncMock(return_value=False)
+        MockRepoSus.return_value.registrar_evento = AsyncMock()
+        MockRepoSus.return_value.listar_paises_activos = AsyncMock(return_value=[config_pais])
+        MockRepoSus.return_value.obtener_por_preapproval_id = AsyncMock(return_value=suscripcion)
+        MockRepoSus.return_value.actualizar_estado = AsyncMock()
+        MockRepoSus.return_value.cancelar_gratis_usuario = AsyncMock()
+        MockRepoPago.return_value.obtener_por_mp_pago_id = AsyncMock(return_value=None)
+        MockRepoPago.return_value.crear = AsyncMock(return_value=pago_creado)
+        MockRepoFactura.return_value.obtener_por_pago_id = AsyncMock(return_value=None)
+        MockRepoFactura.return_value.crear = AsyncMock()
+
+        with patch.object(
+            ServicioMercadoPago, "obtener_pago",
+            new_callable=AsyncMock,
+            return_value={
+                "status": "approved",
+                "transaction_amount": 10800.0,
+                "currency_id": "ARS",
+                "payment_method_id": "credit_card",
+                "status_detail": "accredited",
+                "preapproval_id": "preapp_activar",
+            },
+        ), patch("app.rutas.v1.suscripcion.RepositorioUsuario") as MockRepoUsr:
+            MockRepoUsr.return_value.obtener_por_id = AsyncMock(
+                return_value=_crear_usuario_mock(uid=uid)
+            )
+
+            resp = await cliente.post(
+                "/api/v1/suscripcion/webhook",
+                json={
+                    "id": "evt_activar_001",
+                    "type": "payment",
+                    "action": "payment.created",
+                    "data": {"id": "pay_activar_001"},
+                },
+            )
+
+        assert resp.status_code == 200
+        # Suscripción debe haberse activado
+        MockRepoSus.return_value.actualizar_estado.assert_called_once()
+        args_estado = MockRepoSus.return_value.actualizar_estado.call_args
+        assert args_estado.args[1] == "activa"
+        # Gratis debe haberse cancelado
+        MockRepoSus.return_value.cancelar_gratis_usuario.assert_called_once()
+        # Factura debe haberse creado
+        MockRepoFactura.return_value.crear.assert_called_once()
+
+
 # ── Tests: GET /suscripcion/pagos ──────────────────────────────
 
 
