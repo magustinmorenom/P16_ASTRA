@@ -310,6 +310,7 @@ async def suscribirse(
         email_pagador=usuario.email,
         referencia_externa=referencia,
         url_retorno=config.mp_url_exito,
+        notification_url=config.mp_notification_url,
         frecuencia=precio.frecuencia,
         tipo_frecuencia=precio.intervalo,
     )
@@ -326,8 +327,8 @@ async def suscribirse(
         datos_mp=respuesta_mp,
     )
 
-    # Usar sandbox_init_point si existe, sino init_point
-    url_checkout = respuesta_mp.get("sandbox_init_point") or respuesta_mp.get("init_point")
+    # En producción usar init_point; sandbox_init_point solo como fallback en desarrollo
+    url_checkout = respuesta_mp.get("init_point") or respuesta_mp.get("sandbox_init_point")
 
     return {
         "exito": True,
@@ -626,6 +627,18 @@ async def _procesar_pago(
         # Idempotencia: verificar que no exista factura para este pago
         factura_existente = await repo_factura.obtener_por_pago_id(pago.id)
         if not factura_existente:
+            # Obtener datos del usuario para la factura
+            email_cliente = None
+            nombre_cliente = None
+            try:
+                repo_usuario = RepositorioUsuario(db)
+                usuario_obj = await repo_usuario.obtener_por_id(usuario_id)
+                if usuario_obj:
+                    email_cliente = usuario_obj.email
+                    nombre_cliente = usuario_obj.nombre
+            except Exception:
+                logger.warning("No se pudieron obtener datos del usuario para factura")
+
             await repo_factura.crear(
                 usuario_id=usuario_id,
                 pago_id=pago.id,
@@ -634,6 +647,8 @@ async def _procesar_pago(
                 moneda=moneda,
                 concepto=f"Suscripción CosmicEngine — Pago {pago_id[:8]}",
                 pais_codigo=config_pais.pais_codigo,
+                email_cliente=email_cliente,
+                nombre_cliente=nombre_cliente,
             )
 
 

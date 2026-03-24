@@ -52,6 +52,7 @@ class ServicioMercadoPago:
         email_pagador: str,
         referencia_externa: str,
         url_retorno: str,
+        notification_url: str = "",
         frecuencia: int = 1,
         tipo_frecuencia: str = "months",
     ) -> dict:
@@ -67,7 +68,7 @@ class ServicioMercadoPago:
         if url_retorno and "localhost" not in url_retorno and "127.0.0.1" not in url_retorno:
             back_url = url_retorno
         else:
-            back_url = "https://cosmicengine.app/suscripcion/exito"
+            back_url = "https://theastra.xyz/suscripcion/exito"
 
         payload_plan = {
             "reason": motivo,
@@ -81,6 +82,9 @@ class ServicioMercadoPago:
             },
             "back_url": back_url,
         }
+
+        if notification_url and "localhost" not in notification_url:
+            payload_plan["notification_url"] = notification_url
 
         try:
             async with httpx.AsyncClient(timeout=30.0) as cliente:
