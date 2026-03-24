@@ -1,9 +1,11 @@
 """Rutas de Podcasts Cósmicos."""
 
+import io
 import uuid
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.datos.repositorio_podcast import RepositorioPodcast
@@ -82,15 +84,30 @@ async def obtener_audio(
     _plan: None = Depends(requiere_plan("premium")),
     db: AsyncSession = Depends(obtener_db),
 ):
-    """Retorna la URL presigned del audio en MinIO."""
+    """Sirve el audio directamente desde MinIO como stream.
+
+    Antes devolvía una URL presigned, pero como MinIO corre dentro de Docker
+    con hostname interno (minio:9000), el browser no puede acceder a esa URL.
+    Ahora el backend actúa como proxy y sirve los bytes directamente.
+    """
     repo = RepositorioPodcast(db)
     episodio = await repo.obtener_episodio_por_id(episodio_id)
     if not episodio or episodio.usuario_id != usuario.id:
         raise HTTPException(status_code=404, detail="Episodio no encontrado")
     if not episodio.url_audio or episodio.estado != "listo":
         raise HTTPException(status_code=404, detail="Audio no disponible aún")
-    url = ServicioAlmacenamiento.obtener_url(episodio.url_audio)
-    return {"exito": True, "datos": {"url": url}}
+
+    datos_audio = ServicioAlmacenamiento.obtener_objeto(episodio.url_audio)
+
+    return StreamingResponse(
+        io.BytesIO(datos_audio),
+        media_type="audio/mpeg",
+        headers={
+            "Content-Length": str(len(datos_audio)),
+            "Accept-Ranges": "bytes",
+            "Cache-Control": "private, max-age=3600",
+        },
+    )
 
 
 @router.get("/historial")

@@ -64,3 +64,15 @@ class ServicioAlmacenamiento:
             expires=timedelta(seconds=expiracion),
         )
         return url
+
+    @classmethod
+    def obtener_objeto(cls, objeto_key: str) -> bytes:
+        """Descarga un archivo de MinIO y retorna los bytes."""
+        config = obtener_configuracion()
+        cliente = cls._obtener_cliente()
+        respuesta = cliente.get_object(config.minio_bucket, objeto_key)
+        try:
+            return respuesta.read()
+        finally:
+            respuesta.close()
+            respuesta.release_conn()
