@@ -238,3 +238,93 @@ class TestMercadoPagoPreapprovalPlan:
         payload = mock_instance.post.call_args.kwargs["json"]
         assert "localhost" not in payload["back_url"]
         assert "theastra.xyz" in payload["back_url"]
+
+    @pytest.mark.anyio
+    async def test_notification_url_incluida_en_payload(self):
+        """Si notification_url es válida (no localhost), se incluye en el payload."""
+        from app.servicios.servicio_mercadopago import ServicioMercadoPago
+
+        with patch("app.servicios.servicio_mercadopago.httpx.AsyncClient") as MockClient:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {"id": "p", "status": "active"}
+
+            mock_instance = AsyncMock()
+            mock_instance.post = AsyncMock(return_value=mock_response)
+            mock_instance.__aenter__ = AsyncMock(return_value=mock_instance)
+            mock_instance.__aexit__ = AsyncMock(return_value=False)
+            MockClient.return_value = mock_instance
+
+            await ServicioMercadoPago.crear_preapproval(
+                access_token="TEST",
+                motivo="Premium",
+                monto=500.0,
+                moneda="ARS",
+                email_pagador="t@t.com",
+                referencia_externa="ref",
+                url_retorno="https://theastra.xyz/suscripcion/exito",
+                notification_url="https://theastra.xyz/api/v1/suscripcion/webhook",
+            )
+
+        payload = mock_instance.post.call_args.kwargs["json"]
+        assert payload["notification_url"] == "https://theastra.xyz/api/v1/suscripcion/webhook"
+
+    @pytest.mark.anyio
+    async def test_notification_url_localhost_no_incluida(self):
+        """Si notification_url contiene localhost, NO se incluye en el payload."""
+        from app.servicios.servicio_mercadopago import ServicioMercadoPago
+
+        with patch("app.servicios.servicio_mercadopago.httpx.AsyncClient") as MockClient:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {"id": "p", "status": "active"}
+
+            mock_instance = AsyncMock()
+            mock_instance.post = AsyncMock(return_value=mock_response)
+            mock_instance.__aenter__ = AsyncMock(return_value=mock_instance)
+            mock_instance.__aexit__ = AsyncMock(return_value=False)
+            MockClient.return_value = mock_instance
+
+            await ServicioMercadoPago.crear_preapproval(
+                access_token="TEST",
+                motivo="Premium",
+                monto=500.0,
+                moneda="ARS",
+                email_pagador="t@t.com",
+                referencia_externa="ref",
+                url_retorno="https://theastra.xyz/exito",
+                notification_url="http://localhost:8000/api/v1/suscripcion/webhook",
+            )
+
+        payload = mock_instance.post.call_args.kwargs["json"]
+        assert "notification_url" not in payload
+
+    @pytest.mark.anyio
+    async def test_notification_url_vacia_no_incluida(self):
+        """Si notification_url está vacía, NO se incluye en el payload."""
+        from app.servicios.servicio_mercadopago import ServicioMercadoPago
+
+        with patch("app.servicios.servicio_mercadopago.httpx.AsyncClient") as MockClient:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {"id": "p", "status": "active"}
+
+            mock_instance = AsyncMock()
+            mock_instance.post = AsyncMock(return_value=mock_response)
+            mock_instance.__aenter__ = AsyncMock(return_value=mock_instance)
+            mock_instance.__aexit__ = AsyncMock(return_value=False)
+            MockClient.return_value = mock_instance
+
+            await ServicioMercadoPago.crear_preapproval(
+                access_token="TEST",
+                motivo="Premium",
+                monto=500.0,
+                moneda="ARS",
+                email_pagador="t@t.com",
+                referencia_externa="ref",
+                url_retorno="https://theastra.xyz/exito",
+                notification_url="",
+            )
+
+        payload = mock_instance.post.call_args.kwargs["json"]
+        assert "notification_url" not in payload
