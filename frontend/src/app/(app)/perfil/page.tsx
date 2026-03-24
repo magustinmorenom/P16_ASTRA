@@ -657,7 +657,7 @@ export default function PaginaPerfil() {
 
       {/* Mensaje para usuarios con Google OAuth */}
       {!esProveedorLocal && usuario && (
-        <Tarjeta>
+        <Tarjeta className="mb-6">
           <div className="flex items-center gap-3">
             <Icono nombre="google" tamaño={24} className="text-texto-secundario" />
             <div>
@@ -672,6 +672,21 @@ export default function PaginaPerfil() {
           </div>
         </Tarjeta>
       )}
+
+      {/* ================================================================ */}
+      {/* Cerrar sesion                                                    */}
+      {/* ================================================================ */}
+      <Boton
+        variante="secundario"
+        className="w-full"
+        onClick={() => {
+          const { cerrarSesion } = useStoreAuth.getState();
+          cerrarSesion();
+        }}
+        icono={<Icono nombre="salir" tamaño={16} />}
+      >
+        Cerrar sesion
+      </Boton>
     </div>
     </>
   );
