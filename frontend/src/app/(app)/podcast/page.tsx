@@ -10,21 +10,27 @@ import {
   usarGenerarPodcast,
 } from "@/lib/hooks";
 import { useStoreUI, type PistaReproduccion } from "@/lib/stores/store-ui";
-import { clienteApi } from "@/lib/api/cliente";
+
 import type { PodcastEpisodio, TipoPodcast } from "@/lib/tipos";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
 
-/** Descarga el audio de un episodio obteniendo la URL presigned. */
+/** Descarga el audio de un episodio vía fetch autenticado. */
 async function descargarAudio(episodioId: string, titulo: string) {
   try {
-    const data = await clienteApi.get<{ url: string }>(`/podcast/audio/${episodioId}`);
+    const token = localStorage.getItem("token_acceso");
+    const res = await fetch(`/api/v1/podcast/audio/${episodioId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = data.url;
+    a.href = url;
     a.download = `${titulo.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ ]/g, "")}.mp3`;
-    a.target = "_blank";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   } catch {
     // silenciar error
   }

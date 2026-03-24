@@ -10,7 +10,7 @@
 
 import { useRef, useEffect, useCallback, useState } from "react";
 import { useStoreUI } from "@/lib/stores/store-ui";
-import { clienteApi } from "@/lib/api/cliente";
+
 
 export function usarAudio() {
   const {
@@ -31,16 +31,33 @@ export function usarAudio() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const ultimoPistaId = useRef<string | null>(null);
 
-  // Obtener URL presigned cuando cambia la pista
+  // Obtener audio como blob cuando cambia la pista
   useEffect(() => {
     if (!pistaActual?.url || pistaActual.id === ultimoPistaId.current) return;
     ultimoPistaId.current = pistaActual.id;
     setAudioUrl(null);
 
-    clienteApi
-      .get<{ url: string }>(`/podcast/audio/${pistaActual.id}`)
-      .then((data) => setAudioUrl(data.url))
+    const token = localStorage.getItem("token_acceso");
+    fetch(`/api/v1/podcast/audio/${pistaActual.id}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Audio no disponible");
+        return res.blob();
+      })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        setAudioUrl(url);
+      })
       .catch(() => setAudioUrl(null));
+
+    // Revocar blob URL anterior al cambiar de pista
+    return () => {
+      setAudioUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+    };
   }, [pistaActual?.id, pistaActual?.url]);
 
   const tieneAudio = !!audioUrl;
