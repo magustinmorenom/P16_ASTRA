@@ -68,7 +68,7 @@ class ServicioMercadoPago:
         if url_retorno and "localhost" not in url_retorno and "127.0.0.1" not in url_retorno:
             back_url = url_retorno
         else:
-            back_url = "https://theastra.xyz/suscripcion/exito"
+            back_url = "https://theastra.xyz/checkout/exito"
 
         payload_plan = {
             "reason": motivo,
