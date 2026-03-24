@@ -77,8 +77,6 @@ class ServicioMercadoPago:
                 "frequency_type": tipo_frecuencia,
                 "transaction_amount": monto,
                 "currency_id": moneda,
-                "billing_day": 10,
-                "billing_day_proportional": True,
             },
             "back_url": back_url,
         }

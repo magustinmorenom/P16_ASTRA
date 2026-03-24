@@ -304,7 +304,7 @@ async def suscribirse(
     monto = precio.precio_local / 100  # centavos → unidad
     respuesta_mp = await ServicioMercadoPago.crear_preapproval(
         access_token=config_pais.mp_access_token,
-        motivo=f"CosmicEngine — Plan {plan.nombre}",
+        motivo=f"ASTRA - Plan {plan.nombre}",
         monto=monto,
         moneda=config_pais.moneda,
         email_pagador=usuario.email,
@@ -645,7 +645,7 @@ async def _procesar_pago(
                 suscripcion_id=suscripcion.id if suscripcion else None,
                 monto_centavos=monto,
                 moneda=moneda,
-                concepto=f"Suscripción CosmicEngine — Pago {pago_id[:8]}",
+                concepto=f"Suscripción ASTRA — Pago {pago_id[:8]}",
                 pais_codigo=config_pais.pais_codigo,
                 email_cliente=email_cliente,
                 nombre_cliente=nombre_cliente,
@@ -760,7 +760,7 @@ async def sincronizar_pagos(
                         suscripcion_id=suscripcion.id,
                         monto_centavos=monto,
                         moneda=moneda,
-                        concepto=f"Suscripción CosmicEngine — Pago {pago_id_mp[:8]}",
+                        concepto=f"Suscripción ASTRA — Pago {pago_id_mp[:8]}",
                         pais_codigo=config_pais.pais_codigo,
                         email_cliente=usuario.email,
                         nombre_cliente=usuario.nombre,
@@ -911,8 +911,8 @@ async def descargar_factura_pdf(
     elementos = []
 
     # Encabezado
-    elementos.append(Paragraph("CosmicEngine", titulo))
-    elementos.append(Paragraph("Plataforma de cálculo esotérico-astronómico", subtitulo))
+    elementos.append(Paragraph("ASTRA", titulo))
+    elementos.append(Paragraph("Tu guía cósmica personalizada", subtitulo))
     elementos.append(Spacer(1, 10 * mm))
 
     # Datos de factura
@@ -980,7 +980,7 @@ async def descargar_factura_pdf(
 
     # Pie
     elementos.append(Paragraph(
-        "Este documento es un comprobante generado automáticamente por CosmicEngine.",
+        "Este documento es un comprobante generado automáticamente por ASTRA.",
         ParagraphStyle("Pie", parent=normal, fontSize=8, textColor=colors.grey),
     ))
 
