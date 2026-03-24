@@ -164,6 +164,7 @@ export default function PaginaSuscripcion() {
   const desvincular = usarDesvincular();
   const [codigoGenerado, setCodigoGenerado] = useState<string | null>(null);
   const [mensajeSync, setMensajeSync] = useState<{ texto: string; tipo: "exito" | "info" | "error" } | null>(null);
+  const [mostrarConfirmacionCancelar, setMostrarConfirmacionCancelar] = useState(false);
 
   // Actualizar país seleccionado cuando se detecte por IP
   useEffect(() => {
@@ -192,7 +193,9 @@ export default function PaginaSuscripcion() {
   function manejarCancelar() {
     cancelar.mutate(undefined, {
       onSuccess: () => {
+        setMostrarConfirmacionCancelar(false);
         queryClient.invalidateQueries({ queryKey: ["mi-suscripcion"] });
+        queryClient.invalidateQueries({ queryKey: ["planes"] });
       },
     });
   }
@@ -341,19 +344,10 @@ export default function PaginaSuscripcion() {
                 </ul>
 
                 {/* Accion */}
-                {planActualSlug === "gratis" ? (
+                {planActualSlug === "gratis" && (
                   <Badge variante="exito" className="self-start">
                     Plan actual
                   </Badge>
-                ) : (
-                  <Boton
-                    variante="secundario"
-                    onClick={manejarCancelar}
-                    cargando={cancelar.isPending}
-                    className="w-full"
-                  >
-                    Volver al plan Gratis
-                  </Boton>
                 )}
               </div>
             </Tarjeta>
@@ -448,21 +442,9 @@ export default function PaginaSuscripcion() {
 
                 {/* Accion */}
                 {planActualSlug === "premium" ? (
-                  <div className="flex flex-col gap-2">
-                    <Badge variante="exito" className="self-start">
-                      Plan actual
-                    </Badge>
-                    {miSuscripcion?.estado === "activa" && (
-                      <Boton
-                        variante="secundario"
-                        onClick={manejarCancelar}
-                        cargando={cancelar.isPending}
-                        className="w-full"
-                      >
-                        Cancelar suscripcion
-                      </Boton>
-                    )}
-                  </div>
+                  <Badge variante="exito" className="self-start">
+                    Plan actual
+                  </Badge>
                 ) : (
                   <Boton
                     variante="primario"
@@ -522,13 +504,40 @@ export default function PaginaSuscripcion() {
               {miSuscripcion.estado === "activa" &&
                 miSuscripcion.plan_slug !== "gratis" && (
                   <div className="pt-2">
-                    <Boton
-                      variante="secundario"
-                      onClick={manejarCancelar}
-                      cargando={cancelar.isPending}
-                    >
-                      Cancelar suscripcion
-                    </Boton>
+                    {!mostrarConfirmacionCancelar ? (
+                      <Boton
+                        variante="secundario"
+                        onClick={() => setMostrarConfirmacionCancelar(true)}
+                      >
+                        Cancelar suscripcion
+                      </Boton>
+                    ) : (
+                      <div className="flex flex-col gap-3 rounded-lg border border-error/30 bg-error/5 p-4">
+                        <p className="text-sm font-medium text-texto">
+                          Estas seguro que queres cancelar tu suscripcion Premium?
+                        </p>
+                        <p className="text-xs text-texto-secundario">
+                          Se cancelara el cobro recurrente en MercadoPago y volveras al plan Gratis.
+                          Podes volver a suscribirte en cualquier momento.
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <Boton
+                            variante="primario"
+                            onClick={manejarCancelar}
+                            cargando={cancelar.isPending}
+                            className="bg-error hover:bg-error/80"
+                          >
+                            Si, cancelar
+                          </Boton>
+                          <Boton
+                            variante="secundario"
+                            onClick={() => setMostrarConfirmacionCancelar(false)}
+                          >
+                            No, mantener Premium
+                          </Boton>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
             </div>
