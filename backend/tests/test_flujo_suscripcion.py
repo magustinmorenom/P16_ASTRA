@@ -128,7 +128,7 @@ def _crear_factura(uid=None, usuario_id=None, pago_id=None, monto=1080000, moned
     f.estado = "emitida"
     f.monto_centavos = monto
     f.moneda = moneda
-    f.concepto = "Suscripción CosmicEngine"
+    f.concepto = "Suscripción ASTRA"
     f.pais_codigo = "AR"
     f.email_cliente = None
     f.nombre_cliente = None

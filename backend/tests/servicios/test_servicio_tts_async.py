@@ -152,8 +152,8 @@ class TestMercadoPagoPreapprovalPlan:
         assert resultado["external_reference"] == "ref_123"
 
     @pytest.mark.anyio
-    async def test_crear_preapproval_incluye_billing_day(self):
-        """El payload debe incluir billing_day en auto_recurring."""
+    async def test_crear_preapproval_no_incluye_billing_day(self):
+        """El payload NO debe incluir billing_day (frecuencia por días, no mensual fijo)."""
         from app.servicios.servicio_mercadopago import ServicioMercadoPago
 
         with patch("app.servicios.servicio_mercadopago.httpx.AsyncClient") as MockClient:
@@ -178,8 +178,8 @@ class TestMercadoPagoPreapprovalPlan:
             )
 
         payload = mock_instance.post.call_args.kwargs["json"]
-        assert "billing_day" in payload["auto_recurring"]
-        assert payload["auto_recurring"]["billing_day_proportional"] is True
+        assert "billing_day" not in payload["auto_recurring"]
+        assert "billing_day_proportional" not in payload["auto_recurring"]
 
     @pytest.mark.anyio
     async def test_error_mp_lanza_excepcion(self):
