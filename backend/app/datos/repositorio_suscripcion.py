@@ -87,6 +87,29 @@ class RepositorioSuscripcion:
         )
         return resultado.scalar_one_or_none()
 
+    async def obtener_pendiente_por_referencia(
+        self, referencia_externa: str
+    ) -> Suscripcion | None:
+        """Obtiene la suscripción pendiente más reciente por referencia externa."""
+        resultado = await self.sesion.execute(
+            select(Suscripcion).where(
+                Suscripcion.referencia_externa == referencia_externa,
+                Suscripcion.estado == "pendiente",
+            ).order_by(Suscripcion.creado_en.desc()).limit(1)
+        )
+        return resultado.scalars().first()
+
+    async def actualizar_preapproval_id(
+        self, suscripcion_id: uuid.UUID, mp_preapproval_id: str
+    ) -> None:
+        """Actualiza el mp_preapproval_id de una suscripción."""
+        await self.sesion.execute(
+            update(Suscripcion)
+            .where(Suscripcion.id == suscripcion_id)
+            .values(mp_preapproval_id=mp_preapproval_id)
+        )
+        await self.sesion.commit()
+
     async def actualizar_estado(
         self,
         suscripcion_id: uuid.UUID,

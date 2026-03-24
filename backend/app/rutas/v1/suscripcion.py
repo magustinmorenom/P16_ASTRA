@@ -470,6 +470,34 @@ async def _procesar_preapproval(
 ) -> None:
     """Procesa un cambio de estado en la suscripción de MP."""
     suscripcion = await repo_sus.obtener_por_preapproval_id(preapproval_id)
+
+    # Fallback: buscar por external_reference consultando MP
+    if not suscripcion:
+        # Intentar obtener datos del preapproval de MP para extraer external_reference
+        paises = await repo_sus.listar_paises_activos()
+        datos_mp_fallback = None
+        for config_pais in paises:
+            try:
+                datos_mp_fallback = await ServicioMercadoPago.obtener_preapproval(
+                    config_pais.mp_access_token, preapproval_id
+                )
+                if datos_mp_fallback:
+                    break
+            except ErrorPasarelaPago:
+                continue
+
+        if datos_mp_fallback:
+            ref = datos_mp_fallback.get("external_reference", "")
+            if ref:
+                suscripcion = await repo_sus.obtener_pendiente_por_referencia(ref)
+                if suscripcion:
+                    # Vincular el preapproval_id real con la suscripción
+                    await repo_sus.actualizar_preapproval_id(suscripcion.id, preapproval_id)
+                    logger.info(
+                        "Suscripción %s vinculada a preapproval %s vía referencia %s",
+                        suscripcion.id, preapproval_id, ref,
+                    )
+
     if not suscripcion:
         logger.warning("Suscripción no encontrada para preapproval %s", preapproval_id)
         return
