@@ -3,6 +3,7 @@
 import { useStoreUI } from "@/lib/stores/store-ui";
 import BarraNavegacionInferior from "@/componentes/layouts/barra-navegacion-inferior";
 import MiniReproductor from "@/componentes/layouts/mini-reproductor";
+import ChatWidget from "@/componentes/chat/chat-widget";
 
 // ---------------------------------------------------------------------------
 // Layout Mobile — Shell tipo app nativa
@@ -34,6 +35,9 @@ export default function LayoutMobile({
 
       {/* Barra de navegacion inferior */}
       <BarraNavegacionInferior />
+
+      {/* Chat con el Oráculo */}
+      <ChatWidget />
     </div>
   );
 }

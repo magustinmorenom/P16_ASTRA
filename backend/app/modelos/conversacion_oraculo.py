@@ -1,8 +1,8 @@
-"""Modelo de conversaciones del oráculo vía Telegram."""
+"""Modelo de conversaciones del oráculo (Telegram y chat web)."""
 
 import uuid
 
-from sqlalchemy import BigInteger, Boolean, ForeignKey, Integer
+from sqlalchemy import BigInteger, Boolean, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -10,7 +10,7 @@ from app.modelos.base import ModeloBase
 
 
 class ConversacionOraculo(ModeloBase):
-    """Conversación entre un usuario y el oráculo ASTRA vía Telegram."""
+    """Conversación entre un usuario y el oráculo ASTRA."""
 
     __tablename__ = "conversaciones_oraculo"
 
@@ -20,8 +20,11 @@ class ConversacionOraculo(ModeloBase):
         nullable=False,
         index=True,
     )
-    telegram_id: Mapped[int] = mapped_column(
-        BigInteger, nullable=False,
+    telegram_id: Mapped[int | None] = mapped_column(
+        BigInteger, nullable=True,
+    )
+    canal: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="telegram", server_default="telegram",
     )
     mensajes: Mapped[list] = mapped_column(
         JSONB, default=list, server_default="[]",

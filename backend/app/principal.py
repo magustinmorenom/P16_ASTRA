@@ -160,6 +160,7 @@ def _registrar_rutas(app: FastAPI) -> None:
     from app.rutas.v1 import (
         auth,
         calendario_cosmico,
+        chat,
         diseno_humano,
         natal,
         numerologia,
@@ -182,6 +183,7 @@ def _registrar_rutas(app: FastAPI) -> None:
     app.include_router(perfil.router, prefix=prefijo, tags=["Perfiles"])
     app.include_router(suscripcion.router, prefix=prefijo)
     app.include_router(oraculo.router, prefix=prefijo)
+    app.include_router(chat.router, prefix=prefijo)
     app.include_router(podcast.router, prefix=prefijo, tags=["Podcasts"])
 
     @app.get("/health", tags=["Sistema"])
