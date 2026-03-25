@@ -19,6 +19,7 @@ from app.datos.repositorio_suscripcion import RepositorioSuscripcion
 from app.dependencias_auth import obtener_usuario_actual
 from app.esquemas.suscripcion import EsquemaSuscribirse
 from app.excepciones import (
+    CosmicEngineError,
     ErrorPasarelaPago,
     PlanNoEncontrado,
     SuscripcionNoEncontrada,
@@ -226,7 +227,11 @@ async def mi_suscripcion(
 ):
     """Obtiene la suscripción activa del usuario."""
     repo_sus = RepositorioSuscripcion(db)
-    suscripcion = await repo_sus.obtener_activa(usuario.id)
+    suscripcion = await repo_sus.obtener_activa(
+        usuario.id,
+        email_usuario=usuario.email,
+        nombre_usuario=usuario.nombre,
+    )
 
     if not suscripcion:
         return {
@@ -286,6 +291,13 @@ async def suscribirse(
 
     if plan.slug == "gratis":
         raise ErrorPasarelaPago("No se puede suscribir al plan gratuito vía checkout")
+
+    # Validar que no sea ya Premium
+    suscripcion_actual = await repo_sus.obtener_activa(usuario.id)
+    if suscripcion_actual:
+        plan_actual = await repo_plan.obtener_por_id(suscripcion_actual.plan_id)
+        if plan_actual and plan_actual.slug == "premium":
+            raise CosmicEngineError("Ya tenés plan Premium activo", codigo=409)
 
     # Obtener precio local
     precio = await repo_plan.obtener_precio(plan.id, datos.pais_codigo)
@@ -680,6 +692,16 @@ async def _procesar_pago(
         datos_mp=datos_pago,
         fecha_pago=_parsear_fecha(datos_pago.get("date_approved")),
     )
+
+    # Si pago rechazado, notificar al usuario
+    if estado_local == "rechazado" and usuario_id:
+        try:
+            repo_usuario = RepositorioUsuario(db)
+            usuario_obj = await repo_usuario.obtener_por_id(usuario_id)
+            if usuario_obj:
+                await ServicioEmail.enviar_pago_rechazado(usuario_obj.email, usuario_obj.nombre)
+        except Exception:
+            logger.warning("No se pudo enviar email de pago rechazado")
 
     # Si pago aprobado y hay suscripción, activarla y cancelar gratis
     if estado_local == "aprobado" and suscripcion and suscripcion.estado != "activa":

@@ -353,6 +353,7 @@ class TestSuscribirse:
         MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
         MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
         MockRepoPlan.return_value.obtener_precio = AsyncMock(return_value=precio)
+        MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=None)
         MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
         MockRepoSus.return_value.cancelar_pendientes_usuario = AsyncMock()
 
@@ -466,6 +467,7 @@ class TestSuscribirse:
         MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
         MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
         MockRepoPlan.return_value.obtener_precio = AsyncMock(return_value=None)
+        MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=None)
 
         token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
 
@@ -493,6 +495,7 @@ class TestSuscribirse:
         MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
         MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
         MockRepoPlan.return_value.obtener_precio = AsyncMock(return_value=precio)
+        MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=None)
         MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=None)
 
         token = ServicioAuth.crear_token_acceso(uid, "test@test.com")
@@ -995,6 +998,7 @@ class TestProduccion:
         MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
         MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
         MockRepoPlan.return_value.obtener_precio = AsyncMock(return_value=precio)
+        MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=None)
         MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
         MockRepoSus.return_value.cancelar_pendientes_usuario = AsyncMock()
         MockRepoSus.return_value.crear = AsyncMock(
@@ -1040,6 +1044,7 @@ class TestProduccion:
         MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
         MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
         MockRepoPlan.return_value.obtener_precio = AsyncMock(return_value=precio)
+        MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=None)
         MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
         MockRepoSus.return_value.cancelar_pendientes_usuario = AsyncMock()
         MockRepoSus.return_value.crear = AsyncMock(
@@ -1083,6 +1088,7 @@ class TestProduccion:
         MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
         MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
         MockRepoPlan.return_value.obtener_precio = AsyncMock(return_value=precio)
+        MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=None)
         MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
         MockRepoSus.return_value.cancelar_pendientes_usuario = AsyncMock()
         MockRepoSus.return_value.crear = AsyncMock(
@@ -1543,6 +1549,7 @@ class TestMultiPais:
         MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
         MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
         MockRepoPlan.return_value.obtener_precio = AsyncMock(return_value=precio_br)
+        MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=None)
         MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_br)
         MockRepoSus.return_value.cancelar_pendientes_usuario = AsyncMock()
         MockRepoSus.return_value.crear = AsyncMock(
@@ -1590,6 +1597,7 @@ class TestMultiPais:
         MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
         MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
         MockRepoPlan.return_value.obtener_precio = AsyncMock(return_value=precio_mx)
+        MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=None)
         MockRepoSus.return_value.obtener_config_pais = AsyncMock(return_value=config_mx)
         MockRepoSus.return_value.cancelar_pendientes_usuario = AsyncMock()
         MockRepoSus.return_value.crear = AsyncMock(

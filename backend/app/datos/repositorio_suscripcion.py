@@ -46,7 +46,12 @@ class RepositorioSuscripcion:
         await self.sesion.refresh(suscripcion)
         return suscripcion
 
-    async def obtener_activa(self, usuario_id: uuid.UUID) -> Suscripcion | None:
+    async def obtener_activa(
+        self,
+        usuario_id: uuid.UUID,
+        email_usuario: str | None = None,
+        nombre_usuario: str | None = None,
+    ) -> Suscripcion | None:
         """Obtiene la suscripción activa/pendiente más reciente de un usuario.
 
         Prioriza 'activa' sobre 'pendiente' para que /me muestre el plan
@@ -54,6 +59,8 @@ class RepositorioSuscripcion:
 
         Lazy-expire: si la suscripción activa tiene fecha_fin y ya venció,
         la marca como cancelada y crea una gratis automáticamente.
+
+        Si se pasan email_usuario y nombre_usuario, envía email de expiración.
         """
         from sqlalchemy import case as sql_case
 
@@ -79,6 +86,7 @@ class RepositorioSuscripcion:
             and suscripcion.fecha_fin
             and suscripcion.fecha_fin < datetime.now(timezone.utc)
         ):
+            fecha_fin_str = suscripcion.fecha_fin.strftime("%d/%m/%Y")
             await self.sesion.execute(
                 update(Suscripcion)
                 .where(Suscripcion.id == suscripcion.id)
@@ -103,6 +111,22 @@ class RepositorioSuscripcion:
                 self.sesion.add(nueva_gratis)
                 await self.sesion.commit()
                 await self.sesion.refresh(nueva_gratis)
+
+                # Email de expiración (fire-and-forget)
+                if email_usuario and nombre_usuario:
+                    import asyncio
+                    import logging
+                    from app.servicios.servicio_email import ServicioEmail
+                    logger = logging.getLogger(__name__)
+                    try:
+                        asyncio.create_task(
+                            ServicioEmail.enviar_expiracion_gracia(
+                                email_usuario, nombre_usuario, fecha_fin_str
+                            )
+                        )
+                    except Exception:
+                        logger.warning("No se pudo enviar email de expiración de gracia")
+
                 return nueva_gratis
             await self.sesion.commit()
             return None

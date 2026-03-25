@@ -110,6 +110,15 @@ export default function PaginaLogin() {
           </button>
         </div>
 
+        <div className="flex justify-end -mt-1">
+          <Link
+            href="/olvide-contrasena"
+            className="text-sm text-primario hover:text-primario-hover transition-colors"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
+
         {/* Mensaje de error */}
         {error && (
           <div className="rounded-lg bg-error/10 border border-error/20 px-4 py-3">

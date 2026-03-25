@@ -510,3 +510,215 @@ Implementacion de periodo de gracia al cancelar suscripcion Premium: el usuario 
 3. **Lazy-expire**: Cada vez que se consulta `obtener_activa()`, si la suscripcion tiene `fecha_fin` vencida, se marca como "cancelada" y se crea automaticamente una suscripcion Gratis.
 4. **Proteccion webhook**: Si MP envia webhook de cancelacion pero la suscripcion tiene gracia activa, se ignora para no degradar prematuramente.
 5. **UI coherente**: Ambas paginas (suscripcion y perfil) muestran el mismo badge de advertencia y ocultan la opcion de cancelar si ya esta programada.
+
+---
+
+## Sesion: Mobile App — Feature Parity con Web Frontend
+**Fecha:** 2026-03-24 ~22:00 (ARG)
+
+### Que se hizo
+Implementacion completa de la app mobile React Native (Expo) a paridad con la version mobile del frontend web. ~75 archivos creados/modificados abarcando infraestructura NativeWind, tipos, stores, hooks, componentes UI, auth, onboarding, 5 pantallas tab, 6 pantallas feature, visualizaciones SVG y reproductor de audio.
+
+### Infraestructura — Archivos creados/modificados
+| Archivo | Descripcion |
+|---------|-------------|
+| `mobile/tailwind.config.js` | Config NativeWind con colores ASTRA custom |
+| `mobile/global.css` | Tailwind base/components/utilities |
+| `mobile/babel.config.js` | Preset expo + nativewind + module-resolver @/ |
+| `mobile/metro.config.js` | withNativeWind wrapper |
+| `mobile/tsconfig.json` | Paths @/* → ./src/* |
+| `mobile/nativewind-env.d.ts` | NativeWind types reference |
+| `mobile/app.json` | Agregado plugin expo-splash-screen |
+
+### Tipos — 13 archivos creados en `src/lib/tipos/`
+| Archivo | Contenido |
+|---------|-----------|
+| `api.ts` | RespuestaBase, DatosNacimiento, DatosNumerologia |
+| `auth.ts` | EsquemaRegistro/Login, Usuario, UsuarioConSuscripcion, RespuestaTokens |
+| `natal.ts` | Planeta, Casa, Aspecto, CartaNatal |
+| `diseno-humano.ts` | Activacion, Canal, CruzEncarnacion, DisenoHumano |
+| `numerologia.ts` | NumeroRespuesta, EtapaVida, Numerologia |
+| `retorno-solar.ts` | FechaRetorno, CartaRetorno, RetornoSolar |
+| `transitos.ts` | PlanetaTransito, Transitos |
+| `calendario-cosmico.ts` | TransitosDia, CalendarioRango |
+| `perfil.ts` | Perfil |
+| `calculos.ts` | CalculosPerfil |
+| `suscripcion.ts` | Plan, Suscripcion, Pago, RespuestaCheckout + 8 mas |
+| `podcast.ts` | TipoPodcast, SegmentoLetra, PodcastEpisodio |
+| `index.ts` | Re-export centralizado |
+
+### Stores — 2 archivos creados en `src/lib/stores/`
+| Archivo | Contenido |
+|---------|-----------|
+| `store-auth.ts` | useStoreAuth: usuario, autenticado, cargarUsuario (SecureStore) |
+| `store-ui.ts` | useStoreUI: pistaActual, reproduciendo, progreso, volumen, segmentoActual |
+
+### Hooks — 13 archivos creados en `src/lib/hooks/`
+| Archivo | Hooks |
+|---------|-------|
+| `usar-auth.ts` | usarLogin, usarRegistro, usarLogout, usarCambiarContrasena, usarGoogleAuthUrl |
+| `usar-perfil.ts` | usarCrearPerfil, usarMiPerfil, usarActualizarPerfil |
+| `usar-mis-calculos.ts` | usarMisCalculos |
+| `usar-carta-natal.ts` | usarCartaNatal |
+| `usar-diseno-humano.ts` | usarDisenoHumano |
+| `usar-numerologia.ts` | usarNumerologia |
+| `usar-retorno-solar.ts` | usarRetornoSolar |
+| `usar-transitos.ts` | usarTransitos (refetch 10min) |
+| `usar-calendario-cosmico.ts` | usarTransitosDia, usarTransitosRango |
+| `usar-suscripcion.ts` | usarPlanes, usarMiSuscripcion, usarSuscribirse + 4 mas |
+| `usar-podcast.ts` | usarPodcastHoy, usarPodcastHistorial, usarGenerarPodcast |
+| `usar-audio-nativo.ts` | expo-av + FileSystem cache + SecureStore auth |
+| `index.ts` | Re-export todos los hooks |
+
+### Utilidades — 2 archivos creados en `src/lib/utilidades/`
+| Archivo | Contenido |
+|---------|-----------|
+| `cn.ts` | cn() merge clases con clsx |
+| `formatear-fecha.ts` | formatearFecha, formatearFechaCorta, formatearHora, formatearFechaHora |
+
+### Componentes UI — 10 archivos creados en `src/componentes/`
+| Archivo | Descripcion |
+|---------|-------------|
+| `ui/boton.tsx` | Variantes primario/secundario/fantasma, tamaños, cargando |
+| `ui/input.tsx` | TextInput con etiqueta, icono, error, forwardRef |
+| `ui/tarjeta.tsx` | Variantes default/violeta/dorado/acento |
+| `ui/badge.tsx` | Variantes exito/error/advertencia/info |
+| `ui/avatar.tsx` | Iniciales, tamaños sm/md/lg |
+| `ui/esqueleto.tsx` | Shimmer animado con reanimated |
+| `ui/separador.tsx` | Linea horizontal |
+| `ui/icono-astral.tsx` | IconoAstral + IconoSigno para SVG astrales |
+| `layouts/header-mobile.tsx` | Header con back + titulo + safe area |
+| `compuestos/formulario-nacimiento.tsx` | Form reutilizable con DateTimePicker nativo |
+
+### Visualizaciones SVG — 2 archivos
+| Archivo | Descripcion |
+|---------|-------------|
+| `visualizaciones/rueda-zodiacal.tsx` | react-native-svg: 12 signos, casas, planetas, aspectos |
+| `visualizaciones/body-graph.tsx` | react-native-svg: 9 centros, canales, definido/abierto |
+
+### Auth + Onboarding — 5 archivos
+| Archivo | Descripcion |
+|---------|-------------|
+| `(auth)/_layout.tsx` | Stack sin tabs |
+| `(auth)/login.tsx` | Google OAuth + email/password |
+| `(auth)/registro.tsx` | Google OAuth + formulario completo |
+| `(auth)/callback.tsx` | Deep link handler astra://callback |
+| `(onboarding)/index.tsx` | 1 paso: datos nacimiento → 4 calculos paralelos |
+
+### Pantallas Tab — 6 archivos modificados/reemplazados
+| Archivo | Descripcion |
+|---------|-------------|
+| `(tabs)/_layout.tsx` | Iconos Phosphor + MiniReproductor sobre tab bar |
+| `(tabs)/index.tsx` | Dashboard: saludo, hero lunar, podcasts, transitos |
+| `(tabs)/astral.tsx` | Rueda zodiacal SVG, planetas, aspectos |
+| `(tabs)/descubrir.tsx` | Grid 2x2+1 cards navegacion a features |
+| `(tabs)/podcast.tsx` | Cards generacion, historial con FlatList |
+| `(tabs)/perfil.tsx` | Info usuario, datos nacimiento editables, config expandible |
+
+### Pantallas Feature — 7 archivos
+| Archivo | Descripcion |
+|---------|-------------|
+| `(features)/_layout.tsx` | Stack slide_from_right |
+| `(features)/diseno-humano.tsx` | Body Graph SVG, tipo/autoridad/perfil, centros, canales |
+| `(features)/numerologia.tsx` | Grid 2x3 numeros, etapas vida, maestros |
+| `(features)/transitos.tsx` | 10 planetas con signo/grado/retrogrado |
+| `(features)/retorno-solar.tsx` | Fecha retorno, rueda zodiacal, aspectos |
+| `(features)/calendario-cosmico.tsx` | Strip semanal, detalle dia |
+| `(features)/suscripcion.tsx` | Planes, checkout MP via WebBrowser, pagos |
+
+### Reproductor Audio — 2 archivos + hook
+| Archivo | Descripcion |
+|---------|-------------|
+| `layouts/mini-reproductor.tsx` | Barra 56px: progress + titulo + play/pause + close |
+| `layouts/reproductor-completo.tsx` | Full-screen: cover, progress slider, volumen |
+| `hooks/usar-audio-nativo.ts` | expo-av: fetch auth → FileSystem cache → Audio.Sound |
+
+### Root Layout
+| Archivo | Descripcion |
+|---------|-------------|
+| `src/app/_layout.tsx` | SplashScreen control, GuardAuth (redirect login/onboarding/tabs), global.css import |
+
+### Dependencias nuevas
+- `expo-linear-gradient` — gradientes
+- `expo-file-system` — cache audio
+- `expo-splash-screen` — control splash
+- `phosphor-react-native` — iconos UI
+- `clsx` — merge classNames
+- `babel-plugin-module-resolver` — alias @/
+- `@react-native-community/datetimepicker` — picker fecha/hora nativo
+- `@react-native-community/slider` — slider volumen/progreso
+
+### Como funciona
+1. **NativeWind**: TailwindCSS funciona via nativewind/metro + babel preset. Las clases se usan directamente en `className` de componentes RN.
+2. **Auth Guard**: El root `_layout.tsx` ejecuta `cargarUsuario()` al montar, controla SplashScreen, y redirige segun estado: sin token → login, sin perfil → onboarding, con perfil → tabs.
+3. **Google OAuth**: Abre WebBrowser via `expo-web-browser`, captura redirect `astra://callback` con tokens, los guarda en SecureStore.
+4. **Onboarding**: Un solo paso — formulario de nacimiento. Al enviar: crea perfil + calcula carta natal, HD, numerologia y retorno solar en paralelo.
+5. **Dashboard**: Saludo personalizado + hero lunar de transitos en vivo + 3 cards podcast (generar/play) + lista transitos rapidos.
+6. **Carta Astral**: SVG rueda zodiacal con react-native-svg. Muestra planetas posicionados, casas, aspectos como lineas, tabla de planetas y aspectos.
+7. **Diseno Humano**: SVG Body Graph con 9 centros geometricos (cuadrado/triangulo/diamante), canales, coloring definido/abierto.
+8. **Reproductor**: El hook `usarAudioNativo` descarga audio autenticado via FileSystem, crea `Audio.Sound`, sincroniza play/pause/volumen/seek con store Zustand. Mini reproductor flotante sobre tab bar, expandible a full-screen.
+9. **Suscripcion**: Muestra planes, abre checkout MP en browser externo, permite cancelar con gracia.
+
+---
+
+## Sesion: Fixes del Diagnóstico Premium E2E
+**Fecha:** 2026-03-24 ~14:00 (ARG)
+
+### Que se hizo
+Implementación completa de 6 fases de fixes identificados en el diagnóstico del flujo Premium: reset de contraseña, eliminación de cuenta, sistema global de toasts, gating visual de features premium, cleanup de navbar, consolidación de cancelación, y emails de notificación.
+
+### Backend — Archivos creados
+| Archivo | Descripción |
+|---------|-------------|
+| `app/email_templates/cuenta_eliminada.html` | Email de confirmación de eliminación de cuenta |
+| `app/email_templates/pago_rechazado.html` | Email de notificación de pago rechazado |
+| `app/email_templates/expiracion_gracia.html` | Email de aviso de expiración del período de gracia |
+
+### Backend — Archivos modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `app/esquemas/auth.py` | 3 schemas nuevos: EsquemaSolicitarReset, EsquemaConfirmarReset, EsquemaEliminarCuenta |
+| `app/rutas/v1/auth.py` | 3 endpoints nuevos: solicitar-reset, confirmar-reset, eliminar-cuenta. Updated /me para lazy-expire email |
+| `app/rutas/v1/suscripcion.py` | Guard 409 anti-doble-premium en /suscribirse. Email pago rechazado en webhook. Lazy-expire email en /mi-suscripcion |
+| `app/datos/repositorio_usuario.py` | Método desactivar() para soft-delete de cuenta |
+| `app/datos/repositorio_suscripcion.py` | obtener_activa() con params opcionales email/nombre para lazy-expire email |
+| `app/servicios/servicio_email.py` | 3 métodos nuevos: enviar_cuenta_eliminada, enviar_pago_rechazado, enviar_expiracion_gracia |
+| `app/configuracion.py` | URLs MP default cambiadas de /checkout/* a /suscripcion/* |
+| `tests/rutas/test_rutas_suscripcion.py` | Mock obtener_activa en 7 tests del endpoint /suscribirse |
+| `tests/test_flujo_suscripcion.py` | Mock obtener_activa en test de integración |
+
+### Frontend — Archivos creados
+| Archivo | Descripción |
+|---------|-------------|
+| `src/app/(auth)/olvide-contrasena/page.tsx` | Página de solicitud de reset (campo email + mensaje éxito) |
+| `src/app/(auth)/reset-password/page.tsx` | Página de confirmación de reset (token de URL + nueva contraseña) |
+| `src/componentes/ui/alerta.tsx` | Componente CVA con 4 variantes (exito, error, advertencia, info) |
+| `src/componentes/ui/bloqueo-premium.tsx` | Wrapper de gating visual — blur + overlay CTA para usuarios free |
+| `src/componentes/layouts/contenedor-toasts.tsx` | Contenedor global de toasts con auto-dismiss y animaciones |
+
+### Frontend — Archivos modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `src/lib/hooks/usar-auth.ts` | 3 hooks nuevos: usarSolicitarReset, usarConfirmarReset, usarEliminarCuenta |
+| `src/lib/hooks/index.ts` | Re-exports de los 3 hooks nuevos |
+| `src/lib/stores/store-ui.ts` | Toast slice: ToastItem interface, toasts[], mostrarToast(), cerrarToast() |
+| `src/app/(auth)/login/page.tsx` | Link "¿Olvidaste tu contraseña?" después del campo contraseña |
+| `src/componentes/layouts/layout-app.tsx` | ContenedorToasts montado en desktop y mobile layouts |
+| `src/componentes/layouts/navbar.tsx` | Removida campana rota, removido link duplicado Configuración, agregado badge Premium |
+| `src/app/(app)/perfil/page.tsx` | Cancel→link a /suscripcion, agregado Oráculo Telegram (movido de suscripcion), agregado Eliminar cuenta |
+| `src/app/(app)/suscripcion/page.tsx` | Removida sección Oráculo, mensajeSync reemplazado por toasts |
+| `src/app/(app)/podcast/page.tsx` | Cards envueltas en BloqueoPremium |
+
+### Tests
+- Backend: 474 passed, 1 skipped (10 warnings). 1 fallo pre-existente en test_servicio_tts_async.py (no relacionado)
+- Frontend: TypeScript compila sin errores nuevos (1 error pre-existente en test no relacionado)
+
+### Como funciona
+1. **Reset de contraseña**: Login → "¿Olvidaste tu contraseña?" → formulario email → backend genera token UUID en Redis (TTL 1h) → ServicioEmail envía link → usuario abre /reset-password?token=X → ingresa nueva contraseña → backend valida token, cambia hash, borra token (uso único)
+2. **Eliminación de cuenta**: Perfil → Configuración → Eliminar cuenta → confirmación 2-step (pide contraseña si auth local) → backend cancela suscripción MP si existe, soft-delete (activo=False), revoca refresh token, envía email confirmación → redirect a login
+3. **Guard 409**: Si usuario ya tiene Premium activo e intenta suscribirse de nuevo, backend retorna 409 "Ya tenés plan Premium activo"
+4. **Toasts globales**: store-ui.ts mantiene array de toasts → ContenedorToasts (fixed bottom-right) renderiza Alertas con auto-dismiss (4s default). Reemplaza mensajes inline en suscripción
+5. **BloqueoPremium**: Wrapper que chequea plan_slug del usuario. Si no es premium: blur en children + overlay con corona, mensaje y CTA a /suscripcion. Usado en Podcast
+6. **Navbar cleanup**: Sin campana (no hay sistema de notificaciones), sin link duplicado a configuración, badge Premium visible en avatar y dropdown
+7. **Consolidación**: Cancelación solo en /suscripcion (perfil tiene link "Gestionar suscripción"). Oráculo/Telegram movido de suscripción a perfil (solo premium)
+8. **Emails de notificación**: Pago rechazado (en webhook _procesar_pago), expiración de gracia (lazy en obtener_activa), cuenta eliminada (en endpoint eliminar-cuenta)

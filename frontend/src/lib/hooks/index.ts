@@ -6,6 +6,9 @@ export {
   usarLogout,
   usarCambiarContrasena,
   usarGoogleAuthUrl,
+  usarSolicitarReset,
+  usarConfirmarReset,
+  usarEliminarCuenta,
 } from "./usar-auth";
 
 export { usarCartaNatal } from "./usar-carta-natal";

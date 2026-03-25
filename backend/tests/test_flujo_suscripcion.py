@@ -268,6 +268,7 @@ class TestSuscribirse:
 
         MockPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
         MockPlan.return_value.obtener_precio = AsyncMock(return_value=precio)
+        MockSus.return_value.obtener_activa = AsyncMock(return_value=None)
         MockSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
         MockSus.return_value.cancelar_pendientes_usuario = AsyncMock()
         MockSus.return_value.crear = AsyncMock(return_value=suscripcion)

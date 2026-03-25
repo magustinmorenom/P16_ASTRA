@@ -9,6 +9,17 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/perfil",
 }));
 
+vi.mock("next/link", () => ({
+  default: ({ children, href, ...rest }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
+    <a href={href} {...rest}>{children}</a>
+  ),
+}));
+
+// Mock HeaderMobile
+vi.mock("@/componentes/layouts/header-mobile", () => ({
+  default: ({ titulo }: { titulo: string }) => <div data-testid="header-mobile">{titulo}</div>,
+}));
+
 // Estado mock del perfil
 const PERFIL_MOCK = {
   id: "uuid-perfil-1",
@@ -30,9 +41,11 @@ const mockCartaNatalMutateAsync = vi.fn();
 const mockDisenoHumanoMutateAsync = vi.fn();
 const mockNumerologiaMutateAsync = vi.fn();
 const mockRetornoSolarMutateAsync = vi.fn();
+const mockCancelarMutate = vi.fn();
 
 let mockPerfilData: typeof PERFIL_MOCK | null = PERFIL_MOCK;
 let mockPerfilLoading = false;
+let mockSuscripcionData: { estado: string; plan_slug: string } | null = null;
 
 vi.mock("@/lib/hooks", () => ({
   usarCambiarContrasena: () => ({
@@ -60,24 +73,38 @@ vi.mock("@/lib/hooks", () => ({
   usarRetornoSolar: () => ({
     mutateAsync: mockRetornoSolarMutateAsync,
   }),
+  usarCancelarSuscripcion: () => ({
+    mutate: mockCancelarMutate,
+    isPending: false,
+  }),
+  usarMiSuscripcion: () => ({
+    data: mockSuscripcionData,
+  }),
 }));
 
+const mockCerrarSesion = vi.fn();
+
 vi.mock("@/lib/stores/store-auth", () => ({
-  useStoreAuth: () => ({
-    usuario: {
-      id: "uuid-user-1",
-      nombre: "Lucía García",
-      email: "lucia@test.com",
-      proveedor_auth: "local",
-      activo: true,
-      verificado: true,
-      plan_nombre: "Gratis",
-      plan_slug: "gratis",
-      suscripcion_estado: null,
-      creado_en: "2024-01-01T00:00:00Z",
-      ultimo_acceso: "2024-06-15T12:00:00Z",
+  useStoreAuth: Object.assign(
+    () => ({
+      usuario: {
+        id: "uuid-user-1",
+        nombre: "Lucía García",
+        email: "lucia@test.com",
+        proveedor_auth: "local",
+        activo: true,
+        verificado: true,
+        plan_nombre: "Gratis",
+        plan_slug: "gratis",
+        suscripcion_estado: null,
+        creado_en: "2024-01-01T00:00:00Z",
+        ultimo_acceso: "2024-06-15T12:00:00Z",
+      },
+    }),
+    {
+      getState: () => ({ cerrarSesion: mockCerrarSesion }),
     },
-  }),
+  ),
 }));
 
 import PaginaPerfil from "@/app/(app)/perfil/page";
@@ -90,6 +117,7 @@ describe("PaginaPerfil — Datos de Nacimiento", () => {
     mockPerfilData = PERFIL_MOCK;
     mockPerfilLoading = false;
     mockActualizarPending = false;
+    mockSuscripcionData = null;
     mockActualizarMutateAsync.mockResolvedValue({
       ...PERFIL_MOCK,
       datos_nacimiento_cambiaron: false,
@@ -104,7 +132,7 @@ describe("PaginaPerfil — Datos de Nacimiento", () => {
     renderConProveedores(<PaginaPerfil />);
 
     expect(screen.getByText("Datos de Nacimiento")).toBeInTheDocument();
-    // "Lucía García" aparece múltiples veces (header + datos nacimiento)
+    // "Lucía García" aparece múltiples veces (header + info usuario + datos nacimiento)
     expect(screen.getAllByText("Lucía García").length).toBeGreaterThanOrEqual(2);
     // Estos valores solo aparecen en la sección de datos de nacimiento
     expect(screen.getByText("14:30")).toBeInTheDocument();
@@ -244,5 +272,21 @@ describe("PaginaPerfil — Datos de Nacimiento", () => {
         screen.getByText("No se pudieron actualizar los datos. Intenta nuevamente.")
       ).toBeInTheDocument();
     });
+  });
+
+  it("muestra seccion Configuracion con acordeon de contrasena", () => {
+    renderConProveedores(<PaginaPerfil />);
+
+    expect(screen.getByText("Configuracion")).toBeInTheDocument();
+    expect(screen.getByText("Cambiar contrasena")).toBeInTheDocument();
+    expect(screen.getByText("Cerrar sesion")).toBeInTheDocument();
+  });
+
+  it("llama a cerrarSesion al hacer click en Cerrar sesion", async () => {
+    renderConProveedores(<PaginaPerfil />);
+
+    await user.click(screen.getByText("Cerrar sesion"));
+
+    expect(mockCerrarSesion).toHaveBeenCalled();
   });
 });

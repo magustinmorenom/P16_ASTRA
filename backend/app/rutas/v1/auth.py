@@ -16,12 +16,16 @@ from app.datos.repositorio_usuario import RepositorioUsuario
 from app.dependencias_auth import obtener_usuario_actual
 from app.esquemas.auth import (
     EsquemaCambioContrasena,
+    EsquemaConfirmarReset,
+    EsquemaEliminarCuenta,
     EsquemaLogin,
     EsquemaLogout,
     EsquemaRegistro,
     EsquemaRenovarToken,
+    EsquemaSolicitarReset,
 )
 from app.excepciones import (
+    CosmicEngineError,
     EmailYaRegistrado,
     ErrorAutenticacion,
     ErrorTokenInvalido,
@@ -278,6 +282,113 @@ async def google_callback(
     }
 
 
+@router.post("/solicitar-reset")
+async def solicitar_reset(
+    datos: EsquemaSolicitarReset,
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+    redis: Redis = Depends(_obtener_redis_placeholder),
+):
+    """Solicita un enlace de reset de contraseña por email.
+
+    Siempre retorna 200 para no revelar si el email existe.
+    """
+    repo = RepositorioUsuario(db)
+    usuario = await repo.obtener_por_email(datos.email)
+
+    if usuario and usuario.proveedor_auth == "local" and usuario.activo:
+        token = str(uuid.uuid4())
+        await redis.set(f"reset:{token}", str(usuario.id), ex=3600)
+        try:
+            await ServicioEmail.enviar_reset_password(
+                usuario.email, usuario.nombre, token
+            )
+        except Exception:
+            logger.warning("No se pudo enviar email de reset a %s", datos.email)
+
+    return {"exito": True, "mensaje": "Si el email está registrado, recibirás un enlace para restablecer tu contraseña"}
+
+
+@router.post("/confirmar-reset")
+async def confirmar_reset(
+    datos: EsquemaConfirmarReset,
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+    redis: Redis = Depends(_obtener_redis_placeholder),
+):
+    """Confirma el reset de contraseña con un token válido."""
+    user_id_str = await redis.get(f"reset:{datos.token}")
+    if not user_id_str:
+        raise ErrorTokenInvalido("Enlace expirado o inválido")
+
+    # Redis puede devolver bytes
+    if isinstance(user_id_str, bytes):
+        user_id_str = user_id_str.decode()
+
+    repo = RepositorioUsuario(db)
+    usuario = await repo.obtener_por_id(uuid.UUID(user_id_str))
+    if not usuario or not usuario.activo:
+        raise ErrorTokenInvalido("Enlace expirado o inválido")
+
+    nuevo_hash = ServicioAuth.hashear_contrasena(datos.contrasena_nueva)
+    await repo.cambiar_contrasena(usuario.id, nuevo_hash)
+
+    # Uso único — eliminar token
+    await redis.delete(f"reset:{datos.token}")
+
+    return {"exito": True, "mensaje": "Contraseña actualizada correctamente"}
+
+
+@router.post("/eliminar-cuenta")
+async def eliminar_cuenta(
+    datos: EsquemaEliminarCuenta,
+    usuario: Usuario = Depends(obtener_usuario_actual),
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+    redis: Redis = Depends(_obtener_redis_placeholder),
+):
+    """Elimina (soft-delete) la cuenta del usuario autenticado."""
+    repo = RepositorioUsuario(db)
+
+    # Verificar contraseña para usuarios locales
+    if usuario.proveedor_auth == "local":
+        if not datos.contrasena:
+            raise CosmicEngineError("Se requiere contraseña para eliminar la cuenta", codigo=400)
+        if not ServicioAuth.verificar_contrasena(datos.contrasena, usuario.hash_contrasena):
+            raise ErrorAutenticacion("Contraseña incorrecta")
+
+    # Cancelar suscripción premium si tiene
+    try:
+        repo_sus = RepositorioSuscripcion(db)
+        suscripcion = await repo_sus.obtener_activa(usuario.id)
+        if suscripcion and suscripcion.mp_preapproval_id:
+            config_pais = await repo_sus.obtener_config_pais(suscripcion.pais_codigo)
+            if config_pais:
+                from app.servicios.servicio_mercadopago import ServicioMercadoPago
+                try:
+                    await ServicioMercadoPago.cancelar_preapproval(
+                        access_token=config_pais.mp_access_token,
+                        preapproval_id=suscripcion.mp_preapproval_id,
+                    )
+                except Exception:
+                    logger.warning("No se pudo cancelar preapproval al eliminar cuenta")
+        # Cancelar todas las suscripciones
+        await repo_sus.cancelar_activas_usuario(usuario.id)
+    except Exception:
+        logger.warning("Error cancelando suscripciones al eliminar cuenta de %s", usuario.id)
+
+    # Soft-delete
+    await repo.desactivar(usuario.id)
+
+    # Revocar token
+    await ServicioAuth.revocar_token(redis, datos.token_refresco)
+
+    # Email confirmación (fire-and-forget)
+    try:
+        await ServicioEmail.enviar_cuenta_eliminada(usuario.email, usuario.nombre)
+    except Exception:
+        logger.warning("No se pudo enviar email de eliminación a %s", usuario.email)
+
+    return {"exito": True, "mensaje": "Cuenta eliminada correctamente"}
+
+
 @router.get("/me")
 async def obtener_perfil_usuario(
     usuario: Usuario = Depends(obtener_usuario_actual),
@@ -291,7 +402,11 @@ async def obtener_perfil_usuario(
 
     try:
         repo_sus = RepositorioSuscripcion(db)
-        suscripcion = await repo_sus.obtener_activa(usuario.id)
+        suscripcion = await repo_sus.obtener_activa(
+            usuario.id,
+            email_usuario=usuario.email,
+            nombre_usuario=usuario.nombre,
+        )
         if suscripcion:
             suscripcion_estado = suscripcion.estado
             repo_plan = RepositorioPlan(db)

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 
 import { Icono } from "@/componentes/ui/icono";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
+import { BloqueoPremium } from "@/componentes/ui/bloqueo-premium";
 import {
   usarPodcastHoy,
   usarPodcastHistorial,
@@ -247,28 +248,30 @@ export default function PaginaPodcast() {
         <h2 className="text-sm font-semibold text-[#8A8580] uppercase tracking-wider mb-4">
           Tus Podcasts
         </h2>
-        {cargando ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <Esqueleto key={i} className="h-[140px] rounded-2xl" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {TIPOS.map((tipo) => (
-              <CardEpisodio
-                key={tipo}
-                tipo={tipo}
-                episodio={mapaHoy.get(tipo)}
-                onGenerar={() => generarMutation.mutate(tipo)}
-                generando={
-                  generarMutation.isPending &&
-                  generarMutation.variables === tipo
-                }
-              />
-            ))}
-          </div>
-        )}
+        <BloqueoPremium mensaje="Los podcasts cósmicos son exclusivos del plan Premium">
+          {cargando ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <Esqueleto key={i} className="h-[140px] rounded-2xl" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {TIPOS.map((tipo) => (
+                <CardEpisodio
+                  key={tipo}
+                  tipo={tipo}
+                  episodio={mapaHoy.get(tipo)}
+                  onGenerar={() => generarMutation.mutate(tipo)}
+                  generando={
+                    generarMutation.isPending &&
+                    generarMutation.variables === tipo
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </BloqueoPremium>
       </section>
 
       {/* Historial */}
