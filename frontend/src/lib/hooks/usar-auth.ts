@@ -92,3 +92,29 @@ export function usarGoogleAuthUrl() {
       clienteApi.get<{ url: string }>("/auth/google/url"),
   });
 }
+
+/** Hook para solicitar reset de contraseña. */
+export function usarSolicitarReset() {
+  return useMutation({
+    mutationFn: (datos: { email: string }) =>
+      clienteApi.post("/auth/solicitar-reset", datos),
+  });
+}
+
+/** Hook para confirmar reset de contraseña con token. */
+export function usarConfirmarReset() {
+  return useMutation({
+    mutationFn: (datos: { token: string; contrasena_nueva: string }) =>
+      clienteApi.post("/auth/confirmar-reset", datos),
+  });
+}
+
+/** Hook para eliminar la cuenta del usuario. */
+export function usarEliminarCuenta() {
+  return useMutation({
+    mutationFn: (datos: {
+      contrasena?: string;
+      token_refresco: string;
+    }) => clienteApi.post("/auth/eliminar-cuenta", datos),
+  });
+}

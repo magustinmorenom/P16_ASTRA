@@ -14,17 +14,21 @@ import { Separador } from "@/componentes/ui/separador";
 
 import {
   usarCambiarContrasena,
+  usarEliminarCuenta,
   usarMiPerfil,
   usarActualizarPerfil,
   usarCartaNatal,
   usarDisenoHumano,
   usarNumerologia,
   usarRetornoSolar,
-  usarCancelarSuscripcion,
   usarMiSuscripcion,
+  usarGenerarCodigo,
+  usarEstadoVinculacion,
+  usarDesvincular,
 } from "@/lib/hooks";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import type { DatosNacimiento } from "@/lib/tipos";
+import { formatearFechaCorta } from "@/lib/utilidades/formatear-fecha";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
 
 export default function PaginaPerfil() {
@@ -67,25 +71,39 @@ export default function PaginaPerfil() {
   const esProveedorLocal = usuario?.proveedor_auth === "local";
   const esPremium = usuario?.plan_slug === "premium";
 
-  // Suscripción y cancelación
+  // Suscripción
   const { data: miSuscripcion } = usarMiSuscripcion();
-  const cancelar = usarCancelarSuscripcion();
-  const [mostrarConfirmacionCancelar, setMostrarConfirmacionCancelar] = useState(false);
   const [seccionAbierta, setSeccionAbierta] = useState<string | null>(null);
+
+  // Eliminar cuenta
+  const eliminarCuenta = usarEliminarCuenta();
+  const [contrasenaEliminar, setContrasenaEliminar] = useState("");
+  const [mostrarConfirmacionEliminar, setMostrarConfirmacionEliminar] = useState(false);
+
+  // Oráculo ASTRA (Telegram)
+  const generarCodigo = usarGenerarCodigo();
+  const { data: vinculacion, isLoading: cargandoVinculacion } = usarEstadoVinculacion();
+  const desvincular = usarDesvincular();
+  const [codigoGenerado, setCodigoGenerado] = useState<string | null>(null);
 
   function toggleSeccion(seccion: string) {
     setSeccionAbierta(seccionAbierta === seccion ? null : seccion);
   }
 
-  function manejarCancelarSuscripcion() {
-    cancelar.mutate(undefined, {
-      onSuccess: () => {
-        setMostrarConfirmacionCancelar(false);
-        setSeccionAbierta(null);
-        queryClient.invalidateQueries({ queryKey: ["mi-suscripcion"] });
-        queryClient.invalidateQueries({ queryKey: ["planes"] });
+  function manejarEliminarCuenta() {
+    const tokenRefresco = localStorage.getItem("token_refresco") || "";
+    eliminarCuenta.mutate(
+      {
+        contrasena: esProveedorLocal ? contrasenaEliminar : undefined,
+        token_refresco: tokenRefresco,
       },
-    });
+      {
+        onSuccess: () => {
+          const { cerrarSesion } = useStoreAuth.getState();
+          cerrarSesion();
+        },
+      },
+    );
   }
 
   function iniciarEdicion() {
@@ -586,9 +604,15 @@ export default function PaginaPerfil() {
             <p className="text-xs text-texto-terciario uppercase tracking-wider mb-1">
               Estado de suscripcion
             </p>
-            <Badge variante={badgeSuscripcion.variante}>
-              {badgeSuscripcion.texto}
-            </Badge>
+            {miSuscripcion?.cancelacion_programada ? (
+              <Badge variante="advertencia">
+                Activo hasta {miSuscripcion.fecha_fin ? formatearFechaCorta(miSuscripcion.fecha_fin) : "—"}
+              </Badge>
+            ) : (
+              <Badge variante={badgeSuscripcion.variante}>
+                {badgeSuscripcion.texto}
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -709,68 +733,190 @@ export default function PaginaPerfil() {
             </div>
           )}
 
-          {/* --- Cancelar suscripción (solo premium activa) --- */}
-          {esPremium && miSuscripcion?.estado === "activa" && miSuscripcion?.plan_slug !== "gratis" && (
+          {/* --- Gestionar suscripción (solo premium) --- */}
+          {esPremium && (
+            <Link
+              href="/suscripcion"
+              className="flex items-center justify-between py-3 group"
+            >
+              <div className="flex items-center gap-3">
+                <Icono nombre="corona" tamaño={18} className="text-texto-secundario" />
+                <span className="text-sm text-texto">Gestionar suscripción</span>
+              </div>
+              <Icono
+                nombre="caretDerecha"
+                tamaño={16}
+                className="text-texto-terciario group-hover:text-acento transition-colors"
+              />
+            </Link>
+          )}
+
+          {/* --- Oráculo ASTRA (Telegram) — solo premium --- */}
+          {esPremium && (
             <div>
               <button
                 type="button"
-                onClick={() => toggleSeccion("cancelar")}
+                onClick={() => toggleSeccion("oraculo")}
                 className="flex items-center justify-between w-full py-3 text-left"
               >
                 <div className="flex items-center gap-3">
-                  <Icono nombre="x" tamaño={18} className="text-texto-secundario" />
-                  <span className="text-sm text-texto">Cancelar suscripcion</span>
+                  <Icono nombre="chat" tamaño={18} className="text-texto-secundario" />
+                  <span className="text-sm text-texto">Oráculo ASTRA (Telegram)</span>
                 </div>
                 <Icono
-                  nombre={seccionAbierta === "cancelar" ? "caretArriba" : "caretAbajo"}
+                  nombre={seccionAbierta === "oraculo" ? "caretArriba" : "caretAbajo"}
                   tamaño={16}
                   className="text-texto-terciario"
                 />
               </button>
 
-              {seccionAbierta === "cancelar" && (
-                <div className="pb-4">
-                  {!mostrarConfirmacionCancelar ? (
-                    <div className="flex flex-col gap-3">
-                      <p className="text-sm text-texto-secundario">
-                        Se cancelara el cobro recurrente en MercadoPago y volveras al plan Gratis.
-                        Podes volver a suscribirte en cualquier momento.
-                      </p>
+              {seccionAbierta === "oraculo" && (
+                <div className="pb-4 space-y-4">
+                  {cargandoVinculacion ? (
+                    <p className="text-sm text-texto-secundario">Verificando vinculación...</p>
+                  ) : vinculacion?.vinculado ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Badge variante="exito">Vinculado</Badge>
+                        <span className="text-sm text-texto-secundario">
+                          @{vinculacion.telegram_username || "usuario"}
+                        </span>
+                      </div>
                       <Boton
                         variante="secundario"
-                        onClick={() => setMostrarConfirmacionCancelar(true)}
-                        className="self-start"
+                        tamaño="sm"
+                        onClick={() => desvincular.mutate(undefined, {
+                          onSuccess: () => {
+                            setCodigoGenerado(null);
+                            queryClient.invalidateQueries({ queryKey: ["oraculo-vinculacion"] });
+                          },
+                        })}
+                        cargando={desvincular.isPending}
                       >
-                        Cancelar suscripcion
+                        Desvincular Telegram
                       </Boton>
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-3 rounded-lg border border-error/30 bg-error/5 p-4">
-                      <p className="text-sm font-medium text-texto">
-                        Estas seguro que queres cancelar tu suscripcion Premium?
+                    <div className="space-y-3">
+                      <p className="text-sm text-texto-secundario">
+                        Vinculá tu cuenta de Telegram para acceder al Oráculo ASTRA,
+                        tu asistente cósmico personalizado.
                       </p>
-                      <div className="flex items-center gap-3">
+                      {codigoGenerado ? (
+                        <div className="rounded-lg bg-superficie p-4 text-center">
+                          <p className="text-xs text-texto-terciario mb-1">Tu código de vinculación:</p>
+                          <p className="text-2xl font-mono font-bold text-acento tracking-widest">
+                            {codigoGenerado}
+                          </p>
+                          <p className="text-xs text-texto-terciario mt-2">
+                            Enviá este código al bot @AstraOraculoBot en Telegram
+                          </p>
+                        </div>
+                      ) : (
                         <Boton
                           variante="primario"
-                          onClick={manejarCancelarSuscripcion}
-                          cargando={cancelar.isPending}
-                          className="bg-error hover:bg-error/80"
+                          tamaño="sm"
+                          onClick={() =>
+                            generarCodigo.mutate(undefined, {
+                              onSuccess: (data: { codigo?: string }) => {
+                                if (data?.codigo) setCodigoGenerado(data.codigo);
+                              },
+                            })
+                          }
+                          cargando={generarCodigo.isPending}
                         >
-                          Si, cancelar
+                          Generar código de vinculación
                         </Boton>
-                        <Boton
-                          variante="secundario"
-                          onClick={() => setMostrarConfirmacionCancelar(false)}
-                        >
-                          No, mantener
-                        </Boton>
-                      </div>
+                      )}
                     </div>
                   )}
                 </div>
               )}
             </div>
           )}
+
+          {/* --- Eliminar cuenta --- */}
+          <div>
+            <button
+              type="button"
+              onClick={() => toggleSeccion("eliminar")}
+              className="flex items-center justify-between w-full py-3 text-left"
+            >
+              <div className="flex items-center gap-3">
+                <Icono nombre="papelera" tamaño={18} className="text-error" />
+                <span className="text-sm text-error">Eliminar cuenta</span>
+              </div>
+              <Icono
+                nombre={seccionAbierta === "eliminar" ? "caretArriba" : "caretAbajo"}
+                tamaño={16}
+                className="text-texto-terciario"
+              />
+            </button>
+
+            {seccionAbierta === "eliminar" && (
+              <div className="pb-4">
+                {!mostrarConfirmacionEliminar ? (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-sm text-texto-secundario">
+                      Esta acción es irreversible. Se desactivará tu cuenta, se cancelarán
+                      las suscripciones activas y no podrás volver a iniciar sesión.
+                    </p>
+                    <Boton
+                      variante="secundario"
+                      onClick={() => setMostrarConfirmacionEliminar(true)}
+                      className="self-start"
+                    >
+                      Eliminar mi cuenta
+                    </Boton>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3 rounded-lg border border-error/30 bg-error/5 p-4">
+                    <p className="text-sm font-medium text-texto">
+                      ¿Estás seguro/a que querés eliminar tu cuenta?
+                    </p>
+
+                    {esProveedorLocal && (
+                      <Input
+                        etiqueta="Confirmá tu contraseña"
+                        type="password"
+                        placeholder="Tu contraseña actual"
+                        value={contrasenaEliminar}
+                        onChange={(e) => setContrasenaEliminar(e.target.value)}
+                        icono={<Icono nombre="candado" tamaño={16} />}
+                      />
+                    )}
+
+                    {eliminarCuenta.error && (
+                      <div className="rounded-lg bg-error/10 border border-error/20 px-4 py-3">
+                        <p className="text-sm text-error">{eliminarCuenta.error.message}</p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3">
+                      <Boton
+                        variante="primario"
+                        onClick={manejarEliminarCuenta}
+                        cargando={eliminarCuenta.isPending}
+                        disabled={esProveedorLocal && !contrasenaEliminar}
+                        className="bg-error hover:bg-error/80"
+                      >
+                        Sí, eliminar
+                      </Boton>
+                      <Boton
+                        variante="secundario"
+                        onClick={() => {
+                          setMostrarConfirmacionEliminar(false);
+                          setContrasenaEliminar("");
+                        }}
+                      >
+                        No, mantener
+                      </Boton>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* --- Cerrar sesión --- */}
           <button

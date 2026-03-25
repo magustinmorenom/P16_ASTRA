@@ -108,3 +108,54 @@ class RepositorioConversacion:
         await self.sesion.commit()
         await self.sesion.refresh(conversacion)
         return conversacion
+
+    # ── Chat Web ──────────────────────────────────────────────
+
+    async def obtener_o_crear_web(
+        self, usuario_id: uuid.UUID
+    ) -> ConversacionOraculo:
+        """Obtiene la conversación web activa o crea una nueva."""
+        resultado = await self.sesion.execute(
+            select(ConversacionOraculo).where(
+                ConversacionOraculo.usuario_id == usuario_id,
+                ConversacionOraculo.canal == "web",
+                ConversacionOraculo.activa.is_(True),
+            ).order_by(ConversacionOraculo.creado_en.desc()).limit(1)
+        )
+        conversacion = resultado.scalar_one_or_none()
+
+        if not conversacion:
+            conversacion = ConversacionOraculo(
+                usuario_id=usuario_id,
+                canal="web",
+                mensajes=[],
+            )
+            self.sesion.add(conversacion)
+            await self.sesion.commit()
+            await self.sesion.refresh(conversacion)
+
+        return conversacion
+
+    async def nueva_conversacion_web(
+        self, usuario_id: uuid.UUID
+    ) -> ConversacionOraculo:
+        """Archiva conversación web activa y crea una nueva."""
+        await self.sesion.execute(
+            update(ConversacionOraculo)
+            .where(
+                ConversacionOraculo.usuario_id == usuario_id,
+                ConversacionOraculo.canal == "web",
+                ConversacionOraculo.activa.is_(True),
+            )
+            .values(activa=False)
+        )
+
+        conversacion = ConversacionOraculo(
+            usuario_id=usuario_id,
+            canal="web",
+            mensajes=[],
+        )
+        self.sesion.add(conversacion)
+        await self.sesion.commit()
+        await self.sesion.refresh(conversacion)
+        return conversacion

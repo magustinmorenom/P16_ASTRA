@@ -13,6 +13,17 @@ import type { SegmentoLetra } from "@/lib/tipos/podcast";
 /** Paneles disponibles en la interfaz principal. */
 type PanelActivo = "info" | "chat";
 
+/** Variantes de toast disponibles. */
+export type VarianteToast = "exito" | "error" | "advertencia" | "info";
+
+/** Item de notificación toast. */
+export interface ToastItem {
+  id: string;
+  variante: VarianteToast;
+  mensaje: string;
+  duracionMs: number;
+}
+
 /** Pista que se puede reproducir en el player inferior. */
 export interface PistaReproduccion {
   id: string;
@@ -76,6 +87,13 @@ interface EstadoUI {
   setSegmentoActual: (idx: number) => void;
   /** Alterna el mini reproductor expandido/colapsado en mobile. */
   toggleMiniReproductor: () => void;
+
+  /** Lista de toasts activos. */
+  toasts: ToastItem[];
+  /** Muestra un nuevo toast. */
+  mostrarToast: (variante: VarianteToast, mensaje: string, duracionMs?: number) => void;
+  /** Cierra un toast por ID. */
+  cerrarToast: (id: string) => void;
 }
 
 export const useStoreUI = create<EstadoUI>((set) => ({
@@ -110,4 +128,16 @@ export const useStoreUI = create<EstadoUI>((set) => ({
   setSegmentoActual: (idx) => set({ segmentoActual: idx }),
   toggleMiniReproductor: () =>
     set((estado) => ({ miniReproductorExpandido: !estado.miniReproductorExpandido })),
+
+  toasts: [],
+  mostrarToast: (variante, mensaje, duracionMs = 4000) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    set((estado) => ({
+      toasts: [...estado.toasts, { id, variante, mensaje, duracionMs }],
+    }));
+  },
+  cerrarToast: (id) =>
+    set((estado) => ({
+      toasts: estado.toasts.filter((t) => t.id !== id),
+    })),
 }));

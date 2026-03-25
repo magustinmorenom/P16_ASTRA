@@ -39,6 +39,26 @@ class EsquemaLogout(BaseModel):
     token_refresco: str
 
 
+class EsquemaSolicitarReset(BaseModel):
+    """Datos para solicitar reset de contraseña."""
+
+    email: EmailStr
+
+
+class EsquemaConfirmarReset(BaseModel):
+    """Datos para confirmar reset de contraseña."""
+
+    token: str
+    contrasena_nueva: str = Field(min_length=8, max_length=128)
+
+
+class EsquemaEliminarCuenta(BaseModel):
+    """Datos para eliminar la cuenta del usuario."""
+
+    contrasena: str | None = None  # obligatorio para local, None para Google
+    token_refresco: str
+
+
 class RespuestaTokens(BaseModel):
     """Respuesta con tokens de autenticación."""
 

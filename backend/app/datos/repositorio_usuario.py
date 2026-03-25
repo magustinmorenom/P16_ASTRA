@@ -76,3 +76,12 @@ class RepositorioUsuario:
             .values(hash_contrasena=nuevo_hash)
         )
         await self.sesion.commit()
+
+    async def desactivar(self, usuario_id: uuid.UUID) -> None:
+        """Soft-delete: pone activo=False en un usuario."""
+        await self.sesion.execute(
+            update(Usuario)
+            .where(Usuario.id == usuario_id)
+            .values(activo=False)
+        )
+        await self.sesion.commit()

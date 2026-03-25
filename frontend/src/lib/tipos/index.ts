@@ -110,3 +110,11 @@ export type {
   SegmentoLetra,
   PodcastEpisodio,
 } from "./podcast";
+
+// Chat
+export type {
+  MensajeChat,
+  RespuestaChat,
+  HistorialChat,
+  NuevaConversacion,
+} from "./chat";

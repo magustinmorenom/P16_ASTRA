@@ -156,23 +156,21 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Derecha: campana + avatar */}
+        {/* Derecha: avatar */}
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            className="relative p-2 text-violet-300 hover:text-white transition-colors"
-            aria-label="Notificaciones"
-          >
-            <Icono nombre="campana" tamaño={20} />
-          </button>
-
           {/* Avatar / Menu de usuario */}
           <div className="relative" ref={refMenuUsuario}>
             <button
               onClick={() => setMenuUsuarioAbierto(!menuUsuarioAbierto)}
-              className="flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 text-white text-xs font-bold"
+              className="relative flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 text-white text-xs font-bold"
               aria-label="Menu de usuario"
             >
               {inicialesUsuario}
+              {usuario?.plan_slug === "premium" && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-400 text-[8px] text-yellow-900">
+                  <Icono nombre="corona" tamaño={10} />
+                </span>
+              )}
             </button>
 
             {menuUsuarioAbierto && (
@@ -182,9 +180,17 @@ export default function Navbar() {
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {usuario.nombre}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {usuario.email}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs text-gray-500 truncate">
+                        {usuario.email}
+                      </p>
+                      {usuario.plan_slug === "premium" && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-yellow-100 text-yellow-700">
+                          <Icono nombre="corona" tamaño={10} />
+                          Premium
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -204,15 +210,6 @@ export default function Navbar() {
                 >
                   <Icono nombre="corona" tamaño={16} />
                   Suscripción
-                </Link>
-
-                <Link
-                  href="/perfil"
-                  onClick={() => setMenuUsuarioAbierto(false)}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
-                >
-                  <Icono nombre="configuracion" tamaño={16} />
-                  Configuración
                 </Link>
 
                 <div className="border-t border-gray-100 mt-1">

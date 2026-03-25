@@ -133,6 +133,34 @@ class ServicioEmail:
         return await ServicioEmail.enviar(email, f"Suscripción cancelada — ASTRA", html)
 
     @staticmethod
+    async def enviar_cuenta_eliminada(email: str, nombre: str) -> Optional[str]:
+        """Confirmación de cuenta eliminada."""
+        html = _cargar_template("cuenta_eliminada", {
+            "nombre": nombre,
+            "url_app": ServicioEmail._url_app(),
+        })
+        return await ServicioEmail.enviar(email, "Tu cuenta fue eliminada — ASTRA", html)
+
+    @staticmethod
+    async def enviar_pago_rechazado(email: str, nombre: str) -> Optional[str]:
+        """Notificación de pago rechazado."""
+        html = _cargar_template("pago_rechazado", {
+            "nombre": nombre,
+            "url_app": ServicioEmail._url_app(),
+        })
+        return await ServicioEmail.enviar(email, "Pago rechazado — ASTRA", html)
+
+    @staticmethod
+    async def enviar_expiracion_gracia(email: str, nombre: str, fecha_fin: str) -> Optional[str]:
+        """Notificación de expiración del período de gracia."""
+        html = _cargar_template("expiracion_gracia", {
+            "nombre": nombre,
+            "fecha_fin": fecha_fin,
+            "url_app": ServicioEmail._url_app(),
+        })
+        return await ServicioEmail.enviar(email, "Tu plan Premium ha expirado — ASTRA", html)
+
+    @staticmethod
     async def enviar_podcast_listo(email: str, nombre: str, titulo_podcast: str) -> Optional[str]:
         """Notificación de podcast generado."""
         html = _cargar_template("podcast_listo", {

@@ -381,3 +381,368 @@ No se agregaron tests nuevos. Build pasa limpio (`npm run build` exitoso, 22 pag
 6. El reproductor de audio se extrajo a un hook compartido `usarAudio()` que usan tanto el reproductor desktop como el mini reproductor mobile
 7. El mini reproductor se expande a full-screen con controles completos, cover grande, barra de progreso y volumen
 8. PWA configurada con manifest.json, viewport-fit=cover para safe areas en iPhone, e iconos placeholder
+5. Si solo cambio el nombre, no se recalcula nada
+
+---
+
+## Sesion: Setup proyecto React Native (Expo) — App mobile
+**Fecha:** 2026-03-24 ~12:00 (ARG)
+
+### Que se hizo
+Inicializacion del proyecto React Native con Expo SDK 55 dentro de `mobile/` en el monorepo existente. Estructura base con expo-router (file-based routing), 5 tabs, cliente API con JWT auto-refresh, paleta de colores ASTRA y todas las dependencias core instaladas.
+
+### mobile/ — Archivos creados (10)
+| Archivo | Proposito |
+|---------|-----------|
+| `mobile/app.json` | Config Expo: nombre ASTRA, scheme deep linking, bundleIdentifier iOS/Android, dark mode, plugins |
+| `mobile/package.json` | Dependencias: expo 55, react 19.2, expo-router, react-query, zustand, axios, nativewind, expo-av, react-native-svg, expo-secure-store |
+| `mobile/src/app/_layout.tsx` | Layout raiz: SafeAreaProvider, GestureHandler, QueryClientProvider, Stack navigator dark |
+| `mobile/src/app/(tabs)/_layout.tsx` | Tab navigator con 5 tabs (Inicio, Astral, Descubrir, Podcasts, Perfil), estilo ASTRA |
+| `mobile/src/app/(tabs)/index.tsx` | Pantalla Inicio placeholder |
+| `mobile/src/app/(tabs)/astral.tsx` | Pantalla Carta Astral placeholder |
+| `mobile/src/app/(tabs)/descubrir.tsx` | Pantalla Descubrir placeholder |
+| `mobile/src/app/(tabs)/podcast.tsx` | Pantalla Podcasts placeholder |
+| `mobile/src/app/(tabs)/perfil.tsx` | Pantalla Perfil placeholder |
+| `mobile/src/constants/colores.ts` | Paleta de colores ASTRA (coherente con frontend web) |
+| `mobile/src/lib/api/cliente.ts` | Cliente axios con interceptors JWT (auto-refresh token, SecureStore) |
+
+### Archivos modificados (1)
+| Archivo | Cambios |
+|---------|---------|
+| `.gitignore` | Agregadas reglas para React Native/Expo: .expo/, ios/, android/, .metro-health-check, keystores, provisioning profiles, EAS build |
+
+### Estructura de carpetas
+```
+mobile/
+├── src/
+│   ├── app/              # Rutas (expo-router file-based)
+│   │   ├── _layout.tsx   # Layout raiz
+│   │   ├── (tabs)/       # Tab navigator
+│   │   └── (auth)/       # Auth screens (pendiente)
+│   ├── componentes/      # Componentes reutilizables
+│   │   ├── ui/
+│   │   └── layouts/
+│   ├── lib/
+│   │   ├── api/          # Cliente HTTP + endpoints
+│   │   ├── hooks/        # React Query hooks
+│   │   ├── stores/       # Zustand stores
+│   │   ├── tipos/        # TypeScript types
+│   │   └── utilidades/
+│   └── constants/        # Colores, config
+├── assets/               # Iconos, splash, fuentes
+├── app.json              # Config Expo
+└── package.json
+```
+
+### Dependencias instaladas
+- **Core**: expo 55, react 19.2, react-native 0.83
+- **Navegacion**: expo-router, react-native-screens, react-native-safe-area-context
+- **UI**: nativewind 4, tailwindcss 3.4, react-native-reanimated, react-native-gesture-handler, react-native-svg
+- **Audio**: expo-av
+- **Auth**: expo-secure-store, expo-auth-session, expo-web-browser
+- **Estado**: zustand, @tanstack/react-query
+- **HTTP**: axios
+
+### Tests
+- TypeScript compila limpio (`npx tsc --noEmit` sin errores)
+- Sin tests unitarios aun (setup inicial)
+
+### Como funciona
+1. El proyecto vive en `mobile/` dentro del monorepo P16_ASTRA (junto a `backend/` y `frontend/`)
+2. Usa expo-router con file-based routing en `src/app/` — misma filosofia que Next.js en el frontend web
+3. El cliente API (`src/lib/api/cliente.ts`) apunta al mismo backend FastAPI, con auto-refresh JWT via SecureStore
+4. La paleta de colores es identica al frontend web (dark theme ASTRA)
+5. Para correr: `cd mobile && npx expo start` → escanear QR con Expo Go o usar simulador
+
+---
+
+## Sesion: Suscripciones MP — fixes producción + perfil refactor
+**Fecha:** 2026-03-24 ~14:00 — 18:00 (ARG)
+**Commits:** varios en `dev` → merge a `main` (`0f87a77`)
+
+### Que se hizo
+Correcciones al flujo de suscripción MercadoPago en producción y reestructuración completa de la página de perfil.
+
+### Backend — Archivos modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `app/servicios/servicio_mercadopago.py` | Quitar `billing_day`/`billing_day_proportional`, renombrar motivo a "ASTRA - Plan Premium" |
+| `app/rutas/v1/suscripcion.py` | Factura concepto "Suscripción ASTRA", PDF titulo/footer ASTRA |
+| `app/configuracion.py` | back_urls de `/suscripcion/*` a `/checkout/*` |
+| `app/datos/repositorio_suscripcion.py` | `obtener_activa()` prioriza "activa" sobre "pendiente" con SQL CASE |
+| `tests/test_flujo_suscripcion.py` | Actualizar concepto a "Suscripción ASTRA" |
+
+### Frontend — Archivos creados/modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/app/(checkout)/layout.tsx` | **Nuevo** — Layout público sin auth para post-checkout |
+| `src/app/(checkout)/checkout/exito/page.tsx` | **Nuevo** — Página éxito pública |
+| `src/app/(checkout)/checkout/fallo/page.tsx` | **Nuevo** — Página fallo pública |
+| `src/app/(checkout)/checkout/pendiente/page.tsx` | **Nuevo** — Página pendiente pública |
+| `src/app/(app)/suscripcion/page.tsx` | sessionStorage checkout tracking, polling verificación, visibilitychange, banners estado, confirmación cancelar |
+| `src/app/(app)/perfil/page.tsx` | Reestructuración completa: sección Configuración con acordeón (contraseña, Google info, cancelar suscripción, cerrar sesión) |
+| `src/componentes/ui/icono.tsx` | Agregar CaretDown, CaretUp, PencilSimple |
+
+### Producción — Cambios directos
+
+| Cambio | Detalle |
+|--------|---------|
+| DB `precios_plan` | `precio_local=110000`, `frecuencia=30`, `intervalo='days'` (AR, ARS $1100/30 días) |
+| `.env.prod` | `MP_URL_EXITO/FALLO/PENDIENTE` → `/checkout/*` |
+
+### Tests
+- 483 tests backend pasando
+- Frontend compila sin errores TypeScript
+
+### Como funciona
+1. **Checkout MP**: Al suscribirse, se guarda flag en `sessionStorage`. MP abre back_url en su in-app browser → páginas públicas `/checkout/exito|fallo|pendiente` sin auth. Al volver al browser original, `visibilitychange` + polling detectan el pago y muestran banner de confirmación.
+2. **Cancelación**: Desde perfil → Configuración → "Cancelar suscripción" con doble confirmación. Llama API que cancela en MP vía preapproval API (sin redirect a MP).
+3. **Prioridad estado**: `obtener_activa()` usa SQL CASE para devolver la suscripción "activa" antes que "pendiente", evitando confusión cuando coexisten ambas.
+4. **Perfil refactorizado**: Sección plan muestra "Mejorar plan" o "Gestionar suscripción" según estado. Sección Configuración agrupa contraseña (solo auth local), info Google (solo OAuth), cancelar suscripción (solo premium activa), y cerrar sesión en acordeón expandible.
+
+---
+
+## Sesion: Cancelacion Premium con gracia hasta fin de periodo
+**Fecha:** 2026-03-24 ~15:00 (ARG)
+
+### Que se hizo
+Implementacion de periodo de gracia al cancelar suscripcion Premium: el usuario mantiene acceso hasta fin del periodo pagado en vez de perderlo inmediatamente.
+
+### Backend — Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `backend/app/rutas/v1/suscripcion.py` | Endpoint `/cancelar`: obtiene `next_payment_date` de MP, mantiene estado "activa" con `fecha_fin` programada. Endpoint `/mi-suscripcion`: agrega `cancelacion_programada` al response. Webhook `_procesar_preapproval`: ignora cancelacion de MP si hay gracia activa. |
+| `backend/app/datos/repositorio_suscripcion.py` | Nuevo metodo `programar_cancelacion()` (setea fecha_fin sin cambiar estado). `obtener_activa()` con lazy-expire: si fecha_fin vencio, cancela y crea gratis automaticamente. |
+
+### Frontend — Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/lib/tipos/suscripcion.ts` | Agregado campo `cancelacion_programada?: boolean` a interfaz Suscripcion. |
+| `frontend/src/app/(app)/suscripcion/page.tsx` | Badge "Activo hasta [fecha]" si cancelacion programada. Banner informativo con link a MP. Oculta boton cancelar si ya programada. Dialogo de cancelacion explica gracia. |
+| `frontend/src/app/(app)/perfil/page.tsx` | Badge "Activo hasta [fecha]" en estado de suscripcion. Oculta opcion "Cancelar suscripcion" si ya programada. Texto de confirmacion actualizado con info de gracia. |
+
+### Tests
+- 2 tests nuevos en `test_flujo_suscripcion.py`: `test_cancelar_programa_gracia` y `test_cancelar_fallback_30_dias`
+- 3 tests actualizados en `test_rutas_suscripcion.py`: adaptados al nuevo flujo de gracia
+- 482 tests pasando (2 pre-existentes fallando en podcast/TTS no relacionados)
+
+### Como funciona
+1. **Cancelacion**: El usuario cancela desde la UI. El backend obtiene `next_payment_date` de MP (o usa fecha_inicio + 30 dias como fallback), cancela el preapproval en MP, pero mantiene la suscripcion local como "activa" con `fecha_fin` seteada.
+2. **Gracia**: Mientras `fecha_fin` no haya pasado, el usuario sigue con acceso Premium. La UI muestra badge "Activo hasta [fecha]" y oculta el boton de cancelar.
+3. **Lazy-expire**: Cada vez que se consulta `obtener_activa()`, si la suscripcion tiene `fecha_fin` vencida, se marca como "cancelada" y se crea automaticamente una suscripcion Gratis.
+4. **Proteccion webhook**: Si MP envia webhook de cancelacion pero la suscripcion tiene gracia activa, se ignora para no degradar prematuramente.
+5. **UI coherente**: Ambas paginas (suscripcion y perfil) muestran el mismo badge de advertencia y ocultan la opcion de cancelar si ya esta programada.
+
+---
+
+## Sesion: Mobile App — Feature Parity con Web Frontend
+**Fecha:** 2026-03-24 ~22:00 (ARG)
+
+### Que se hizo
+Implementacion completa de la app mobile React Native (Expo) a paridad con la version mobile del frontend web. ~75 archivos creados/modificados abarcando infraestructura NativeWind, tipos, stores, hooks, componentes UI, auth, onboarding, 5 pantallas tab, 6 pantallas feature, visualizaciones SVG y reproductor de audio.
+
+### Infraestructura — Archivos creados/modificados
+| Archivo | Descripcion |
+|---------|-------------|
+| `mobile/tailwind.config.js` | Config NativeWind con colores ASTRA custom |
+| `mobile/global.css` | Tailwind base/components/utilities |
+| `mobile/babel.config.js` | Preset expo + nativewind + module-resolver @/ |
+| `mobile/metro.config.js` | withNativeWind wrapper |
+| `mobile/tsconfig.json` | Paths @/* → ./src/* |
+| `mobile/nativewind-env.d.ts` | NativeWind types reference |
+| `mobile/app.json` | Agregado plugin expo-splash-screen |
+
+### Tipos — 13 archivos creados en `src/lib/tipos/`
+| Archivo | Contenido |
+|---------|-----------|
+| `api.ts` | RespuestaBase, DatosNacimiento, DatosNumerologia |
+| `auth.ts` | EsquemaRegistro/Login, Usuario, UsuarioConSuscripcion, RespuestaTokens |
+| `natal.ts` | Planeta, Casa, Aspecto, CartaNatal |
+| `diseno-humano.ts` | Activacion, Canal, CruzEncarnacion, DisenoHumano |
+| `numerologia.ts` | NumeroRespuesta, EtapaVida, Numerologia |
+| `retorno-solar.ts` | FechaRetorno, CartaRetorno, RetornoSolar |
+| `transitos.ts` | PlanetaTransito, Transitos |
+| `calendario-cosmico.ts` | TransitosDia, CalendarioRango |
+| `perfil.ts` | Perfil |
+| `calculos.ts` | CalculosPerfil |
+| `suscripcion.ts` | Plan, Suscripcion, Pago, RespuestaCheckout + 8 mas |
+| `podcast.ts` | TipoPodcast, SegmentoLetra, PodcastEpisodio |
+| `index.ts` | Re-export centralizado |
+
+### Stores — 2 archivos creados en `src/lib/stores/`
+| Archivo | Contenido |
+|---------|-----------|
+| `store-auth.ts` | useStoreAuth: usuario, autenticado, cargarUsuario (SecureStore) |
+| `store-ui.ts` | useStoreUI: pistaActual, reproduciendo, progreso, volumen, segmentoActual |
+
+### Hooks — 13 archivos creados en `src/lib/hooks/`
+| Archivo | Hooks |
+|---------|-------|
+| `usar-auth.ts` | usarLogin, usarRegistro, usarLogout, usarCambiarContrasena, usarGoogleAuthUrl |
+| `usar-perfil.ts` | usarCrearPerfil, usarMiPerfil, usarActualizarPerfil |
+| `usar-mis-calculos.ts` | usarMisCalculos |
+| `usar-carta-natal.ts` | usarCartaNatal |
+| `usar-diseno-humano.ts` | usarDisenoHumano |
+| `usar-numerologia.ts` | usarNumerologia |
+| `usar-retorno-solar.ts` | usarRetornoSolar |
+| `usar-transitos.ts` | usarTransitos (refetch 10min) |
+| `usar-calendario-cosmico.ts` | usarTransitosDia, usarTransitosRango |
+| `usar-suscripcion.ts` | usarPlanes, usarMiSuscripcion, usarSuscribirse + 4 mas |
+| `usar-podcast.ts` | usarPodcastHoy, usarPodcastHistorial, usarGenerarPodcast |
+| `usar-audio-nativo.ts` | expo-av + FileSystem cache + SecureStore auth |
+| `index.ts` | Re-export todos los hooks |
+
+### Utilidades — 2 archivos creados en `src/lib/utilidades/`
+| Archivo | Contenido |
+|---------|-----------|
+| `cn.ts` | cn() merge clases con clsx |
+| `formatear-fecha.ts` | formatearFecha, formatearFechaCorta, formatearHora, formatearFechaHora |
+
+### Componentes UI — 10 archivos creados en `src/componentes/`
+| Archivo | Descripcion |
+|---------|-------------|
+| `ui/boton.tsx` | Variantes primario/secundario/fantasma, tamaños, cargando |
+| `ui/input.tsx` | TextInput con etiqueta, icono, error, forwardRef |
+| `ui/tarjeta.tsx` | Variantes default/violeta/dorado/acento |
+| `ui/badge.tsx` | Variantes exito/error/advertencia/info |
+| `ui/avatar.tsx` | Iniciales, tamaños sm/md/lg |
+| `ui/esqueleto.tsx` | Shimmer animado con reanimated |
+| `ui/separador.tsx` | Linea horizontal |
+| `ui/icono-astral.tsx` | IconoAstral + IconoSigno para SVG astrales |
+| `layouts/header-mobile.tsx` | Header con back + titulo + safe area |
+| `compuestos/formulario-nacimiento.tsx` | Form reutilizable con DateTimePicker nativo |
+
+### Visualizaciones SVG — 2 archivos
+| Archivo | Descripcion |
+|---------|-------------|
+| `visualizaciones/rueda-zodiacal.tsx` | react-native-svg: 12 signos, casas, planetas, aspectos |
+| `visualizaciones/body-graph.tsx` | react-native-svg: 9 centros, canales, definido/abierto |
+
+### Auth + Onboarding — 5 archivos
+| Archivo | Descripcion |
+|---------|-------------|
+| `(auth)/_layout.tsx` | Stack sin tabs |
+| `(auth)/login.tsx` | Google OAuth + email/password |
+| `(auth)/registro.tsx` | Google OAuth + formulario completo |
+| `(auth)/callback.tsx` | Deep link handler astra://callback |
+| `(onboarding)/index.tsx` | 1 paso: datos nacimiento → 4 calculos paralelos |
+
+### Pantallas Tab — 6 archivos modificados/reemplazados
+| Archivo | Descripcion |
+|---------|-------------|
+| `(tabs)/_layout.tsx` | Iconos Phosphor + MiniReproductor sobre tab bar |
+| `(tabs)/index.tsx` | Dashboard: saludo, hero lunar, podcasts, transitos |
+| `(tabs)/astral.tsx` | Rueda zodiacal SVG, planetas, aspectos |
+| `(tabs)/descubrir.tsx` | Grid 2x2+1 cards navegacion a features |
+| `(tabs)/podcast.tsx` | Cards generacion, historial con FlatList |
+| `(tabs)/perfil.tsx` | Info usuario, datos nacimiento editables, config expandible |
+
+### Pantallas Feature — 7 archivos
+| Archivo | Descripcion |
+|---------|-------------|
+| `(features)/_layout.tsx` | Stack slide_from_right |
+| `(features)/diseno-humano.tsx` | Body Graph SVG, tipo/autoridad/perfil, centros, canales |
+| `(features)/numerologia.tsx` | Grid 2x3 numeros, etapas vida, maestros |
+| `(features)/transitos.tsx` | 10 planetas con signo/grado/retrogrado |
+| `(features)/retorno-solar.tsx` | Fecha retorno, rueda zodiacal, aspectos |
+| `(features)/calendario-cosmico.tsx` | Strip semanal, detalle dia |
+| `(features)/suscripcion.tsx` | Planes, checkout MP via WebBrowser, pagos |
+
+### Reproductor Audio — 2 archivos + hook
+| Archivo | Descripcion |
+|---------|-------------|
+| `layouts/mini-reproductor.tsx` | Barra 56px: progress + titulo + play/pause + close |
+| `layouts/reproductor-completo.tsx` | Full-screen: cover, progress slider, volumen |
+| `hooks/usar-audio-nativo.ts` | expo-av: fetch auth → FileSystem cache → Audio.Sound |
+
+### Root Layout
+| Archivo | Descripcion |
+|---------|-------------|
+| `src/app/_layout.tsx` | SplashScreen control, GuardAuth (redirect login/onboarding/tabs), global.css import |
+
+### Dependencias nuevas
+- `expo-linear-gradient` — gradientes
+- `expo-file-system` — cache audio
+- `expo-splash-screen` — control splash
+- `phosphor-react-native` — iconos UI
+- `clsx` — merge classNames
+- `babel-plugin-module-resolver` — alias @/
+- `@react-native-community/datetimepicker` — picker fecha/hora nativo
+- `@react-native-community/slider` — slider volumen/progreso
+
+### Como funciona
+1. **NativeWind**: TailwindCSS funciona via nativewind/metro + babel preset. Las clases se usan directamente en `className` de componentes RN.
+2. **Auth Guard**: El root `_layout.tsx` ejecuta `cargarUsuario()` al montar, controla SplashScreen, y redirige segun estado: sin token → login, sin perfil → onboarding, con perfil → tabs.
+3. **Google OAuth**: Abre WebBrowser via `expo-web-browser`, captura redirect `astra://callback` con tokens, los guarda en SecureStore.
+4. **Onboarding**: Un solo paso — formulario de nacimiento. Al enviar: crea perfil + calcula carta natal, HD, numerologia y retorno solar en paralelo.
+5. **Dashboard**: Saludo personalizado + hero lunar de transitos en vivo + 3 cards podcast (generar/play) + lista transitos rapidos.
+6. **Carta Astral**: SVG rueda zodiacal con react-native-svg. Muestra planetas posicionados, casas, aspectos como lineas, tabla de planetas y aspectos.
+7. **Diseno Humano**: SVG Body Graph con 9 centros geometricos (cuadrado/triangulo/diamante), canales, coloring definido/abierto.
+8. **Reproductor**: El hook `usarAudioNativo` descarga audio autenticado via FileSystem, crea `Audio.Sound`, sincroniza play/pause/volumen/seek con store Zustand. Mini reproductor flotante sobre tab bar, expandible a full-screen.
+9. **Suscripcion**: Muestra planes, abre checkout MP en browser externo, permite cancelar con gracia.
+
+---
+
+## Sesion: Fixes del Diagnóstico Premium E2E
+**Fecha:** 2026-03-24 ~14:00 (ARG)
+
+### Que se hizo
+Implementación completa de 6 fases de fixes identificados en el diagnóstico del flujo Premium: reset de contraseña, eliminación de cuenta, sistema global de toasts, gating visual de features premium, cleanup de navbar, consolidación de cancelación, y emails de notificación.
+
+### Backend — Archivos creados
+| Archivo | Descripción |
+|---------|-------------|
+| `app/email_templates/cuenta_eliminada.html` | Email de confirmación de eliminación de cuenta |
+| `app/email_templates/pago_rechazado.html` | Email de notificación de pago rechazado |
+| `app/email_templates/expiracion_gracia.html` | Email de aviso de expiración del período de gracia |
+
+### Backend — Archivos modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `app/esquemas/auth.py` | 3 schemas nuevos: EsquemaSolicitarReset, EsquemaConfirmarReset, EsquemaEliminarCuenta |
+| `app/rutas/v1/auth.py` | 3 endpoints nuevos: solicitar-reset, confirmar-reset, eliminar-cuenta. Updated /me para lazy-expire email |
+| `app/rutas/v1/suscripcion.py` | Guard 409 anti-doble-premium en /suscribirse. Email pago rechazado en webhook. Lazy-expire email en /mi-suscripcion |
+| `app/datos/repositorio_usuario.py` | Método desactivar() para soft-delete de cuenta |
+| `app/datos/repositorio_suscripcion.py` | obtener_activa() con params opcionales email/nombre para lazy-expire email |
+| `app/servicios/servicio_email.py` | 3 métodos nuevos: enviar_cuenta_eliminada, enviar_pago_rechazado, enviar_expiracion_gracia |
+| `app/configuracion.py` | URLs MP default cambiadas de /checkout/* a /suscripcion/* |
+| `tests/rutas/test_rutas_suscripcion.py` | Mock obtener_activa en 7 tests del endpoint /suscribirse |
+| `tests/test_flujo_suscripcion.py` | Mock obtener_activa en test de integración |
+
+### Frontend — Archivos creados
+| Archivo | Descripción |
+|---------|-------------|
+| `src/app/(auth)/olvide-contrasena/page.tsx` | Página de solicitud de reset (campo email + mensaje éxito) |
+| `src/app/(auth)/reset-password/page.tsx` | Página de confirmación de reset (token de URL + nueva contraseña) |
+| `src/componentes/ui/alerta.tsx` | Componente CVA con 4 variantes (exito, error, advertencia, info) |
+| `src/componentes/ui/bloqueo-premium.tsx` | Wrapper de gating visual — blur + overlay CTA para usuarios free |
+| `src/componentes/layouts/contenedor-toasts.tsx` | Contenedor global de toasts con auto-dismiss y animaciones |
+
+### Frontend — Archivos modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `src/lib/hooks/usar-auth.ts` | 3 hooks nuevos: usarSolicitarReset, usarConfirmarReset, usarEliminarCuenta |
+| `src/lib/hooks/index.ts` | Re-exports de los 3 hooks nuevos |
+| `src/lib/stores/store-ui.ts` | Toast slice: ToastItem interface, toasts[], mostrarToast(), cerrarToast() |
+| `src/app/(auth)/login/page.tsx` | Link "¿Olvidaste tu contraseña?" después del campo contraseña |
+| `src/componentes/layouts/layout-app.tsx` | ContenedorToasts montado en desktop y mobile layouts |
+| `src/componentes/layouts/navbar.tsx` | Removida campana rota, removido link duplicado Configuración, agregado badge Premium |
+| `src/app/(app)/perfil/page.tsx` | Cancel→link a /suscripcion, agregado Oráculo Telegram (movido de suscripcion), agregado Eliminar cuenta |
+| `src/app/(app)/suscripcion/page.tsx` | Removida sección Oráculo, mensajeSync reemplazado por toasts |
+| `src/app/(app)/podcast/page.tsx` | Cards envueltas en BloqueoPremium |
+
+### Tests
+- Backend: 474 passed, 1 skipped (10 warnings). 1 fallo pre-existente en test_servicio_tts_async.py (no relacionado)
+- Frontend: TypeScript compila sin errores nuevos (1 error pre-existente en test no relacionado)
+
+### Como funciona
+1. **Reset de contraseña**: Login → "¿Olvidaste tu contraseña?" → formulario email → backend genera token UUID en Redis (TTL 1h) → ServicioEmail envía link → usuario abre /reset-password?token=X → ingresa nueva contraseña → backend valida token, cambia hash, borra token (uso único)
+2. **Eliminación de cuenta**: Perfil → Configuración → Eliminar cuenta → confirmación 2-step (pide contraseña si auth local) → backend cancela suscripción MP si existe, soft-delete (activo=False), revoca refresh token, envía email confirmación → redirect a login
+3. **Guard 409**: Si usuario ya tiene Premium activo e intenta suscribirse de nuevo, backend retorna 409 "Ya tenés plan Premium activo"
+4. **Toasts globales**: store-ui.ts mantiene array de toasts → ContenedorToasts (fixed bottom-right) renderiza Alertas con auto-dismiss (4s default). Reemplaza mensajes inline en suscripción
+5. **BloqueoPremium**: Wrapper que chequea plan_slug del usuario. Si no es premium: blur en children + overlay con corona, mensaje y CTA a /suscripcion. Usado en Podcast
+6. **Navbar cleanup**: Sin campana (no hay sistema de notificaciones), sin link duplicado a configuración, badge Premium visible en avatar y dropdown
+7. **Consolidación**: Cancelación solo en /suscripcion (perfil tiene link "Gestionar suscripción"). Oráculo/Telegram movido de suscripción a perfil (solo premium)
+8. **Emails de notificación**: Pago rechazado (en webhook _procesar_pago), expiración de gracia (lazy en obtener_activa), cuenta eliminada (en endpoint eliminar-cuenta)

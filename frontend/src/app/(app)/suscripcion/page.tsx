@@ -18,11 +18,9 @@ import {
   usarDetectarPais,
   usarSincronizarPagos,
   usarVerificarEstado,
-  usarEstadoVinculacion,
-  usarGenerarCodigo,
-  usarDesvincular,
 } from "@/lib/hooks";
-import { formatearFechaHora, formatearFecha } from "@/lib/utilidades/formatear-fecha";
+import { useStoreUI } from "@/lib/stores/store-ui";
+import { formatearFechaHora, formatearFecha, formatearFechaCorta } from "@/lib/utilidades/formatear-fecha";
 import type { Plan } from "@/lib/tipos";
 import type { RespuestaSincronizar } from "@/lib/hooks/usar-suscripcion";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
@@ -158,12 +156,7 @@ export default function PaginaSuscripcion() {
     }
   }, [miSuscripcion, checkoutEnCurso]);
 
-  // Oráculo ASTRA
-  const { data: vinculacion, isLoading: cargandoVinculacion } = usarEstadoVinculacion();
-  const generarCodigo = usarGenerarCodigo();
-  const desvincular = usarDesvincular();
-  const [codigoGenerado, setCodigoGenerado] = useState<string | null>(null);
-  const [mensajeSync, setMensajeSync] = useState<{ texto: string; tipo: "exito" | "info" | "error" } | null>(null);
+  const { mostrarToast } = useStoreUI();
   const [mostrarConfirmacionCancelar, setMostrarConfirmacionCancelar] = useState(false);
 
   // Actualizar país seleccionado cuando se detecte por IP
@@ -479,8 +472,38 @@ export default function PaginaSuscripcion() {
                 <span className="font-semibold text-texto">
                   Plan: {miSuscripcion.plan_nombre ?? "Gratis"}
                 </span>
-                {badgeEstado(miSuscripcion.estado)}
+                {miSuscripcion.cancelacion_programada ? (
+                  <Badge variante="advertencia">
+                    Activo hasta {miSuscripcion.fecha_fin ? formatearFechaCorta(miSuscripcion.fecha_fin) : "—"}
+                  </Badge>
+                ) : (
+                  badgeEstado(miSuscripcion.estado)
+                )}
               </div>
+
+              {/* Banner informativo de cancelación programada */}
+              {miSuscripcion.cancelacion_programada && (
+                <div className="flex flex-col gap-2 rounded-lg border border-advertencia/30 bg-advertencia/5 p-4">
+                  <p className="text-sm text-texto">
+                    Tu suscripcion Premium sigue activa hasta el{" "}
+                    <span className="font-semibold">
+                      {miSuscripcion.fecha_fin ? formatearFecha(miSuscripcion.fecha_fin) : "—"}
+                    </span>.
+                    Despues de esa fecha, tu plan cambiara automaticamente a Gratis.
+                  </p>
+                  <p className="text-xs text-texto-terciario">
+                    Podes verificar la cancelacion en{" "}
+                    <a
+                      href="https://www.mercadopago.com.ar/subscriptions"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-acento underline"
+                    >
+                      mercadopago.com.ar &gt; Suscripciones
+                    </a>
+                  </p>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-texto-secundario">
                 <div>
@@ -501,8 +524,10 @@ export default function PaginaSuscripcion() {
                 </div>
               </div>
 
+              {/* Botón cancelar: solo si activa, premium, y NO tiene cancelación programada */}
               {miSuscripcion.estado === "activa" &&
-                miSuscripcion.plan_slug !== "gratis" && (
+                miSuscripcion.plan_slug !== "gratis" &&
+                !miSuscripcion.cancelacion_programada && (
                   <div className="pt-2">
                     {!mostrarConfirmacionCancelar ? (
                       <Boton
@@ -517,7 +542,9 @@ export default function PaginaSuscripcion() {
                           Estas seguro que queres cancelar tu suscripcion Premium?
                         </p>
                         <p className="text-xs text-texto-secundario">
-                          Se cancelara el cobro recurrente en MercadoPago y volveras al plan Gratis.
+                          Se cancelara el cobro recurrente en MercadoPago.
+                          Seguiras con acceso Premium hasta fin del periodo pagado,
+                          luego tu plan cambiara a Gratis automaticamente.
                           Podes volver a suscribirte en cualquier momento.
                         </p>
                         <div className="flex items-center gap-3">
@@ -552,103 +579,6 @@ export default function PaginaSuscripcion() {
       </section>
 
       {/* ---------------------------------------------------------- */}
-      {/* Seccion: Oráculo ASTRA (solo premium)                      */}
-      {/* ---------------------------------------------------------- */}
-      {planActualSlug === "premium" && (
-        <section className="flex flex-col gap-4">
-          <h2 className="text-xl font-semibold text-texto">
-            Oráculo ASTRA
-          </h2>
-          <p className="text-sm text-texto-secundario">
-            Tu guía espiritual personalizado, disponible 24/7 en Telegram.
-          </p>
-
-          {cargandoVinculacion ? (
-            <Esqueleto className="h-32" />
-          ) : vinculacion?.vinculado ? (
-            <Tarjeta variante="default" padding="md">
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <Badge variante="exito">Vinculado</Badge>
-                  <span className="text-sm text-texto-secundario">
-                    @{vinculacion.telegram_username ?? "sin username"}
-                  </span>
-                </div>
-                <p className="text-sm text-texto-terciario">
-                  Podés enviar mensajes al bot en Telegram para consultar al oráculo.
-                </p>
-                <Boton
-                  variante="secundario"
-                  onClick={() => desvincular.mutate()}
-                  cargando={desvincular.isPending}
-                  className="self-start"
-                >
-                  Desvincular Telegram
-                </Boton>
-              </div>
-            </Tarjeta>
-          ) : (
-            <Tarjeta variante="default" padding="md">
-              <div className="flex flex-col gap-4">
-                {codigoGenerado ? (
-                  <div className="flex flex-col gap-3">
-                    <p className="text-sm text-texto-secundario">
-                      Seguí estos pasos para vincular tu cuenta:
-                    </p>
-                    <ol className="list-decimal list-inside text-sm text-texto-secundario flex flex-col gap-1">
-                      <li>
-                        Abrí <span className="font-medium text-texto">@AstraOraculoBot</span> en Telegram
-                      </li>
-                      <li>
-                        Enviá el comando:{" "}
-                        <code className="bg-fondo-elevado px-2 py-0.5 rounded text-acento font-mono">
-                          /vincular {codigoGenerado}
-                        </code>
-                      </li>
-                    </ol>
-                    <p className="text-xs text-texto-terciario">
-                      El código expira en 10 minutos.
-                    </p>
-                    <Boton
-                      variante="secundario"
-                      onClick={() => {
-                        generarCodigo.mutate(undefined, {
-                          onSuccess: (resp) => setCodigoGenerado(resp.codigo),
-                        });
-                      }}
-                      cargando={generarCodigo.isPending}
-                      className="self-start"
-                    >
-                      Generar nuevo código
-                    </Boton>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    <p className="text-sm text-texto-secundario">
-                      Vinculá tu cuenta de Telegram para acceder al oráculo desde el celular.
-                    </p>
-                    <Boton
-                      variante="primario"
-                      onClick={() => {
-                        generarCodigo.mutate(undefined, {
-                          onSuccess: (resp) => setCodigoGenerado(resp.codigo),
-                        });
-                      }}
-                      cargando={generarCodigo.isPending}
-                      className="self-start"
-                      icono={<Icono nombre="enlace" tamaño={18} />}
-                    >
-                      Vincular Telegram
-                    </Boton>
-                  </div>
-                )}
-              </div>
-            </Tarjeta>
-          )}
-        </section>
-      )}
-
-      {/* ---------------------------------------------------------- */}
       {/* Seccion: Historial de Pagos                                */}
       {/* ---------------------------------------------------------- */}
       <section className="flex flex-col gap-4">
@@ -659,25 +589,21 @@ export default function PaginaSuscripcion() {
           <Boton
             variante="secundario"
             onClick={() => {
-              setMensajeSync(null);
               sincronizarPagos.mutate(undefined, {
                 onSuccess: (datos: RespuestaSincronizar) => {
                   queryClient.invalidateQueries({ queryKey: ["pagos"] });
                   queryClient.invalidateQueries({ queryKey: ["mi-suscripcion"] });
                   queryClient.invalidateQueries({ queryKey: ["verificar-estado"] });
-                  const resp = datos;
-                  if (resp.sincronizados > 0) {
-                    setMensajeSync({ texto: `Se sincronizaron ${resp.sincronizados} pagos`, tipo: "exito" });
-                  } else if (resp.errores && resp.errores.length > 0) {
-                    setMensajeSync({ texto: resp.errores.join(". "), tipo: "error" });
+                  if (datos.sincronizados > 0) {
+                    mostrarToast("exito", `Se sincronizaron ${datos.sincronizados} pagos`);
+                  } else if (datos.errores && datos.errores.length > 0) {
+                    mostrarToast("error", datos.errores.join(". "));
                   } else {
-                    setMensajeSync({ texto: "No se encontraron pagos nuevos", tipo: "info" });
+                    mostrarToast("info", "No se encontraron pagos nuevos");
                   }
-                  setTimeout(() => setMensajeSync(null), 6000);
                 },
                 onError: () => {
-                  setMensajeSync({ texto: "Error al conectar con MercadoPago", tipo: "error" });
-                  setTimeout(() => setMensajeSync(null), 6000);
+                  mostrarToast("error", "Error al conectar con MercadoPago");
                 },
               });
             }}
@@ -688,15 +614,6 @@ export default function PaginaSuscripcion() {
             Sincronizar con MP
           </Boton>
         </div>
-        {mensajeSync && (
-          <div className={`text-xs px-3 py-2 rounded-lg ${
-            mensajeSync.tipo === "exito" ? "bg-green-50 text-green-700 border border-green-200" :
-            mensajeSync.tipo === "error" ? "bg-red-50 text-red-700 border border-red-200" :
-            "bg-blue-50 text-blue-700 border border-blue-200"
-          }`}>
-            {mensajeSync.texto}
-          </div>
-        )}
 
         {cargandoPagos ? (
           <div className="flex flex-col gap-2">

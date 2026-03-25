@@ -268,6 +268,7 @@ class TestSuscribirse:
 
         MockPlan.return_value.obtener_por_id = AsyncMock(return_value=plan)
         MockPlan.return_value.obtener_precio = AsyncMock(return_value=precio)
+        MockSus.return_value.obtener_activa = AsyncMock(return_value=None)
         MockSus.return_value.obtener_config_pais = AsyncMock(return_value=config_pais)
         MockSus.return_value.cancelar_pendientes_usuario = AsyncMock()
         MockSus.return_value.crear = AsyncMock(return_value=suscripcion)
@@ -449,35 +450,35 @@ class TestListarFacturas:
         assert cuerpo["datos"][0]["numero_factura"] == "CE-202603-0001"
 
 
-class TestCancelarDegradaAGratis:
-    """Tests de POST /suscripcion/cancelar."""
+class TestCancelarConGracia:
+    """Tests de POST /suscripcion/cancelar — cancelación con período de gracia."""
 
     @pytest.mark.asyncio
     @patch("app.rutas.v1.suscripcion.ServicioMercadoPago")
-    @patch("app.rutas.v1.suscripcion.RepositorioPlan")
     @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
     @patch("app.dependencias_auth.RepositorioUsuario")
-    async def test_cancelar_degrada_a_gratis(
-        self, MockRepoAuth, MockSus, MockPlan, MockMP, cliente, redis_falso
+    async def test_cancelar_programa_gracia(
+        self, MockRepoAuth, MockSus, MockMP, cliente, redis_falso
     ):
+        """Cancelar mantiene la suscripción activa con fecha_fin programada."""
         uid = uuid.uuid4()
         usuario = _crear_usuario(uid=uid)
         MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
 
-        plan_gratis = _crear_plan_gratis()
         suscripcion = _crear_suscripcion(
             usuario_id=uid, estado="activa", mp_preapproval_id="preapproval_abc"
         )
+        suscripcion.fecha_inicio = datetime.now(timezone.utc)
 
         repo_sus = MockSus.return_value
         repo_sus.obtener_activa = AsyncMock(return_value=suscripcion)
         repo_sus.obtener_config_pais = AsyncMock(return_value=_crear_config_pais())
-        repo_sus.actualizar_estado = AsyncMock()
-        repo_sus.crear = AsyncMock(return_value=_crear_suscripcion(
-            usuario_id=uid, plan_id=plan_gratis.id, estado="activa"
-        ))
+        repo_sus.programar_cancelacion = AsyncMock()
 
-        MockPlan.return_value.obtener_por_slug = AsyncMock(return_value=plan_gratis)
+        MockMP.obtener_preapproval = AsyncMock(return_value={
+            "status": "authorized",
+            "next_payment_date": "2026-04-22T10:00:00Z",
+        })
         MockMP.cancelar_preapproval = AsyncMock()
 
         token = ServicioAuth.crear_token_acceso(uid, usuario.email)
@@ -488,15 +489,54 @@ class TestCancelarDegradaAGratis:
         assert resp.status_code == 200
         cuerpo = resp.json()
         assert cuerpo["exito"] is True
+        assert "activo hasta" in cuerpo["mensaje"].lower()
 
         # Verificar que se canceló en MP
         MockMP.cancelar_preapproval.assert_called_once()
 
-        # Verificar que se actualizó estado a cancelada
-        repo_sus.actualizar_estado.assert_called_once()
-        assert repo_sus.actualizar_estado.call_args.args[1] == "cancelada"
+        # Verificar que se programó la cancelación (NO actualizar_estado)
+        repo_sus.programar_cancelacion.assert_called_once()
+        fecha_fin_arg = repo_sus.programar_cancelacion.call_args.args[1]
+        assert fecha_fin_arg.year == 2026
+        assert fecha_fin_arg.month == 4
 
-        # Verificar que se creó suscripción gratis
-        repo_sus.crear.assert_called_once()
-        assert repo_sus.crear.call_args.kwargs["plan_id"] == plan_gratis.id
-        assert repo_sus.crear.call_args.kwargs["estado"] == "activa"
+        # Verificar que NO se creó suscripción gratis
+        repo_sus.crear.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.suscripcion.ServicioMercadoPago")
+    @patch("app.rutas.v1.suscripcion.RepositorioSuscripcion")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_cancelar_fallback_30_dias(
+        self, MockRepoAuth, MockSus, MockMP, cliente, redis_falso
+    ):
+        """Sin next_payment_date de MP, usa fecha_inicio + 30 días."""
+        uid = uuid.uuid4()
+        usuario = _crear_usuario(uid=uid)
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+
+        suscripcion = _crear_suscripcion(
+            usuario_id=uid, estado="activa", mp_preapproval_id="preapproval_def"
+        )
+        suscripcion.fecha_inicio = datetime(2026, 3, 10, tzinfo=timezone.utc)
+
+        repo_sus = MockSus.return_value
+        repo_sus.obtener_activa = AsyncMock(return_value=suscripcion)
+        repo_sus.obtener_config_pais = AsyncMock(return_value=_crear_config_pais())
+        repo_sus.programar_cancelacion = AsyncMock()
+
+        MockMP.obtener_preapproval = AsyncMock(return_value={"status": "authorized"})
+        MockMP.cancelar_preapproval = AsyncMock()
+
+        token = ServicioAuth.crear_token_acceso(uid, usuario.email)
+        resp = await cliente.post(
+            "/api/v1/suscripcion/cancelar",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 200
+
+        # Fallback: 10 marzo + 30 = 9 abril
+        repo_sus.programar_cancelacion.assert_called_once()
+        fecha_fin_arg = repo_sus.programar_cancelacion.call_args.args[1]
+        assert fecha_fin_arg.day == 9
+        assert fecha_fin_arg.month == 4
