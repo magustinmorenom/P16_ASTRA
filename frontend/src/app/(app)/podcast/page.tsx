@@ -301,8 +301,10 @@ export default function PaginaPodcast() {
               const enReproduccion = pistaActual?.id === ep.id;
 
               return (
-                <button
+                <div
                   key={ep.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => {
                     const pista: PistaReproduccion = {
                       id: ep.id,
@@ -317,7 +319,24 @@ export default function PaginaPodcast() {
                     };
                     setPistaActual(pista);
                   }}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      const pista: PistaReproduccion = {
+                        id: ep.id,
+                        titulo: ep.titulo,
+                        subtitulo: `Podcast ${config.etiqueta} — ${ep.fecha}`,
+                        tipo: "podcast",
+                        duracionSegundos: ep.duracion_segundos ?? 0,
+                        icono: config.icono,
+                        gradiente: config.gradiente,
+                        url: ep.url_audio,
+                        segmentos: ep.segmentos,
+                      };
+                      setPistaActual(pista);
+                    }
+                  }}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left cursor-pointer ${
                     enReproduccion
                       ? "bg-[#F5F0FF] border border-[#7C4DFF]/30"
                       : "hover:bg-[#F5F0FF]/50 border border-transparent"
@@ -352,7 +371,7 @@ export default function PaginaPodcast() {
                   >
                     <Icono nombre="descarga" tamaño={16} />
                   </button>
-                </button>
+                </div>
               );
             })}
           </div>

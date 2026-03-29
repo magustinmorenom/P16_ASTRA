@@ -15,67 +15,149 @@ vi.mock("next/image", () => ({
 }));
 
 // Mock de hooks
-const mockUsarTransitos = vi.fn();
+const mockUsarPronosticoDiario = vi.fn();
+const mockUsarPronosticoSemanal = vi.fn();
 const mockUsarPodcastHoy = vi.fn();
 const mockUsarGenerarPodcast = vi.fn();
+const mockUsarEsMobile = vi.fn();
 
 vi.mock("@/lib/hooks", () => ({
-  usarTransitos: () => mockUsarTransitos(),
+  usarPronosticoDiario: () => mockUsarPronosticoDiario(),
+  usarPronosticoSemanal: () => mockUsarPronosticoSemanal(),
   usarPodcastHoy: () => mockUsarPodcastHoy(),
   usarGenerarPodcast: () => mockUsarGenerarPodcast(),
+  usarEsMobile: () => mockUsarEsMobile(),
 }));
 
 vi.mock("@/lib/stores/store-auth", () => ({
-  useStoreAuth: () => ({ usuario: { nombre: "Test User" } }),
+  useStoreAuth: () => ({ usuario: { nombre: "Test User" }, autenticado: true }),
 }));
 
 import PaginaDashboard from "@/app/(app)/dashboard/page";
+
+// Datos mock para el pronóstico
+const PRONOSTICO_MOCK = {
+  clima: {
+    estado: "soleado",
+    titulo: "Día Soleado",
+    frase_sintesis: "Un gran día para emprender nuevos proyectos.",
+    energia: 8,
+    claridad: 7,
+    conexion: 6,
+  },
+  areas: [
+    {
+      id: "trabajo",
+      nombre: "Trabajo",
+      nivel: "favorable",
+      icono: "briefcase",
+      frase: "Ideal para negociar",
+      detalle: "Detalle extendido del trabajo",
+    },
+    {
+      id: "amor",
+      nombre: "Amor",
+      nivel: "neutro",
+      icono: "heart",
+      frase: "Escuchá tu intuición",
+      detalle: "Detalle extendido del amor",
+    },
+  ],
+  momentos: [
+    {
+      bloque: "manana",
+      titulo: "Mañana",
+      icono: "sunrise",
+      frase: "Arrancá temprano",
+      nivel: "favorable",
+    },
+    {
+      bloque: "tarde",
+      titulo: "Tarde",
+      icono: "sun",
+      frase: "Momento productivo",
+      nivel: "neutro",
+    },
+    {
+      bloque: "noche",
+      titulo: "Noche",
+      icono: "moon",
+      frase: "Descansá",
+      nivel: "neutro",
+    },
+  ],
+  alertas: [],
+  consejo_hd: {
+    titulo: "Tu Estrategia Hoy",
+    mensaje: "Como Generador, esperá a responder.",
+    centro_destacado: "sacral",
+  },
+  luna: {
+    signo: "Sagitario",
+    fase: "Creciente",
+    significado: "Expansión y optimismo",
+  },
+  numero_personal: {
+    numero: 1,
+    descripcion: "Liderazgo, independencia, originalidad",
+  },
+  acceso: {
+    pronostico_clima: true,
+    pronostico_areas: true,
+    pronostico_momentos: true,
+    pronostico_alertas: true,
+    pronostico_semana: true,
+    pronostico_consejo_hd: true,
+    pronostico_detalle_area: true,
+  },
+};
 
 describe("PaginaDashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUsarPodcastHoy.mockReturnValue({ data: [], isLoading: false });
     mockUsarGenerarPodcast.mockReturnValue({ mutate: vi.fn(), isPending: false });
+    mockUsarPronosticoSemanal.mockReturnValue({ data: null, isLoading: false });
+    mockUsarEsMobile.mockReturnValue(false);
   });
 
-  it("muestra tránsito lunar desde usarTransitos", () => {
-    mockUsarTransitos.mockReturnValue({
-      data: {
-        planetas: [
-          { nombre: "Luna", signo: "Aries", grado_en_signo: 15.5 },
-          { nombre: "Sol", signo: "Piscis", grado_en_signo: 22.3 },
-        ],
-      },
+  it("muestra el pronóstico cósmico con clima y áreas", () => {
+    mockUsarPronosticoDiario.mockReturnValue({
+      data: PRONOSTICO_MOCK,
       isLoading: false,
+      error: null,
+      refetch: vi.fn(),
     });
 
     renderConProveedores(<PaginaDashboard />);
 
-    expect(screen.getByText("Influencias Cósmicas de Hoy")).toBeInTheDocument();
-    expect(screen.getByText(/Luna en Aries/)).toBeInTheDocument();
+    expect(screen.getByText("Clima Cósmico")).toBeInTheDocument();
+    expect(screen.getByText("Día Soleado")).toBeInTheDocument();
+    expect(screen.getByText("Áreas de Vida")).toBeInTheDocument();
+    expect(screen.getByText("Trabajo")).toBeInTheDocument();
+    expect(screen.getByText("Amor")).toBeInTheDocument();
   });
 
-  it("muestra esqueleto mientras carga tránsitos", () => {
-    mockUsarTransitos.mockReturnValue({
+  it("muestra esqueletos mientras carga el pronóstico", () => {
+    mockUsarPronosticoDiario.mockReturnValue({
       data: undefined,
       isLoading: true,
+      error: null,
+      refetch: vi.fn(),
     });
 
     const { container } = renderConProveedores(<PaginaDashboard />);
 
-    // El hero lunar muestra esqueleto de carga
     const esqueletos = container.querySelectorAll('[class*="animate-pulse"]');
     expect(esqueletos.length).toBeGreaterThan(0);
   });
 
   it("muestra sección de podcasts y lecturas", () => {
-    mockUsarTransitos.mockReturnValue({
-      data: {
-        planetas: [
-          { nombre: "Luna", signo: "Aries", grado_en_signo: 15.5 },
-        ],
-      },
+    mockUsarPronosticoDiario.mockReturnValue({
+      data: PRONOSTICO_MOCK,
       isLoading: false,
+      error: null,
+      refetch: vi.fn(),
     });
 
     renderConProveedores(<PaginaDashboard />);
@@ -86,22 +168,36 @@ describe("PaginaDashboard", () => {
     expect(screen.getByText("Tu Mes Cósmico")).toBeInTheDocument();
   });
 
-  it("muestra tránsitos rápidos con datos de planetas", () => {
-    mockUsarTransitos.mockReturnValue({
-      data: {
-        planetas: [
-          { nombre: "Luna", signo: "Aries", grado_en_signo: 15.5 },
-          { nombre: "Sol", signo: "Piscis", grado_en_signo: 22.3 },
-        ],
-      },
+  it("muestra estado de error con botón reintentar", () => {
+    mockUsarPronosticoDiario.mockReturnValue({
+      data: null,
       isLoading: false,
+      error: new Error("API error"),
+      refetch: vi.fn(),
     });
 
     renderConProveedores(<PaginaDashboard />);
 
-    expect(screen.getByText("Tránsitos Rápidos")).toBeInTheDocument();
-    // Los planetas aparecen en la lista de tránsitos rápidos
-    expect(screen.getAllByText("Luna").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Sol").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Pronóstico Cósmico")).toBeInTheDocument();
+    expect(screen.getByText(/No pudimos generar tu pronóstico/)).toBeInTheDocument();
+    expect(screen.getByText("Reintentar")).toBeInTheDocument();
+  });
+
+  it("muestra momentos del día y consejo HD", () => {
+    mockUsarPronosticoDiario.mockReturnValue({
+      data: PRONOSTICO_MOCK,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    renderConProveedores(<PaginaDashboard />);
+
+    expect(screen.getByText("Momentos del Día")).toBeInTheDocument();
+    expect(screen.getByText("Mañana")).toBeInTheDocument();
+    expect(screen.getByText("Tarde")).toBeInTheDocument();
+    expect(screen.getByText("Noche")).toBeInTheDocument();
+    expect(screen.getByText("Tu Estrategia Hoy")).toBeInTheDocument();
+    expect(screen.getByText(/Como Generador/)).toBeInTheDocument();
   });
 });
