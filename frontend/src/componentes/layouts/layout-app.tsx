@@ -11,7 +11,6 @@ import LayoutMobile from "@/componentes/layouts/layout-mobile";
 import ChatWidget from "@/componentes/chat/chat-widget";
 import { ContenedorToasts } from "@/componentes/layouts/contenedor-toasts";
 import { useStoreAuth } from "@/lib/stores/store-auth";
-import { useStoreUI } from "@/lib/stores/store-ui";
 import { usarEsMobile } from "@/lib/hooks/usar-es-mobile";
 
 export default function LayoutApp({
@@ -21,7 +20,6 @@ export default function LayoutApp({
 }) {
   const router = useRouter();
   const { autenticado, cargando, usuario } = useStoreAuth();
-  const { pistaActual } = useStoreUI();
   const esMobile = usarEsMobile();
 
   useEffect(() => {
@@ -51,22 +49,22 @@ export default function LayoutApp({
     );
   }
 
-  /* ======= DESKTOP LAYOUT (sin cambios) ======= */
-  const alturaContenido = pistaActual
-    ? "h-[calc(100vh-62px-80px)]"
-    : "h-[calc(100vh-62px)]";
-
+  /* ======= DESKTOP LAYOUT ======= */
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col h-screen overflow-hidden bg-[#16011b]">
+      {/* Navbar — full width */}
       <Navbar />
-      <div className={`flex flex-1 mt-[62px] ${pistaActual ? "mb-[80px]" : ""} overflow-hidden`}>
-        <SidebarNavegacion alturaContenido={alturaContenido} />
-        <main className={`flex-1 overflow-y-auto scroll-sutil ${alturaContenido}`}>
+
+      {/* Body: sidebar + content */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        <SidebarNavegacion />
+        <main className="flex-1 overflow-y-auto scroll-sutil bg-[#16011b]">
           {children}
         </main>
-        <PanelLyrics />
       </div>
+
       <ReproductorCosmico />
+      <PanelLyrics />
       <ChatWidget />
       <ContenedorToasts />
     </div>

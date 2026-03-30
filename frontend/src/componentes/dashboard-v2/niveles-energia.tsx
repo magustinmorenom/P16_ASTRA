@@ -1,4 +1,5 @@
 import { PanelGlass } from "./panel-glass";
+import { Icono, type NombreIcono } from "@/componentes/ui/icono";
 
 interface NivelesEnergiaProps {
   energia: number;
@@ -6,13 +7,14 @@ interface NivelesEnergiaProps {
   fuerza: number;
 }
 
-function BarraSegmentos({ etiqueta, valor }: { etiqueta: string; valor: number }) {
+function BarraSegmentos({ etiqueta, valor, icono }: { etiqueta: string; valor: number; icono: NombreIcono }) {
   const segmentos = 10;
   const activos = Math.min(Math.max(Math.round(valor), 0), segmentos);
 
   return (
     <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl backdrop-blur-[21px] bg-white/[0.07] border border-white/[0.12]">
-      <span className="text-white/90 text-[10px] w-[58px] text-center shrink-0">
+      <span className="flex items-center gap-1.5 text-white/90 text-[13px] font-medium w-[90px] shrink-0">
+        <Icono nombre={icono} tamaño={14} peso="fill" className="text-white" />
         {etiqueta}
       </span>
       <div className="flex gap-[3px] flex-1">
@@ -34,9 +36,9 @@ function BarraSegmentos({ etiqueta, valor }: { etiqueta: string; valor: number }
 export function NivelesEnergia({ energia, claridad, fuerza }: NivelesEnergiaProps) {
   return (
     <PanelGlass className="flex flex-col gap-1 p-2 justify-center">
-      <BarraSegmentos etiqueta="Intuición" valor={energia} />
-      <BarraSegmentos etiqueta="Claridad" valor={claridad} />
-      <BarraSegmentos etiqueta="Fuerza" valor={fuerza} />
+      <BarraSegmentos etiqueta="Intuición" valor={energia} icono="wifi" />
+      <BarraSegmentos etiqueta="Claridad" valor={claridad} icono="ojo" />
+      <BarraSegmentos etiqueta="Fuerza" valor={fuerza} icono="rayo" />
     </PanelGlass>
   );
 }

@@ -13,7 +13,7 @@ export function NumeroDelDia({ numero }: NumeroDelDiaProps) {
           {numero.numero}
         </span>
       </div>
-      <p className="text-white/90 text-[11px] leading-snug flex-1">
+      <p className="text-white/90 text-[14px] font-medium leading-[1.35] flex-1">
         {numero.descripcion}
       </p>
     </PanelGlass>

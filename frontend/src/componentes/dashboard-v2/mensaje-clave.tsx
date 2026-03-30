@@ -13,7 +13,7 @@ export function MensajeClave({ nombreUsuario, titulo, fraseSintesis }: MensajeCl
         {nombreUsuario}, {titulo}
       </h2>
       <PanelGlass className="px-4 py-3">
-        <p className="text-white/90 text-[11px] leading-relaxed">
+        <p className="text-white/90 text-[14px] font-medium leading-[1.35]">
           {fraseSintesis}
         </p>
       </PanelGlass>

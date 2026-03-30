@@ -18,7 +18,7 @@ export function LunaPosicion({ luna }: LunaPosicionProps) {
       >
         <path d="M26 18.5A10 10 0 0113.5 6a10 10 0 1012.5 12.5z" />
       </svg>
-      <p className="text-white/90 text-[11px] leading-snug flex-1">
+      <p className="text-white/90 text-[14px] font-medium leading-[1.35] flex-1">
         Luna en {luna.signo}. {luna.significado}
       </p>
     </PanelGlass>

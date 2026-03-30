@@ -21,12 +21,26 @@ export function usarPronosticoDiario(fecha?: string) {
 }
 
 /** Obtiene el pronóstico semanal resumido. */
-export function usarPronosticoSemanal() {
+export function usarPronosticoSemanal(fechaInicio?: string) {
+  const params = fechaInicio ? `?fecha_inicio=${fechaInicio}` : "";
   return useQuery({
-    queryKey: ["pronostico", "semanal"],
+    queryKey: ["pronostico", "semanal", fechaInicio ?? "actual"],
     queryFn: () =>
-      clienteApi.get<PronosticoSemanalDTO>("/pronostico/semanal"),
+      clienteApi.get<PronosticoSemanalDTO>(`/pronostico/semanal${params}`),
     staleTime: 60 * 60 * 1000, // 1h
     refetchOnWindowFocus: false,
+    enabled: fechaInicio !== null, // siempre habilitado salvo que se pase null explícito
+  });
+}
+
+/** Obtiene el pronóstico de la siguiente semana (solo cuando habilitado). */
+export function usarPronosticoSemanaSiguiente(fechaInicio: string | undefined) {
+  return useQuery({
+    queryKey: ["pronostico", "semanal", fechaInicio],
+    queryFn: () =>
+      clienteApi.get<PronosticoSemanalDTO>(`/pronostico/semanal?fecha_inicio=${fechaInicio}`),
+    staleTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!fechaInicio,
   });
 }

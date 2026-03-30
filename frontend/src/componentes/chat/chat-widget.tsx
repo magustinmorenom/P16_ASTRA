@@ -244,7 +244,6 @@ export default function ChatWidget() {
           className="fixed inset-0 z-[9998] animate-fade-in"
           style={{
             background: "rgba(15,10,30,0.18)",
-            backdropFilter: "blur(3px)",
           }}
         />
       )}
