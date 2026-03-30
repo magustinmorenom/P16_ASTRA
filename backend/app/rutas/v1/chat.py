@@ -14,6 +14,7 @@ from app.datos.repositorio_perfil import RepositorioPerfil
 from app.datos.repositorio_plan import RepositorioPlan
 from app.datos.repositorio_suscripcion import RepositorioSuscripcion
 from app.dependencias_auth import obtener_usuario_actual
+from app.esquemas.respuesta import RespuestaBase
 from app.excepciones import LimiteExcedido
 from app.modelos.usuario import Usuario
 from app.principal import _obtener_db_placeholder, _obtener_redis_placeholder
@@ -36,6 +37,10 @@ class MensajeChatRequest(BaseModel):
 class MensajeChatResponse(BaseModel):
     respuesta: str
     mensajes_restantes: int | None = None  # None = ilimitado (premium)
+
+
+class RespuestaMensajeChat(RespuestaBase):
+    datos: MensajeChatResponse
 
 
 # ── Helpers ───────────────────────────────────────────────────
@@ -111,7 +116,7 @@ async def _obtener_contexto_cosmico(
 
 # ── Endpoints ─────────────────────────────────────────────────
 
-@router.post("/mensaje", response_model=MensajeChatResponse)
+@router.post("/mensaje", response_model=RespuestaMensajeChat)
 async def enviar_mensaje(
     datos: MensajeChatRequest,
     usuario: Usuario = Depends(obtener_usuario_actual),

@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from pathlib import Path
+import re
 
 import anthropic
 import pytz
@@ -219,6 +220,63 @@ class ServicioOraculo:
         return "\n".join(partes)
 
     @classmethod
+    def _formatear_respuesta_chat(cls, texto: str) -> str:
+        """Normaliza la salida del modelo para mantenerla conversacional y breve."""
+        if not texto or not texto.strip():
+            return "Estoy acá.\nDecime un poco más y lo vemos juntos."
+
+        texto = texto.replace("\r\n", "\n").replace("\r", "\n").strip()
+        texto = re.sub(r"```.*?```", "", texto, flags=re.DOTALL)
+        texto = re.sub(r"\*\*(.*?)\*\*", r"\1", texto)
+        texto = re.sub(r"\*(.*?)\*", r"\1", texto)
+
+        lineas_limpias: list[str] = []
+        for linea in texto.split("\n"):
+            linea = linea.strip()
+            if not linea:
+                continue
+            linea = re.sub(r"^#{1,6}\s*", "", linea)
+            linea = re.sub(r"^>\s*", "", linea)
+            linea = re.sub(r"^[-*•]\s*", "", linea)
+            linea = re.sub(r"^\d+\.\s*", "", linea)
+            linea = re.sub(r"^[^\wÁÉÍÓÚÜÑáéíóúüñ¿¡]+", "", linea)
+            linea = re.sub(r"\s+", " ", linea).strip()
+            if linea:
+                lineas_limpias.append(linea)
+
+        if not lineas_limpias:
+            return "Estoy acá.\nDecime un poco más y lo vemos juntos."
+
+        texto_plano = " ".join(lineas_limpias)
+        segmentos = [
+            segmento.strip()
+            for segmento in re.split(r"(?<=[.!?])\s+", texto_plano)
+            if segmento.strip()
+        ]
+
+        if not segmentos:
+            segmentos = [texto_plano]
+
+        lineas_finales: list[str] = []
+        for segmento in segmentos:
+            if len(lineas_finales) >= 3:
+                break
+
+            segmento = re.sub(r"\s+", " ", segmento).strip()
+            if not segmento:
+                continue
+
+            if len(segmento) > 180:
+                segmento = segmento[:177].rstrip(" ,;:") + "..."
+
+            lineas_finales.append(segmento)
+
+        if not lineas_finales:
+            return "Estoy acá.\nDecime un poco más y lo vemos juntos."
+
+        return "\n".join(lineas_finales[:3])
+
+    @classmethod
     async def consultar(
         cls,
         mensaje_usuario: str,
@@ -264,13 +322,14 @@ class ServicioOraculo:
         try:
             respuesta = await cliente.messages.create(
                 model=config.anthropic_modelo,
-                max_tokens=1024,
+                max_tokens=220,
                 temperature=0.7,
                 system=system_prompt,
                 messages=mensajes,
             )
 
             texto = respuesta.content[0].text if respuesta.content else ""
+            texto = cls._formatear_respuesta_chat(texto)
             tokens = (respuesta.usage.input_tokens or 0) + (respuesta.usage.output_tokens or 0)
 
             return texto, tokens

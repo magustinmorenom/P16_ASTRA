@@ -5,14 +5,34 @@ import { Icono } from "@/componentes/ui/icono";
 
 interface CtaNumerologiaProps {
   numeroPersonal?: number;
+  titulo?: string;
+  descripcion?: string;
+  ruta?: string | null;
+  mostrarAccion?: boolean;
 }
 
-export function CtaNumerologia({ numeroPersonal }: CtaNumerologiaProps) {
-  return (
-    <Link
-      href="/numerologia"
-      className="group block rounded-[10px] relative overflow-hidden transition-all duration-300 hover:scale-[1.005]"
-    >
+export function CtaNumerologia({
+  numeroPersonal,
+  titulo = "Ver mi Carta Numerológica",
+  descripcion,
+  ruta = "/numerologia",
+  mostrarAccion = true,
+}: CtaNumerologiaProps) {
+  const descripcionFinal =
+    descripcion ??
+    (numeroPersonal
+      ? `Tu número personal hoy es ${numeroPersonal}`
+      : "Descubrí tu mapa numerológico completo");
+
+  const clasesBase = [
+    "group block rounded-[10px] relative overflow-hidden transition-all duration-300",
+    ruta ? "hover:scale-[1.005]" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const contenido = (
+    <>
       {/* Fondo gradiente */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#2D1B69] via-[#4A2D8C] to-[#7C4DFF]" />
 
@@ -36,20 +56,29 @@ export function CtaNumerologia({ numeroPersonal }: CtaNumerologiaProps) {
         {/* Texto */}
         <div className="flex-1 min-w-0">
           <p className="text-white text-[16px] font-semibold leading-snug">
-            Ver mi Carta Numerologica
+            {titulo}
           </p>
           <p className="text-white/50 text-[13px] leading-snug mt-0.5">
-            {numeroPersonal
-              ? `Tu numero personal hoy es ${numeroPersonal}`
-              : "Descubri tu mapa numerologico completo"}
+            {descripcionFinal}
           </p>
         </div>
 
-        {/* Flecha */}
-        <div className="h-9 w-9 rounded-full bg-white/[0.10] border border-white/[0.10] flex items-center justify-center shrink-0 group-hover:bg-white/[0.20] transition-colors">
-          <Icono nombre="flecha" tamaño={16} className="text-white" />
-        </div>
+        {mostrarAccion && (
+          <div className="h-9 w-9 rounded-full bg-white/[0.10] border border-white/[0.10] flex items-center justify-center shrink-0 group-hover:bg-white/[0.20] transition-colors">
+            <Icono nombre="flecha" tamaño={16} className="text-white" />
+          </div>
+        )}
       </div>
+    </>
+  );
+
+  if (!ruta) {
+    return <div className={clasesBase}>{contenido}</div>;
+  }
+
+  return (
+    <Link href={ruta} className={clasesBase}>
+      {contenido}
     </Link>
   );
 }

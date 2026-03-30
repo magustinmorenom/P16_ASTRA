@@ -186,6 +186,30 @@ class TestResumirTransitos:
         assert "2026-03-23" in resultado
 
 
+class TestFormatearRespuestaChat:
+    """Tests para el formateo corto del chatbot."""
+
+    def test_formatea_respuesta_a_maximo_tres_lineas(self):
+        texto = """# Consejo para hoy
+
+        Manuel, hoy conviene bajar un cambio y ordenar lo que venís sintiendo.
+        La Luna activa una energía de observación y eso combina bien con tu necesidad de claridad.
+        Si podés, hacé una sola cosa importante y no te llenes de pendientes.
+        También te puede servir hablar menos y escuchar más.
+        """
+
+        resultado = ServicioOraculo._formatear_respuesta_chat(texto)
+
+        assert len(resultado.splitlines()) <= 3
+        assert "#" not in resultado
+
+    def test_respuesta_vacia_devuelve_fallback_corto(self):
+        resultado = ServicioOraculo._formatear_respuesta_chat("   ")
+
+        assert len(resultado.splitlines()) <= 3
+        assert "Estoy acá." in resultado
+
+
 class TestConsultar:
     """Tests para la consulta al oráculo (Claude API mockeada)."""
 
@@ -273,6 +297,7 @@ class TestConsultar:
         assert mensajes[0]["role"] == "user"
         assert mensajes[1]["role"] == "assistant"
         assert mensajes[2]["content"] == "¿Qué más me decís?"
+        assert llamada.kwargs["max_tokens"] == 220
 
     @pytest.mark.asyncio
     @patch("app.servicios.servicio_oraculo.anthropic")

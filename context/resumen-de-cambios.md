@@ -903,3 +903,186 @@ Transformacion completa de la pagina Carta Natal (frontend desktop + mobile) de 
 1. **Frontend Desktop**: La pagina usa `react-resizable-panels` con un PanelGroup horizontal. Panel izquierdo (70% default, min 55%) contiene el flujo narrativo: hero con rueda zodiacal + frase-esencia, triada Sol/Luna/Asc con tarjetas clicables, barras de distribucion energetica, planetas como articulos con interpretacion inline, aspectos agrupados por tipo, y grid de casas. Panel derecho (30%, colapsable) muestra contenido contextual segun lo seleccionado (resumen default, detalle de planeta con aspectos, detalle de aspecto, detalle de casa, analisis de triada). El divisor es arrastrable. En mobile (< lg) se muestra solo el scroll sin panel derecho.
 2. **Mobile**: Scroll vertical con AnimacionEntrada escalonada. Cada elemento (planeta, aspecto, casa, triada) es Pressable y abre un bottom sheet con snap points al 40% y 80%. El sheet usa BottomSheetScrollView para contenido largo.
 3. **Interpretaciones**: Sistema de templates en `interpretaciones-natal.ts` genera texto narrativo combinando arquetipo del planeta + elemento/modalidad del signo + tema de la casa + dignidad + retrogradacion. No requiere API — todo se genera client-side a partir de los datos de la carta natal.
+
+## Sesion: Reubicación de card de numerología
+**Fecha:** 2026-03-30 ~14:59 (ARG)
+
+### Que se hizo
+Se quitó la card de acceso a numerología del dashboard y se reubicó dentro de la propia sección de Numerología, manteniendo la misma estética visual.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/componentes/dashboard-v2/cta-numerologia.tsx` | Se hizo reutilizable la card para usarla con o sin navegación, con título y descripción configurables. |
+| `frontend/src/app/(app)/dashboard/page.tsx` | Se removió la card de numerología del dashboard desktop. |
+| `frontend/src/app/(app)/numerologia/page.tsx` | Se agregó la card en la sección de Numerología tanto en estado inicial como en resultados. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de desarrollo. |
+
+### Tests
+0 tests nuevos/modificados. `npm run lint -- "src/componentes/dashboard-v2/cta-numerologia.tsx" "src/app/(app)/dashboard/page.tsx" "src/app/(app)/numerologia/page.tsx"` ejecutado sin errores; quedaron 2 warnings preexistentes del React Compiler en `dashboard/page.tsx`.
+
+### Como funciona
+1. El dashboard ya no muestra la card "Ver mi Carta Numerológica".
+2. La página `/numerologia` ahora renderiza esa misma pieza visual como cabecera contextual dentro de la sección.
+3. En el formulario inicial la card invita a calcular la carta, y cuando hay resultados muestra el número personal del día dentro de la misma tarjeta.
+
+## Sesion: Menú “Próximamente” para Calendario y Revolución Solar
+**Fecha:** 2026-03-30 ~15:11 (ARG)
+
+### Que se hizo
+Se marcó `Calendario` y `Revolución Solar` como funcionalidades próximas dentro de la navegación y se reemplazó el render principal de ambas rutas por vistas de anticipación con fondo violeta glass y copy explicativo del alcance futuro.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/componentes/proximamente/feature-proximamente.tsx` | Nuevo componente reutilizable para pantallas de “Próximamente”, con fondo editorial violeta, glassmorphism y bloques que explican qué hará cada feature. |
+| `frontend/src/componentes/layouts/sidebar-navegacion.tsx` | Se agregaron chips pequeños de “Próximamente” en `Calendario` y `Revolución Solar` tanto en desktop como en mobile, y se corrigió el naming visible de la segunda opción. |
+| `frontend/src/app/(app)/descubrir/page.tsx` | Se alinearon las cards de mobile con el nuevo estado, agregando chip visual y corrigiendo el texto a `Revolución Solar`. |
+| `frontend/src/app/(app)/calendario-cosmico/page.tsx` | Se reemplazó la vista funcional por una pantalla de anticipación que explica la futura experiencia del Calendario Cósmico. |
+| `frontend/src/app/(app)/retorno-solar/page.tsx` | Se reemplazó la vista funcional por una pantalla de anticipación que explica la futura experiencia de Revolución Solar, manteniendo la ruta técnica existente. |
+| `frontend/src/tests/componentes/sidebar-descarga.test.tsx` | Se actualizó el test del sidebar para validar el nuevo label `Revolución Solar` y los chips `Próximamente`. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de desarrollo. |
+
+### Tests
+1 test modificado. `npm run lint -- src/componentes/proximamente/feature-proximamente.tsx "src/app/(app)/calendario-cosmico/page.tsx" "src/app/(app)/retorno-solar/page.tsx" src/componentes/layouts/sidebar-navegacion.tsx "src/app/(app)/descubrir/page.tsx" src/tests/componentes/sidebar-descarga.test.tsx` ejecutado sin errores en los archivos nuevos/modificados; quedaron 6 warnings preexistentes dentro de `src/tests/componentes/sidebar-descarga.test.tsx`. `npm run test -- src/tests/componentes/sidebar-descarga.test.tsx` no pudo ejecutarse en este entorno porque la toolchain actual requiere una versión de Node compatible con `node:util.styleText` y la máquina está corriendo Node `v18.17.1`, por lo que no se pudo confirmar el total pasando.
+
+### Como funciona
+1. El sidebar desktop y el drawer mobile ahora muestran un chip pequeño `Próximamente` junto a `Calendario` y `Revolución Solar`.
+2. La pantalla `Descubrir` replica el mismo estado visual para que la señal sea coherente también en mobile.
+3. Al entrar a `/calendario-cosmico` o `/retorno-solar`, el usuario ve una pantalla de anticipación con fondo violeta/glass y bloques que explican qué va a ofrecer cada módulo cuando esté listo.
+4. La interfaz visible ya habla de `Revolución Solar`, pero la ruta `/retorno-solar` se mantiene para no romper navegación ni enlaces existentes.
+
+## Sesion: Chatbot más conversacional y conciso
+**Fecha:** 2026-03-30 ~15:21 (ARG)
+
+### Que se hizo
+Se ajustó el comportamiento del oráculo para que responda como chat real: más conversacional, directo y con un límite efectivo de hasta 3 líneas por respuesta.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `backend/app/oraculo/system_prompt.md` | Se redefinió el estilo del oráculo para priorizar respuestas cortas, naturales y sin formato de informe. |
+| `backend/app/servicios/servicio_oraculo.py` | Se agregó post-procesado para limpiar markdown, condensar la salida y limitarla a 3 líneas; también se redujo `max_tokens`. |
+| `backend/tests/servicios/test_servicio_oraculo.py` | Se agregaron tests para validar el formateo corto y el nuevo límite de tokens del chat. |
+| `frontend/src/componentes/chat/chat-widget.tsx` | Se habilitó el render de saltos de línea para que la respuesta breve se vea realmente en hasta 3 líneas. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de desarrollo. |
+
+### Tests
+2 tests nuevos/modificados. `./.venv/bin/pytest tests/servicios/test_servicio_oraculo.py` → 20 passed. `npm run lint -- src/componentes/chat/chat-widget.tsx` ejecutado sin errores; quedó 1 warning preexistente de React Hooks en el widget.
+
+### Como funciona
+1. El prompt del oráculo ahora prioriza respuestas de chat, sin títulos ni bloques largos.
+2. Aunque el modelo devuelva texto más extenso, el backend lo normaliza y lo recorta a un máximo de 3 líneas.
+3. El widget web ahora respeta los saltos de línea para que ese formato breve se vea correctamente en pantalla.
+
+## Sesion: Fix de serialización en chat web
+**Fecha:** 2026-03-30 ~15:12 (ARG)
+
+### Que se hizo
+Se corrigió el contrato de respuesta del endpoint del chatbot web para que FastAPI serialice el envoltorio estándar sin romper después de guardar la respuesta del oráculo.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `backend/app/rutas/v1/chat.py` | Se tipó la respuesta del endpoint `/chat/mensaje` con una envolvente compatible con `{ exito, datos }`. |
+| `backend/tests/rutas/test_rutas_chat.py` | Nuevo test de regresión para verificar que `/chat/mensaje` responde 200 y devuelve `datos.respuesta` correctamente. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de desarrollo. |
+
+### Tests
+1 test nuevo. `./.venv/bin/pytest tests/rutas/test_rutas_chat.py` → 1 passed.
+
+### Como funciona
+1. El endpoint sigue devolviendo la estructura estándar del backend: `exito`, `datos` y dentro de `datos` la `respuesta` del oráculo.
+2. FastAPI ya no intenta validar `respuesta` en el nivel raíz, que era lo que disparaba el `ResponseValidationError`.
+3. El frontend puede volver a desenvainar `datos` con `clienteApi` y mostrar la respuesta del chatbot sin recibir un 500.
+
+## Sesion: Ajuste de layout en pantallas “Próximamente”
+**Fecha:** 2026-03-30 ~15:19 (ARG)
+
+### Que se hizo
+Se simplificó el layout de las pantallas “Próximamente”: se quitó la tarjeta de `Estado actual` y se redistribuyeron las tarjetas-resumen debajo del copete para evitar que quedaran angostas y excesivamente altas.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/componentes/proximamente/feature-proximamente.tsx` | Se eliminó el bloque lateral de estado y se reordenaron las tarjetas de resumen en una grilla horizontal más ancha debajo del encabezado. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de desarrollo. |
+
+### Tests
+0 tests nuevos/modificados. `npm run lint -- src/componentes/proximamente/feature-proximamente.tsx` ejecutado sin errores.
+
+### Como funciona
+1. El encabezado de la pantalla mantiene el badge, ícono, título y copete descriptivo.
+2. Las tres tarjetas de resumen ahora se renderizan justo debajo del copete usando todo el ancho disponible, con una proporción más equilibrada.
+3. La sección inferior conserva la explicación funcional y la nota de vista previa, pero ya no muestra la tarjeta separada de `Estado actual`.
+
+## Sesion: Fix de reproducción de podcasts web
+**Fecha:** 2026-03-30 ~15:30 (ARG)
+
+### Que se hizo
+Se reforzó el flujo de audio de podcasts en web para que la carga del MP3 use el cliente autenticado, reutilice blobs cacheados y muestre estados claros cuando el navegador todavía no puede iniciar la reproducción.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/lib/api/cliente.ts` | Se agregó `getBlob()` con la misma lógica de refresh automático que ya usaban las llamadas JSON. |
+| `frontend/src/lib/hooks/usar-audio.ts` | Se incorporó cache en memoria de blobs/URLs de audio, precarga de episodios listos, manejo de retry para la misma pista y toast informativo cuando el navegador requiere un segundo play. |
+| `frontend/src/componentes/layouts/reproductor-cosmico.tsx` | Se agregó `autoPlay`, estado visual de carga y bloqueo temporal del botón mientras el audio termina de cargarse. |
+| `frontend/src/componentes/layouts/mini-reproductor.tsx` | Se aplicó el mismo manejo de `autoPlay` y spinner en mobile/full-screen. |
+| `frontend/src/app/(app)/podcast/page.tsx` | La descarga ahora usa el cliente autenticado y la página precarga audios listos del día e historial. |
+| `frontend/src/app/(app)/dashboard/page.tsx` | Se agregó precarga de audios listos del dashboard para reducir fallos en el primer play. |
+| `frontend/src/tests/paginas/podcast.test.tsx` | Se mockeó la precarga de audio para mantener la suite aislada del fetch real. |
+| `frontend/src/tests/paginas/dashboard.test.tsx` | Se mockeó la precarga de audio para aislar la suite del side effect nuevo. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de desarrollo. |
+
+### Tests
+0 tests nuevos. `PATH=/opt/homebrew/bin:$PATH npm run test -- src/tests/paginas/podcast.test.tsx` → 7 tests pasando. `PATH=/opt/homebrew/bin:$PATH npx eslint ...` sobre archivos tocados sin errores; quedaron warnings preexistentes del React Compiler y del test `dashboard.test.tsx`. La suite `src/tests/paginas/dashboard.test.tsx` mantiene 3 fallas por asserts desactualizados del contenido desktop, no por este fix.
+
+### Como funciona
+1. Cuando una pantalla web necesita reproducir o descargar un podcast, ya no usa `fetch` directo sino el mismo cliente autenticado que renueva token si hace falta.
+2. Los MP3 listos se precargan y quedan cacheados como blob URLs en memoria para evitar repetir descargas y mejorar la probabilidad de reproducción inmediata.
+3. Si el navegador bloquea el auto-play inicial después de cargar el blob, el reproductor conserva el audio listo y muestra un aviso para que el usuario presione play nuevamente sin tener que regenerar ni recargar el episodio.
+
+## Sesion: Rediseño visual de la sección Diseño Humano
+**Fecha:** 2026-03-30 ~15:36 (ARG)
+
+### Que se hizo
+Se rediseñó la página de Diseño Humano con una composición más editorial y clara: hero oscuro con métricas, panel destacado para el Body Graph, mejor jerarquía para centros/canales y un bloque de activaciones integrado al flujo principal.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/app/(app)/diseno-humano/page.tsx` | Reescritura visual completa de los estados de carga, formulario y resultados; nuevo hero, nueva organización de paneles y mejor presentación de cruz, centros, canales y activaciones. |
+| `frontend/src/componentes/visualizaciones/body-graph.tsx` | Se mejoró el estilo del gráfico y se corrigió el mapeo de centros/canales para que la visualización responda a aliases reales y destaque conexiones activas válidas. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de desarrollo. |
+
+### Tests
+0 tests nuevos/modificados. `npm run lint -- "src/app/(app)/diseno-humano/page.tsx" src/componentes/visualizaciones/body-graph.tsx` ejecutado sin errores. No se ejecutó Vitest en este entorno por la incompatibilidad conocida de la toolchain actual con Node `v18.17.1`.
+
+### Como funciona
+1. El estado inicial ahora presenta Diseño Humano como una experiencia guiada, con copete explicativo y formulario integrado en una tarjeta de mayor jerarquía visual.
+2. El estado de resultados organiza la lectura en tres capas: hero con atributos principales, panel central del Body Graph y bloques explicativos para cruz, activaciones, centros y canales.
+3. El `BodyGraph` ya no depende de nombres exactos capitalizados: normaliza aliases de centros y usa `datos.canales` para iluminar conexiones realmente activas, haciendo que el gráfico represente mejor la información calculada.
+
+## Sesion: Fix de icono de reproducción en podcasts
+**Fecha:** 2026-03-30 ~15:42 (ARG)
+
+### Que se hizo
+Se corrigió el estado visual del reproductor para que deje de mostrar spinner cuando el audio ya está listo y sonando, y vuelva a mostrar el icono de pausa como corresponde.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/lib/hooks/usar-audio.ts` | Se simplificó la carga del audio por cambio de pista para evitar una carrera de estado que dejaba `cargandoAudio` activo después de obtener el blob. |
+| `frontend/src/componentes/layouts/reproductor-cosmico.tsx` | El spinner ahora solo se muestra si todavía no existe audio reproducible; si el audio ya está listo, el botón vuelve a play/pausa. |
+| `frontend/src/componentes/layouts/mini-reproductor.tsx` | Se aplicó la misma lógica al mini reproductor y a la vista expandida mobile. |
+| `frontend/src/tests/componentes/reproductor-cosmico.test.tsx` | Nuevo test de regresión para validar que el spinner desaparece cuando `tieneAudio` ya es verdadero. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de desarrollo. |
+
+### Tests
+1 test nuevo. `PATH=/opt/homebrew/bin:$PATH npm run test -- src/tests/componentes/reproductor-cosmico.test.tsx src/tests/paginas/podcast.test.tsx` → 9 tests pasando. `PATH=/opt/homebrew/bin:$PATH npx eslint src/lib/hooks/usar-audio.ts src/componentes/layouts/reproductor-cosmico.tsx src/componentes/layouts/mini-reproductor.tsx src/tests/componentes/reproductor-cosmico.test.tsx` ejecutado sin errores.
+
+### Como funciona
+1. Al seleccionar una pista, el hook carga el blob del MP3 y apaga explícitamente `cargandoAudio` apenas obtiene una URL reproducible o detecta un error.
+2. Los reproductores desktop y mobile ya no usan `cargandoAudio` a secas para pintar el spinner: ahora exigen además que todavía no exista `audioUrl`.
+3. Si el audio ya está disponible y el reproductor está sonando, el botón central vuelve a renderizar el icono de pausa en lugar del loader circular.

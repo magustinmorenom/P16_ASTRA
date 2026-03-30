@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { Icono } from "@/componentes/ui/icono";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
 import { BloqueoPremium } from "@/componentes/ui/bloqueo-premium";
+import { obtenerBlobAudioPodcast, precargarAudiosPodcast } from "@/lib/hooks/usar-audio";
 import {
   usarPodcastHoy,
   usarPodcastHistorial,
@@ -18,12 +19,7 @@ import HeaderMobile from "@/componentes/layouts/header-mobile";
 /** Descarga el audio de un episodio vía fetch autenticado. */
 async function descargarAudio(episodioId: string, titulo: string) {
   try {
-    const token = localStorage.getItem("token_acceso");
-    const res = await fetch(`/api/v1/podcast/audio/${episodioId}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    if (!res.ok) return;
-    const blob = await res.blob();
+    const blob = await obtenerBlobAudioPodcast(episodioId);
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -218,7 +214,11 @@ export default function PaginaPodcast() {
   const hayEnProceso = (episodiosHoy ?? []).some(
     (ep) => ep.estado === "generando_guion" || ep.estado === "generando_audio"
   );
-  const { data: _ } = usarPodcastHoy(hayEnProceso);
+  usarPodcastHoy(hayEnProceso);
+
+  useEffect(() => {
+    precargarAudiosPodcast([...(episodiosHoy ?? []), ...(historial ?? [])]);
+  }, [episodiosHoy, historial]);
 
   return (
     <><HeaderMobile titulo="Podcasts" />

@@ -9,7 +9,50 @@
 "use client";
 
 import { useRef, useEffect, useCallback, useState } from "react";
+import { clienteApi } from "@/lib/api/cliente";
 import { useStoreUI } from "@/lib/stores/store-ui";
+import type { PodcastEpisodio } from "@/lib/tipos";
+
+const cacheAudioPodcast = new Map<string, string>();
+const cargasAudioPendientes = new Map<string, Promise<string>>();
+
+async function obtenerUrlAudioPodcast(episodioId: string): Promise<string> {
+  const urlCacheada = cacheAudioPodcast.get(episodioId);
+  if (urlCacheada) return urlCacheada;
+
+  const cargaPendiente = cargasAudioPendientes.get(episodioId);
+  if (cargaPendiente) return cargaPendiente;
+
+  const carga = clienteApi
+    .getBlob(`/podcast/audio/${episodioId}`)
+    .then((blob) => {
+      const url = URL.createObjectURL(blob);
+      cacheAudioPodcast.set(episodioId, url);
+      cargasAudioPendientes.delete(episodioId);
+      return url;
+    })
+    .catch((error) => {
+      cargasAudioPendientes.delete(episodioId);
+      throw error;
+    });
+
+  cargasAudioPendientes.set(episodioId, carga);
+  return carga;
+}
+
+export async function obtenerBlobAudioPodcast(episodioId: string): Promise<Blob> {
+  return clienteApi.getBlob(`/podcast/audio/${episodioId}`);
+}
+
+export function precargarAudiosPodcast(episodios: PodcastEpisodio[]): void {
+  episodios
+    .filter((episodio) => episodio.estado === "listo" && !!episodio.url_audio)
+    .forEach((episodio) => {
+      void obtenerUrlAudioPodcast(episodio.id).catch(() => {
+        // Si falla la precarga, la reproducción hará un nuevo intento on-demand.
+      });
+    });
+}
 
 
 export function usarAudio() {
@@ -25,40 +68,52 @@ export function usarAudio() {
     setVolumen,
     toggleSilencio,
     setSegmentoActual,
+    mostrarToast,
   } = useStoreUI();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const ultimoPistaId = useRef<string | null>(null);
+  const [cargandoAudio, setCargandoAudio] = useState(false);
 
   // Obtener audio como blob cuando cambia la pista
   useEffect(() => {
-    if (!pistaActual?.url || pistaActual.id === ultimoPistaId.current) return;
-    ultimoPistaId.current = pistaActual.id;
+    if (!pistaActual?.url) {
+      setAudioUrl(null);
+      setCargandoAudio(false);
+      return;
+    }
+
+    const urlCacheada = cacheAudioPodcast.get(pistaActual.id);
+    if (urlCacheada) {
+      setAudioUrl(urlCacheada);
+      setCargandoAudio(false);
+      return;
+    }
+
     setAudioUrl(null);
+    setCargandoAudio(true);
 
-    const token = localStorage.getItem("token_acceso");
-    fetch(`/api/v1/podcast/audio/${pistaActual.id}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Audio no disponible");
-        return res.blob();
-      })
-      .then((blob) => {
-        const url = URL.createObjectURL(blob);
+    let cancelado = false;
+
+    void obtenerUrlAudioPodcast(pistaActual.id)
+      .then((url) => {
+        if (cancelado) return;
         setAudioUrl(url);
+        setCargandoAudio(false);
       })
-      .catch(() => setAudioUrl(null));
+      .catch(() => {
+        if (cancelado) return;
+        setAudioUrl(null);
+        setCargandoAudio(false);
+        useStoreUI.setState({ reproduciendo: false });
+        mostrarToast("error", "No pudimos cargar el audio del podcast.");
+      })
+      .finally(() => undefined);
 
-    // Revocar blob URL anterior al cambiar de pista
     return () => {
-      setAudioUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return null;
-      });
+      cancelado = true;
     };
-  }, [pistaActual?.id, pistaActual?.url]);
+  }, [mostrarToast, pistaActual]);
 
   const tieneAudio = !!audioUrl;
 
@@ -66,11 +121,14 @@ export function usarAudio() {
   useEffect(() => {
     if (!audioRef.current || !tieneAudio) return;
     if (reproduciendo) {
-      audioRef.current.play().catch(() => {});
+      audioRef.current.play().catch(() => {
+        useStoreUI.setState({ reproduciendo: false });
+        mostrarToast("info", "El audio ya está listo. Presioná play nuevamente.");
+      });
     } else {
       audioRef.current.pause();
     }
-  }, [reproduciendo, tieneAudio]);
+  }, [reproduciendo, tieneAudio, mostrarToast]);
 
   // Sincronizar volumen
   useEffect(() => {
@@ -120,7 +178,6 @@ export function usarAudio() {
       audioRef.current.src = "";
     }
     setAudioUrl(null);
-    ultimoPistaId.current = null;
     useStoreUI.setState({
       pistaActual: null,
       reproduciendo: false,
@@ -140,6 +197,7 @@ export function usarAudio() {
     audioRef,
     audioUrl,
     tieneAudio,
+    cargandoAudio,
     pistaActual,
     reproduciendo,
     progresoSegundos,

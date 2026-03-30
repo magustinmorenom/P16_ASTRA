@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { renderConProveedores } from "../utilidades";
 
 vi.mock("next/navigation", () => ({
@@ -10,11 +9,18 @@ vi.mock("next/navigation", () => ({
 const mockPodcastHoy = vi.fn();
 const mockPodcastHistorial = vi.fn();
 const mockGenerarPodcast = vi.fn();
+const mockPrecargarAudiosPodcast = vi.fn();
 
 vi.mock("@/lib/hooks", () => ({
   usarPodcastHoy: () => mockPodcastHoy(),
   usarPodcastHistorial: () => mockPodcastHistorial(),
   usarGenerarPodcast: () => mockGenerarPodcast(),
+}));
+
+vi.mock("@/lib/hooks/usar-audio", () => ({
+  precargarAudiosPodcast: (...args: unknown[]) =>
+    mockPrecargarAudiosPodcast(...args),
+  obtenerBlobAudioPodcast: vi.fn(),
 }));
 
 vi.mock("@/lib/stores/store-ui", () => ({
@@ -41,8 +47,6 @@ const EPISODIO_LISTO = {
 };
 
 describe("PaginaPodcast", () => {
-  const user = userEvent.setup();
-
   beforeEach(() => {
     vi.clearAllMocks();
     mockGenerarPodcast.mockReturnValue({

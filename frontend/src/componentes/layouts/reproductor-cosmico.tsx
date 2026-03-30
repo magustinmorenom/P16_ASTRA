@@ -14,6 +14,7 @@ export default function ReproductorCosmico() {
     audioRef,
     audioUrl,
     tieneAudio,
+    cargandoAudio,
     pistaActual,
     reproduciendo,
     progresoSegundos,
@@ -33,6 +34,8 @@ export default function ReproductorCosmico() {
     return null;
   }
 
+  const mostrandoCarga = cargandoAudio && !tieneAudio;
+
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-50 h-[80px] bg-[#1A1128] flex items-center px-4 lg:px-6 gap-4">
       {/* Audio element oculto — usa URL presigned de MinIO */}
@@ -40,6 +43,7 @@ export default function ReproductorCosmico() {
         <audio
           ref={audioRef}
           src={audioUrl!}
+          autoPlay={reproduciendo}
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleEnded}
           preload="auto"
@@ -87,14 +91,19 @@ export default function ReproductorCosmico() {
           </button>
           <button
             onClick={toggleReproduccion}
+            disabled={mostrandoCarga}
             className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-white flex items-center justify-center hover:scale-105 transition-transform"
           >
-            <Icono
-              nombre={reproduciendo ? "pausar" : "reproducir"}
-              tamaño={20}
-              peso="fill"
-              className="text-[#1A1128]"
-            />
+            {mostrandoCarga ? (
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#1A1128] border-t-transparent" />
+            ) : (
+              <Icono
+                nombre={reproduciendo ? "pausar" : "reproducir"}
+                tamaño={20}
+                peso="fill"
+                className="text-[#1A1128]"
+              />
+            )}
           </button>
           <button className="text-[#B388FF] hover:text-white transition-colors">
             <Icono nombre="avanzar" tamaño={20} peso="fill" />

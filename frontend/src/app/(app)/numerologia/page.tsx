@@ -7,6 +7,7 @@ import { Boton } from "@/componentes/ui/boton";
 import { Input } from "@/componentes/ui/input";
 import { Badge } from "@/componentes/ui/badge";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
+import { CtaNumerologia } from "@/componentes/dashboard-v2/cta-numerologia";
 import { usarNumerologia, usarMisCalculos } from "@/lib/hooks";
 import { usarEsMobile } from "@/lib/hooks/usar-es-mobile";
 import { cn } from "@/lib/utilidades/cn";
@@ -356,6 +357,14 @@ export default function PaginaNumerologia() {
             </p>
           </div>
           <div className="max-w-lg">
+            <div className="mb-4">
+              <CtaNumerologia
+                titulo="Tu Carta Numerológica"
+                descripcion="Calculá tu mapa numerológico completo"
+                ruta={null}
+                mostrarAccion={false}
+              />
+            </div>
             <div className={cn("rounded-2xl p-6", esMobile ? "bg-fondo-tarjeta border border-borde" : "backdrop-blur-xl bg-white/[0.06] border border-white/[0.10]")}>
               <form onSubmit={manejarEnvio} className="flex flex-col gap-4">
                 <Input
@@ -471,6 +480,14 @@ export default function PaginaNumerologia() {
         <p className={cn("text-[14px] -mt-3", esDesktop ? "text-white/40" : "text-texto-secundario")}>
           Tocá cualquier número para ver su explicación detallada.
         </p>
+
+        <CtaNumerologia
+          numeroPersonal={(datos.dia_personal ?? NUMERO_VACIO_DEFAULT).numero}
+          titulo="Tu Carta Numerológica"
+          descripcion={`Tu número personal hoy es ${(datos.dia_personal ?? NUMERO_VACIO_DEFAULT).numero}`}
+          ruta={null}
+          mostrarAccion={false}
+        />
 
         {/* ─── Hero: Día Personal + Año + Mes ───────────────────────── */}
         <div className="flex gap-3">

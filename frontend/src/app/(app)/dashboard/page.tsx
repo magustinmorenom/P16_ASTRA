@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { Icono } from "@/componentes/ui/icono";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
+import { precargarAudiosPodcast } from "@/lib/hooks/usar-audio";
 import {
   usarPronosticoDiario,
   usarPronosticoSemanal,
@@ -27,7 +28,6 @@ import { ConsejoHD } from "@/componentes/pronostico/consejo-hd";
 // --- Componentes v2 (desktop dark) ---
 import { HeroSeccion } from "@/componentes/dashboard-v2/hero-seccion";
 import { MensajeClave } from "@/componentes/dashboard-v2/mensaje-clave";
-import { CtaNumerologia } from "@/componentes/dashboard-v2/cta-numerologia";
 import { AreasVidaV2 } from "@/componentes/dashboard-v2/areas-vida-v2";
 import { SemanaV2 } from "@/componentes/dashboard-v2/semana-v2";
 
@@ -107,7 +107,11 @@ export default function PaginaDashboard() {
   const hayEnProceso = (episodiosHoy ?? []).some(
     (ep) => ep.estado === "generando_guion" || ep.estado === "generando_audio"
   );
-  const { data: _ } = usarPodcastHoy(hayEnProceso);
+  usarPodcastHoy(hayEnProceso);
+
+  useEffect(() => {
+    precargarAudiosPodcast(episodiosHoy ?? []);
+  }, [episodiosHoy]);
 
   function manejarPlayPodcast(tipo: TipoPodcast) {
     const ep = mapaEpisodios.get(tipo);
@@ -236,10 +240,7 @@ export default function PaginaDashboard() {
                 fraseSintesis={pronosticoDiario.clima.frase_sintesis}
               />
 
-              {/* 3. CTA Numerología */}
-              <CtaNumerologia numeroPersonal={pronosticoDiario.numero_personal?.numero} />
-
-              {/* 4. Áreas de Vida */}
+              {/* 3. Áreas de Vida */}
               <AreasVidaV2 areas={pronosticoDiario.areas} />
             </>
           )}

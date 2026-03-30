@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utilidades/cn";
 import { Icono, type NombreIcono } from "@/componentes/ui/icono";
-import { useStoreAuth } from "@/lib/stores/store-auth";
 import { useStoreUI } from "@/lib/stores/store-ui";
 import { usarMiPerfil, usarMisCalculos } from "@/lib/hooks";
 import { generarMarkdownPerfil } from "@/lib/utilidades/generar-markdown-perfil";
@@ -19,6 +18,7 @@ interface EnlaceNav {
   etiqueta: string;
   ruta: string;
   icono: NombreIcono;
+  proximamente?: boolean;
 }
 
 const enlacesNavegacion: EnlaceNav[] = [
@@ -27,8 +27,18 @@ const enlacesNavegacion: EnlaceNav[] = [
   { etiqueta: "Carta Astral", ruta: "/carta-natal", icono: "estrella" },
   { etiqueta: "Diseño Humano", ruta: "/diseno-humano", icono: "hexagono" },
   { etiqueta: "Numerología", ruta: "/numerologia", icono: "numeral" },
-  { etiqueta: "Calendario", ruta: "/calendario-cosmico", icono: "planeta" },
-  { etiqueta: "Retorno Solar", ruta: "/retorno-solar", icono: "retornoSolar" },
+  {
+    etiqueta: "Calendario",
+    ruta: "/calendario-cosmico",
+    icono: "planeta",
+    proximamente: true,
+  },
+  {
+    etiqueta: "Revolución Solar",
+    ruta: "/retorno-solar",
+    icono: "retornoSolar",
+    proximamente: true,
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -36,7 +46,6 @@ const enlacesNavegacion: EnlaceNav[] = [
 // ---------------------------------------------------------------------------
 export default function SidebarNavegacion() {
   const pathname = usePathname();
-  const { usuario } = useStoreAuth();
   const { sidebarAbierto, cerrarSidebar, sidebarColapsado } = useStoreUI();
 
   const { data: perfil } = usarMiPerfil();
@@ -129,7 +138,13 @@ export default function SidebarNavegacion() {
                 <li key={enlace.ruta} className="group">
                   <Link
                     href={enlace.ruta}
-                    title={colapsado ? enlace.etiqueta : undefined}
+                    title={
+                      colapsado
+                        ? enlace.proximamente
+                          ? `${enlace.etiqueta} · Próximamente`
+                          : enlace.etiqueta
+                        : undefined
+                    }
                     className={cn(
                       "flex items-center rounded-lg text-[13px] font-medium transition-all duration-200",
                       colapsado
@@ -149,7 +164,16 @@ export default function SidebarNavegacion() {
                         estaActivo ? "text-[#B388FF]" : "text-white/35 group-hover:text-white/70"
                       )}
                     />
-                    {!colapsado && enlace.etiqueta}
+                    {!colapsado && (
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="truncate">{enlace.etiqueta}</span>
+                        {enlace.proximamente && (
+                          <span className="shrink-0 rounded-full border border-white/12 bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-100/78">
+                            Próximamente
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </Link>
                 </li>
               );
@@ -240,9 +264,9 @@ export default function SidebarNavegacion() {
                             ? "bg-[#7C4DFF]/15 text-white border-[#7C4DFF]/20"
                             : "text-white/40 hover:text-white/80 hover:bg-white/[0.05] border-transparent"
                         )}
-                      >
-                        <Icono
-                          nombre={enlace.icono}
+                        >
+                          <Icono
+                            nombre={enlace.icono}
                           tamaño={20}
                           peso={estaActivo ? "fill" : "regular"}
                           className={cn(
@@ -250,7 +274,14 @@ export default function SidebarNavegacion() {
                             estaActivo ? "text-[#B388FF]" : "text-white/35"
                           )}
                         />
-                        {enlace.etiqueta}
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="truncate">{enlace.etiqueta}</span>
+                          {enlace.proximamente && (
+                            <span className="shrink-0 rounded-full border border-white/12 bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-100/78">
+                              Próximamente
+                            </span>
+                          )}
+                        </div>
                       </Link>
                     </li>
                   );

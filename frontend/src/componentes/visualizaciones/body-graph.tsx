@@ -13,18 +13,25 @@ interface PosicionCentro {
   x: number;
   y: number;
   forma: "cuadrado" | "triangulo" | "diamante";
+  aliases: string[];
 }
 
 const CENTROS: PosicionCentro[] = [
-  { nombre: "Cabeza", x: 200, y: 30, forma: "triangulo" },
-  { nombre: "Ajna", x: 200, y: 90, forma: "triangulo" },
-  { nombre: "Garganta", x: 200, y: 155, forma: "cuadrado" },
-  { nombre: "G", x: 200, y: 225, forma: "diamante" },
-  { nombre: "Corazón", x: 130, y: 225, forma: "triangulo" },
-  { nombre: "Plexo Solar", x: 270, y: 295, forma: "triangulo" },
-  { nombre: "Sacral", x: 200, y: 310, forma: "cuadrado" },
-  { nombre: "Raíz", x: 200, y: 390, forma: "cuadrado" },
-  { nombre: "Bazo", x: 130, y: 310, forma: "triangulo" },
+  { nombre: "Cabeza", x: 200, y: 30, forma: "triangulo", aliases: ["cabeza"] },
+  { nombre: "Ajna", x: 200, y: 90, forma: "triangulo", aliases: ["ajna"] },
+  { nombre: "Garganta", x: 200, y: 155, forma: "cuadrado", aliases: ["garganta"] },
+  { nombre: "G", x: 200, y: 225, forma: "diamante", aliases: ["g", "identidad"] },
+  { nombre: "Corazón", x: 130, y: 225, forma: "triangulo", aliases: ["corazon", "ego"] },
+  {
+    nombre: "Plexo Solar",
+    x: 270,
+    y: 295,
+    forma: "triangulo",
+    aliases: ["plexosolar", "plexo_solar", "emocional", "plexo solar"],
+  },
+  { nombre: "Sacral", x: 200, y: 310, forma: "cuadrado", aliases: ["sacral", "sacro"] },
+  { nombre: "Raíz", x: 200, y: 390, forma: "cuadrado", aliases: ["raiz"] },
+  { nombre: "Bazo", x: 130, y: 310, forma: "triangulo", aliases: ["bazo", "esplenico"] },
 ];
 
 const CONEXIONES: [string, string][] = [
@@ -48,6 +55,14 @@ function obtenerPosCentro(nombre: string) {
   return CENTROS.find((c) => c.nombre === nombre);
 }
 
+function normalizarClave(valor: string) {
+  return valor
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\s_()]/g, "");
+}
+
 function DibujarCentro({
   centro,
   definido,
@@ -55,9 +70,9 @@ function DibujarCentro({
   centro: PosicionCentro;
   definido: boolean;
 }) {
-  const fill = definido ? "#7C4DFF" : "transparent";
-  const stroke = definido ? "#a855f7" : "#525252";
-  const tam = 28;
+  const fill = definido ? "#7C4DFF" : "rgba(255,255,255,0.04)";
+  const stroke = definido ? "#D4A234" : "rgba(255,255,255,0.25)";
+  const tam = 34;
 
   return (
     <g>
@@ -67,11 +82,11 @@ function DibujarCentro({
           y={centro.y - tam / 2}
           width={tam}
           height={tam}
-          rx={4}
+          rx={6}
           fill={fill}
           stroke={stroke}
-          strokeWidth="1.5"
-          opacity={definido ? 0.8 : 0.4}
+          strokeWidth="1.8"
+          opacity={definido ? 0.95 : 1}
         />
       )}
       {centro.forma === "triangulo" && (
@@ -79,8 +94,8 @@ function DibujarCentro({
           points={`${centro.x},${centro.y - tam / 2} ${centro.x - tam / 2},${centro.y + tam / 2} ${centro.x + tam / 2},${centro.y + tam / 2}`}
           fill={fill}
           stroke={stroke}
-          strokeWidth="1.5"
-          opacity={definido ? 0.8 : 0.4}
+          strokeWidth="1.8"
+          opacity={definido ? 0.95 : 1}
         />
       )}
       {centro.forma === "diamante" && (
@@ -88,16 +103,17 @@ function DibujarCentro({
           points={`${centro.x},${centro.y - tam / 2} ${centro.x + tam / 2},${centro.y} ${centro.x},${centro.y + tam / 2} ${centro.x - tam / 2},${centro.y}`}
           fill={fill}
           stroke={stroke}
-          strokeWidth="1.5"
-          opacity={definido ? 0.8 : 0.4}
+          strokeWidth="1.8"
+          opacity={definido ? 0.95 : 1}
         />
       )}
       <text
         x={centro.x}
-        y={centro.y + tam / 2 + 14}
+        y={centro.y + tam / 2 + 16}
         textAnchor="middle"
-        fill={definido ? "#f5f5f5" : "#737373"}
-        fontSize="8"
+        fill={definido ? "#FFFFFF" : "rgba(233,213,255,0.72)"}
+        fontSize="9"
+        fontWeight={definido ? "600" : "500"}
       >
         {centro.nombre}
       </text>
@@ -114,26 +130,59 @@ export default function BodyGraph({ datos, className }: PropsBodyGraph) {
     );
   }
 
-  const centrosDefinidos = datos.centros
-    ? typeof datos.centros === "object" && !Array.isArray(datos.centros)
-      ? (datos.centros as Record<string, string>)
-      : {}
-    : {};
+  const centrosNormalizados = Object.entries(datos.centros ?? {}).reduce<Record<string, string>>(
+    (acc, [clave, estado]) => {
+      acc[normalizarClave(clave)] = estado;
+      return acc;
+    },
+    {},
+  );
 
-  function estaDefinido(nombre: string): boolean {
-    const valor = centrosDefinidos[nombre];
-    return valor === "definido";
+  const canalesActivos = new Set(
+    (datos.canales ?? []).flatMap((canal) => {
+      const [a, b] = canal.centros.map(normalizarClave);
+      return [`${a}:${b}`, `${b}:${a}`];
+    }),
+  );
+
+  function estaDefinido(centro: PosicionCentro): boolean {
+    return centro.aliases.some((alias) => {
+      const valor = centrosNormalizados[normalizarClave(alias)];
+      return valor === "definido" || valor === "defined";
+    });
+  }
+
+  function estaConexionActiva(origen: string, destino: string): boolean {
+    const centroA = obtenerPosCentro(origen);
+    const centroB = obtenerPosCentro(destino);
+    if (!centroA || !centroB) return false;
+
+    return centroA.aliases.some((aliasA) =>
+      centroB.aliases.some((aliasB) =>
+        canalesActivos.has(`${normalizarClave(aliasA)}:${normalizarClave(aliasB)}`),
+      ),
+    );
   }
 
   return (
     <div className={cn("flex items-center justify-center", className)}>
-      <svg viewBox="0 0 400 440" className="w-full max-w-[350px]">
-        {/* Conexiones */}
+      <svg viewBox="0 0 400 440" className="w-full max-w-[360px] overflow-visible">
+        <defs>
+          <radialGradient id="hdGlow" cx="50%" cy="40%" r="70%">
+            <stop offset="0%" stopColor="rgba(179,136,255,0.20)" />
+            <stop offset="100%" stopColor="rgba(23,13,44,0)" />
+          </radialGradient>
+        </defs>
+
+        <circle cx="200" cy="220" r="158" fill="url(#hdGlow)" />
+
         {CONEXIONES.map(([a, b], i) => {
           const ca = obtenerPosCentro(a);
           const cb = obtenerPosCentro(b);
           if (!ca || !cb) return null;
-          const ambosDefinidos = estaDefinido(a) && estaDefinido(b);
+
+          const activa = estaConexionActiva(a, b);
+
           return (
             <line
               key={i}
@@ -141,19 +190,18 @@ export default function BodyGraph({ datos, className }: PropsBodyGraph) {
               y1={ca.y}
               x2={cb.x}
               y2={cb.y}
-              stroke={ambosDefinidos ? "#7C4DFF" : "#404040"}
-              strokeWidth={ambosDefinidos ? 2 : 1}
-              opacity={ambosDefinidos ? 0.7 : 0.3}
+              stroke={activa ? "#D4A234" : "rgba(255,255,255,0.16)"}
+              strokeWidth={activa ? 2.6 : 1.2}
+              opacity={activa ? 0.95 : 0.65}
             />
           );
         })}
 
-        {/* Centros */}
         {CENTROS.map((centro) => (
           <DibujarCentro
             key={centro.nombre}
             centro={centro}
-            definido={estaDefinido(centro.nombre)}
+            definido={estaDefinido(centro)}
           />
         ))}
       </svg>
