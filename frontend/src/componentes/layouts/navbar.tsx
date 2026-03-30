@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { Icono } from "@/componentes/ui/icono";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { useStoreUI } from "@/lib/stores/store-ui";
+import { usarEsMobile } from "@/lib/hooks/usar-es-mobile";
 import { usarMiPerfil, usarMisCalculos } from "@/lib/hooks";
 
 // ---------------------------------------------------------------------------
@@ -31,7 +32,8 @@ const ICONO_SIGNO: Record<string, string> = {
 export default function Navbar() {
   const router = useRouter();
   const { usuario, cerrarSesion } = useStoreAuth();
-  const { toggleSidebar } = useStoreUI();
+  const { toggleSidebar, sidebarColapsado, toggleSidebarColapsado } = useStoreUI();
+  const esMobile = usarEsMobile();
 
   const { data: perfil } = usarMiPerfil();
   const { data: calculos, isLoading: cargandoCalculos } = usarMisCalculos();
@@ -76,7 +78,7 @@ export default function Navbar() {
     .toUpperCase();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-[62px] bg-[#2D1B69]">
+    <nav className="relative z-30 h-[62px] shrink-0 bg-[#2D1B69]">
       <div className="h-full mx-auto px-4 lg:px-6 flex items-center justify-between gap-4">
         {/* Izquierda: Hamburguesa (mobile) + Logo + Home */}
         <div className="flex items-center gap-3 shrink-0">
@@ -99,13 +101,16 @@ export default function Navbar() {
             />
           </Link>
 
-          <Link
-            href="/dashboard"
-            className="hidden sm:flex items-center justify-center h-8 w-8 rounded-full bg-white/[0.08] hover:bg-white/[0.15] transition-colors text-white"
-            aria-label="Inicio"
-          >
-            <Icono nombre="casa" tamaño={18} peso="fill" />
-          </Link>
+          {/* Toggle colapsar sidebar (solo desktop) */}
+          {!esMobile && (
+            <button
+              onClick={toggleSidebarColapsado}
+              className="hidden lg:flex items-center justify-center h-8 w-8 rounded-full bg-white/[0.08] hover:bg-white/[0.15] transition-colors text-white"
+              aria-label={sidebarColapsado ? "Expandir sidebar" : "Colapsar sidebar"}
+            >
+              <Icono nombre="menu" tamaño={18} />
+            </button>
+          )}
         </div>
 
         {/* Centro: Ribbon glassmorphism con perfil cósmico */}

@@ -40,6 +40,25 @@ node_modules/
 .next/
 out/
 
+# React Native / Expo
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/expo-env.d.ts
+mobile/ios/
+mobile/android/
+.metro-health-check*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+.kotlin/
+
+# EAS Build
+mobile/eas-build-local/
+
 # Testing
 .coverage
 htmlcov/
@@ -47,3 +66,5 @@ htmlcov/
 
 # Misc
 *.log
+*.tsbuildinfo
+*.pem

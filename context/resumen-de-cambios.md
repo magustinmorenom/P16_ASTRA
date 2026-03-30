@@ -722,3 +722,184 @@ Implementación completa de 6 fases de fixes identificados en el diagnóstico de
 6. **Navbar cleanup**: Sin campana (no hay sistema de notificaciones), sin link duplicado a configuración, badge Premium visible en avatar y dropdown
 7. **Consolidación**: Cancelación solo en /suscripcion (perfil tiene link "Gestionar suscripción"). Oráculo/Telegram movido de suscripción a perfil (solo premium)
 8. **Emails de notificación**: Pago rechazado (en webhook _procesar_pago), expiración de gracia (lazy en obtener_activa), cuenta eliminada (en endpoint eliminar-cuenta)
+
+---
+
+## Sesion: Rediseño Visual Mobile — Glassmorphism + Light/Dark Mode
+**Fecha:** 2026-03-26 ~14:00 (ARG)
+
+### Que se hizo
+Transformación visual completa de la app mobile ASTRA: sistema de temas dual (claro/oscuro/automático), glassmorphism con expo-blur, tipografía Inter, animaciones con Reanimated, y actualización de todas las pantallas y componentes para usar colores dinámicos.
+
+### Dependencias instaladas
+- `expo-blur` (BlurView nativo iOS, fallback Android)
+- `expo-font` + `@expo-google-fonts/inter` (tipografía Inter 400/500/600/700)
+
+### Archivos creados
+
+| Archivo | Descripción |
+|---------|-------------|
+| `src/lib/stores/store-tema.ts` | Store Zustand para tema: preferencia (claro/oscuro/auto), esquemaActivo, colores, persistencia SecureStore |
+| `src/lib/hooks/usar-tema.ts` | Hook que expone colores, esOscuro, esquema, preferencia, setPreferencia |
+| `src/componentes/ui/vista-vidrio.tsx` | Primitiva glassmorphism: BlurView iOS + fallback semi-transparente Android |
+| `src/componentes/ui/presionable-animado.tsx` | Pressable con animación scale(0.97) vía Reanimated |
+| `src/componentes/ui/animacion-entrada.tsx` | Fade-in + translateY(20→0) con delay configurable para stagger |
+
+### Archivos modificados
+
+| Archivo | Cambios |
+|---------|---------|
+| `app.json` | `userInterfaceStyle: "automatic"` (era "dark"), plugin expo-font |
+| `tailwind.config.js` | Colores removidos (ahora via style props), fontFamily Inter |
+| `src/constants/colores.ts` | Reescrito: ColoresClaro, ColoresOscuro, obtenerColores(), tokens glass/SVG |
+| `src/app/_layout.tsx` | Carga fuentes Inter, init tema, Appearance listener, StatusBar dinámico |
+| `src/app/(tabs)/_layout.tsx` | Tab bar glass (BlurView iOS), colores dinámicos |
+| `src/app/(auth)/_layout.tsx` | contentStyle dinámico |
+| `src/app/(onboarding)/_layout.tsx` | contentStyle dinámico |
+| `src/app/(features)/_layout.tsx` | contentStyle dinámico |
+| `src/componentes/ui/tarjeta.tsx` | Glass con BlurView, variantes con tinte, fallback sólido |
+| `src/componentes/ui/boton.tsx` | PresionableAnimado, Inter, colores dinámicos |
+| `src/componentes/ui/input.tsx` | Colores dinámicos, Inter |
+| `src/componentes/ui/badge.tsx` | bgMap/textMap desde tema |
+| `src/componentes/ui/avatar.tsx` | Color fondo adaptativo |
+| `src/componentes/ui/esqueleto.tsx` | Migrado a Reanimated, color adaptativo |
+| `src/componentes/ui/separador.tsx` | Border dinámico |
+| `src/componentes/ui/icono-astral.tsx` | tintColor desde colores.acento |
+| `src/componentes/layouts/header-mobile.tsx` | Glass header con BlurView iOS |
+| `src/componentes/layouts/mini-reproductor.tsx` | Glass, colores dinámicos |
+| `src/componentes/layouts/reproductor-completo.tsx` | Colores dinámicos |
+| `src/componentes/compuestos/formulario-nacimiento.tsx` | themeVariant dinámico, colores dinámicos |
+| `src/componentes/visualizaciones/rueda-zodiacal.tsx` | SVG strokes/fills desde tokens tema |
+| `src/componentes/visualizaciones/body-graph.tsx` | Colores definido/abierto desde tema |
+| `src/app/(tabs)/index.tsx` | AnimacionEntrada stagger, gradientes dinámicos |
+| `src/app/(tabs)/astral.tsx` | Colores dinámicos, AnimacionEntrada |
+| `src/app/(tabs)/descubrir.tsx` | PresionableAnimado cards, AnimacionEntrada |
+| `src/app/(tabs)/podcast.tsx` | AnimacionEntrada, colores dinámicos |
+| `src/app/(tabs)/perfil.tsx` | **Selector de tema** (Sol/Luna/Auto), colores dinámicos |
+| `src/app/(auth)/login.tsx` | Colores dinámicos, Inter |
+| `src/app/(auth)/registro.tsx` | Colores dinámicos, Inter |
+| `src/app/(auth)/callback.tsx` | Colores dinámicos |
+| `src/app/(onboarding)/index.tsx` | Colores dinámicos |
+| `src/app/(features)/diseno-humano.tsx` | Colores dinámicos, AnimacionEntrada |
+| `src/app/(features)/numerologia.tsx` | Colores dinámicos, AnimacionEntrada |
+| `src/app/(features)/retorno-solar.tsx` | Colores dinámicos, AnimacionEntrada |
+| `src/app/(features)/transitos.tsx` | Colores dinámicos, AnimacionEntrada |
+| `src/app/(features)/calendario-cosmico.tsx` | Colores dinámicos |
+| `src/app/(features)/suscripcion.tsx` | Colores dinámicos |
+| `src/lib/hooks/index.ts` | Export usarTema |
+
+### Tests
+- No hay tests unitarios mobile (Expo no tiene suite configurada). Verificación visual pendiente.
+
+### Como funciona
+1. **Sistema de temas**: `store-tema.ts` (Zustand) almacena preferencia del usuario en SecureStore. Al iniciar la app, `_layout.tsx` carga la preferencia y sincroniza con `Appearance` del sistema. El hook `usarTema()` retorna el objeto `colores` correspondiente al tema activo (claro u oscuro).
+2. **Paletas duales**: `colores.ts` define ColoresClaro (#FAFAFA base, #7C4DFF acento) y ColoresOscuro (#0a0a1a base, #c084fc acento), con tokens semánticos idénticos incluyendo glass (vidrioFondo, vidrioBorde), tab bar, y SVG.
+3. **Glassmorphism**: `vista-vidrio.tsx` usa `BlurView` de expo-blur en iOS (efecto nativo UIVisualEffectView). En Android usa fallback semi-transparente sólido. `tarjeta.tsx` y `header-mobile.tsx` lo usan como fondo.
+4. **Selector de tema**: En la pantalla Perfil hay 3 opciones (Sol=Claro, Luna=Oscuro, CircleHalf=Automático). La selección persiste en SecureStore y se aplica inmediatamente.
+5. **Animaciones**: `PresionableAnimado` agrega feedback táctil scale(0.97) a botones y cards. `AnimacionEntrada` agrega fade-in + slide-up al montar secciones, con prop `retraso` para efecto stagger.
+6. **Migración de colores**: Todos los componentes y pantallas pasaron de `className="bg-fondo text-primario"` (NativeWind) a `style={{ backgroundColor: colores.fondo, color: colores.primario }}` (style props dinámicos), ya que NativeWind no soporta CSS variables para cambio de tema en runtime.
+
+---
+
+## Sesion: Pronóstico Cósmico — Home Dashboard Redesign
+**Fecha:** 2026-03-26 ~15:00 (ARG)
+
+### Que se hizo
+Feature completa de "Pronóstico Cósmico": backend que genera forecasts diarios/semanales combinando Astrología + Numerología + Diseño Humano vía Claude API, con cache Redis. Frontend rediseñado con dashboard centrado en el pronóstico.
+
+### Backend — Archivos creados/modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `backend/app/servicios/servicio_numerologia.py` | Agregado parámetro `fecha_objetivo` a `_anio_personal`, `_mes_personal`, `_dia_personal` + nuevo método público `calcular_dia_personal()` |
+| `backend/app/configuracion.py` | Agregada variable `pronostico_modelo` (default: claude-haiku-4-5) |
+| `backend/app/configuracion_features.py` | **Nuevo** — Config de gating freemium/premium por feature con función `obtener_acceso_pronostico()` |
+| `backend/app/esquemas/pronostico.py` | **Nuevo** — Schemas Pydantic: ClimaCosmicoSchema, AreaVidaSchema, MomentoClaveSchema, AlertaCosmicaSchema, ConsejoHDSchema, PronosticoDiarioSchema, PronosticoSemanalSchema |
+| `backend/app/oraculo/prompt_pronostico.md` | **Nuevo** — System prompt para Claude que genera JSON estructurado del pronóstico |
+| `backend/app/servicios/servicio_pronostico.py` | **Nuevo** — Servicio orquestador con `generar_pronostico_diario()` y `generar_pronostico_semanal()`, cache Redis, fallback sin AI |
+| `backend/app/rutas/v1/pronostico.py` | **Nuevo** — Endpoints `GET /pronostico/diario` y `GET /pronostico/semanal` |
+| `backend/app/principal.py` | Registrado router de pronóstico |
+
+### Frontend — Archivos creados/modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/lib/tipos/pronostico.ts` | **Nuevo** — Interfaces TS (PronosticoDiarioDTO, PronosticoSemanalDTO, etc.) |
+| `frontend/src/lib/tipos/index.ts` | Agregados exports de tipos de pronóstico |
+| `frontend/src/lib/hooks/usar-pronostico.ts` | **Nuevo** — React Query hooks `usarPronosticoDiario()` y `usarPronosticoSemanal()` |
+| `frontend/src/lib/hooks/index.ts` | Agregados exports de hooks de pronóstico |
+| `frontend/src/componentes/pronostico/barra-energia.tsx` | **Nuevo** — Barra visual de energía/claridad/conexión (1-10) |
+| `frontend/src/componentes/pronostico/indicador-nivel.tsx` | **Nuevo** — Dot de color favorable/neutro/precaución |
+| `frontend/src/componentes/pronostico/hero-clima.tsx` | **Nuevo** — Card hero con clima cósmico, gradiente dinámico, barras de energía |
+| `frontend/src/componentes/pronostico/areas-vida.tsx` | **Nuevo** — 6 cards de áreas (Trabajo/Amor/Salud/Finanzas/Creatividad/Crecimiento) con expand |
+| `frontend/src/componentes/pronostico/momentos-clave.tsx` | **Nuevo** — Timeline de 3 bloques (Mañana/Tarde/Noche) |
+| `frontend/src/componentes/pronostico/alerta-cosmica.tsx` | **Nuevo** — Cards condicionales de alertas (retrógrados, eclipses, etc.) |
+| `frontend/src/componentes/pronostico/vista-semana.tsx` | **Nuevo** — 7 mini-cards horizontales con energía y clima por día |
+| `frontend/src/componentes/pronostico/consejo-hd.tsx` | **Nuevo** — Card de consejo personalizado de Diseño Humano |
+| `frontend/src/app/(app)/dashboard/page.tsx` | **Reescrito** — Dashboard centrado en pronóstico con esqueletos, error state, podcasts |
+
+### Tests
+- 20 tests nuevos en `tests/servicios/test_servicio_pronostico.py` (todos pasando)
+- 13 tests existentes de numerología siguen pasando (retrocompat verificada)
+- 0 errores TypeScript en archivos nuevos
+
+### Como funciona
+1. **Flujo diario**: Dashboard monta → `usarPronosticoDiario()` llama `GET /pronostico/diario` → backend chequea cache Redis (`pronostico:diario:{usuario}:{fecha}`) → si miss: carga perfil cósmico del usuario (natal + HD + numerología de BD), obtiene tránsitos actuales, calcula número personal del día, construye prompt con todo el contexto → llama Claude Haiku (JSON mode) → parsea y valida con Pydantic → guarda en Redis con TTL hasta medianoche ARG + 1h → retorna al frontend
+2. **Flujo semanal**: Similar pero calcula tránsitos y número personal para cada día de la semana (Lun-Dom), envía todo en una sola llamada a Claude
+3. **Fallback**: Si Claude falla o no hay API key, retorna pronóstico genérico basado en número personal + fase lunar (el dashboard nunca queda vacío)
+4. **Cache 3 niveles**: Redis L1 (TTL dinámico hasta medianoche/lunes), React Query L2 (staleTime 30min/1h)
+5. **Gating**: `configuracion_features.py` define nivel por sección (todo freemium por ahora). El endpoint incluye campo `acceso` en la respuesta
+6. **Dashboard**: Hero con clima → Áreas de vida (scroll/grid) → Momentos del día (timeline) → Alertas (condicional) → Vista semanal → Podcasts → Consejo HD. Responsive via usarEsMobile(). Panel derecho eliminado.
+
+---
+
+## Sesion: Lectura de Carta Natal — Vista Narrativa-Infografica
+**Fecha:** 2026-03-26 ~18:40 (ARG)
+
+### Que se hizo
+Transformacion completa de la pagina Carta Natal (frontend desktop + mobile) de vista tabular tecnica a experiencia de lectura narrativa-infografica con paneles resizables, interpretaciones contextuales y bottom sheet mobile.
+
+### Frontend — Archivos creados
+| Archivo | Descripcion |
+|---------|-------------|
+| `frontend/src/lib/utilidades/interpretaciones-natal.ts` | Constantes astrologicas centralizadas + sistema de templates narrativos (interpretarPlaneta, interpretarAspecto, interpretarCasa, generarEsencia, interpretarTriada, calcularDistribucion, ordenarPlanetas, agruparAspectos) |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Hero con rueda zodiacal centrada + nombre + frase-esencia generada |
+| `frontend/src/componentes/carta-natal/seccion-triada.tsx` | 3 tarjetas Sol/Luna/Ascendente con colores diferenciados (dorado/violeta/indigo) |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Barras proporcionales de elementos y modalidades |
+| `frontend/src/componentes/carta-natal/planetas-narrativo.tsx` | Planetas como articulos narrativos con interpretacion inline |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Aspectos agrupados por tipo con badges y orbe visual |
+| `frontend/src/componentes/carta-natal/casas-grid.tsx` | Grid 4x3 de casas, angulares destacadas |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Panel derecho dinamico (default/planeta/aspecto/casa/triada) con datos tecnicos colapsables |
+
+### Frontend — Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Reescritura completa: react-resizable-panels (Group/Panel/Separator), scroll narrativo en panel central, panel contextual dinamico en panel derecho, mobile sin panel derecho |
+| `frontend/package.json` | +react-resizable-panels v4.7.6 |
+
+### Mobile — Archivos creados
+| Archivo | Descripcion |
+|---------|-------------|
+| `mobile/src/lib/utilidades/interpretaciones-natal.ts` | Copia de interpretaciones frontend (mismas funciones) |
+| `mobile/src/componentes/carta-natal/seccion-triada.tsx` | Triada mobile con Pressable y tema dinamico |
+| `mobile/src/componentes/carta-natal/distribucion-energetica.tsx` | Barras energeticas mobile |
+| `mobile/src/componentes/carta-natal/planeta-narrativo.tsx` | Planetas narrativos mobile con Badge |
+| `mobile/src/componentes/carta-natal/aspectos-narrativo.tsx` | Aspectos agrupados mobile |
+| `mobile/src/componentes/carta-natal/casas-grid.tsx` | Grid 4 columnas mobile |
+| `mobile/src/componentes/carta-natal/sheet-detalle.tsx` | Bottom sheet (@gorhom/bottom-sheet) con snap points 40%/80%, contenido contextual (planeta/aspecto/casa/triada) |
+
+### Mobile — Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `mobile/src/app/(tabs)/astral.tsx` | Reescritura completa: scroll narrativo con frase-esencia, triada, distribucion, planetas, aspectos, casas + bottom sheet para detalles |
+| `mobile/package.json` | +@gorhom/bottom-sheet |
+
+### Tests
+- Frontend build (`npm run build`): pasa sin errores
+- Frontend TypeScript: 0 errores nuevos (1 pre-existente en test no relacionado)
+- Mobile TypeScript: 0 errores nuevos (pre-existentes en archivos no relacionados)
+
+### Como funciona
+1. **Frontend Desktop**: La pagina usa `react-resizable-panels` con un PanelGroup horizontal. Panel izquierdo (70% default, min 55%) contiene el flujo narrativo: hero con rueda zodiacal + frase-esencia, triada Sol/Luna/Asc con tarjetas clicables, barras de distribucion energetica, planetas como articulos con interpretacion inline, aspectos agrupados por tipo, y grid de casas. Panel derecho (30%, colapsable) muestra contenido contextual segun lo seleccionado (resumen default, detalle de planeta con aspectos, detalle de aspecto, detalle de casa, analisis de triada). El divisor es arrastrable. En mobile (< lg) se muestra solo el scroll sin panel derecho.
+2. **Mobile**: Scroll vertical con AnimacionEntrada escalonada. Cada elemento (planeta, aspecto, casa, triada) es Pressable y abre un bottom sheet con snap points al 40% y 80%. El sheet usa BottomSheetScrollView para contenido largo.
+3. **Interpretaciones**: Sistema de templates en `interpretaciones-natal.ts` genera texto narrativo combinando arquetipo del planeta + elemento/modalidad del signo + tema de la casa + dignidad + retrogradacion. No requiere API — todo se genera client-side a partir de los datos de la carta natal.

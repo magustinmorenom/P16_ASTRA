@@ -97,9 +97,23 @@ Base: `/api/v1/`
 - Usar el skill `fullstack-engineer` para tareas de implementación backend/frontend
 - Usar el skill `ux-designer` para tareas de diseño de interfaces
 - Usar el skill `payment-gateway` para integración de pagos con MercadoPago (checkout, suscripciones, webhooks, testing)
+- Usar el skill `mobile-developer` para tareas de desarrollo mobile React Native / Expo
 - Todo código nuevo debe seguir el stack definido en `context/ADR-0.md`
 - No introducir dependencias fuera del stack sin aprobación explícita del usuario
 - Los cálculos astronómicos son deterministas: mismo input = mismo output (aprovechar cache)
+
+### Paleta de Colores — Regla obligatoria
+
+**NUNCA usar naranja (#FF9800, #F57C00, orange, amber) en la interfaz.** Está prohibido en todo el frontend.
+
+Paleta permitida:
+- **Primario**: Violeta (#7C4DFF, #4A2D8C, #2D1B69) — gradientes de noche
+- **Acento**: Violeta claro (#B388FF, #c084fc) y dorado sutil (#D4A234) solo para detalles mínimos
+- **Fondos**: Gris claro (#FAFAFA), blanco, glassmorphism (backdrop-blur + bg-white/60)
+- **Texto**: Gris oscuro (#2C2926), gris medio (#8A8580), blanco sobre fondos oscuros
+- **Estados**: Esmeralda (favorable), violeta (neutro), rojo suave (precaución) — NUNCA naranja/amber
+
+El estilo visual es **glassmorphism + degradé violeta noche + grises para contraste**. Las tarjetas usan `backdrop-blur-xl bg-white/60 border border-white/30` o fondos sólidos blancos con bordes sutiles.
 
 ### Iconografía — Regla obligatoria
 
