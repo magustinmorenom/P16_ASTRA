@@ -48,6 +48,7 @@ export type {
 export type {
   NumeroRespuesta,
   EtapaVida,
+  MesPersonalItem,
   Numerologia,
 } from "./numerologia";
 
@@ -118,3 +119,18 @@ export type {
   HistorialChat,
   NuevaConversacion,
 } from "./chat";
+
+// Pronóstico Cósmico
+export type {
+  ClimaCosmicoDTO,
+  AreaVidaDTO,
+  MomentoClaveDTO,
+  AlertaCosmicaDTO,
+  ConsejoHDDTO,
+  LunaInfoDTO,
+  NumeroPersonalDTO,
+  AccesoPronosticoDTO,
+  PronosticoDiarioDTO,
+  DiaSemanalDTO,
+  PronosticoSemanalDTO,
+} from "./pronostico";

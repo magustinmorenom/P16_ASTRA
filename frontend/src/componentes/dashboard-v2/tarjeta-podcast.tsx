@@ -1,0 +1,82 @@
+import { Icono } from "@/componentes/ui/icono";
+
+interface TarjetaPodcastProps {
+  nombre: string;
+  episodioListo: boolean;
+  generando: boolean;
+  fechaManana: string;
+  onReproducir: () => void;
+  onGenerar: () => void;
+}
+
+export function TarjetaPodcast({
+  nombre,
+  episodioListo,
+  generando,
+  fechaManana,
+  onReproducir,
+  onGenerar,
+}: TarjetaPodcastProps) {
+  return (
+    <div className="flex flex-col gap-2">
+      {/* Fila superior: Fecha (izq) + Podcast info (der) — contenedor unificado */}
+      <div className="rounded-2xl backdrop-blur-[21px] bg-white/[0.07] border border-white/[0.10] p-3 flex items-center gap-4">
+        {/* Burbuja podcast info */}
+        <div className="flex-1 flex flex-col gap-2.5">
+          <div className="rounded-xl bg-white/[0.08] border border-white/[0.10] px-3.5 py-2.5">
+            <p className="text-white/90 text-[12px] leading-[1.17] font-normal">
+              Hola {nombre}! Tu podcast de hoy {episodioListo ? "esta listo" : "está pendiente"}
+            </p>
+          </div>
+
+          {/* Botón reproducir */}
+          <button
+            onClick={episodioListo ? onReproducir : onGenerar}
+            disabled={generando}
+            className="btn-reproducir flex items-center gap-2 rounded-full bg-[#1a1035]/80 border border-white/[0.08] px-3.5 py-1.5 self-start cursor-pointer"
+          >
+            <span className="btn-reproducir-icono h-[20px] w-[20px] rounded-full bg-white/10 flex items-center justify-center shrink-0 transition-all duration-300">
+              {generando ? (
+                <div className="h-2.5 w-2.5 animate-spin rounded-full border-[1.5px] border-white border-t-transparent" />
+              ) : (
+                <Icono
+                  nombre={episodioListo ? "reproducir" : "destello"}
+                  tamaño={10}
+                  peso="fill"
+                  className="text-white"
+                />
+              )}
+            </span>
+            <span className="btn-reproducir-dot h-[5px] w-[5px] rounded-full bg-[#00c220] shrink-0" />
+            <span className="btn-reproducir-texto text-[#f8f6ff]/60 text-[10px] font-medium tracking-[1px] uppercase transition-colors duration-300">
+              {generando ? "Generando..." : "Reproducir"}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Card genera para mañana */}
+      <button
+        onClick={onGenerar}
+        disabled={generando}
+        className="rounded-2xl overflow-hidden relative w-full text-left"
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1a0e3e]/80 via-[#2d1b69]/70 to-[#382954]/60" />
+        <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-violet-500/25 blur-[40px] pointer-events-none" />
+        <div className="relative flex items-center gap-3 px-4 py-3">
+          <span className="h-[32px] w-[32px] rounded-lg bg-white/10 border border-white/[0.08] flex items-center justify-center shrink-0">
+            <Icono nombre="destello" tamaño={14} peso="fill" className="text-white" />
+          </span>
+          <p className="text-[#f8f6ff]/60 text-[10px] font-medium tracking-[1.5px] text-center uppercase leading-[1.45] flex-1">
+            Prepara tu día{"\n"}genera podcast{"\n"}para mañana
+          </p>
+          <div className="rounded-xl backdrop-blur-[21px] bg-white/[0.07] border border-white/[0.10] px-3 py-2">
+            <span className="text-[#f8f6ff] font-[family-name:var(--font-inria)] text-[16px] font-bold tracking-wide whitespace-nowrap">
+              {fechaManana}
+            </span>
+          </div>
+        </div>
+      </button>
+    </div>
+  );
+}

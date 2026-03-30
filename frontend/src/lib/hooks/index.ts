@@ -53,5 +53,7 @@ export {
   usarGenerarPodcast,
 } from "./usar-podcast";
 
+export { usarPronosticoDiario, usarPronosticoSemanal, usarPronosticoSemanaSiguiente } from "./usar-pronostico";
+
 export { usarEsMobile } from "./usar-es-mobile";
 export { usarAudio } from "./usar-audio";

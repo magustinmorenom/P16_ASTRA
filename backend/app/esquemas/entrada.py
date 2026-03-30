@@ -18,6 +18,9 @@ class DatosNacimiento(BaseModel):
     ciudad_nacimiento: str = Field(..., min_length=1, max_length=100, description="Ciudad de nacimiento")
     pais_nacimiento: str = Field(..., min_length=1, max_length=60, description="País de nacimiento")
     sistema_casas: str = Field(default="placidus", description="Sistema de casas astrológicas")
+    latitud: float | None = Field(default=None, description="Latitud pre-resuelta (opcional)")
+    longitud: float | None = Field(default=None, description="Longitud pre-resuelta (opcional)")
+    zona_horaria: str | None = Field(default=None, description="Zona horaria IANA pre-resuelta (opcional)")
 
 
 class DatosActualizarPerfil(BaseModel):

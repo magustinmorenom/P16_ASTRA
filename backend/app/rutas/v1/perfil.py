@@ -29,14 +29,19 @@ async def crear_perfil(
     usuario: Usuario | None = Depends(obtener_usuario_opcional),
 ):
     """Crea un nuevo perfil con datos de nacimiento."""
-    # Geocodificar
-    geo = await ServicioGeo.geocodificar(
-        datos.ciudad_nacimiento,
-        datos.pais_nacimiento,
-    )
-
-    # Zona horaria
-    zona = ServicioZonaHoraria.obtener_zona_horaria(geo.latitud, geo.longitud)
+    # Usar coords pre-resueltas si vienen, sino geocodificar (retrocompat web)
+    if datos.latitud is not None and datos.longitud is not None and datos.zona_horaria:
+        lat = datos.latitud
+        lon = datos.longitud
+        zona = datos.zona_horaria
+    else:
+        geo = await ServicioGeo.geocodificar(
+            datos.ciudad_nacimiento,
+            datos.pais_nacimiento,
+        )
+        lat = geo.latitud
+        lon = geo.longitud
+        zona = ServicioZonaHoraria.obtener_zona_horaria(lat, lon)
 
     # Crear perfil
     repo = RepositorioPerfil(db)
@@ -46,8 +51,8 @@ async def crear_perfil(
         hora_nacimiento=datos.hora_nacimiento,
         ciudad_nacimiento=datos.ciudad_nacimiento,
         pais_nacimiento=datos.pais_nacimiento,
-        latitud=geo.latitud,
-        longitud=geo.longitud,
+        latitud=lat,
+        longitud=lon,
         zona_horaria=zona,
         usuario_id=usuario.id if usuario else None,
     )

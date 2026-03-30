@@ -162,11 +162,13 @@ def _registrar_rutas(app: FastAPI) -> None:
         calendario_cosmico,
         chat,
         diseno_humano,
+        geo,
         natal,
         numerologia,
         oraculo,
         perfil,
         podcast,
+        pronostico,
         retorno_solar,
         suscripcion,
         transitos,
@@ -185,6 +187,8 @@ def _registrar_rutas(app: FastAPI) -> None:
     app.include_router(oraculo.router, prefix=prefijo)
     app.include_router(chat.router, prefix=prefijo)
     app.include_router(podcast.router, prefix=prefijo, tags=["Podcasts"])
+    app.include_router(pronostico.router, prefix=prefijo, tags=["Pronóstico Cósmico"])
+    app.include_router(geo.router, prefix=prefijo)
 
     @app.get("/health", tags=["Sistema"])
     async def health_check():

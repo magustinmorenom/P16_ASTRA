@@ -24,8 +24,9 @@ vi.mock("@/lib/hooks", () => ({
 }));
 
 vi.mock("@/lib/utilidades/formatear-grado", () => ({
-  obtenerSimbolo: (signo: string) => signo.charAt(0),
   formatearGrado: (g: number) => `${g}°`,
+  obtenerSignoDesdeGrado: (g: number) => "Aries",
+  SIGNOS: ["Aries", "Tauro", "Géminis", "Cáncer", "Leo", "Virgo", "Libra", "Escorpio", "Sagitario", "Capricornio", "Acuario", "Piscis"],
 }));
 
 vi.mock("@/componentes/visualizaciones/rueda-zodiacal", () => ({

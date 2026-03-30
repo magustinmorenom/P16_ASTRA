@@ -9,7 +9,6 @@ import { Icono } from "@/componentes/ui/icono";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { useStoreUI } from "@/lib/stores/store-ui";
 import { usarMiPerfil, usarMisCalculos } from "@/lib/hooks";
-import { obtenerSimbolo } from "@/lib/utilidades/formatear-grado";
 
 // ---------------------------------------------------------------------------
 // Mapa de signo zodiacal a icono SVG
@@ -132,7 +131,7 @@ export default function Navbar() {
                 {sol && ICONO_SIGNO[sol.signo] ? (
                   <Image src={ICONO_SIGNO[sol.signo]} alt={sol.signo} width={14} height={14} className="brightness-0 invert opacity-80" />
                 ) : (
-                  <span className="text-white/70 text-[10px]">{sol ? obtenerSimbolo(sol.signo) : "—"}</span>
+                  <span className="text-white/70 text-[10px]">—</span>
                 )}
                 <span className="text-white/50 text-[10px]">Sol</span>
               </div>
@@ -140,7 +139,7 @@ export default function Navbar() {
                 {luna && ICONO_SIGNO[luna.signo] ? (
                   <Image src={ICONO_SIGNO[luna.signo]} alt={luna.signo} width={14} height={14} className="brightness-0 invert opacity-80" />
                 ) : (
-                  <span className="text-white/70 text-[10px]">{luna ? obtenerSimbolo(luna.signo) : "—"}</span>
+                  <span className="text-white/70 text-[10px]">—</span>
                 )}
                 <span className="text-white/50 text-[10px]">Luna</span>
               </div>
@@ -148,7 +147,7 @@ export default function Navbar() {
                 {ascendente && ICONO_SIGNO[ascendente.signo] ? (
                   <Image src={ICONO_SIGNO[ascendente.signo]} alt={ascendente.signo} width={14} height={14} className="brightness-0 invert opacity-80" />
                 ) : (
-                  <span className="text-white/70 text-[10px]">{ascendente ? obtenerSimbolo(ascendente.signo) : "—"}</span>
+                  <span className="text-white/70 text-[10px]">—</span>
                 )}
                 <span className="text-white/50 text-[10px]">Asc</span>
               </div>

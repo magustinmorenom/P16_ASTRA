@@ -7,14 +7,25 @@ class NumeroRespuesta(BaseModel):
     """Un número calculado con su descripción."""
     numero: int
     descripcion: str
+    descripcion_larga: str = ""
 
 
 class EtapaVida(BaseModel):
     """Una etapa (pináculo) de la vida con rango de edad."""
     numero: int
+    nombre: str = ""
     descripcion: str
+    descripcion_larga: str = ""
     edad_inicio: int
     edad_fin: int | None
+
+
+class MesPersonalItem(BaseModel):
+    """Un mes personal con su número y nombre del mes."""
+    mes: int
+    nombre_mes: str
+    numero: int
+    descripcion: str
 
 
 class NumerologiaRespuesta(BaseModel):
@@ -30,5 +41,6 @@ class NumerologiaRespuesta(BaseModel):
     anio_personal: NumeroRespuesta
     mes_personal: NumeroRespuesta
     dia_personal: NumeroRespuesta
+    meses_personales: list[MesPersonalItem] = []
     etapas_de_la_vida: list[EtapaVida]
     numeros_maestros_presentes: list[int]

@@ -1,59 +1,63 @@
 "use client";
 
 import { cn } from "@/lib/utilidades/cn";
-import { SIMBOLOS_SIGNOS, SIGNOS } from "@/lib/utilidades/formatear-grado";
 import type { Planeta, Casa, Aspecto } from "@/lib/tipos";
+import {
+  glifoPath,
+  COLORES_PLANETAS,
+  COLORES_ELEMENTO,
+  ELEMENTO_SIGNO,
+  ESTILOS_ASPECTO,
+} from "./glifos-astrologicos";
+import {
+  polarAXY,
+  ajustarAngulo,
+  resolverColisiones,
+  generarArcoSVG,
+  ROMANO,
+  SIGNOS,
+} from "./utilidades-rueda";
+
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
 
 interface PropsRuedaZodiacal {
   planetas?: Planeta[];
   casas?: Casa[];
   aspectos?: Aspecto[];
   className?: string;
-  /** Usar colores claros para fondo blanco */
   claro?: boolean;
-  /** Callback al hacer clic en un planeta */
   onPlanetaClick?: (planeta: Planeta) => void;
 }
 
-const COLORES_SIGNOS: Record<string, string> = {
-  Aries: "#ef4444", Tauro: "#22c55e", Géminis: "#eab308",
-  Cáncer: "#6366f1", Leo: "#f97316", Virgo: "#22c55e",
-  Libra: "#eab308", Escorpio: "#6366f1", Sagitario: "#ef4444",
-  Capricornio: "#22c55e", Acuario: "#eab308", Piscis: "#6366f1",
-};
+// ---------------------------------------------------------------------------
+// Constantes de layout — viewBox 800x800
+// ---------------------------------------------------------------------------
 
-const COLORES_PLANETAS: Record<string, string> = {
-  Sol: "#D4A234", Luna: "#9575CD", Mercurio: "#E57373", Venus: "#66BB6A",
-  Marte: "#EF5350", Júpiter: "#FFA726", Saturno: "#78909C", Urano: "#26C6DA",
-  Neptuno: "#5C6BC0", Plutón: "#8D6E63", "Nodo Norte": "#66BB6A", "Nodo Sur": "#A1887F",
-};
+const CX = 400;
+const CY = 400;
 
-const COLORES_ASPECTOS: Record<string, string> = {
-  conjunción: "#FBBF24",
-  trígono: "#22c55e",
-  sextil: "#22D3EE",
-  cuadratura: "#ef4444",
-  oposición: "#ef4444",
-};
+const R_EXTERIOR = 380;      // borde externo del anillo zodiacal
+const R_ZODIACAL_INT = 320;  // borde interno del anillo zodiacal (donde van ticks)
+const R_TICKS_INT = 312;     // fin de tick marks
+const R_CASAS_EXT = 312;     // borde externo del area de casas
+const R_PLANETAS = 260;      // radio de planetas (display)
+const R_CONECTORA = 300;     // radio donde llega la linea conectora al grado real
+const R_ASPECTO = 175;       // radio maximo para lineas de aspectos
+const R_CENTRO = 70;         // circulo central
 
-const SIMBOLOS_PLANETAS: Record<string, string> = {
-  Sol: "☉", Luna: "☽", Mercurio: "☿", Venus: "♀",
-  Marte: "♂", Júpiter: "♃", Saturno: "♄", Urano: "♅",
-  Neptuno: "♆", Plutón: "♇", "Nodo Norte": "☊", "Nodo Sur": "☋",
-};
+// ---------------------------------------------------------------------------
+// Normalizador de clave (quitar acentos y minusculas)
+// ---------------------------------------------------------------------------
 
-const CX = 200;
-const CY = 200;
-const R_EXT = 180;
-const R_SIGNOS = 155;
-const R_CASAS = 130;
-const R_PLANETAS = 105;
-const R_CENTRO = 60;
-
-function polarAXY(angulo: number, radio: number) {
-  const rad = ((angulo - 90) * Math.PI) / 180;
-  return { x: CX + radio * Math.cos(rad), y: CY + radio * Math.sin(rad) };
+function normClave(s: string): string {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
+
+// ---------------------------------------------------------------------------
+// Componente
+// ---------------------------------------------------------------------------
 
 export default function RuedaZodiacal({
   planetas,
@@ -73,146 +77,353 @@ export default function RuedaZodiacal({
 
   const ascGrado = casas[0]?.grado ?? 0;
 
-  function ajustarAngulo(longitud: number) {
-    return (ascGrado - longitud + 360) % 360;
-  }
+  // Resolver colisiones de planetas
+  const planetasResueltos = resolverColisiones(planetas, ascGrado, 10);
 
-  // Colores según tema
+  // Colores segun tema
   const t = claro
     ? {
-        fondoExt: "#F8F5FF",
+        fondoExt: "#FAFAFA",
         strokeAnillo: "#D0C4F0",
-        fondoCentro: "#F0EBFF",
-        strokeCasa: "#C4B8E0",
-        strokeSigno: "#D0C4F0",
-        fondoPlaneta: "#FFFFFF",
-        strokePlaneta: "#B388FF",
+        fondoCentro: "#F8F5FF",
+        strokeCasa: "#B0A4D0",
+        textoRomano: "#8A8580",
         textoPlaneta: "#2C2926",
         textoRetro: "#ef4444",
         textoAsc: "#7C4DFF",
+        tickColor: "#C4B8E0",
+        centroStroke: "#D0C4F0",
+        ejeColor: "#7C4DFF",
       }
     : {
         fondoExt: "#1e1b2e",
         strokeAnillo: "#7C4DFF",
         fondoCentro: "#1a0a3e",
-        strokeCasa: "#7C4DFF",
-        strokeSigno: "#7C4DFF",
-        fondoPlaneta: "#1e1b2e",
-        strokePlaneta: "#7C4DFF",
+        strokeCasa: "#5A3FAA",
+        textoRomano: "#9575CD",
         textoPlaneta: "#f5f5f5",
         textoRetro: "#ef4444",
-        textoAsc: "#7C4DFF",
+        textoAsc: "#B388FF",
+        tickColor: "#5A3FAA",
+        centroStroke: "#7C4DFF",
+        ejeColor: "#B388FF",
       };
 
   return (
     <div className={cn("flex items-center justify-center", className)}>
-      <svg viewBox="0 0 400 400" className="w-full max-w-[500px]">
-        {/* Fondo */}
-        <circle cx={CX} cy={CY} r={R_EXT} fill={t.fondoExt} stroke={t.strokeAnillo} strokeWidth="1" opacity={claro ? "0.8" : "0.3"} />
-        <circle cx={CX} cy={CY} r={R_CASAS} fill="none" stroke={t.strokeAnillo} strokeWidth="0.5" opacity={claro ? "0.5" : "0.2"} />
-        <circle cx={CX} cy={CY} r={R_CENTRO} fill={t.fondoCentro} stroke={t.strokeAnillo} strokeWidth="0.5" opacity={claro ? "0.6" : "0.3"} />
+      <svg viewBox="0 0 800 800" className="w-full max-w-[600px]">
+        {/* Filter para hover glow */}
+        <defs>
+          <filter id="glow-planeta" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#7C4DFF" floodOpacity="0.6" />
+          </filter>
+        </defs>
 
-        {/* Signos zodiacales */}
+        {/* ============================================================= */}
+        {/* CAPA 1: Fondo */}
+        {/* ============================================================= */}
+        <circle cx={CX} cy={CY} r={R_EXTERIOR} fill={t.fondoExt} stroke={t.strokeAnillo} strokeWidth="1.5" />
+        <circle cx={CX} cy={CY} r={R_ZODIACAL_INT} fill={claro ? "#fff" : "#151024"} stroke={t.strokeAnillo} strokeWidth="0.8" />
+        <circle cx={CX} cy={CY} r={R_CENTRO} fill={t.fondoCentro} stroke={t.centroStroke} strokeWidth="0.8" opacity="0.6" />
+
+        {/* ============================================================= */}
+        {/* CAPA 2: Arcos zodiacales coloreados por elemento */}
+        {/* ============================================================= */}
         {SIGNOS.map((signo, i) => {
-          const inicio = ajustarAngulo(i * 30);
-          const medio = ajustarAngulo(i * 30 + 15);
-          const pInicio = polarAXY(inicio, R_EXT);
-          const pInicioInt = polarAXY(inicio, R_SIGNOS);
-          const pTexto = polarAXY(medio, (R_EXT + R_SIGNOS) / 2);
+          const startLong = i * 30;
+          const endLong = (i + 1) * 30;
+          const startAng = ajustarAngulo(startLong, ascGrado);
+          const endAng = ajustarAngulo(endLong, ascGrado);
+          const elemento = ELEMENTO_SIGNO[signo];
+          const colores = elemento ? COLORES_ELEMENTO[elemento] : COLORES_ELEMENTO.Fuego;
+          const midAng = ajustarAngulo(startLong + 15, ascGrado);
+          const pGlifo = polarAXY(midAng, (R_EXTERIOR + R_ZODIACAL_INT) / 2, CX, CY);
+
+          const arcPath = generarArcoSVG(startAng, endAng, R_ZODIACAL_INT, R_EXTERIOR, CX, CY);
+          const pathData = glifoPath("signo", signo);
 
           return (
             <g key={signo}>
+              {/* Arco de fondo */}
+              <path
+                d={arcPath}
+                fill={claro ? colores.fondo : `${colores.borde}15`}
+                stroke={colores.borde}
+                strokeWidth="0.5"
+                opacity={claro ? 0.8 : 0.4}
+              />
+              {/* Glifo del signo */}
+              {pathData && (
+                <g transform={`translate(${pGlifo.x - 10}, ${pGlifo.y - 10}) scale(${20/24})`}>
+                  <path
+                    d={pathData}
+                    fill="none"
+                    stroke={claro ? colores.borde : colores.borde}
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity={claro ? 0.9 : 0.8}
+                  />
+                </g>
+              )}
+            </g>
+          );
+        })}
+
+        {/* ============================================================= */}
+        {/* CAPA 3: Tick marks de grados */}
+        {/* ============================================================= */}
+        {Array.from({ length: 360 }, (_, deg) => {
+          const ang = ajustarAngulo(deg, ascGrado);
+          const esCadaCinco = deg % 5 === 0;
+          const esCadaTreinta = deg % 30 === 0;
+          if (!esCadaCinco) return null;
+
+          const rExt = R_ZODIACAL_INT;
+          const rInt = esCadaTreinta ? R_TICKS_INT - 6 : R_TICKS_INT;
+          const p1 = polarAXY(ang, rExt, CX, CY);
+          const p2 = polarAXY(ang, rInt, CX, CY);
+
+          return (
+            <line
+              key={`tick-${deg}`}
+              x1={p1.x} y1={p1.y}
+              x2={p2.x} y2={p2.y}
+              stroke={t.tickColor}
+              strokeWidth={esCadaTreinta ? 1.2 : 0.5}
+              opacity={esCadaTreinta ? 0.7 : 0.4}
+            />
+          );
+        })}
+
+        {/* ============================================================= */}
+        {/* CAPA 4: Lineas de casas + numeros romanos */}
+        {/* ============================================================= */}
+        {casas.map((casa, idx) => {
+          const angulo = ajustarAngulo(casa.grado, ascGrado);
+          const pExt = polarAXY(angulo, R_CASAS_EXT, CX, CY);
+          const pInt = polarAXY(angulo, R_CENTRO, CX, CY);
+          const esAngular = casa.numero === 1 || casa.numero === 4 || casa.numero === 7 || casa.numero === 10;
+
+          // Punto medio para numero romano: entre esta cuspide y la siguiente
+          const siguienteCasa = casas[(idx + 1) % casas.length];
+          let midGrado = (casa.grado + siguienteCasa.grado) / 2;
+          if (Math.abs(casa.grado - siguienteCasa.grado) > 180) {
+            midGrado = ((casa.grado + siguienteCasa.grado + 360) / 2) % 360;
+          }
+          const midAng = ajustarAngulo(midGrado, ascGrado);
+          const pNum = polarAXY(midAng, (R_CASAS_EXT + R_ASPECTO) / 2.2, CX, CY);
+
+          return (
+            <g key={`casa-${casa.numero}`}>
               <line
-                x1={pInicio.x} y1={pInicio.y}
-                x2={pInicioInt.x} y2={pInicioInt.y}
-                stroke={t.strokeSigno} strokeWidth="0.5" opacity={claro ? "0.5" : "0.3"}
+                x1={pExt.x} y1={pExt.y}
+                x2={pInt.x} y2={pInt.y}
+                stroke={t.strokeCasa}
+                strokeWidth={esAngular ? 1.8 : 0.6}
+                opacity={esAngular ? 0.8 : 0.4}
               />
               <text
-                x={pTexto.x} y={pTexto.y}
-                textAnchor="middle" dominantBaseline="central"
-                fill={COLORES_SIGNOS[signo] || (claro ? "#666" : "#fff")}
-                fontSize="14"
+                x={pNum.x} y={pNum.y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fill={t.textoRomano}
+                fontSize="12"
+                fontWeight={esAngular ? "bold" : "normal"}
+                opacity={0.7}
               >
-                {SIMBOLOS_SIGNOS[signo]}
+                {ROMANO[casa.numero]}
               </text>
             </g>
           );
         })}
 
-        {/* Líneas de casas */}
-        {casas.map((casa) => {
-          const angulo = ajustarAngulo(casa.grado);
-          const pExt = polarAXY(angulo, R_SIGNOS);
-          const pInt = polarAXY(angulo, R_CENTRO);
-          const esAngular = casa.numero === 1 || casa.numero === 10;
-          return (
-            <line
-              key={casa.numero}
-              x1={pExt.x} y1={pExt.y}
-              x2={pInt.x} y2={pInt.y}
-              stroke={t.strokeCasa} strokeWidth={esAngular ? 1.5 : 0.5}
-              opacity={esAngular ? 0.8 : (claro ? 0.4 : 0.3)}
-            />
-          );
-        })}
+        {/* ============================================================= */}
+        {/* CAPA 5: Ejes ASC / MC / DSC / IC */}
+        {/* ============================================================= */}
+        {(() => {
+          const ejes = [
+            { label: "ASC", grado: casas[0]?.grado ?? 0 },
+            { label: "IC", grado: casas[3]?.grado ?? 90 },
+            { label: "DSC", grado: casas[6]?.grado ?? 180 },
+            { label: "MC", grado: casas[9]?.grado ?? 270 },
+          ];
+          return ejes.map(({ label, grado }) => {
+            const ang = ajustarAngulo(grado, ascGrado);
+            const pBorde = polarAXY(ang, R_EXTERIOR + 2, CX, CY);
+            const pLabel = polarAXY(ang, R_EXTERIOR + 18, CX, CY);
+            return (
+              <g key={label}>
+                <text
+                  x={pLabel.x}
+                  y={pLabel.y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill={t.ejeColor}
+                  fontSize="11"
+                  fontWeight="bold"
+                  opacity="0.9"
+                >
+                  {label}
+                </text>
+                {/* Marcador en el borde */}
+                <circle
+                  cx={pBorde.x} cy={pBorde.y} r="2.5"
+                  fill={t.ejeColor}
+                  opacity="0.6"
+                />
+              </g>
+            );
+          });
+        })()}
 
-        {/* Líneas de aspectos */}
+        {/* ============================================================= */}
+        {/* CAPA 6: Lineas de aspectos (diferenciadas por tipo) */}
+        {/* ============================================================= */}
         {aspectos?.map((asp, i) => {
-          const p1 = planetas.find((p) => p.nombre === asp.planeta1);
-          const p2 = planetas.find((p) => p.nombre === asp.planeta2);
-          if (!p1 || !p2) return null;
-          const a1 = ajustarAngulo(p1.longitud);
-          const a2 = ajustarAngulo(p2.longitud);
-          const pos1 = polarAXY(a1, R_PLANETAS);
-          const pos2 = polarAXY(a2, R_PLANETAS);
-          const tipoNorm = asp.tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          const pr1 = planetasResueltos.find((p) => p.nombre === asp.planeta1);
+          const pr2 = planetasResueltos.find((p) => p.nombre === asp.planeta2);
+          if (!pr1 || !pr2) return null;
+
+          const pos1 = polarAXY(pr1.display, R_ASPECTO, CX, CY);
+          const pos2 = polarAXY(pr2.display, R_ASPECTO, CX, CY);
+          const tipoNorm = normClave(asp.tipo);
+          const estilo = ESTILOS_ASPECTO[tipoNorm];
+
           return (
             <line
-              key={i}
+              key={`asp-${i}`}
               x1={pos1.x} y1={pos1.y}
               x2={pos2.x} y2={pos2.y}
-              stroke={COLORES_ASPECTOS[tipoNorm] || "#999"}
-              strokeWidth="0.7"
-              opacity={claro ? "0.4" : "0.5"}
-            />
+              stroke={estilo?.color ?? "#999"}
+              strokeWidth={estilo?.ancho ?? 0.8}
+              strokeDasharray={estilo?.dash ?? ""}
+              opacity={claro ? 0.35 : 0.45}
+            >
+              <title>{asp.planeta1} {asp.tipo} {asp.planeta2} (orbe: {asp.orbe?.toFixed(1)}°)</title>
+            </line>
           );
         })}
 
-        {/* Planetas */}
-        {planetas.map((planeta) => {
-          const angulo = ajustarAngulo(planeta.longitud);
-          const pos = polarAXY(angulo, R_PLANETAS);
-          const simbolo = SIMBOLOS_PLANETAS[planeta.nombre] || planeta.nombre[0];
+        {/* ============================================================= */}
+        {/* CAPA 7: Planetas con glifos SVG + colision avoidance */}
+        {/* ============================================================= */}
+        {planetasResueltos.map((pr) => {
+          const planeta = planetas.find((p) => p.nombre === pr.nombre);
+          if (!planeta) return null;
+
+          const posDisplay = polarAXY(pr.display, R_PLANETAS, CX, CY);
           const colorPlaneta = COLORES_PLANETAS[planeta.nombre] || "#7C4DFF";
+          const pathData = glifoPath("planeta", planeta.nombre);
+
+          // Si el display difiere significativamente del real, dibujar linea conectora
+          let diffAngulo = Math.abs(pr.display - pr.real);
+          if (diffAngulo > 180) diffAngulo = 360 - diffAngulo;
+          const necesitaConectora = diffAngulo > 2;
+
+          const posReal = polarAXY(pr.real, R_CONECTORA, CX, CY);
+          const posTick = polarAXY(pr.real, R_ZODIACAL_INT, CX, CY);
+
+          const glifoSize = 13;
+
           return (
             <g
               key={planeta.nombre}
-              className={onPlanetaClick ? "cursor-pointer" : ""}
+              className={cn(
+                onPlanetaClick && "cursor-pointer",
+                "hover:[filter:url(#glow-planeta)]",
+              )}
               onClick={() => onPlanetaClick?.(planeta)}
             >
+              <title>
+                {planeta.nombre} {planeta.signo} {planeta.grado_en_signo?.toFixed(1)}°
+                {planeta.retrogrado ? " (R)" : ""}
+                {" — Casa "}{ROMANO[planeta.casa] ?? planeta.casa}
+              </title>
+
+              {/* Linea conectora al grado real */}
+              {necesitaConectora && (
+                <line
+                  x1={posDisplay.x} y1={posDisplay.y}
+                  x2={posReal.x} y2={posReal.y}
+                  stroke={colorPlaneta}
+                  strokeWidth="0.6"
+                  opacity="0.4"
+                  strokeDasharray="2 2"
+                />
+              )}
+
+              {/* Punto en el grado real (sobre el anillo de ticks) */}
               <circle
-                cx={pos.x} cy={pos.y} r="10"
-                fill={claro ? "#fff" : t.fondoPlaneta}
-                stroke={claro ? colorPlaneta : t.strokePlaneta}
-                strokeWidth={claro ? "1.5" : "0.5"}
+                cx={posTick.x} cy={posTick.y} r="2"
+                fill={colorPlaneta}
+                opacity="0.6"
               />
-              <text
-                x={pos.x} y={pos.y}
-                textAnchor="middle" dominantBaseline="central"
-                fill={planeta.retrogrado ? t.textoRetro : (claro ? colorPlaneta : t.textoPlaneta)}
-                fontSize="11"
-                fontWeight="bold"
-              >
-                {simbolo}
-              </text>
+
+              {/* Circulo de fondo del planeta */}
+              <circle
+                cx={posDisplay.x} cy={posDisplay.y} r="16"
+                fill={claro ? "#fff" : "#1e1b2e"}
+                stroke={colorPlaneta}
+                strokeWidth={claro ? 1.5 : 1}
+                opacity="0.95"
+              />
+
+              {/* Glifo del planeta */}
+              {pathData ? (
+                <g transform={`translate(${posDisplay.x - glifoSize}, ${posDisplay.y - glifoSize}) scale(${(glifoSize * 2) / 24})`}>
+                  <path
+                    d={pathData}
+                    fill="none"
+                    stroke={planeta.retrogrado ? t.textoRetro : colorPlaneta}
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </g>
+              ) : (
+                <text
+                  x={posDisplay.x} y={posDisplay.y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill={planeta.retrogrado ? t.textoRetro : colorPlaneta}
+                  fontSize="13"
+                  fontWeight="bold"
+                >
+                  {planeta.nombre[0]}
+                </text>
+              )}
+
+              {/* Indicador retrogrado */}
+              {planeta.retrogrado && (
+                <text
+                  x={posDisplay.x + 12} y={posDisplay.y - 12}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill={t.textoRetro}
+                  fontSize="9"
+                  fontWeight="bold"
+                >
+                  R
+                </text>
+              )}
             </g>
           );
         })}
 
-        {/* ASC / MC labels */}
-        <text x={CX} y={CY} textAnchor="middle" dominantBaseline="central" fill={t.textoAsc} fontSize="10" fontWeight="bold">
-          ASC
-        </text>
+        {/* ============================================================= */}
+        {/* CAPA 8: Centro — Cruz ASC/MC sutil */}
+        {/* ============================================================= */}
+        <line
+          x1={CX - R_CENTRO + 10} y1={CY}
+          x2={CX + R_CENTRO - 10} y2={CY}
+          stroke={t.centroStroke} strokeWidth="0.5" opacity="0.3"
+        />
+        <line
+          x1={CX} y1={CY - R_CENTRO + 10}
+          x2={CX} y2={CY + R_CENTRO - 10}
+          stroke={t.centroStroke} strokeWidth="0.5" opacity="0.3"
+        />
       </svg>
     </div>
   );
