@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Inria_Sans } from "next/font/google";
 import "./globals.css";
 import { ProveedorQuery } from "@/proveedores/proveedor-query";
 import { ProveedorAuth } from "@/proveedores/proveedor-auth";
@@ -7,6 +7,12 @@ import { ProveedorAuth } from "@/proveedores/proveedor-auth";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+});
+
+const inriaSans = Inria_Sans({
+  variable: "--font-inria",
+  subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 export const viewport: Viewport = {
@@ -39,7 +45,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} h-full antialiased`}>
+    <html lang="es" className={`${inter.variable} ${inriaSans.variable} h-full antialiased`}>
       <head>
         <link rel="apple-touch-icon" href="/img/icon-192.png" />
         <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>

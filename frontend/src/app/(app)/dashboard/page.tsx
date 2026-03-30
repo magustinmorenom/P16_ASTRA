@@ -16,12 +16,19 @@ import { useStoreUI, type PistaReproduccion } from "@/lib/stores/store-ui";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import type { TipoPodcast } from "@/lib/tipos";
 
+// --- Componentes v1 (mobile) ---
 import { HeroClima } from "@/componentes/pronostico/hero-clima";
 import { AreasVida } from "@/componentes/pronostico/areas-vida";
 import { MomentosClave } from "@/componentes/pronostico/momentos-clave";
 import { AlertaCosmica } from "@/componentes/pronostico/alerta-cosmica";
 import { VistaSemana } from "@/componentes/pronostico/vista-semana";
 import { ConsejoHD } from "@/componentes/pronostico/consejo-hd";
+
+// --- Componentes v2 (desktop dark) ---
+import { HeroSeccion } from "@/componentes/dashboard-v2/hero-seccion";
+import { MensajeClave } from "@/componentes/dashboard-v2/mensaje-clave";
+import { AreasVidaV2 } from "@/componentes/dashboard-v2/areas-vida-v2";
+import { SemanaV2 } from "@/componentes/dashboard-v2/semana-v2";
 
 // ---------------------------------------------------------------------------
 // Config visual de podcasts
@@ -148,6 +155,108 @@ export default function PaginaDashboard() {
         ? "Buenas tardes"
         : "Buenas noches";
 
+  // =========================================================================
+  // DESKTOP — Dashboard V2 (dark theme)
+  // =========================================================================
+  if (!esMobile) {
+    const epDia = mapaEpisodios.get("dia");
+    const podcastDiaListo = epDia?.estado === "listo";
+    const podcastDiaGenerando =
+      (generarMutation.isPending && generarMutation.variables === "dia") ||
+      epDia?.estado === "generando_guion" ||
+      epDia?.estado === "generando_audio";
+
+    const podcastSemanaGenerando =
+      (generarMutation.isPending && generarMutation.variables === "semana") ||
+      mapaEpisodios.get("semana")?.estado === "generando_guion" ||
+      mapaEpisodios.get("semana")?.estado === "generando_audio";
+
+    return (
+      <div className="bg-[#16011b] min-h-full p-6 flex flex-col gap-6">
+          {/* ---- PRONÓSTICO ---- */}
+          {cargandoPronostico ? (
+            <div className="flex flex-col gap-4">
+              <Esqueleto className="h-[268px] rounded-[10px] !bg-white/5" />
+              <Esqueleto className="h-[180px] rounded-[10px] !bg-white/5" />
+              <Esqueleto className="h-[120px] rounded-[10px] !bg-white/5" />
+            </div>
+          ) : errorPronostico || !pronosticoDiario ? (
+            /* Estado de error */
+            <div className="rounded-[10px] relative overflow-hidden" style={{ minHeight: 220 }}>
+              <div className="absolute inset-0 bg-gradient-to-br from-[#0f0826] via-[#1a0e3e] to-[#2D1B69]" />
+              <div className="absolute -right-8 -top-8 h-44 w-44 rounded-full bg-violet-500/30 blur-3xl" />
+              <div className="absolute left-1/4 -bottom-10 h-36 w-36 rounded-full bg-fuchsia-500/20 blur-3xl" />
+              <div className="relative z-10 m-4 rounded-xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] p-5">
+                <p className="text-violet-300/60 text-[11px] font-semibold tracking-widest uppercase mb-2">
+                  Pronóstico Cósmico
+                </p>
+                <p className="text-white text-[18px] font-semibold leading-snug mb-2">
+                  {autenticado
+                    ? "No pudimos generar tu pronóstico"
+                    : "Iniciá sesión para ver tu pronóstico"}
+                </p>
+                <p className="text-violet-200/50 text-[14px] mb-4 leading-relaxed">
+                  {autenticado
+                    ? "Asegurate de tener un perfil con tus datos de nacimiento."
+                    : "Necesitás un perfil para personalizar tu pronóstico."}
+                </p>
+                {autenticado && (
+                  <button
+                    onClick={() => reintentarPronostico()}
+                    className="px-5 py-2.5 rounded-xl bg-white/[0.1] backdrop-blur-md text-white text-[14px] font-medium hover:bg-white/[0.18] transition-colors border border-white/[0.12]"
+                  >
+                    Reintentar
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* 1. Hero Section */}
+              <HeroSeccion
+                fecha={new Date()}
+                nombreUsuario={nombreSaludo}
+                momentos={pronosticoDiario.momentos}
+                numero={pronosticoDiario.numero_personal}
+                luna={pronosticoDiario.luna}
+                energia={pronosticoDiario.clima.energia}
+                claridad={pronosticoDiario.clima.claridad}
+                fuerza={pronosticoDiario.clima.conexion}
+                podcastListo={podcastDiaListo}
+                podcastGenerando={podcastDiaGenerando ?? false}
+                onReproducirPodcast={() => manejarPlayPodcast("dia")}
+                onGenerarPodcast={() => generarMutation.mutate("dia")}
+              />
+
+              {/* 2. Mensaje Clave */}
+              <MensajeClave
+                nombreUsuario={nombreSaludo}
+                titulo={pronosticoDiario.clima.titulo}
+                fraseSintesis={pronosticoDiario.clima.frase_sintesis}
+              />
+
+              {/* 3. Áreas de Vida */}
+              <AreasVidaV2 areas={pronosticoDiario.areas} />
+            </>
+          )}
+
+          {/* 4. Pronóstico Semanal */}
+          {cargandoSemanal ? (
+            <Esqueleto className="h-[200px] rounded-[10px] !bg-white/5" />
+          ) : pronosticoSemanal?.semana ? (
+            <SemanaV2
+              semana={pronosticoSemanal.semana}
+              onGenerarPodcastSemana={() => generarMutation.mutate("semana")}
+              generandoPodcast={podcastSemanaGenerando ?? false}
+            />
+          ) : null}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // MOBILE — Dashboard V1 (tema claro, sin cambios)
+  // =========================================================================
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Header mobile */}
@@ -175,18 +284,6 @@ export default function PaginaDashboard() {
 
         {/* Todo el contenido es relative z-10 para estar encima de orbes */}
         <div className="relative z-10 flex flex-col gap-4">
-          {/* Header desktop */}
-          <div className="hidden lg:flex items-center justify-between">
-            <div>
-              <h1 className="text-[20px] font-semibold text-[#2C2926] tracking-tight">
-                {saludo}, {nombreSaludo}
-              </h1>
-              <p className="text-[12px] text-[#8A8580] capitalize mt-0.5">
-                {fechaHoy}
-              </p>
-            </div>
-          </div>
-
           {/* ---- PRONÓSTICO ---- */}
           {cargandoPronostico ? (
             <div className="flex flex-col gap-3">

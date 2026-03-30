@@ -52,6 +52,7 @@
 
   --font-sans: var(--font-familia-base);
   --font-mono: var(--font-familia-mono);
+  --font-display: var(--font-inria), serif;
 }
 
 /* ============================================
@@ -281,4 +282,37 @@ body::-webkit-scrollbar-thumb {
 
 .mobile-scroll::-webkit-scrollbar {
   display: none;
+}
+
+/* ============================================
+   Dark Theme — Scrollbar sutil oscura
+   ============================================ */
+
+/* --- Firefox --- */
+.scroll-sutil-dark {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(204, 84, 255, 0.2) transparent;
+}
+
+.scroll-sutil-dark:hover {
+  scrollbar-color: rgba(204, 84, 255, 0.4) transparent;
+}
+
+/* --- WebKit (Chrome / Safari / Edge) --- */
+.scroll-sutil-dark::-webkit-scrollbar {
+  width: 5px;
+}
+
+.scroll-sutil-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-sutil-dark::-webkit-scrollbar-thumb {
+  background: rgba(204, 84, 255, 0.2);
+  border-radius: 9999px;
+}
+
+.scroll-sutil-dark:hover::-webkit-scrollbar-thumb {
+  background: rgba(204, 84, 255, 0.4);
 }
