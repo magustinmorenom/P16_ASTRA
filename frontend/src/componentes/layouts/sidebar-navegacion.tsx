@@ -23,12 +23,12 @@ interface EnlaceNav {
 
 const enlacesNavegacion: EnlaceNav[] = [
   { etiqueta: "Inicio", ruta: "/dashboard", icono: "casa" },
+  { etiqueta: "Podcasts", ruta: "/podcast", icono: "microfono" },
   { etiqueta: "Carta Astral", ruta: "/carta-natal", icono: "estrella" },
   { etiqueta: "Diseño Humano", ruta: "/diseno-humano", icono: "hexagono" },
   { etiqueta: "Numerología", ruta: "/numerologia", icono: "numeral" },
   { etiqueta: "Calendario", ruta: "/calendario-cosmico", icono: "planeta" },
   { etiqueta: "Retorno Solar", ruta: "/retorno-solar", icono: "retornoSolar" },
-  { etiqueta: "Podcasts", ruta: "/podcast", icono: "microfono" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -126,25 +126,28 @@ export default function SidebarNavegacion() {
                   : pathname.startsWith(enlace.ruta);
 
               return (
-                <li key={enlace.ruta}>
+                <li key={enlace.ruta} className="group">
                   <Link
                     href={enlace.ruta}
                     title={colapsado ? enlace.etiqueta : undefined}
                     className={cn(
-                      "flex items-center rounded-lg text-sm font-medium transition-colors",
+                      "flex items-center rounded-lg text-[13px] font-medium transition-all duration-200",
                       colapsado
                         ? "justify-center px-0 py-2.5"
                         : "gap-3 px-3 py-2.5",
                       estaActivo
-                        ? "bg-white/10 text-white"
-                        : "text-white/50 hover:text-white/90 hover:bg-white/5"
+                        ? "bg-[#7C4DFF]/15 text-white border border-[#7C4DFF]/20"
+                        : "text-white/40 hover:text-white/80 hover:bg-white/[0.05] border border-transparent"
                     )}
                   >
                     <Icono
                       nombre={enlace.icono}
                       tamaño={20}
                       peso={estaActivo ? "fill" : "regular"}
-                      className={estaActivo ? "text-[#B388FF]" : ""}
+                      className={cn(
+                        "transition-colors duration-200",
+                        estaActivo ? "text-[#B388FF]" : "text-white/35 group-hover:text-white/70"
+                      )}
                     />
                     {!colapsado && enlace.etiqueta}
                   </Link>
@@ -155,7 +158,7 @@ export default function SidebarNavegacion() {
         </nav>
 
         {/* Separador */}
-        <div className={cn("my-2 h-px bg-white/10", colapsado ? "mx-2" : "mx-4")} />
+        <div className={cn("my-3 h-px bg-white/[0.06]", colapsado ? "mx-2" : "mx-4")} />
 
         {/* Boton Descargar Perfil */}
         {!colapsado ? (
@@ -164,10 +167,10 @@ export default function SidebarNavegacion() {
               onClick={() => setModalDescarga(true)}
               disabled={!tieneCalculos || cargandoCalculos}
               className={cn(
-                "w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium border transition-colors",
+                "w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-[13px] font-medium border transition-all duration-200",
                 tieneCalculos && !cargandoCalculos
-                  ? "border-white/15 text-white/50 hover:text-[#B388FF] hover:border-[#B388FF]/50 hover:bg-white/5"
-                  : "border-white/10 text-white/20 cursor-not-allowed"
+                  ? "border-white/[0.08] text-white/35 hover:text-[#B388FF] hover:border-[#B388FF]/30 hover:bg-[#7C4DFF]/10"
+                  : "border-white/[0.05] text-white/15 cursor-not-allowed"
               )}
             >
               <Icono nombre="descarga" tamaño={18} />
@@ -181,10 +184,10 @@ export default function SidebarNavegacion() {
               disabled={!tieneCalculos || cargandoCalculos}
               title="Descargar Perfil"
               className={cn(
-                "w-full flex items-center justify-center py-2.5 rounded-lg transition-colors",
+                "w-full flex items-center justify-center py-2.5 rounded-lg transition-all duration-200",
                 tieneCalculos && !cargandoCalculos
-                  ? "text-white/50 hover:text-[#B388FF] hover:bg-white/5"
-                  : "text-white/20 cursor-not-allowed"
+                  ? "text-white/35 hover:text-[#B388FF] hover:bg-[#7C4DFF]/10"
+                  : "text-white/15 cursor-not-allowed"
               )}
             >
               <Icono nombre="descarga" tamaño={20} />
@@ -227,22 +230,25 @@ export default function SidebarNavegacion() {
                       : pathname.startsWith(enlace.ruta);
 
                   return (
-                    <li key={enlace.ruta}>
+                    <li key={enlace.ruta} className="group">
                       <Link
                         href={enlace.ruta}
                         onClick={cerrarSidebar}
                         className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 border",
                           estaActivo
-                            ? "bg-white/10 text-white"
-                            : "text-white/50 hover:text-white/90 hover:bg-white/5"
+                            ? "bg-[#7C4DFF]/15 text-white border-[#7C4DFF]/20"
+                            : "text-white/40 hover:text-white/80 hover:bg-white/[0.05] border-transparent"
                         )}
                       >
                         <Icono
                           nombre={enlace.icono}
                           tamaño={20}
                           peso={estaActivo ? "fill" : "regular"}
-                          className={estaActivo ? "text-[#B388FF]" : ""}
+                          className={cn(
+                            "transition-colors duration-200",
+                            estaActivo ? "text-[#B388FF]" : "text-white/35"
+                          )}
                         />
                         {enlace.etiqueta}
                       </Link>
@@ -252,17 +258,17 @@ export default function SidebarNavegacion() {
               </ul>
             </nav>
 
-            <div className="mx-4 my-2 h-px bg-white/10" />
+            <div className="mx-4 my-3 h-px bg-white/[0.06]" />
 
             <div className="px-3 pb-2">
               <button
                 onClick={() => setModalDescarga(true)}
                 disabled={!tieneCalculos || cargandoCalculos}
                 className={cn(
-                  "w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium border transition-colors",
+                  "w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-[13px] font-medium border transition-all duration-200",
                   tieneCalculos && !cargandoCalculos
-                    ? "border-white/15 text-white/50 hover:text-[#B388FF] hover:border-[#B388FF]/50 hover:bg-white/5"
-                    : "border-white/10 text-white/20 cursor-not-allowed"
+                    ? "border-white/[0.08] text-white/35 hover:text-[#B388FF] hover:border-[#B388FF]/30 hover:bg-[#7C4DFF]/10"
+                    : "border-white/[0.05] text-white/15 cursor-not-allowed"
                 )}
               >
                 <Icono nombre="descarga" tamaño={18} />

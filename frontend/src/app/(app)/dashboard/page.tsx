@@ -27,6 +27,7 @@ import { ConsejoHD } from "@/componentes/pronostico/consejo-hd";
 // --- Componentes v2 (desktop dark) ---
 import { HeroSeccion } from "@/componentes/dashboard-v2/hero-seccion";
 import { MensajeClave } from "@/componentes/dashboard-v2/mensaje-clave";
+import { CtaNumerologia } from "@/componentes/dashboard-v2/cta-numerologia";
 import { AreasVidaV2 } from "@/componentes/dashboard-v2/areas-vida-v2";
 import { SemanaV2 } from "@/componentes/dashboard-v2/semana-v2";
 
@@ -235,7 +236,10 @@ export default function PaginaDashboard() {
                 fraseSintesis={pronosticoDiario.clima.frase_sintesis}
               />
 
-              {/* 3. Áreas de Vida */}
+              {/* 3. CTA Numerología */}
+              <CtaNumerologia numeroPersonal={pronosticoDiario.numero_personal?.numero} />
+
+              {/* 4. Áreas de Vida */}
               <AreasVidaV2 areas={pronosticoDiario.areas} />
             </>
           )}
