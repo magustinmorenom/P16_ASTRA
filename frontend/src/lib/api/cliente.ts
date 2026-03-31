@@ -50,14 +50,11 @@ class ClienteAPI {
     return headers;
   }
 
-  /**
-   * Ejecuta request y desenvuelve la respuesta.
-   * Devuelve `datos` directamente — no el envoltorio.
-   */
-  private async solicitud<T>(
+  /** Ejecuta request con refresh automático y devuelve la respuesta cruda. */
+  private async ejecutarSolicitud(
     ruta: string,
     opciones?: RequestInit,
-  ): Promise<T> {
+  ): Promise<Response> {
     const headers = this.obtenerHeaders();
 
     let respuesta = await fetch(`${BASE_URL}${ruta}`, {
@@ -83,6 +80,19 @@ class ClienteAPI {
     if (!respuesta.ok) {
       throw await this.manejarError(respuesta);
     }
+
+    return respuesta;
+  }
+
+  /**
+   * Ejecuta request y desenvuelve la respuesta.
+   * Devuelve `datos` directamente — no el envoltorio.
+   */
+  private async solicitud<T>(
+    ruta: string,
+    opciones?: RequestInit,
+  ): Promise<T> {
+    const respuesta = await this.ejecutarSolicitud(ruta, opciones);
 
     // Desenvolver: extraer `datos` del envoltorio
     const json = (await respuesta.json()) as RespuestaAPI<T>;
@@ -162,6 +172,11 @@ class ClienteAPI {
 
   async get<T>(ruta: string): Promise<T> {
     return this.solicitud<T>(ruta);
+  }
+
+  async getBlob(ruta: string): Promise<Blob> {
+    const respuesta = await this.ejecutarSolicitud(ruta);
+    return respuesta.blob();
   }
 
   async post<T>(ruta: string, datos?: unknown): Promise<T> {

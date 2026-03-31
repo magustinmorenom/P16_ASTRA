@@ -20,6 +20,7 @@ export default function MiniReproductor() {
     audioRef,
     audioUrl,
     tieneAudio,
+    cargandoAudio,
     pistaActual,
     reproduciendo,
     progresoSegundos,
@@ -37,6 +38,8 @@ export default function MiniReproductor() {
 
   if (!pistaActual) return null;
 
+  const mostrandoCarga = cargandoAudio && !tieneAudio;
+
   return (
     <>
       {/* Audio element */}
@@ -44,6 +47,7 @@ export default function MiniReproductor() {
         <audio
           ref={audioRef}
           src={audioUrl!}
+          autoPlay={reproduciendo}
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleEnded}
           preload="auto"
@@ -95,14 +99,19 @@ export default function MiniReproductor() {
           {/* Controles */}
           <button
             onClick={toggleReproduccion}
+            disabled={mostrandoCarga}
             className="touch-feedback h-11 w-11 rounded-full bg-white flex items-center justify-center shrink-0"
           >
-            <Icono
-              nombre={reproduciendo ? "pausar" : "reproducir"}
-              tamaño={18}
-              peso="fill"
-              className="text-[#1A1128]"
-            />
+            {mostrandoCarga ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#1A1128] border-t-transparent" />
+            ) : (
+              <Icono
+                nombre={reproduciendo ? "pausar" : "reproducir"}
+                tamaño={18}
+                peso="fill"
+                className="text-[#1A1128]"
+              />
+            )}
           </button>
 
           <button
@@ -191,14 +200,19 @@ export default function MiniReproductor() {
             </button>
             <button
               onClick={toggleReproduccion}
+              disabled={mostrandoCarga}
               className="touch-feedback h-16 w-16 rounded-full bg-white flex items-center justify-center"
             >
-              <Icono
-                nombre={reproduciendo ? "pausar" : "reproducir"}
-                tamaño={28}
-                peso="fill"
-                className="text-[#1A1128]"
-              />
+              {mostrandoCarga ? (
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#1A1128] border-t-transparent" />
+              ) : (
+                <Icono
+                  nombre={reproduciendo ? "pausar" : "reproducir"}
+                  tamaño={28}
+                  peso="fill"
+                  className="text-[#1A1128]"
+                />
+              )}
             </button>
             <button className="text-[#B388FF] hover:text-white transition-colors">
               <Icono nombre="avanzar" tamaño={28} peso="fill" />

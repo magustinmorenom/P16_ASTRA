@@ -7,8 +7,6 @@ import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utilidades/cn";
 import { Icono, type NombreIcono } from "@/componentes/ui/icono";
-import { Esqueleto } from "@/componentes/ui/esqueleto";
-import { useStoreAuth } from "@/lib/stores/store-auth";
 import { useStoreUI } from "@/lib/stores/store-ui";
 import { usarMiPerfil, usarMisCalculos } from "@/lib/hooks";
 import { generarMarkdownPerfil } from "@/lib/utilidades/generar-markdown-perfil";
@@ -20,37 +18,38 @@ interface EnlaceNav {
   etiqueta: string;
   ruta: string;
   icono: NombreIcono;
+  proximamente?: boolean;
 }
 
 const enlacesNavegacion: EnlaceNav[] = [
   { etiqueta: "Inicio", ruta: "/dashboard", icono: "casa" },
+  { etiqueta: "Podcasts", ruta: "/podcast", icono: "microfono" },
   { etiqueta: "Carta Astral", ruta: "/carta-natal", icono: "estrella" },
   { etiqueta: "Diseño Humano", ruta: "/diseno-humano", icono: "hexagono" },
   { etiqueta: "Numerología", ruta: "/numerologia", icono: "numeral" },
-  { etiqueta: "Calendario", ruta: "/calendario-cosmico", icono: "planeta" },
-  { etiqueta: "Retorno Solar", ruta: "/retorno-solar", icono: "retornoSolar" },
-  { etiqueta: "Podcasts", ruta: "/podcast", icono: "microfono" },
+  {
+    etiqueta: "Calendario",
+    ruta: "/calendario-cosmico",
+    icono: "planeta",
+    proximamente: true,
+  },
+  {
+    etiqueta: "Revolución Solar",
+    ruta: "/retorno-solar",
+    icono: "retornoSolar",
+    proximamente: true,
+  },
 ];
 
 // ---------------------------------------------------------------------------
 // Componente
 // ---------------------------------------------------------------------------
-export default function SidebarNavegacion({
-  alturaContenido = "h-full",
-}: {
-  alturaContenido?: string;
-}) {
+export default function SidebarNavegacion() {
   const pathname = usePathname();
-  const { usuario } = useStoreAuth();
-  const { sidebarAbierto, cerrarSidebar } = useStoreUI();
+  const { sidebarAbierto, cerrarSidebar, sidebarColapsado } = useStoreUI();
 
   const { data: perfil } = usarMiPerfil();
   const { data: calculos, isLoading: cargandoCalculos } = usarMisCalculos();
-
-  const sol = calculos?.natal?.planetas?.find((p: { nombre: string }) => p.nombre === "Sol");
-  const luna = calculos?.natal?.planetas?.find((p: { nombre: string }) => p.nombre === "Luna");
-
-  const esMaestro = (n: number) => [11, 22, 33].includes(n);
 
   // --- Estado del modal de descarga ---
   const [modalDescarga, setModalDescarga] = useState(false);
@@ -115,138 +114,128 @@ export default function SidebarNavegacion({
     }
   }, [perfil, calculos]);
 
-  const contenidoSidebar = (
-    <div className="flex flex-col h-full bg-white scroll-sutil overflow-y-auto">
-      {/* Navegacion */}
-      <nav className="px-3 pt-4 pb-2">
-        <ul className="flex flex-col gap-0.5">
-          {enlacesNavegacion.map((enlace) => {
-            const estaActivo =
-              enlace.ruta === "/dashboard"
-                ? pathname === "/dashboard"
-                : pathname.startsWith(enlace.ruta);
-
-            return (
-              <li key={enlace.ruta}>
-                <Link
-                  href={enlace.ruta}
-                  onClick={cerrarSidebar}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                    estaActivo
-                      ? "bg-[#F5F0FF] text-[#7C4DFF]"
-                      : "text-[#8A8580] hover:text-[#2C2926] hover:bg-[#F5F0FF]/50"
-                  )}
-                >
-                  <Icono
-                    nombre={enlace.icono}
-                    tamaño={20}
-                    peso={estaActivo ? "fill" : "regular"}
-                    className={estaActivo ? "text-[#7C4DFF]" : ""}
-                  />
-                  {enlace.etiqueta}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-
-      {/* Separador */}
-      <div className="mx-4 my-2 h-px bg-[#E8E4E0]" />
-
-      {/* Cards resumen compactas */}
-      <div className="px-3 flex flex-col gap-2 pb-3">
-        {/* Card Astrologia mini */}
-        <Link href="/carta-natal" onClick={cerrarSidebar} className="block rounded-xl bg-[#F5F0FF] p-3 hover:bg-[#EDE5FF] transition-colors">
-          <div className="flex items-center gap-2 mb-2">
-            <Icono nombre="estrella" tamaño={16} peso="fill" className="text-violet-500" />
-            <span className="text-xs font-semibold text-[#2C2926]">Carta Astral</span>
-          </div>
-          {cargandoCalculos ? (
-            <Esqueleto className="h-3 w-full" />
-          ) : sol && luna ? (
-            <p className="text-[11px] text-[#8A8580] leading-snug">
-              Sol en {sol.signo} · Luna en {luna.signo}
-            </p>
-          ) : (
-            <p className="text-[11px] text-[#8A8580]">Completa tu perfil</p>
-          )}
-        </Link>
-
-        {/* Card HD mini */}
-        <Link href="/diseno-humano" onClick={cerrarSidebar} className="block rounded-xl bg-[#FDF6E3] p-3 hover:bg-[#FBF0D0] transition-colors">
-          <div className="flex items-center gap-2 mb-2">
-            <Icono nombre="hexagono" tamaño={16} peso="fill" className="text-[#D4A234]" />
-            <span className="text-xs font-semibold text-[#2C2926]">Human Design</span>
-          </div>
-          {cargandoCalculos ? (
-            <Esqueleto className="h-3 w-full" />
-          ) : calculos?.diseno_humano ? (
-            <p className="text-[11px] text-[#8A8580] leading-snug">
-              {calculos.diseno_humano.tipo} · {calculos.diseno_humano.perfil}
-            </p>
-          ) : (
-            <p className="text-[11px] text-[#8A8580]">Completa tu perfil</p>
-          )}
-        </Link>
-
-        {/* Card Numerologia mini */}
-        <Link href="/numerologia" onClick={cerrarSidebar} className="block rounded-xl bg-[#F5F0FF] p-3 hover:bg-[#EDE5FF] transition-colors">
-          <div className="flex items-center gap-2 mb-2">
-            <Icono nombre="numeral" tamaño={16} peso="bold" className="text-violet-500" />
-            <span className="text-xs font-semibold text-[#2C2926]">Numerología</span>
-          </div>
-          {cargandoCalculos ? (
-            <Esqueleto className="h-3 w-full" />
-          ) : calculos?.numerologia ? (
-            <p className="text-[11px] text-[#8A8580] leading-snug">
-              Camino de vida:{" "}
-              <span className={cn("font-bold", esMaestro(calculos.numerologia.camino_de_vida?.numero) ? "text-[#D4A234]" : "text-violet-600")}>
-                {calculos.numerologia.camino_de_vida?.numero}
-              </span>
-            </p>
-          ) : (
-            <p className="text-[11px] text-[#8A8580]">Completa tu perfil</p>
-          )}
-        </Link>
-      </div>
-
-      {/* Boton Descargar Perfil */}
-      <div className="px-3 pb-2">
-        <button
-          onClick={() => setModalDescarga(true)}
-          disabled={!tieneCalculos || cargandoCalculos}
-          className={cn(
-            "w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium border transition-colors",
-            tieneCalculos && !cargandoCalculos
-              ? "border-[#E8E4E0] text-[#8A8580] hover:text-[#7C4DFF] hover:border-[#7C4DFF] hover:bg-[#F5F0FF]/50"
-              : "border-[#E8E4E0]/50 text-[#C5C0BC] cursor-not-allowed"
-          )}
-        >
-          <Icono nombre="descarga" tamaño={18} />
-          Descargar Perfil
-        </button>
-      </div>
-
-      {/* Logo ASTRA pie */}
-      <div className="py-3 flex justify-center opacity-30 shrink-0">
-        <Image
-          src="/img/logo-astra-blanco.png"
-          alt="ASTRA"
-          width={72}
-          height={20}
-          className="h-4 w-auto invert"
-        />
-      </div>
-    </div>
-  );
+  const colapsado = sidebarColapsado;
 
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className={`hidden lg:flex w-[240px] flex-shrink-0 border-r border-[#E8E4E0]/40 overflow-hidden ${alturaContenido}`}>
-        {contenidoSidebar}
+      <aside
+        className={cn(
+          "hidden flex-shrink-0 flex-col overflow-hidden border-r border-white/[0.06] bg-[linear-gradient(180deg,#1C0627_0%,#16011B_100%)] transition-[width] duration-200 ease-in-out lg:flex",
+          colapsado ? "w-[68px]" : "w-[264px]"
+        )}
+      >
+        {/* Navegacion */}
+        <nav className={cn("pb-2 pt-5", colapsado ? "px-2" : "px-3")}>
+          <ul className="flex flex-col gap-1">
+            {enlacesNavegacion.map((enlace) => {
+              const estaActivo =
+                enlace.ruta === "/dashboard"
+                  ? pathname === "/dashboard"
+                  : pathname.startsWith(enlace.ruta);
+
+              return (
+                <li key={enlace.ruta} className="group">
+                  <Link
+                    href={enlace.ruta}
+                    title={
+                      colapsado
+                        ? enlace.proximamente
+                          ? `${enlace.etiqueta} · Próximamente`
+                          : enlace.etiqueta
+                        : undefined
+                    }
+                    className={cn(
+                      "flex items-center rounded-xl text-[13px] font-medium transition-all duration-200",
+                      colapsado
+                        ? "justify-center px-0 py-3"
+                        : "gap-3 px-3 py-3",
+                      estaActivo
+                        ? "border border-[#B388FF]/20 bg-[linear-gradient(135deg,rgba(124,77,255,0.24),rgba(179,136,255,0.08))] text-white shadow-[0_12px_28px_rgba(20,8,42,0.26)]"
+                        : "border border-transparent text-white/48 hover:bg-white/[0.05] hover:text-white/84"
+                    )}
+                  >
+                    <Icono
+                      nombre={enlace.icono}
+                      tamaño={20}
+                      peso={estaActivo ? "fill" : "regular"}
+                      className={cn(
+                        "transition-colors duration-200",
+                        estaActivo ? "text-[#D9C2FF]" : "text-white/36 group-hover:text-white/72"
+                      )}
+                    />
+                    {!colapsado && (
+                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                        <span className="min-w-0 leading-none">
+                          {enlace.etiqueta}
+                        </span>
+                        {enlace.proximamente && (
+                          <span className="shrink-0 rounded-full border border-white/12 bg-white/[0.06] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-violet-100/78">
+                            Próximamente
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        {/* Separador */}
+        <div className={cn("my-3 h-px bg-white/[0.06]", colapsado ? "mx-2" : "mx-4")} />
+
+        {/* Boton Descargar Perfil */}
+        {!colapsado ? (
+          <div className="px-3 pb-2">
+            <button
+              onClick={() => setModalDescarga(true)}
+              disabled={!tieneCalculos || cargandoCalculos}
+              className={cn(
+                "flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
+                tieneCalculos && !cargandoCalculos
+                  ? "border-white/[0.08] bg-white/[0.02] text-white/40 hover:border-[#B388FF]/30 hover:bg-[#7C4DFF]/10 hover:text-[#D9C2FF]"
+                  : "border-white/[0.05] text-white/15 cursor-not-allowed"
+              )}
+            >
+              <Icono nombre="descarga" tamaño={18} />
+              Descargar Perfil
+            </button>
+          </div>
+        ) : (
+          <div className="px-1.5 pb-2">
+            <button
+              onClick={() => setModalDescarga(true)}
+              disabled={!tieneCalculos || cargandoCalculos}
+              title="Descargar Perfil"
+              className={cn(
+                "flex w-full items-center justify-center rounded-xl py-2.5 transition-all duration-200",
+                tieneCalculos && !cargandoCalculos
+                  ? "text-white/35 hover:bg-[#7C4DFF]/10 hover:text-[#D9C2FF]"
+                  : "text-white/15 cursor-not-allowed"
+              )}
+            >
+              <Icono nombre="descarga" tamaño={20} />
+            </button>
+          </div>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Logo ASTRA pie */}
+        {!colapsado && (
+          <div className="py-3 flex justify-center opacity-30 shrink-0">
+            <Image
+              src="/img/logo-astra-blanco.png"
+              alt="ASTRA"
+              width={72}
+              height={20}
+              className="h-4 w-auto"
+            />
+          </div>
+        )}
       </aside>
 
       {/* Mobile overlay */}
@@ -256,8 +245,79 @@ export default function SidebarNavegacion({
             className="lg:hidden fixed inset-0 bg-black/40 z-40"
             onClick={cerrarSidebar}
           />
-          <aside className="lg:hidden fixed top-[62px] left-0 bottom-0 w-[280px] z-50 shadow-xl overflow-y-auto">
-            {contenidoSidebar}
+          <aside className="lg:hidden fixed top-[62px] left-0 bottom-0 w-[280px] z-50 shadow-xl overflow-y-auto bg-[#190223]">
+            {/* Navegacion mobile (siempre expandida) */}
+            <nav className="px-3 pt-4 pb-2">
+              <ul className="flex flex-col gap-0.5">
+                {enlacesNavegacion.map((enlace) => {
+                  const estaActivo =
+                    enlace.ruta === "/dashboard"
+                      ? pathname === "/dashboard"
+                      : pathname.startsWith(enlace.ruta);
+
+                  return (
+                    <li key={enlace.ruta} className="group">
+                      <Link
+                        href={enlace.ruta}
+                        onClick={cerrarSidebar}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 border",
+                          estaActivo
+                            ? "bg-[#7C4DFF]/15 text-white border-[#7C4DFF]/20"
+                            : "text-white/40 hover:text-white/80 hover:bg-white/[0.05] border-transparent"
+                        )}
+                        >
+                          <Icono
+                            nombre={enlace.icono}
+                          tamaño={20}
+                          peso={estaActivo ? "fill" : "regular"}
+                          className={cn(
+                            "transition-colors duration-200",
+                            estaActivo ? "text-[#B388FF]" : "text-white/35"
+                          )}
+                        />
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="truncate">{enlace.etiqueta}</span>
+                          {enlace.proximamente && (
+                            <span className="shrink-0 rounded-full border border-white/12 bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-100/78">
+                              Próximamente
+                            </span>
+                          )}
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+
+            <div className="mx-4 my-3 h-px bg-white/[0.06]" />
+
+            <div className="px-3 pb-2">
+              <button
+                onClick={() => setModalDescarga(true)}
+                disabled={!tieneCalculos || cargandoCalculos}
+                className={cn(
+                  "w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-[13px] font-medium border transition-all duration-200",
+                  tieneCalculos && !cargandoCalculos
+                    ? "border-white/[0.08] text-white/35 hover:text-[#B388FF] hover:border-[#B388FF]/30 hover:bg-[#7C4DFF]/10"
+                    : "border-white/[0.05] text-white/15 cursor-not-allowed"
+                )}
+              >
+                <Icono nombre="descarga" tamaño={18} />
+                Descargar Perfil
+              </button>
+            </div>
+
+            <div className="py-3 flex justify-center opacity-30 shrink-0">
+              <Image
+                src="/img/logo-astra-blanco.png"
+                alt="ASTRA"
+                width={72}
+                height={20}
+                className="h-4 w-auto"
+              />
+            </div>
           </aside>
         </>
       )}
@@ -269,7 +329,6 @@ export default function SidebarNavegacion({
             ref={modalRef}
             className="bg-white rounded-2xl shadow-xl w-[340px] p-6 relative"
           >
-            {/* Boton cerrar */}
             <button
               onClick={() => setModalDescarga(false)}
               className="absolute top-3 right-3 text-[#8A8580] hover:text-[#2C2926] transition-colors"
@@ -281,7 +340,6 @@ export default function SidebarNavegacion({
             <p className="text-sm text-[#8A8580] mb-5">Elige el formato de descarga</p>
 
             <div className="flex gap-3">
-              {/* PDF */}
               <button
                 onClick={descargarPDF}
                 disabled={descargando !== null}
@@ -296,7 +354,6 @@ export default function SidebarNavegacion({
                 <span className="text-[11px] text-[#8A8580]">Con estilo ASTRA</span>
               </button>
 
-              {/* Markdown */}
               <button
                 onClick={descargarMarkdown}
                 disabled={descargando !== null}

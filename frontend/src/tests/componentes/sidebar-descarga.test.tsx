@@ -272,6 +272,7 @@ describe("SidebarNavegacion — Botón Descargar Perfil", () => {
     expect(screen.getAllByText("Carta Astral").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Diseño Humano").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Numerología").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Retorno Solar")).toBeInTheDocument();
+    expect(screen.getByText("Revolución Solar")).toBeInTheDocument();
+    expect(screen.getAllByText("Próximamente")).toHaveLength(2);
   });
 });

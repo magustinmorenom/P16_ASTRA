@@ -69,11 +69,11 @@ describe("PaginaDisenoHumano", () => {
 
     // Hero card muestra nombre
     expect(screen.getByText(/Diseño Humano de Test/)).toBeInTheDocument();
-    // Atributos principales en chips
-    expect(screen.getByText("Generador")).toBeInTheDocument();
+    // El tipo puede aparecer en más de un bloque del layout premium
+    expect(screen.getAllByText("Generador").length).toBeGreaterThanOrEqual(1);
     // "Sacral" aparece como autoridad y como nombre de centro
     expect(screen.getAllByText("Sacral").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("2/4")).toBeInTheDocument();
+    expect(screen.getAllByText("2/4").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByTestId("formulario-nacimiento")).not.toBeInTheDocument();
   });
 

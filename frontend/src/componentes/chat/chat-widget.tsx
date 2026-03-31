@@ -61,8 +61,8 @@ function BurbujaMensaje({ msg }: { msg: MensajeChat }) {
       <div
         className={`max-w-[80%] px-4 py-2.5 text-[13px] leading-relaxed ${
           esUsuario
-            ? "rounded-2xl rounded-br-sm text-white"
-            : "rounded-2xl rounded-bl-sm text-texto"
+            ? "rounded-2xl rounded-br-sm text-white whitespace-pre-line"
+            : "rounded-2xl rounded-bl-sm text-texto whitespace-pre-line"
         }`}
         style={
           esUsuario
@@ -104,7 +104,7 @@ export default function ChatWidget() {
   const { autenticado, usuario } = useStoreAuth();
   const esMobile = usarEsMobile();
 
-  const { data: historial, refetch: refetchHistorial } = usarHistorialChat(abierto && !historialCargado);
+  const { data: historial } = usarHistorialChat(abierto && !historialCargado);
   const enviarMutation = usarEnviarMensaje();
   const nuevaConvMutation = usarNuevaConversacion();
 

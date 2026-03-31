@@ -14,6 +14,7 @@ interface CardDescubrir {
   ruta: string;
   gradiente: string;
   iconoColor: string;
+  proximamente?: boolean;
 }
 
 const cards: CardDescubrir[] = [
@@ -35,19 +36,21 @@ const cards: CardDescubrir[] = [
   },
   {
     titulo: "Calendario Cosmico",
-    subtitulo: "Transitos y eventos dia a dia",
+    subtitulo: "Lectura diaria de tránsitos y ventanas clave",
     icono: "calendario",
     ruta: "/calendario-cosmico",
     gradiente: "from-[#4A2D8C] to-[#2D1B69]",
     iconoColor: "text-violet-300/70",
+    proximamente: true,
   },
   {
-    titulo: "Retorno Solar",
-    subtitulo: "Tu carta de cumpleanos anual",
+    titulo: "Revolución Solar",
+    subtitulo: "Tu mapa del nuevo ciclo solar anual",
     icono: "retornoSolar",
     ruta: "/retorno-solar",
-    gradiente: "from-[#D4A234] to-[#7C4DFF]",
+    gradiente: "from-[#2D1B69] via-[#4A2D8C] to-[#7C4DFF]",
     iconoColor: "text-white/70",
+    proximamente: true,
   },
   {
     titulo: "Transitos en Vivo",
@@ -114,7 +117,12 @@ export default function PaginaDescubrir() {
                 </div>
 
                 {/* Flecha */}
-                <div className="absolute right-3 top-4">
+                <div className="absolute right-3 top-4 flex items-center gap-2">
+                  {card.proximamente && (
+                    <span className="rounded-full border border-white/15 bg-black/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/80 backdrop-blur-md">
+                      Próximamente
+                    </span>
+                  )}
                   <Icono nombre="flecha" tamaño={16} className="text-white/30" />
                 </div>
               </div>

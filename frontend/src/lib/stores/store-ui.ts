@@ -46,6 +46,8 @@ interface EstadoUI {
   menuAbierto: boolean;
   /** Indica si el sidebar esta abierto en mobile. */
   sidebarAbierto: boolean;
+  /** Indica si el sidebar desktop esta colapsado (solo iconos). */
+  sidebarColapsado: boolean;
 
   /** Pista actualmente cargada en el reproductor. */
   pistaActual: PistaReproduccion | null;
@@ -72,6 +74,8 @@ interface EstadoUI {
   toggleSidebar: () => void;
   /** Cierra el sidebar. */
   cerrarSidebar: () => void;
+  /** Alterna colapso del sidebar desktop. */
+  toggleSidebarColapsado: () => void;
 
   /** Establece la pista actual del reproductor. */
   setPistaActual: (pista: PistaReproduccion | null) => void;
@@ -101,6 +105,7 @@ export const useStoreUI = create<EstadoUI>((set) => ({
   pasoOnboarding: 0,
   menuAbierto: false,
   sidebarAbierto: false,
+  sidebarColapsado: false,
 
   pistaActual: null,
   reproduciendo: false,
@@ -116,6 +121,8 @@ export const useStoreUI = create<EstadoUI>((set) => ({
   toggleSidebar: () =>
     set((estado) => ({ sidebarAbierto: !estado.sidebarAbierto })),
   cerrarSidebar: () => set({ sidebarAbierto: false }),
+  toggleSidebarColapsado: () =>
+    set((estado) => ({ sidebarColapsado: !estado.sidebarColapsado })),
 
   setPistaActual: (pista) =>
     set({ pistaActual: pista, progresoSegundos: 0, reproduciendo: !!pista, segmentoActual: 0 }),

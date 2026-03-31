@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { Icono } from "@/componentes/ui/icono";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
+import { precargarAudiosPodcast } from "@/lib/hooks/usar-audio";
 import {
   usarPronosticoDiario,
   usarPronosticoSemanal,
@@ -106,7 +107,11 @@ export default function PaginaDashboard() {
   const hayEnProceso = (episodiosHoy ?? []).some(
     (ep) => ep.estado === "generando_guion" || ep.estado === "generando_audio"
   );
-  const { data: _ } = usarPodcastHoy(hayEnProceso);
+  usarPodcastHoy(hayEnProceso);
+
+  useEffect(() => {
+    precargarAudiosPodcast(episodiosHoy ?? []);
+  }, [episodiosHoy]);
 
   function manejarPlayPodcast(tipo: TipoPodcast) {
     const ep = mapaEpisodios.get(tipo);
@@ -155,22 +160,22 @@ export default function PaginaDashboard() {
         ? "Buenas tardes"
         : "Buenas noches";
 
+  const epDia = mapaEpisodios.get("dia");
+  const podcastDiaListo = epDia?.estado === "listo";
+  const podcastDiaGenerando =
+    (generarMutation.isPending && generarMutation.variables === "dia") ||
+    epDia?.estado === "generando_guion" ||
+    epDia?.estado === "generando_audio";
+
+  const podcastSemanaGenerando =
+    (generarMutation.isPending && generarMutation.variables === "semana") ||
+    mapaEpisodios.get("semana")?.estado === "generando_guion" ||
+    mapaEpisodios.get("semana")?.estado === "generando_audio";
+
   // =========================================================================
   // DESKTOP — Dashboard V2 (dark theme)
   // =========================================================================
   if (!esMobile) {
-    const epDia = mapaEpisodios.get("dia");
-    const podcastDiaListo = epDia?.estado === "listo";
-    const podcastDiaGenerando =
-      (generarMutation.isPending && generarMutation.variables === "dia") ||
-      epDia?.estado === "generando_guion" ||
-      epDia?.estado === "generando_audio";
-
-    const podcastSemanaGenerando =
-      (generarMutation.isPending && generarMutation.variables === "semana") ||
-      mapaEpisodios.get("semana")?.estado === "generando_guion" ||
-      mapaEpisodios.get("semana")?.estado === "generando_audio";
-
     return (
       <div className="bg-[#16011b] min-h-full p-6 flex flex-col gap-6">
           {/* ---- PRONÓSTICO ---- */}
@@ -255,24 +260,79 @@ export default function PaginaDashboard() {
   }
 
   // =========================================================================
-  // MOBILE — Dashboard V1 (tema claro, sin cambios)
+  // MOBILE — Dashboard V1 (tema claro refinado)
   // =========================================================================
+  const metasHeaderMobile = [
+    pronosticoDiario
+      ? {
+          icono: "wifi" as const,
+          texto: `Energía ${pronosticoDiario.clima.energia}/10`,
+        }
+      : {
+          icono: "destello" as const,
+          texto: "Pronóstico pendiente",
+          tono: "rojo" as const,
+        },
+    pronosticoDiario
+      ? {
+          icono: "luna" as const,
+          texto: `Luna en ${pronosticoDiario.luna.signo}`,
+        }
+      : {
+          icono: "calendario" as const,
+          texto: fechaHoy,
+        },
+    podcastDiaGenerando
+      ? {
+          icono: "microfono" as const,
+          texto: "Preparando audio",
+          tono: "oro" as const,
+        }
+      : podcastDiaListo
+        ? {
+            icono: "reproducir" as const,
+            texto: "Podcast listo",
+            tono: "verde" as const,
+          }
+        : {
+            icono: "destello" as const,
+            texto: "Generar audio",
+          },
+  ];
+
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Header mobile */}
-      <HeaderMobile>
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
-            {nombreSaludo[0]}
-          </div>
-          <div>
-            <p className="text-[15px] font-semibold text-[#2C2926]">
-              {saludo}, {nombreSaludo}
-            </p>
-            <p className="text-[11px] text-[#8A8580] capitalize">{fechaHoy}</p>
-          </div>
-        </div>
-      </HeaderMobile>
+      <HeaderMobile
+        etiqueta="Pulso del día"
+        titulo={`${saludo}, ${nombreSaludo}`}
+        subtitulo="Tu contexto esencial antes de empezar a explorar."
+        metas={metasHeaderMobile}
+        accionDerecha={
+          <button
+            onClick={() =>
+              podcastDiaListo
+                ? manejarPlayPodcast("dia")
+                : generarMutation.mutate("dia")
+            }
+            disabled={podcastDiaGenerando}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-200/70 bg-white/80 text-[#7C4DFF] shadow-[0_6px_20px_rgba(124,77,255,0.12)] transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+            aria-label={
+              podcastDiaListo ? "Reproducir podcast del día" : "Generar podcast del día"
+            }
+          >
+            {podcastDiaGenerando ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#7C4DFF] border-t-transparent" />
+            ) : (
+              <Icono
+                nombre={podcastDiaListo ? "reproducir" : "microfono"}
+                tamaño={18}
+                peso="fill"
+              />
+            )}
+          </button>
+        }
+      />
 
       {/* Contenido principal — fondo con orbes decorativos para glass */}
       <section className="flex-1 scroll-sutil relative p-4 lg:p-6 flex flex-col gap-4">

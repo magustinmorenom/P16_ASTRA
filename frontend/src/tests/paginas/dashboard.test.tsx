@@ -20,6 +20,7 @@ const mockUsarPronosticoSemanal = vi.fn();
 const mockUsarPodcastHoy = vi.fn();
 const mockUsarGenerarPodcast = vi.fn();
 const mockUsarEsMobile = vi.fn();
+const mockPrecargarAudiosPodcast = vi.fn();
 
 vi.mock("@/lib/hooks", () => ({
   usarPronosticoDiario: () => mockUsarPronosticoDiario(),
@@ -27,6 +28,11 @@ vi.mock("@/lib/hooks", () => ({
   usarPodcastHoy: () => mockUsarPodcastHoy(),
   usarGenerarPodcast: () => mockUsarGenerarPodcast(),
   usarEsMobile: () => mockUsarEsMobile(),
+}));
+
+vi.mock("@/lib/hooks/usar-audio", () => ({
+  precargarAudiosPodcast: (...args: unknown[]) =>
+    mockPrecargarAudiosPodcast(...args),
 }));
 
 vi.mock("@/lib/stores/store-auth", () => ({

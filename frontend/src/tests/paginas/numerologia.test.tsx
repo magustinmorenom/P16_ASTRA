@@ -20,6 +20,18 @@ vi.mock("@/lib/hooks", () => ({
   usarMisCalculos: () => mockUsarMisCalculos(),
 }));
 
+vi.mock("@/lib/hooks/usar-es-mobile", () => ({
+  usarEsMobile: () => false,
+}));
+
+vi.mock("react-resizable-panels", () => ({
+  Panel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Group: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Separator: ({ children, className }: { children?: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
+}));
+
 import PaginaNumerologia from "@/app/(app)/numerologia/page";
 
 const NUMEROLOGIA_MOCK = {
@@ -58,13 +70,13 @@ describe("PaginaNumerologia", () => {
 
     renderConProveedores(<PaginaNumerologia />);
 
-    // Hero card muestra nombre
-    expect(screen.getByText(/Carta Numerológica de Test/)).toBeInTheDocument();
-    // Números aparecen en chips y grid
+    expect(
+      screen.getByText(/Test, tu carta abre un sendero 7 y una misión 22\./),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Tu carta se lee por capas")).toBeInTheDocument();
     expect(screen.getAllByText("7").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("22").length).toBeGreaterThanOrEqual(1);
-    // Descripción del número seleccionado por defecto (Camino de Vida) en panel derecho
-    expect(screen.getByText("El buscador")).toBeInTheDocument();
+    expect(screen.getAllByText("Núcleo y misión").length).toBeGreaterThanOrEqual(1);
   });
 
   it("muestra banner de números maestros cuando corresponde", () => {
@@ -75,7 +87,29 @@ describe("PaginaNumerologia", () => {
 
     renderConProveedores(<PaginaNumerologia />);
 
-    expect(screen.getByText(/Números Maestros/)).toBeInTheDocument();
+    expect(screen.getByText("Maestros: 22")).toBeInTheDocument();
+  });
+
+  it("tolera cartas guardadas sin etapas ni arrays auxiliares", () => {
+    const numerologiaIncompleta = {
+      ...NUMEROLOGIA_MOCK,
+      meses_personales: undefined,
+      etapas_de_la_vida: undefined,
+      numeros_maestros_presentes: undefined,
+    } as unknown as typeof NUMEROLOGIA_MOCK;
+
+    mockUsarMisCalculos.mockReturnValue({
+      data: { natal: null, diseno_humano: null, numerologia: numerologiaIncompleta, retorno_solar: null },
+      isLoading: false,
+    });
+
+    renderConProveedores(<PaginaNumerologia />);
+
+    expect(
+      screen.getByText(/Test, tu carta abre un sendero 7 y una misión 22\./),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Etapas no disponibles")).toBeInTheDocument();
+    expect(screen.queryByText("Maestros: 22")).not.toBeInTheDocument();
   });
 
   it("muestra formulario cuando no hay datos", () => {
@@ -86,7 +120,9 @@ describe("PaginaNumerologia", () => {
 
     renderConProveedores(<PaginaNumerologia />);
 
-    expect(screen.getByText(/Calculá tu carta numerológica/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Numerología por capítulos, no por bloques sueltos/),
+    ).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Nombre completo")).toBeInTheDocument();
   });
 
@@ -96,9 +132,10 @@ describe("PaginaNumerologia", () => {
       isLoading: true,
     });
 
-    renderConProveedores(<PaginaNumerologia />);
+    const { container } = renderConProveedores(<PaginaNumerologia />);
 
-    expect(screen.getByText(/Cargando tu carta numerológica/)).toBeInTheDocument();
+    expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(0);
+    expect(screen.queryByPlaceholderText("Nombre completo")).not.toBeInTheDocument();
   });
 
   it("botón 'Nuevo cálculo' muestra formulario", async () => {

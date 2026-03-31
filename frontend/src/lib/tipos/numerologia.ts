@@ -43,7 +43,7 @@ export interface Numerologia {
   mes_personal: NumeroRespuesta;
   dia_personal: NumeroRespuesta;
   meses_personales?: MesPersonalItem[];
-  etapas_de_la_vida: EtapaVida[];
+  etapas_de_la_vida?: EtapaVida[];
   /** Números maestros presentes en la carta (11, 22, 33). */
-  numeros_maestros_presentes: number[];
+  numeros_maestros_presentes?: number[];
 }

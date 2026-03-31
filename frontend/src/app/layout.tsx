@@ -50,7 +50,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/img/icon-192.png" />
         <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
       </head>
-      <body className="min-h-full flex flex-col font-sans">
+      <body suppressHydrationWarning className="min-h-full flex flex-col font-sans">
         <ProveedorQuery>
           <ProveedorAuth>{children}</ProveedorAuth>
         </ProveedorQuery>
