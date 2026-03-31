@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import { useStoreUI } from "@/lib/stores/store-ui";
-import { Icono } from "@/componentes/ui/icono";
+import { RailLateral } from "@/componentes/layouts/rail-lateral";
 import { cn } from "@/lib/utilidades/cn";
 
 /**
@@ -24,7 +24,7 @@ export default function PanelLyrics() {
       // Pequeño delay para que el DOM monte antes de animar
       requestAnimationFrame(() => setMontado(true));
     } else {
-      setMontado(false);
+      requestAnimationFrame(() => setMontado(false));
     }
   }, [visible]);
 
@@ -52,53 +52,17 @@ export default function PanelLyrics() {
   };
 
   return (
-    <div className="hidden lg:block fixed inset-0 z-50 pointer-events-none">
-      {/* Backdrop sutil — clic cierra */}
-      <div
-        onClick={cerrar}
-        className={cn(
-          "absolute inset-0 bg-black/20 transition-opacity duration-350 pointer-events-auto",
-          montado ? "opacity-100" : "opacity-0"
-        )}
-      />
-
-      {/* Panel glassmorphic */}
-      <aside
-        className={cn(
-          "absolute top-0 right-0 h-full w-[360px] pointer-events-auto",
-          "flex flex-col",
-          "backdrop-blur-2xl bg-[#1A1128]/75 border-l border-white/10",
-          "shadow-[-8px_0_32px_rgba(124,77,255,0.08)]",
-          "transition-all duration-350 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
-          montado
-            ? "translate-x-0 opacity-100"
-            : "translate-x-full opacity-0"
-        )}
-      >
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-white/8 flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold text-[#B388FF] uppercase tracking-wider">
-              Transcripción
-            </p>
-            <p className="text-sm text-[#F5F0FF]/70 truncate mt-0.5">
-              {pistaActual.titulo}
-            </p>
-          </div>
-          <button
-            onClick={cerrar}
-            className="text-[#B388FF]/60 hover:text-[#F5F0FF] transition-colors shrink-0 mt-0.5 cursor-pointer"
-            title="Cerrar transcripción"
-          >
-            <Icono nombre="x" tamaño={18} />
-          </button>
-        </div>
-
-        {/* Lyrics */}
-        <div
-          ref={contenedorRef}
-          className="flex-1 overflow-y-auto scroll-sutil px-5 py-6 pb-24 space-y-4"
-        >
+    <RailLateral
+      modo="overlay"
+      visible={visible}
+      montado={montado}
+      etiqueta="Transcripción"
+      titulo={pistaActual.titulo}
+      subtitulo={pistaActual.subtitulo}
+      onCerrar={cerrar}
+      cuerpoClassName="space-y-4 px-5 py-6 pb-24"
+    >
+      <div ref={contenedorRef}>
           {segmentos.map((seg, idx) => (
             <div
               key={idx}
@@ -117,8 +81,7 @@ export default function PanelLyrics() {
               {seg.texto}
             </div>
           ))}
-        </div>
-      </aside>
-    </div>
+      </div>
+    </RailLateral>
   );
 }

@@ -469,7 +469,7 @@ export default function Navbar() {
       : "microfono";
 
   return (
-    <nav className="relative z-30 shrink-0 overflow-hidden border-b border-white/[0.08] bg-[linear-gradient(180deg,#2A1247_0%,#17041F_100%)]">
+    <nav className="relative z-40 shrink-0 overflow-visible border-b border-white/[0.08] bg-[linear-gradient(180deg,#2A1247_0%,#17041F_100%)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(179,136,255,0.24),transparent_28%),radial-gradient(circle_at_78%_20%,rgba(212,162,52,0.08),transparent_22%)]" />
 
       <div className="relative mx-auto flex h-[78px] items-center justify-between gap-4 px-4 lg:px-6">
@@ -576,7 +576,7 @@ export default function Navbar() {
             {esPremium ? "Premium activo" : "Plan gratis"}
           </Link>
 
-          <div className="relative" ref={refMenuUsuario}>
+          <div className="relative z-50" ref={refMenuUsuario}>
             <button
               onClick={() => setMenuUsuarioAbierto(!menuUsuarioAbierto)}
               className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-violet-500 to-violet-700 text-xs font-bold text-white shadow-[0_10px_24px_rgba(32,10,74,0.3)]"
@@ -591,7 +591,7 @@ export default function Navbar() {
             </button>
 
             {menuUsuarioAbierto && (
-              <div className="absolute right-0 top-full mt-3 w-64 rounded-[24px] border border-white/[0.08] bg-[#1B0B2C]/95 p-2 shadow-[0_26px_70px_rgba(8,2,20,0.45)] backdrop-blur-2xl">
+              <div className="absolute right-0 top-full z-[70] mt-3 w-64 rounded-[24px] border border-white/[0.08] bg-[#1B0B2C]/95 p-2 shadow-[0_26px_70px_rgba(8,2,20,0.45)] backdrop-blur-2xl">
                 {usuario && (
                   <div className="rounded-[18px] border border-white/[0.08] bg-white/[0.04] px-4 py-3">
                     <div className="mb-2 flex items-start justify-between gap-3">

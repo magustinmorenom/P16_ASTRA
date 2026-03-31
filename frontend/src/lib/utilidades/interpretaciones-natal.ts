@@ -8,9 +8,9 @@
 // ---------------------------------------------------------------------------
 
 export const COLORES_PLANETA: Record<string, string> = {
-  Sol: "#D4A234", Luna: "#9575CD", Mercurio: "#E57373", Venus: "#66BB6A",
+  Sol: "#B388FF", Luna: "#9575CD", Mercurio: "#E57373", Venus: "#66BB6A",
   Marte: "#EF5350", Júpiter: "#7C4DFF", Saturno: "#78909C", Urano: "#26C6DA",
-  Neptuno: "#5C6BC0", Plutón: "#8D6E63", "Nodo Norte": "#66BB6A", "Nodo Sur": "#A1887F",
+  Neptuno: "#5C6BC0", Plutón: "#9C6DFF", "Nodo Norte": "#66BB6A", "Nodo Sur": "#8C9EFF",
 };
 
 export const SIMBOLOS_ASPECTO: Record<string, string> = {
@@ -18,19 +18,19 @@ export const SIMBOLOS_ASPECTO: Record<string, string> = {
 };
 
 export const BADGE_ASPECTO: Record<string, { bg: string; text: string; label: string }> = {
-  conjuncion: { bg: "bg-[#F5E9C9]", text: "text-[#8A5A00]", label: "Conjunción" },
-  trigono: { bg: "bg-green-100", text: "text-green-700", label: "Trígono" },
-  sextil: { bg: "bg-sky-100", text: "text-sky-700", label: "Sextil" },
-  cuadratura: { bg: "bg-red-100", text: "text-red-600", label: "Cuadratura" },
-  oposicion: { bg: "bg-violet-100", text: "text-violet-700", label: "Oposición" },
+  conjuncion: { bg: "bg-[#7C4DFF]/16", text: "text-[#E4D5FF]", label: "Conjunción" },
+  trigono: { bg: "bg-emerald-500/16", text: "text-emerald-200", label: "Trígono" },
+  sextil: { bg: "bg-sky-500/16", text: "text-sky-200", label: "Sextil" },
+  cuadratura: { bg: "bg-rose-500/16", text: "text-rose-200", label: "Cuadratura" },
+  oposicion: { bg: "bg-violet-500/16", text: "text-violet-200", label: "Oposición" },
 };
 
 export const DIGNIDAD_BADGE: Record<string, { bg: string; text: string }> = {
-  domicilio: { bg: "bg-green-100", text: "text-green-700" },
-  exaltacion: { bg: "bg-emerald-100", text: "text-emerald-700" },
-  detrimento: { bg: "bg-red-100", text: "text-red-600" },
-  caida: { bg: "bg-rose-100", text: "text-rose-700" },
-  peregrino: { bg: "bg-gray-100", text: "text-gray-600" },
+  domicilio: { bg: "bg-emerald-500/16", text: "text-emerald-200" },
+  exaltacion: { bg: "bg-cyan-500/16", text: "text-cyan-200" },
+  detrimento: { bg: "bg-red-500/16", text: "text-red-200" },
+  caida: { bg: "bg-rose-500/16", text: "text-rose-200" },
+  peregrino: { bg: "bg-white/10", text: "text-white/72" },
 };
 
 // ---------------------------------------------------------------------------

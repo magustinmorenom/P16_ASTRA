@@ -45,10 +45,8 @@ class TestConstruirSystem:
                 "cruz_encarnacion": {"nombre": "Cruz del Ángulo Recto de la Esfinge"},
             },
             "numerologia": {
-                "numeros": {
-                    "vida": {"nombre": "Número de Vida", "valor": 7},
-                    "expresion": {"nombre": "Número de Expresión", "valor": 3},
-                },
+                "camino_de_vida": {"numero": 7, "descripcion": "Análisis, espiritualidad"},
+                "expresion": {"numero": 3, "descripcion": "Creatividad, comunicación"},
             },
         }
         prompt = ServicioOraculo._construir_system(perfil_cosmico=perfil)
@@ -61,7 +59,7 @@ class TestConstruirSystem:
         assert "Generador" in prompt
         assert "Sacral" in prompt
         assert "1/3" in prompt
-        assert "Número de Vida" in prompt
+        assert "Camino de Vida: 7" in prompt
 
     def test_system_con_transitos(self):
         transitos = {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import Navbar from "@/componentes/layouts/navbar";
 import SidebarNavegacion from "@/componentes/layouts/sidebar-navegacion";
@@ -19,8 +19,10 @@ export default function LayoutApp({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { autenticado, cargando, usuario } = useStoreAuth();
   const esMobile = usarEsMobile();
+  const usaRailContextualSeparado = pathname.startsWith("/carta-natal");
 
   useEffect(() => {
     if (!cargando && !autenticado) {
@@ -58,7 +60,13 @@ export default function LayoutApp({
       {/* Body: sidebar + content */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <SidebarNavegacion />
-        <main className="flex-1 overflow-y-auto scroll-sutil bg-[#16011b]">
+        <main
+          className={
+            usaRailContextualSeparado
+              ? "min-h-0 min-w-0 flex-1 overflow-hidden bg-[#16011b]"
+              : "min-h-0 min-w-0 flex-1 overflow-y-auto scroll-sutil bg-[#16011b]"
+          }
+        >
           {children}
         </main>
       </div>
