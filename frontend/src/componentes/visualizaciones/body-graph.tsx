@@ -187,7 +187,7 @@ export default function BodyGraph({
     );
   }
 
-  const centrosNormalizados = Object.entries(datos.centros ?? {}).reduce<Record<string, string>>(
+  const centrosNormalizados = Object.entries(datos?.centros ?? {}).reduce<Record<string, string>>(
     (acc, [clave, estado]) => {
       acc[normalizarClaveHD(clave)] = estado;
       return acc;
@@ -229,7 +229,7 @@ export default function BodyGraph({
   }
 
   function canalesDeFondo(origen: string, destino: string): boolean {
-    const canalRelacionado = (datos.canales ?? []).some((canal) => {
+    const canalRelacionado = (datos?.canales ?? []).some((canal) => {
       const [a, b] = canal.centros.map(normalizarClaveHD);
       const origenNormalizado = normalizarClaveHD(origen);
       const destinoNormalizado = normalizarClaveHD(destino);
@@ -283,7 +283,7 @@ export default function BodyGraph({
           );
         })}
 
-        {(datos.canales ?? []).map((canal) => {
+        {(datos?.canales ?? []).map((canal) => {
           const centroA = obtenerCentroPorClave(canal.centros[0]);
           const centroB = obtenerCentroPorClave(canal.centros[1]);
           if (!centroA || !centroB) return null;
@@ -354,14 +354,14 @@ export default function BodyGraph({
             estado={estadoCentro(centro)}
             activo={
               centroCoincide(centro, centroActivo) ||
-              (datos.canales ?? []).some((canal) => {
+              (datos?.canales ?? []).some((canal) => {
                 if (canalSeleccionado !== crearIdCanal(canal)) return false;
                 return centroPerteneceACanal(canal, centro);
               })
             }
             relacionado={
               centroActivo
-                ? (datos.canales ?? []).some(
+                ? (datos?.canales ?? []).some(
                     (canal) => canalTocaCentro(canal, centroActivo) && centroPerteneceACanal(canal, centro),
                   )
                 : false

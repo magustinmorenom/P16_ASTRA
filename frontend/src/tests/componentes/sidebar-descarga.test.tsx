@@ -37,7 +37,7 @@ vi.mock("@/lib/stores/store-ui", () => ({
 
 const mockGenerarMarkdown = vi.fn(() => "# Markdown de prueba");
 vi.mock("@/lib/utilidades/generar-markdown-perfil", () => ({
-  generarMarkdownPerfil: (...args: unknown[]) => mockGenerarMarkdown(...args),
+  generarMarkdownPerfil: (...args: unknown[]) => mockGenerarMarkdown(...(args as [])),
 }));
 
 import SidebarNavegacion from "@/componentes/layouts/sidebar-navegacion";

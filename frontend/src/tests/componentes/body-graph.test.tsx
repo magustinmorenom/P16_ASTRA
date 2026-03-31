@@ -15,9 +15,9 @@ const DATOS_HD = {
     tierra_inconsciente: 57,
   },
   centros: {
-    sacral: "definido",
-    garganta: "definido",
-    cabeza: "abierto",
+    sacral: "definido" as const,
+    garganta: "definido" as const,
+    cabeza: "abierto" as const,
   },
   canales: [
     {
