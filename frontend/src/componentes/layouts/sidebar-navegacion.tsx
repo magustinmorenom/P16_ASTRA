@@ -121,13 +121,13 @@ export default function SidebarNavegacion() {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden lg:flex flex-col flex-shrink-0 bg-[#190223] overflow-hidden transition-[width] duration-200 ease-in-out",
-          colapsado ? "w-[64px]" : "w-[240px]"
+          "hidden flex-shrink-0 flex-col overflow-hidden border-r border-white/[0.06] bg-[linear-gradient(180deg,#1C0627_0%,#16011B_100%)] transition-[width] duration-200 ease-in-out lg:flex",
+          colapsado ? "w-[68px]" : "w-[264px]"
         )}
       >
         {/* Navegacion */}
-        <nav className={cn("pt-4 pb-2", colapsado ? "px-1.5" : "px-3")}>
-          <ul className="flex flex-col gap-0.5">
+        <nav className={cn("pb-2 pt-5", colapsado ? "px-2" : "px-3")}>
+          <ul className="flex flex-col gap-1">
             {enlacesNavegacion.map((enlace) => {
               const estaActivo =
                 enlace.ruta === "/dashboard"
@@ -146,13 +146,13 @@ export default function SidebarNavegacion() {
                         : undefined
                     }
                     className={cn(
-                      "flex items-center rounded-lg text-[13px] font-medium transition-all duration-200",
+                      "flex items-center rounded-xl text-[13px] font-medium transition-all duration-200",
                       colapsado
-                        ? "justify-center px-0 py-2.5"
-                        : "gap-3 px-3 py-2.5",
+                        ? "justify-center px-0 py-3"
+                        : "gap-3 px-3 py-3",
                       estaActivo
-                        ? "bg-[#7C4DFF]/15 text-white border border-[#7C4DFF]/20"
-                        : "text-white/40 hover:text-white/80 hover:bg-white/[0.05] border border-transparent"
+                        ? "border border-[#B388FF]/20 bg-[linear-gradient(135deg,rgba(124,77,255,0.24),rgba(179,136,255,0.08))] text-white shadow-[0_12px_28px_rgba(20,8,42,0.26)]"
+                        : "border border-transparent text-white/48 hover:bg-white/[0.05] hover:text-white/84"
                     )}
                   >
                     <Icono
@@ -161,14 +161,16 @@ export default function SidebarNavegacion() {
                       peso={estaActivo ? "fill" : "regular"}
                       className={cn(
                         "transition-colors duration-200",
-                        estaActivo ? "text-[#B388FF]" : "text-white/35 group-hover:text-white/70"
+                        estaActivo ? "text-[#D9C2FF]" : "text-white/36 group-hover:text-white/72"
                       )}
                     />
                     {!colapsado && (
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className="truncate">{enlace.etiqueta}</span>
+                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                        <span className="min-w-0 leading-none">
+                          {enlace.etiqueta}
+                        </span>
                         {enlace.proximamente && (
-                          <span className="shrink-0 rounded-full border border-white/12 bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-100/78">
+                          <span className="shrink-0 rounded-full border border-white/12 bg-white/[0.06] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-violet-100/78">
                             Próximamente
                           </span>
                         )}
@@ -191,9 +193,9 @@ export default function SidebarNavegacion() {
               onClick={() => setModalDescarga(true)}
               disabled={!tieneCalculos || cargandoCalculos}
               className={cn(
-                "w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-[13px] font-medium border transition-all duration-200",
+                "flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
                 tieneCalculos && !cargandoCalculos
-                  ? "border-white/[0.08] text-white/35 hover:text-[#B388FF] hover:border-[#B388FF]/30 hover:bg-[#7C4DFF]/10"
+                  ? "border-white/[0.08] bg-white/[0.02] text-white/40 hover:border-[#B388FF]/30 hover:bg-[#7C4DFF]/10 hover:text-[#D9C2FF]"
                   : "border-white/[0.05] text-white/15 cursor-not-allowed"
               )}
             >
@@ -208,9 +210,9 @@ export default function SidebarNavegacion() {
               disabled={!tieneCalculos || cargandoCalculos}
               title="Descargar Perfil"
               className={cn(
-                "w-full flex items-center justify-center py-2.5 rounded-lg transition-all duration-200",
+                "flex w-full items-center justify-center rounded-xl py-2.5 transition-all duration-200",
                 tieneCalculos && !cargandoCalculos
-                  ? "text-white/35 hover:text-[#B388FF] hover:bg-[#7C4DFF]/10"
+                  ? "text-white/35 hover:bg-[#7C4DFF]/10 hover:text-[#D9C2FF]"
                   : "text-white/15 cursor-not-allowed"
               )}
             >

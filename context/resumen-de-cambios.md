@@ -1086,3 +1086,369 @@ Se corrigió el estado visual del reproductor para que deje de mostrar spinner c
 1. Al seleccionar una pista, el hook carga el blob del MP3 y apaga explícitamente `cargandoAudio` apenas obtiene una URL reproducible o detecta un error.
 2. Los reproductores desktop y mobile ya no usan `cargandoAudio` a secas para pintar el spinner: ahora exigen además que todavía no exista `audioUrl`.
 3. Si el audio ya está disponible y el reproductor está sonando, el botón central vuelve a renderizar el icono de pausa en lugar del loader circular.
+
+## Sesion: Refinamiento visual de la pantalla Podcasts
+**Fecha:** 2026-03-30 ~15:58 (ARG)
+
+### Que se hizo
+Se mejoró la calidad visual del módulo de Podcasts en desktop con una composición más editorial: hero con más presencia, tarjetas integradas al entorno oscuro, historial más legible y navegación superior/lateral más coherente con la estética premium de ASTRA.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/app/(app)/podcast/page.tsx` | Se rediseñó la página con hero destacado, métricas de estado, nuevas tarjetas para día/semana/mes, mejor jerarquía de secciones y un historial con mayor contraste y acciones más claras. |
+| `frontend/src/componentes/layouts/navbar.tsx` | Se refinó la topbar con gradiente, glass más cuidado, mejor avatar y uso de `IconoSigno` para respetar la convención de iconografía astral. |
+| `frontend/src/componentes/layouts/sidebar-navegacion.tsx` | Se ajustó el sidebar desktop con más ancho, estados activos más sólidos, mejor contraste y etiquetas “Próximamente” sin truncado agresivo. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de desarrollo. |
+
+### Tests
+0 tests nuevos/modificados. `npm run lint -- "src/app/(app)/podcast/page.tsx" "src/componentes/layouts/navbar.tsx" "src/componentes/layouts/sidebar-navegacion.tsx"` ejecutado sin errores.
+
+### Como funciona
+1. La entrada a Podcasts ahora abre con un hero oscuro que resume el estado del módulo y concentra mejor el foco visual antes de bajar a las acciones.
+2. Las tres tarjetas principales usan un lenguaje unificado para mostrar título, contexto, estado y CTA, evitando que cada card parezca un patrón distinto.
+3. El historial quedó encapsulado en una superficie propia con más contraste, metadata visible y accesos claros a reproducción y descarga, mientras navbar y sidebar acompañan la experiencia con un chrome más pulido.
+
+## Sesion: Limpieza del hero de Podcasts
+**Fecha:** 2026-03-30 ~16:44 (ARG)
+
+### Que se hizo
+Se simplificó el hero de la pantalla de Podcasts quitando las tres tarjetas de métricas laterales para dejar una cabecera más limpia y enfocada.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/app/(app)/podcast/page.tsx` | Se eliminaron las tarjetas de “Listos hoy”, “Historial” y “Último movimiento” del hero, dejando solo el bloque editorial principal. |
+| `context/resumen-de-cambios.md` | Se documentó este ajuste visual. |
+
+### Tests
+0 tests nuevos/modificados. `npm run lint -- "src/app/(app)/podcast/page.tsx"` ejecutado sin errores.
+
+### Como funciona
+1. El hero mantiene el badge, el ícono y el texto editorial principal, pero ya no muestra métricas apiladas a la derecha.
+2. La primera decisión visual vuelve a ser el título y la descripción del módulo, sin tarjetas secundarias compitiendo por atención.
+3. El resto de la pantalla conserva la estructura del rediseño anterior: cards principales y bloque de historial intactos.
+
+## Sesion: Skill de consistencia visual premium ciruela
+**Fecha:** 2026-03-30 ~16:49 (ARG)
+
+### Que se hizo
+Se creó un skill nuevo para capturar el lenguaje visual "premium ciruela" de ASTRA y reutilizarlo al refinar futuras pantallas sin depender de memoria implícita.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `.agents/skills/experto-ui-premium-ciruela/SKILL.md` | Nuevo skill con reglas de hero, cards, historial, sidebar, navbar, heurísticas de decisión, anti-patrones y recetas Tailwind para mantener consistencia visual. |
+| `context/resumen-de-cambios.md` | Se documentó esta nueva capacidad del repositorio. |
+
+### Tests
+0 tests nuevos/modificados. Se validó manualmente la estructura y el contenido del skill. La validación automática `quick_validate.py` no pudo ejecutarse en este entorno porque falta la dependencia `PyYAML`.
+
+### Como funciona
+1. Cuando una tarea pida una UI más premium, más editorial o explícitamente "premium ciruela", el skill define el patrón visual a seguir para hero, superficies, cards, listas y chrome.
+2. El skill también fija reglas negativas claras, como evitar tarjetas métricas redundantes, slabs blancos sin integración o sidebars con contraste pobre.
+3. Con esto, las futuras intervenciones de UI pueden repetir el mismo sistema visual de forma más consistente y menos improvisada.
+
+## Sesion: Limpieza de copy interno en cards de podcasts
+**Fecha:** 2026-03-30 ~16:51 (ARG)
+
+### Que se hizo
+Se eliminaron los mensajes descriptivos internos de las cards de podcasts para dejar las tarjetas más limpias y con menos ruido visual.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/app/(app)/podcast/page.tsx` | Se removió el bloque de copy intermedio dentro de las cards de día, semana y mes, manteniendo la jerarquía principal y las acciones. |
+| `context/resumen-de-cambios.md` | Se documentó este ajuste visual puntual. |
+
+### Tests
+0 tests nuevos/modificados. `npm run lint -- "src/app/(app)/podcast/page.tsx"` ejecutado sin errores.
+
+### Como funciona
+1. Cada card conserva icono, título, subtítulo y acciones, pero ya no muestra el recuadro textual intermedio.
+2. El usuario ve una tarjeta más directa y menos cargada, con foco en reproducir, descargar o generar.
+3. El layout general de la pantalla no cambia; solo se limpia el contenido interno de las cards.
+
+## Sesion: UI premium ciruela para Calendario y Revolución Solar
+**Fecha:** 2026-03-30 ~17:01 (ARG)
+
+### Que se hizo
+Se rediseñaron las pantallas de anticipación de `Calendario Cósmico` y `Revolución Solar` para alinearlas con el lenguaje visual premium ciruela de ASTRA: hero editorial, surfaces integradas, mejor jerarquía y una vista previa más específica para cada módulo.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/componentes/proximamente/feature-proximamente.tsx` | Se reescribió el componente compartido para sumar hero premium, panel lateral de vista previa, bloque de capacidades y recorrido guiado, manteniendo el fondo ciruela/glass. |
+| `frontend/src/app/(app)/calendario-cosmico/page.tsx` | Se actualizó el contenido del calendario con copy más editorial y una vista previa propia centrada en ritmo diario/semanal/mensual. |
+| `frontend/src/app/(app)/retorno-solar/page.tsx` | Se actualizó el contenido de revolución solar con foco en cálculo exacto, comparativa natal vs retorno y narrativa anual. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de desarrollo. |
+
+### Tests
+0 tests nuevos/modificados. `npm run lint -- "src/componentes/proximamente/feature-proximamente.tsx" "src/app/(app)/calendario-cosmico/page.tsx" "src/app/(app)/retorno-solar/page.tsx"` ejecutado sin errores.
+
+### Como funciona
+1. Al entrar a `/calendario-cosmico` o `/retorno-solar`, el usuario sigue viendo una pantalla de anticipación, pero ahora con una cabecera editorial más marcada y superficies coherentes con la estética premium ciruela de Podcasts.
+2. Cada módulo muestra una vista previa distinta: calendario enfatiza ritmo del día/semana/mes y revolución solar enfatiza instante exacto, carta comparada y tema anual.
+3. Debajo del hero, la pantalla explica tanto lo que va a resolver la feature como el recorrido esperado de uso, para que la promesa del módulo se entienda rápido y con menos ruido visual.
+
+## Sesion: Header premium con estado vivo y acción rápida
+**Fecha:** 2026-03-30 ~17:15 (ARG)
+
+### Que se hizo
+Se rediseñó el header principal de la app para que deje de ser una barra decorativa y pase a funcionar como una capa de contexto operativo: muestra el estado vivo del usuario, la acción más útil del momento y una jerarquía visual más premium en desktop y mobile.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/componentes/layouts/navbar.tsx` | Se reconstruyó la topbar desktop con contexto por ruta, panel central de estado vivo (pronóstico, alertas, reproducción, podcast), CTA rápida, mejor lectura del plan y dropdown de usuario integrado al lenguaje premium ciruela. |
+| `frontend/src/componentes/layouts/header-mobile.tsx` | Se rediseñó el header mobile como cápsula premium con mejor jerarquía tipográfica, soporte para etiqueta, subtítulo, chips de metadatos y acciones rápidas. |
+| `frontend/src/app/(app)/dashboard/page.tsx` | Se conectó el header mobile del dashboard a datos reales del día (energía, luna, estado del podcast) y a una acción directa para reproducir o generar el audio diario. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de desarrollo. |
+
+### Tests
+0 tests nuevos/modificados. Se intentó ejecutar `npm run test -- src/tests/paginas/dashboard.test.tsx`, pero el entorno actual usa `Node v18.17.1` y Vitest falla al iniciar por incompatibilidad con `node:util.styleText`. La revisión final del cambio se hizo manualmente sobre los archivos tocados.
+
+### Como funciona
+1. En desktop, la barra superior ahora combina tres capas claras: identidad de la sección actual, panel central con estado útil del momento y una acción rápida contextual para continuar audio o entrar directo a podcasts.
+2. El contenido central prioriza lo realmente accionable: si hay reproducción en curso muestra continuidad, si hay alerta prioriza esa señal, y si no usa el pulso del día con energía, luna y estado del podcast.
+3. En mobile, el dashboard abre con un header que ya trae el contexto esencial antes del scroll: saludo, microestado del día en chips y un botón para disparar la acción principal del audio diario.
+
+## Sesion: Limpieza visual de Calendario y Revolución Solar
+**Fecha:** 2026-03-30 ~17:14 (ARG)
+
+### Que se hizo
+Se simplificaron ambas pantallas de anticipación para que muestren únicamente la tarjeta principal. Se removieron todas las tarjetas secundarias y bloques complementarios, manteniendo solo el hero editorial.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/componentes/proximamente/feature-proximamente.tsx` | Se redujo el layout a una sola tarjeta principal, eliminando panel lateral, grillas secundarias y bloque final. |
+| `frontend/src/app/(app)/calendario-cosmico/page.tsx` | Se eliminó la configuración secundaria que ya no se renderiza, dejando solo el contenido necesario para la tarjeta principal. |
+| `frontend/src/app/(app)/retorno-solar/page.tsx` | Se eliminó la configuración secundaria que ya no se renderiza, dejando solo el contenido necesario para la tarjeta principal. |
+| `context/resumen-de-cambios.md` | Se documentó esta simplificación visual. |
+
+### Tests
+0 tests nuevos/modificados. `npm run lint -- "src/componentes/proximamente/feature-proximamente.tsx" "src/app/(app)/calendario-cosmico/page.tsx" "src/app/(app)/retorno-solar/page.tsx"` ejecutado sin errores.
+
+### Como funciona
+1. Tanto `/calendario-cosmico` como `/retorno-solar` siguen reutilizando el mismo componente compartido.
+2. Ese componente ahora renderiza solo la tarjeta principal con badge, icono, título y descripción.
+3. Al entrar a cualquiera de las dos rutas, la pantalla queda más limpia y directa, sin tarjetas secundarias compitiendo por atención.
+
+## Sesion: Numerología premium con panel contextual persistente
+**Fecha:** 2026-03-30 ~17:18 (ARG)
+
+### Que se hizo
+Se rediseñó la experiencia de Numerología para que deje de sentirse como un onepager de datos y pase a operar como una mesa de lectura premium: hero editorial, capítulos de interpretación, cards más coherentes y panel derecho persistente con explicación breve + significado personalizado.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/app/(app)/numerologia/page.tsx` | Reescritura visual y estructural completa: hero editorial, capítulos `Núcleo y misión`, `Ritmo actual` y `Etapas de vida`, renombre de secciones para acercarlas al lenguaje del libro, layout desktop con `PanelGroup`, navegación por capítulos y mobile con sheet contextual. |
+| `frontend/src/componentes/numerologia/panel-contextual-numerologia.tsx` | Nuevo panel contextual reutilizable para numerología con vista default, lectura detallada por número/mes/etapa y bloque técnico colapsable. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de rediseño. |
+
+### Tests
+0 tests nuevos/modificados. En una primera pasada, `npm run lint -- "src/app/(app)/numerologia/page.tsx" src/componentes/numerologia/panel-contextual-numerologia.tsx` detectó una advertencia real por prop sin usar; fue corregida. Luego ESLint quedó colgado en este entorno, por lo que la validación final se cerró con una comprobación de sintaxis vía `typescript.transpileModule` sobre ambos archivos, sin diagnósticos.
+
+### Como funciona
+1. En desktop, Numerología ahora usa el mismo modelo premium de lectura asistida que venías pidiendo: contenido central narrativo y panel derecho persistente para toda entidad clickeable.
+2. Las piezas técnicas disponibles se reorganizaron en capítulos más claros y más cercanos a la lógica del libro: sendero/destino/esencia/imagen, ritmo actual y etapas.
+3. Al tocar un número, un mes o una etapa, el panel contextual siempre separa la lectura en dos capas: `Qué es` y `Qué significa para vos`, con un bloque técnico colapsable para la fórmula o criterio de cálculo.
+
+## Sesion: Diseño Humano premium con cabina contextual
+**Fecha:** 2026-03-30 ~17:20 (ARG)
+
+### Que se hizo
+Se rediseñó la pantalla de Diseño Humano para que deje de sentirse como un onepager de bloques sueltos y pase a funcionar como una cabina editorial interactiva. Ahora el Body Graph actúa como mapa de navegación y toda la información técnica relevante abre una explicación breve con significado específico para el usuario en un panel derecho persistente.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/app/(app)/diseno-humano/page.tsx` | Reescritura visual y estructural completa: hero editorial premium, navegación por capítulos, cards de esencia clickeables, workspace técnico con Body Graph, listas de centros/canales/activaciones y panel contextual persistente en desktop con sheet en mobile. |
+| `frontend/src/componentes/visualizaciones/body-graph.tsx` | Se volvió interactivo el gráfico: soporte para selección de centros y canales, resaltado contextual, mejor lectura visual y accesibilidad básica por teclado. |
+| `frontend/src/componentes/diseno-humano/panel-contextual.tsx` | Nuevo panel contextual reutilizable para Diseño Humano con bloques `Qué es`, `Qué significa para vos`, `Claves de lectura` y datos técnicos colapsables. |
+| `frontend/src/lib/utilidades/interpretaciones-diseno-humano.ts` | Nueva capa semántica para construir titulares editoriales, descripciones contextuales y lecturas específicas por tipo, autoridad, definición, centros, canales, cruz y activaciones. |
+| `frontend/src/tests/paginas/diseno-humano.test.tsx` | Se ajustaron las aserciones al nuevo layout premium para aceptar valores repetidos en más de un bloque sin perder cobertura del flujo principal. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de rediseño e integración. |
+
+### Tests
+4 tests modificados/pasando en `src/tests/paginas/diseno-humano.test.tsx`. También se ejecutó `eslint` sobre `src/app/(app)/diseno-humano/page.tsx`, `src/componentes/visualizaciones/body-graph.tsx`, `src/componentes/diseno-humano/panel-contextual.tsx`, `src/lib/utilidades/interpretaciones-diseno-humano.ts` y `src/tests/paginas/diseno-humano.test.tsx` sin errores.
+
+### Como funciona
+1. La entrada principal ahora es un hero editorial que resume la tesis del diseño del usuario y permite saltar rápidamente a `Esencia`, `Mapa` o `Propósito`.
+2. En la zona central, el usuario puede abrir tipo, autoridad, perfil y definición, o explorar el Body Graph por centros, canales y activaciones; cada selección actualiza el mismo estado compartido.
+3. En desktop, el panel contextual derecho queda siempre disponible para explicar la pieza seleccionada en dos capas separadas: definición breve y traducción personalizada según los datos del usuario; en mobile, esa misma lectura aparece como sheet inferior.
+4. El gráfico dejó de ser decorativo: al tocar un centro o un canal se iluminan las conexiones relacionadas y se dispara la interpretación correspondiente, manteniendo una experiencia más completa y menos lineal.
+
+## Sesion: Supresión de mismatch de hidratación en RootLayout
+**Fecha:** 2026-03-30 ~17:32 (ARG)
+
+### Que se hizo
+Se corrigió el warning de hidratación que aparecía en desarrollo cuando un atributo externo era inyectado sobre `<body>` antes de que React hidratara la app. El ajuste se hizo en el layout raíz para ignorar esa diferencia puntual sin modificar el render real de la interfaz.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/app/layout.tsx` | Se agregó `suppressHydrationWarning` al `<body>` para tolerar atributos agregados por extensiones o scripts externos antes de la hidratación. |
+| `context/resumen-de-cambios.md` | Se documentó esta corrección de hidratación. |
+
+### Tests
+0 tests nuevos/modificados. `eslint` ejecutado sobre `src/app/layout.tsx` sin errores.
+
+### Como funciona
+1. El `RootLayout` sigue renderizando exactamente la misma estructura y los mismos proveedores globales.
+2. La diferencia es que ahora React no emite warning si el navegador o una extensión modifica atributos del `<body>` antes de hidratar.
+3. Esto evita ruido de consola por mutaciones externas como `cz-shortcut-listen`, sin tocar la lógica de negocio ni el layout visual.
+
+## Sesion: Fix runtime en BodyGraph interactivo
+**Fecha:** 2026-03-30 ~17:34 (ARG)
+
+### Que se hizo
+Se corrigió un error de runtime en el `BodyGraph` interactivo de Diseño Humano causado por una referencia a variable mal nombrada durante el render de canales definidos. Además se agregó una prueba directa del componente para cubrir este camino real de render.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/componentes/visualizaciones/body-graph.tsx` | Se corrigió la referencia `relacionada` por `relacionado` en el cálculo visual de ancho de línea para canales activos. |
+| `frontend/src/tests/componentes/body-graph.test.tsx` | Nuevo test de componente que renderiza el `BodyGraph` real con un canal definido para detectar errores de runtime en el SVG interactivo. |
+| `context/resumen-de-cambios.md` | Se documentó esta corrección puntual. |
+
+### Tests
+1 test nuevo, 5 tests pasando entre `src/tests/componentes/body-graph.test.tsx` y `src/tests/paginas/diseno-humano.test.tsx`. `eslint` ejecutado sobre `src/componentes/visualizaciones/body-graph.tsx`, `src/tests/componentes/body-graph.test.tsx` y `src/tests/paginas/diseno-humano.test.tsx` sin errores.
+
+### Como funciona
+1. El `BodyGraph` vuelve a renderizar correctamente cuando hay canales definidos y estados seleccionados.
+2. La capa interactiva de líneas ya no rompe el render del SVG al calcular el grosor del canal resaltado.
+3. La nueva prueba asegura que este camino de render real quede cubierto aunque la página principal siga mockeando el gráfico en sus tests.
+
+## Sesion: Carta Astral premium con panel contextual y sheet mobile
+**Fecha:** 2026-03-30 ~16:57 (ARG)
+
+### Que se hizo
+Se rediseñó la experiencia de Carta Astral para que deje de sentirse como una página apilada y pase a operar como una cabina de lectura premium: hero editorial alrededor de la rueda natal, módulos con mejor jerarquía visual, panel contextual más claro y una hoja inferior contextual en mobile.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Reescritura del shell visual: fondo con capas, estados de carga y formulario premium, layout desktop integrado con `PanelGroup`, botón de nuevo cálculo y sheet contextual en mobile al tocar una entidad. |
+| `frontend/src/componentes/carta-natal/estilos.ts` | Nuevo archivo de tokens visuales compartidos para unificar superficies claras/oscuras y etiquetas de sección dentro de Carta Astral. |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Rediseño completo del hero con rueda protagonista, tesis editorial, chips de Sol/Luna/Ascendente, quick facts y CTA para recalcular. |
+| `frontend/src/componentes/carta-natal/seccion-triada.tsx` | La tríada principal pasó a cards más editoriales, con mejor narrativa y metadatos más legibles. |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | La distribución energética se reorganizó en un bloque con lectura rápida + paneles separados para elementos y modalidades. |
+| `frontend/src/componentes/carta-natal/planetas-narrativo.tsx` | Se actualizaron las cards de planetas para que tengan más jerarquía, mejor señal visual del seleccionado y menos aspecto de lista blanca genérica. |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Se rediseñaron los grupos de aspectos con mejor ritmo visual, badges más consistentes y estados más claros para orbe/aplicativo. |
+| `frontend/src/componentes/carta-natal/casas-grid.tsx` | La grilla de casas pasó a un sistema de tarjetas más amplio, con mejor lectura del signo y diferenciación de casas angulares. |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Reescritura del panel derecho: ahora separa explícitamente `Qué es`, `En tu carta` y `Qué observar`, con versión default más útil y bloque técnico sin `effect` de reseteo. |
+| `frontend/src/lib/utilidades/interpretaciones-natal.ts` | Se exportaron constantes necesarias para el nuevo panel y se reemplazó el badge ámbar de conjunción por un tono dorado permitido. |
+| `frontend/src/tests/paginas/carta-natal.test.tsx` | Limpieza menor del mock para eliminar warnings de lint y acompañar la nueva validación del módulo. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de rediseño. |
+
+### Tests
+0 tests nuevos/modificados a nivel funcional. `./node_modules/.bin/eslint "src/app/(app)/carta-natal/page.tsx" "src/componentes/carta-natal/panel-contextual.tsx" "src/componentes/carta-natal/hero-carta.tsx" "src/componentes/carta-natal/seccion-triada.tsx" "src/componentes/carta-natal/distribucion-energetica.tsx" "src/componentes/carta-natal/planetas-narrativo.tsx" "src/componentes/carta-natal/aspectos-narrativo.tsx" "src/componentes/carta-natal/casas-grid.tsx" "src/componentes/carta-natal/estilos.ts" "src/lib/utilidades/interpretaciones-natal.ts" "src/tests/paginas/carta-natal.test.tsx"` ejecutado sin errores ni warnings. Vitest no se ejecutó en esta sesión por la incompatibilidad conocida del entorno actual con `Node v18.17.1`.
+
+### Como funciona
+1. En desktop, Carta Astral conserva el patrón de panel central + panel derecho, pero ahora todo el shell se integra mejor: hero editorial, módulos más coherentes y panel contextual oscuro que explica cualquier planeta, aspecto, casa o punto de la tríada en tres capas breves.
+2. En mobile, tocar una entidad ya no deja la selección “invisible”: se abre una hoja inferior contextual con la misma lectura del panel derecho, así que la premisa de “click técnico → explicación breve + significado personal” también existe fuera de desktop.
+3. La rueda natal deja de ser una ilustración aislada y pasa a funcionar como entrada principal de navegación, acompañada por una narrativa más clara del conjunto de la carta y por bloques secundarios que compiten menos entre sí.
+
+## Sesion: Corrección premium ciruela de Carta Astral y adopción de ui-ciruela
+**Fecha:** 2026-03-30 ~17:29 (ARG)
+
+### Que se hizo
+Se corrigió la dirección visual de Carta Astral para alinearla con el criterio premium ciruela: hero más compacto, menos gigantismo tipográfico, menos ruido por bloque y la rueda natal dejó de dominar la pantalla. Además, `ui-ciruela` quedó instalada como referencia visual oficial del proyecto y `ux-designer` pasó a estado legacy.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Se reordenó la experiencia de Carta Astral: la rueda ya no vive en el lienzo principal, ahora se abre sólo desde un botón en un modal; también se redujo la masa visual general y se ajustó el layout central/panel derecho. |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Reescritura del hero para sacar el nombre gigante del usuario, bajar escala tipográfica, mover la rueda fuera del hero y dejar una entrada más sobria y editorial. |
+| `frontend/src/componentes/carta-natal/seccion-triada.tsx` | Se bajó la jerarquía visual del bloque y se redujo el tono explicativo para que la tríada no compita como mini-hero adicional. |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Se redujo escala y ruido textual del bloque, manteniendo sólo el resumen necesario. |
+| `frontend/src/componentes/carta-natal/planetas-narrativo.tsx` | Se achicó la jerarquía de encabezado y la escala interna de cards de planeta. |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Se simplificó el encabezado del módulo para que no repita el patrón hero de otras secciones. |
+| `frontend/src/componentes/carta-natal/casas-grid.tsx` | Se bajó la escala del bloque y se limpió la presentación general. |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Se redujo el peso tipográfico del panel derecho para que acompañe en vez de competir. |
+| `frontend/src/tests/paginas/carta-natal.test.tsx` | Se actualizaron aserciones al nuevo hero y se agregó cobertura para la apertura del modal de rueda natal. |
+| `.claude/skills/ui-ciruela/SKILL.md` | Nuevo skill para Claude con `ui-ciruela` como referente visual oficial del producto. |
+| `.agents/skills/ui-ciruela/SKILL.md` | Alias equivalente del skill para el flujo de agentes del proyecto. |
+| `.claude/skills/ux-designer/SKILL.md` | Se marcó como referencia legacy para ASTRA, indicando que `ui-ciruela` es la guía actual. |
+| `.agents/skills/ux-designer/SKILL.md` | Se agregó la misma nota de referencia legacy para el flujo de agentes. |
+| `AGENTS.md` | Se actualizó la convención del proyecto para usar `ui-ciruela` como skill visual principal. |
+| `claude.md` | Se actualizó la guía local de Claude para usar `ui-ciruela` como referencia visual principal. |
+| `context/resumen-de-cambios.md` | Se documentó esta corrección visual y el cambio de referencia de skill. |
+
+### Tests
+1 test nuevo/modificado en `frontend/src/tests/paginas/carta-natal.test.tsx`. `./node_modules/.bin/eslint "src/app/(app)/carta-natal/page.tsx" "src/componentes/carta-natal/hero-carta.tsx" "src/componentes/carta-natal/panel-contextual.tsx" "src/componentes/carta-natal/seccion-triada.tsx" "src/componentes/carta-natal/distribucion-energetica.tsx" "src/componentes/carta-natal/planetas-narrativo.tsx" "src/componentes/carta-natal/aspectos-narrativo.tsx" "src/componentes/carta-natal/casas-grid.tsx" "src/tests/paginas/carta-natal.test.tsx"` ejecutado sin errores ni warnings. `vitest run "src/tests/paginas/carta-natal.test.tsx"` no pudo ejecutarse por la incompatibilidad conocida del entorno actual con `Node v18.17.1` (`node:util.styleText`).
+
+### Como funciona
+1. La entrada principal a `/carta-natal` ya no pone la rueda como protagonista: la pantalla arranca desde una lectura editorial compacta y deja la rueda como artefacto secundario, accesible sólo con el botón `Ver rueda natal`.
+2. Al tocar ese botón, se abre un modal dedicado con la rueda completa en modo consulta, sin navegación interactiva sobre el gráfico.
+3. El resto de la pantalla mantiene la exploración por tríada, planetas, aspectos y casas, pero con una escala más contenida y menos bloques que compiten entre sí.
+4. A nivel de proyecto, `ui-ciruela` queda instalado como skill visual oficial tanto en `.claude/skills` como en `.agents/skills`, y la documentación local deja a `ux-designer` como referencia legacy para ASTRA.
+
+## Sesion: Reparación de Numerología tras rediseño premium
+**Fecha:** 2026-03-30 ~17:27 (ARG)
+
+### Que se hizo
+Se corrigió la rotura de la sección de Numerología causada por nulabilidad mal resuelta en la página nueva. Además, se actualizó el test de página para que refleje la UI premium actual en lugar de seguir validando la versión anterior.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/app/(app)/numerologia/page.tsx` | Se normalizó el uso de la carta activa con una referencia tipada no nula y fallback explícito para `meses_personales`, evitando errores de TypeScript en handlers, render del historial mensual y props del panel contextual. |
+| `frontend/src/tests/paginas/numerologia.test.tsx` | Se reescribieron las aserciones para la experiencia premium actual, se mockeó `usarEsMobile` para estabilizar el render desktop en test y se eliminaron expectativas obsoletas de la interfaz anterior. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de reparación. |
+
+### Tests
+Se ejecutó `./node_modules/.bin/tsc --noEmit --pretty false` en `frontend`. Los errores de `src/app/(app)/numerologia/page.tsx` desaparecieron; quedaron solo errores previos no relacionados en `src/componentes/visualizaciones/body-graph.tsx` y `src/tests/componentes/sidebar-descarga.test.tsx`. Además, usando `Node 20` se ejecutó `npm test -- src/tests/paginas/numerologia.test.tsx` con **5 tests pasando**. El `build` global del frontend sigue fallando por errores previos de `body-graph.tsx`, no por Numerología.
+
+### Como funciona
+1. Después del guard clause que separa formulario/carga de resultados, la página ahora fija una referencia tipada a la carta numerológica activa y usa esa misma fuente en todos los handlers y paneles.
+2. Los meses personales se normalizan a un array vacío cuando la API no los trae, con lo que la biblioteca del año deja de depender de un optional inseguro.
+3. El test ya valida la narrativa nueva de la pantalla, el panel contextual por defecto y el flujo de “Nuevo cálculo”, evitando falsos negativos por seguir apuntando a la UI vieja.
+
+## Sesion: Blindaje de Numerología ante cartas persistidas incompletas
+**Fecha:** 2026-03-30 ~17:36 (ARG)
+
+### Que se hizo
+Se corrigió el crash de runtime en Numerología cuando una carta guardada llegaba sin `etapas_de_la_vida` u otros arrays auxiliares. La página ahora normaliza esos payloads antes de renderizar y muestra un estado útil cuando faltan los pináculos en vez de romper la ruta.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/app/(app)/numerologia/page.tsx` | Se agregó una normalización defensiva de la carta numerológica, se blindó `obtenerEtapaActiva` con `Array.isArray` y se incorporó un fallback visual para cartas persistidas sin etapas de vida. |
+| `frontend/src/componentes/numerologia/panel-contextual-numerologia.tsx` | Se protegió la búsqueda de etapa activa dentro del panel contextual para evitar accesos inseguros a arrays ausentes y mantener estable el panel por defecto. |
+| `frontend/src/tests/paginas/numerologia.test.tsx` | Se agregó una prueba de regresión para cartas incompletas y se eliminó una expectativa vieja que ya no coincidía con el nuevo fallback visual. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de corrección. |
+
+### Tests
+`eslint` ejecutado sin errores sobre `frontend/src/app/(app)/numerologia/page.tsx`, `frontend/src/componentes/numerologia/panel-contextual-numerologia.tsx` y `frontend/src/tests/paginas/numerologia.test.tsx`. `npm test -- src/tests/paginas/numerologia.test.tsx` no pudo correr en este entorno porque `Vitest 4 / rolldown` requiere una versión de Node con `node:util.styleText`, y la sesión actual sigue en `Node v18.17.1`. También se ejecutó `./node_modules/.bin/tsc --noEmit --pretty false`; el chequeo sigue fallando por errores previos no relacionados en `src/componentes/visualizaciones/body-graph.tsx`, `src/tests/componentes/body-graph.test.tsx` y `src/tests/componentes/sidebar-descarga.test.tsx`.
+
+### Como funciona
+1. Cuando la página recibe la carta desde `mis_calculos` o desde un cálculo manual, primero pasa por una normalización que garantiza defaults seguros para números centrales, meses personales, etapas de vida y números maestros.
+2. La detección de etapa activa ya no asume que existe un array válido: tanto la página como el panel contextual verifican la estructura antes de llamar a `.find()`.
+3. Si la carta persistida no trae pináculos, la ruta sigue mostrando el hero, el núcleo y el ritmo actual, y en el capítulo de etapas aparece un bloque claro que invita a recalcular para regenerar esa parte faltante.
+
+## Sesion: Blindaje runtime de Numerología para datos persistidos incompletos
+**Fecha:** 2026-03-30 ~17:36 (ARG)
+
+### Que se hizo
+Se corrigió un runtime `Cannot read properties of undefined (reading 'find')` en Numerología cuando la carta persistida venía sin `etapas_de_la_vida`. La ruta ahora normaliza datos incompletos antes de renderizar y el panel contextual también soporta faltantes sin romper.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/app/(app)/numerologia/page.tsx` | Se blindó `obtenerEtapaActiva`, se normalizaron arrays opcionales heredados (`meses_personales`, `etapas_de_la_vida`, `numeros_maestros_presentes`) y se mantuvo el hero/acciones funcionando aunque falten etapas en datos viejos. |
+| `frontend/src/componentes/numerologia/panel-contextual-numerologia.tsx` | La vista default ahora tolera ausencia de etapas y muestra fallbacks suaves en los resúmenes en lugar de romper por accesos directos. |
+| `frontend/src/lib/tipos/numerologia.ts` | Se marcaron como opcionales los arrays que en datos persistidos antiguos pueden faltar. |
+| `frontend/src/tests/paginas/numerologia.test.tsx` | Se agregó un test de regresión para cartas sin `etapas_de_la_vida` y se mantuvo la validación de la experiencia premium. |
+| `context/resumen-de-cambios.md` | Se documentó esta reparación de runtime. |
+
+### Tests
+Usando `Node 20`, se ejecutó `npm test -- src/tests/paginas/numerologia.test.tsx` con **6 tests pasando**. `tsc --noEmit` ya no reporta errores en Numerología; los únicos errores restantes del frontend siguen siendo ajenos a esta ruta (`body-graph.tsx`, `body-graph.test.tsx` y `sidebar-descarga.test.tsx`).
+
+### Como funciona
+1. Si la numerología persistida viene de una versión vieja y no trae etapas o meses personales, la página la normaliza antes de usarla.
+2. El cálculo de etapa activa ya no asume `find()` sobre un array existente; primero valida que realmente haya una colección.
+3. El panel contextual deja de depender de campos obligatorios duros y muestra lectura parcial segura cuando falta parte del payload histórico.

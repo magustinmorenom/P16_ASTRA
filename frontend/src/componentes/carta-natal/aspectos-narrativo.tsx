@@ -1,5 +1,6 @@
 "use client";
 
+import { ETIQUETA_CARTA, SUPERFICIE_CLARA_CARTA } from "@/componentes/carta-natal/estilos";
 import {
   COLORES_PLANETA,
   BADGE_ASPECTO,
@@ -19,22 +20,36 @@ export function AspectosNarrativo({ aspectos, onSeleccionar }: AspectosNarrativo
 
   return (
     <section className="mb-8">
-      <h2 className="text-[15px] font-semibold text-[#2C2926] mb-3">Aspectos Planetarios</h2>
+      <div className="mb-3">
+        <div>
+          <p className={`${ETIQUETA_CARTA} text-[#7C4DFF]`}>Relaciones internas</p>
+          <h2 className="mt-1.5 text-[18px] font-semibold tracking-tight text-[#2C2926]">
+            Aspectos planetarios
+          </h2>
+        </div>
+      </div>
+
       <div className="space-y-5">
         {grupos.map((grupo) => {
           const badge = BADGE_ASPECTO[grupo.tipo];
           return (
-            <div key={grupo.tipo}>
-              {/* Encabezado de grupo */}
-              <div className="flex items-center gap-2 mb-2">
-                {badge && (
-                  <span className={`text-[11px] font-semibold rounded-full px-2.5 py-0.5 ${badge.bg} ${badge.text}`}>
-                    {badge.label}
+            <div key={grupo.tipo} className={`${SUPERFICIE_CLARA_CARTA} p-4`}>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  {badge && (
+                    <span className={`text-[11px] font-semibold rounded-full px-2.5 py-1 ${badge.bg} ${badge.text}`}>
+                      {badge.label}
+                    </span>
+                  )}
+                  <span className="text-[11px] text-[#8A8580]">
+                    {grupo.aspectos.length} aspecto{grupo.aspectos.length === 1 ? "" : "s"}
                   </span>
-                )}
-                <span className="text-[11px] text-[#B3ADA7]">{grupo.aspectos.length} aspectos</span>
+                </div>
+                <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#B3ADA7]">
+                  Grupo
+                </span>
               </div>
-              {/* Lista */}
+
               <div className="space-y-1.5">
                 {grupo.aspectos.map((aspecto, idx) => {
                   const clave = normalizarClave(aspecto.tipo);
@@ -47,28 +62,41 @@ export function AspectosNarrativo({ aspectos, onSeleccionar }: AspectosNarrativo
                     <button
                       key={`${aspecto.planeta1}-${aspecto.planeta2}-${idx}`}
                       onClick={() => onSeleccionar(aspecto)}
-                      className={`
-                        w-full text-left bg-white rounded-xl px-4 py-3 flex items-center justify-between
-                        border transition-all cursor-pointer hover:border-[#E8E4E0] hover:shadow-sm
-                        ${orbeEstrecho ? "border-[#E8E4E0]/80" : "border-transparent"}
-                      `}
+                      className={`w-full rounded-2xl border px-4 py-3 text-left transition-all hover:-translate-y-0.5 ${
+                        orbeEstrecho
+                          ? "border-[#D9CCF5] bg-[linear-gradient(180deg,#F8F4FF_0%,#FFFFFF_100%)] shadow-[0_16px_36px_rgba(77,29,149,0.08)]"
+                          : "border-[#ECE4FA] bg-white/88 hover:border-[#D7C8F4]"
+                      }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color1 }} />
-                        <span className="text-[13px] font-medium text-[#2C2926]">{aspecto.planeta1}</span>
-                        <span className="text-[14px] text-[#B3ADA7]">{simbolo}</span>
-                        <span className="text-[13px] font-medium text-[#2C2926]">{aspecto.planeta2}</span>
-                        <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color2 }} />
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0 ml-2">
-                        <span className="text-[11px] text-[#8A8580]">
-                          {aspecto.orbe.toFixed(1)}°
-                        </span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                          aspecto.aplicativo ? "bg-emerald-50 text-emerald-600" : "bg-gray-50 text-gray-500"
-                        }`}>
-                          {aspecto.aplicativo ? "Ap" : "Sep"}
-                        </span>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color1 }} />
+                            <span className="text-[13px] font-medium text-[#2C2926]">{aspecto.planeta1}</span>
+                            <span className="text-[14px] text-[#B3ADA7]">{simbolo}</span>
+                            <span className="text-[13px] font-medium text-[#2C2926]">{aspecto.planeta2}</span>
+                            <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color2 }} />
+                          </div>
+                          <p className="mt-2 text-[12px] text-[#6F6A65]">
+                            {orbeEstrecho ? "Orbe estrecho" : "Influencia presente"} ·{" "}
+                            {aspecto.aplicativo ? "en crecimiento" : "ya desplegada"}
+                          </p>
+                        </div>
+
+                        <div className="ml-2 flex shrink-0 flex-col items-end gap-2">
+                          <span className="text-[11px] text-[#8A8580]">
+                            {aspecto.orbe.toFixed(1)}°
+                          </span>
+                          <span
+                            className={`rounded-full px-2 py-1 text-[10px] ${
+                              aspecto.aplicativo
+                                ? "bg-emerald-50 text-emerald-600"
+                                : "bg-[#F3F0F7] text-[#6F6A65]"
+                            }`}
+                          >
+                            {aspecto.aplicativo ? "Aplicativo" : "Separativo"}
+                          </span>
+                        </div>
                       </div>
                     </button>
                   );

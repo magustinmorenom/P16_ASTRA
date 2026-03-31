@@ -24,8 +24,8 @@ vi.mock("@/lib/hooks", () => ({
 }));
 
 vi.mock("@/lib/utilidades/formatear-grado", () => ({
-  formatearGrado: (g: number) => `${g}°`,
-  obtenerSignoDesdeGrado: (g: number) => "Aries",
+  formatearGrado: (...args: [number]) => `${args[0]}°`,
+  obtenerSignoDesdeGrado: () => "Aries",
   SIGNOS: ["Aries", "Tauro", "Géminis", "Cáncer", "Leo", "Virgo", "Libra", "Escorpio", "Sagitario", "Capricornio", "Acuario", "Piscis"],
 }));
 
@@ -64,8 +64,6 @@ const CARTA_NATAL_MOCK = {
 };
 
 describe("PaginaCartaNatal", () => {
-  const user = userEvent.setup();
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -78,11 +76,27 @@ describe("PaginaCartaNatal", () => {
 
     renderConProveedores(<PaginaCartaNatal />);
 
-    expect(screen.getByText("Carta Natal de Test")).toBeInTheDocument();
+    expect(screen.getAllByText("Carta Astral").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("button", { name: /ver rueda natal/i })).toBeInTheDocument();
     // Sol y Luna aparecen múltiples veces (planeta + aspecto), verificamos que existan
     expect(screen.getAllByText("Sol").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Luna").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByTestId("formulario-nacimiento")).not.toBeInTheDocument();
+  });
+
+  it("abre la rueda en un modal bajo demanda", async () => {
+    mockUsarMisCalculos.mockReturnValue({
+      data: { natal: CARTA_NATAL_MOCK, diseno_humano: null, numerologia: null, retorno_solar: null },
+      isLoading: false,
+    });
+
+    const user = userEvent.setup();
+    renderConProveedores(<PaginaCartaNatal />);
+
+    await user.click(screen.getByRole("button", { name: /ver rueda natal/i }));
+
+    expect(screen.getByText("Mapa completo de la carta")).toBeInTheDocument();
+    expect(screen.getByTestId("rueda-zodiacal")).toBeInTheDocument();
   });
 
   it("muestra formulario cuando no hay datos persistidos", () => {

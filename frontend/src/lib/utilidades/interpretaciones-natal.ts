@@ -18,7 +18,7 @@ export const SIMBOLOS_ASPECTO: Record<string, string> = {
 };
 
 export const BADGE_ASPECTO: Record<string, { bg: string; text: string; label: string }> = {
-  conjuncion: { bg: "bg-amber-100", text: "text-amber-700", label: "Conjunción" },
+  conjuncion: { bg: "bg-[#F5E9C9]", text: "text-[#8A5A00]", label: "Conjunción" },
   trigono: { bg: "bg-green-100", text: "text-green-700", label: "Trígono" },
   sextil: { bg: "bg-sky-100", text: "text-sky-700", label: "Sextil" },
   cuadratura: { bg: "bg-red-100", text: "text-red-600", label: "Cuadratura" },
@@ -80,7 +80,7 @@ export function normalizarClave(s: string): string {
 // Arquetipos y temas (base para interpretaciones)
 // ---------------------------------------------------------------------------
 
-const ARQUETIPO_PLANETA: Record<string, string> = {
+export const ARQUETIPO_PLANETA: Record<string, string> = {
   Sol: "tu identidad esencial y propósito vital",
   Luna: "tu mundo emocional y necesidades internas",
   Mercurio: "tu forma de pensar y comunicarte",
@@ -108,7 +108,7 @@ const ESENCIA_MODALIDAD: Record<string, string> = {
   Mutable: "adaptándose, fluyendo y encontrando versatilidad",
 };
 
-const TEMA_CASA: Record<number, string> = {
+export const TEMA_CASA: Record<number, string> = {
   1: "la identidad personal y la forma de presentarse al mundo",
   2: "los recursos, valores propios y la relación con lo material",
   3: "la comunicación, el aprendizaje y el entorno cercano",
@@ -131,7 +131,7 @@ const EFECTO_DIGNIDAD: Record<string, string> = {
   peregrino: "Es peregrino — opera sin ventajas ni desventajas especiales, con tono neutro.",
 };
 
-const NARRATIVA_ASPECTO: Record<string, string> = {
+export const NARRATIVA_ASPECTO: Record<string, string> = {
   conjuncion: "Estas energías se fusionan intensamente, potenciándose y amplificándose mutuamente.",
   trigono: "Fluyen con armonía natural, generando facilidad y talentos innatos.",
   sextil: "Se complementan con oportunidades que requieren un paso consciente para activarse.",

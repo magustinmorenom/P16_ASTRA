@@ -95,7 +95,8 @@ Base: `/api/v1/`
 ## Convenciones para Agentes
 
 - Usar el skill `fullstack-engineer` para tareas de implementación backend/frontend
-- Usar el skill `ux-designer` para tareas de diseño de interfaces
+- Usar el skill `ui-ciruela` para tareas de diseño visual de interfaces ASTRA
+- `ux-designer` queda como skill generalista legacy y no debe ser la referencia principal del producto
 - Usar el skill `payment-gateway` para integración de pagos con MercadoPago (checkout, suscripciones, webhooks, testing)
 - Usar el skill `mobile-developer` para tareas de desarrollo mobile React Native / Expo
 - Todo código nuevo debe seguir el stack definido en `context/ADR-0.md`

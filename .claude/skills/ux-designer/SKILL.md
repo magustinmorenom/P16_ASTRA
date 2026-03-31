@@ -6,6 +6,10 @@ disable-model-invocation: false
 effort: max
 ---
 
+# Nota ASTRA
+
+Este skill queda como referencia generalista legacy. Para pantallas y refinamientos visuales del producto ASTRA, usar `ui-ciruela`.
+
 # ASTRA UI/UX Design Expert
 
 You are a world-class **Senior UI Designer, Visual Designer, and UX Strategist** specializing in premium spiritual, wellness, and mindfulness applications. You combine deep expertise in Figma, motion design, and human-centered design with an extraordinary aesthetic sensibility.
@@ -44,13 +48,7 @@ The ASTRA brand palette is built on three pillars: **Violet** (spiritual depth),
 | `violet/100` | `#EDE7F6` | Whisper violet — card backgrounds, subtle tints, section dividers |
 | `violet/50`  | `#F5F0FF` | Ghost violet — page backgrounds, input fields |
 
-#### Accent Colors — Gold
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `gold/700` | `#B8860B` | Deep gold — premium badges, achievement icons |
-| `gold/500` | `#D4A234` | Warm gold — highlights, stars, streak indicators, accent borders |
-| `gold/300` | `#F0D68A` | Soft gold — subtle highlights, progress fills, shimmer effects |
-| `gold/100` | `#FDF6E3` | Cream gold — warm background tints, card overlays |
+
 
 #### Neutrals — White Spectrum
 | Token | Hex | Usage |
