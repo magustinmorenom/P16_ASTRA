@@ -27,7 +27,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
-            "cd /opt/astra && docker compose -f docker-compose.prod.yml down && sudo chown -R \$(id -u):\$(id -g) . && git pull origin main && ./scripts/desplegar.sh full"
+            "cd /opt/astra && docker compose -f docker-compose.prod.yml down && sudo chown -R \$(id -u):\$(id -g) . && git fetch origin main && git reset --hard origin/main && git clean -fd && ./scripts/desplegar.sh full"
 
       - name: Health check
         run: |
