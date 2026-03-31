@@ -1430,6 +1430,26 @@ Se corrigió el crash de runtime en Numerología cuando una carta guardada llega
 2. La detección de etapa activa ya no asume que existe un array válido: tanto la página como el panel contextual verifican la estructura antes de llamar a `.find()`.
 3. Si la carta persistida no trae pináculos, la ruta sigue mostrando el hero, el núcleo y el ritmo actual, y en el capítulo de etapas aparece un bloque claro que invita a recalcular para regenerar esa parte faltante.
 
+## Sesion: Corrección de z-index en menú de avatar del header
+**Fecha:** 2026-03-31 ~08:22 (ARG)
+
+### Que se hizo
+Se corrigió el menú desplegable del avatar en el header desktop para que no quede recortado ni por detrás del contenedor principal al abrir las opciones de suscripción y cuenta.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/componentes/layouts/navbar.tsx` | Se cambió el `navbar` a `overflow-visible` y se elevaron las capas (`z-index`) del trigger y del dropdown del avatar para que el menú flote por encima del layout. |
+| `context/resumen-de-cambios.md` | Se documentó esta corrección visual. |
+
+### Tests
+`eslint` ejecutado sin errores sobre `frontend/src/componentes/layouts/navbar.tsx`.
+
+### Como funciona
+1. El `nav` superior ya no recorta el contenido que sobresale verticalmente.
+2. El contenedor del avatar y su dropdown usan un nivel de apilado mayor que el resto del header y del contenido principal.
+3. Al abrir el menú, las opciones de perfil, suscripción y cierre de sesión se muestran por delante del layout en vez de quedar ocultas detrás del container inferior.
+
 ## Sesion: Blindaje runtime de Numerología para datos persistidos incompletos
 **Fecha:** 2026-03-30 ~17:36 (ARG)
 
@@ -1452,3 +1472,264 @@ Usando `Node 20`, se ejecutó `npm test -- src/tests/paginas/numerologia.test.ts
 1. Si la numerología persistida viene de una versión vieja y no trae etapas o meses personales, la página la normaliza antes de usarla.
 2. El cálculo de etapa activa ya no asume `find()` sobre un array existente; primero valida que realmente haya una colección.
 3. El panel contextual deja de depender de campos obligatorios duros y muestra lectura parcial segura cuando falta parte del payload histórico.
+
+## Sesion: Unificación premium ciruela de Carta Astral
+**Fecha:** 2026-03-31 ~08:38 (ARG)
+
+### Que se hizo
+Se rediseñó la sección de Carta Astral para alinearla con el lenguaje visual premium de Podcasts: fondo ciruela continuo, hero más corto y editorial, superficies oscuras consistentes y eliminación de acentos beige/dorado en la lectura principal. También se ajustaron los tests de página para el layout responsive actual.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción de cambios |
+|---------|------------------------|
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Se reemplazó el canvas claro por un fondo ciruela continuo, se oscurecieron shells y paneles, se rehízo el estado inicial con tile de ícono premium y se eliminaron residuos visuales beige/dorados del layout principal. |
+| `frontend/src/componentes/carta-natal/estilos.ts` | Se redefinieron las superficies base de Carta Astral para usar glass oscuro premium en lugar de tarjetas claras. |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Se simplificó el hero a una sola columna, se quitó la tarjeta clara lateral y la frase decorativa, y se adoptó el tile con degradé violeta/lila del sistema premium. |
+| `frontend/src/componentes/carta-natal/seccion-triada.tsx` | La tríada pasó a cards oscuras integradas con tiles de signo en degradé y chips consistentes con el nuevo sistema visual. |
+| `frontend/src/componentes/carta-natal/planetas-narrativo.tsx` | Se migraron las tarjetas de planetas a superficies oscuras, con estados seleccionados más claros y sin badges crema/dorados. |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Se reestilizaron los grupos y filas de aspectos con contraste alto sobre fondo oscuro y badges de estado acordes al sistema premium. |
+| `frontend/src/componentes/carta-natal/casas-grid.tsx` | Las 12 casas se llevaron al mismo idioma material oscuro, con tiles de signo lilas y chips sin fondos blancos. |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Se adaptaron barras, leyendas y tarjetas de lectura energética al esquema oscuro premium. |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Se reemplazaron los acentos dorados restantes del panel contextual por violetas/lilas para mantener coherencia con la pantalla. |
+| `frontend/src/lib/utilidades/interpretaciones-natal.ts` | Se actualizaron las paletas de colores de planetas, aspectos y dignidades para remover tonos marrones/beige y unificar la lectura cromática. |
+| `frontend/src/tests/paginas/carta-natal.test.tsx` | Se mockeó `react-resizable-panels` para jsdom y se adaptaron las expectativas al render responsive actual con CTA duplicado entre mobile y desktop. |
+| `context/resumen-de-cambios.md` | Se documentó esta sesión de rediseño y validación. |
+
+### Tests
+Usando `Node 20`, se ejecutó `npm run lint -- "src/app/(app)/carta-natal/page.tsx" "src/componentes/carta-natal/estilos.ts" "src/componentes/carta-natal/hero-carta.tsx" "src/componentes/carta-natal/seccion-triada.tsx" "src/componentes/carta-natal/planetas-narrativo.tsx" "src/componentes/carta-natal/aspectos-narrativo.tsx" "src/componentes/carta-natal/casas-grid.tsx" "src/componentes/carta-natal/distribucion-energetica.tsx" "src/componentes/carta-natal/panel-contextual.tsx" "src/lib/utilidades/interpretaciones-natal.ts" "src/tests/paginas/carta-natal.test.tsx"` sin errores. También se ejecutó `npm test -- src/tests/paginas/carta-natal.test.tsx` con **4 tests pasando**.
+
+### Como funciona
+1. La pantalla de Carta Astral ahora vive sobre una sola atmósfera ciruela, sin cortar la experiencia con slabs claros ni acentos dorados que la empujen a otro sistema visual.
+2. El hero resume la lectura en pocas capas: badge, tile astral con degradé, título, una frase guía, chips de Sol/Luna/Ascendente y CTA principal para abrir la rueda bajo demanda.
+3. Los capítulos de tríada, planetas, aspectos, casas y distribución energética comparten el mismo material oscuro premium, por lo que la experiencia se siente más consistente, más editorial y más cercana a la cabina visual lograda en Podcasts.
+
+---
+
+## Sesion: Tránsitos planetarios persistidos — ventana deslizante 1 año
+**Fecha:** 2026-03-31 ~09:45 (ARG)
+
+### Que se hizo
+Se implementó un sistema de persistencia de tránsitos planetarios diarios con ventana deslizante: 365 días hacia adelante + retención de hasta 5 años hacia atrás. Incluye auto-reparación de ventana (no depende de cron), cálculo de aspectos entre planetas en tránsito, y fase lunar por día.
+
+### Backend — Archivos creados
+| Archivo | Descripción |
+|---------|-------------|
+| `app/modelos/transito_diario.py` | Modelo SQLAlchemy `TransitoDiario` con JSONB para planetas y aspectos |
+| `alembic/versions/010_transitos_diarios.py` | Migración: tabla + índice único fecha + GIN planetas/aspectos |
+| `app/datos/repositorio_transito.py` | Repositorio completo: CRUD, bulk insert ON CONFLICT, rango, purga, estados |
+| `app/servicios/servicio_transitos_persistidos.py` | Lógica de cálculo (planetas + aspectos + fase lunar), auto-reparación de ventana, purga |
+| `app/tareas/__init__.py` | Init del paquete de tareas programadas |
+| `app/tareas/tarea_transitos.py` | Tareas cron: diaria (avanzar ventana) + mensual (purga >5 años) |
+| `scripts/cargar_transitos.py` | Script de carga inicial (365 atrás + hoy + 365 adelante) |
+| `tests/servicios/test_transitos_persistidos.py` | 30 tests: cálculo, fases, aspectos, ventana, modelo, integración |
+
+### Backend — Archivos modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `app/modelos/__init__.py` | Registra `TransitoDiario` en exports |
+| `app/servicios/servicio_transitos.py` | Agrega métodos DB-first (`obtener_transitos_fecha_persistido`, `obtener_transitos_rango_persistido`) sin tocar métodos existentes |
+
+### Tests
+30 tests nuevos en `test_transitos_persistidos.py`, todos pasando. Suite completa: 535 passed, 2 failed (pre-existentes podcast/mercadopago), 1 skipped.
+
+### Como funciona
+1. La tabla `transitos_diarios` almacena una fila por día con: posiciones de 11 cuerpos celestes (JSONB), aspectos entre planetas del día, fase lunar, y estado (pasado/presente/futuro).
+2. `calcular_transito_para_fecha()` usa `ServicioEfemerides` (pyswisseph) a mediodía UTC para calcular planetas, luego calcula aspectos entre todos los pares y la fase lunar.
+3. `verificar_y_completar_ventana()` detecta cuántos días faltan para completar la ventana hoy+365 y los rellena automáticamente. Usa `INSERT ON CONFLICT DO NOTHING` para idempotencia.
+4. Los métodos `*_persistido` en `ServicioTransitos` buscan primero en DB; si no encuentran, calculan en vivo y persisten (fallback transparente).
+5. El script de carga inicial precalculó 731 días (365 atrás + hoy + 365 adelante) en 0.3 segundos.
+6. La auto-reparación garantiza que la ventana se completa al primer request tras N días sin cron (ideal para desarrollo local).
+
+---
+
+## Sesion: Scoring temporal + eventos notables + detector intent para el oráculo
+**Fecha:** 2026-03-31 ~11:10 (ARG)
+
+### Que se hizo
+Se implementó el sistema completo de consultas temporales del oráculo: detector de intent (regex), eventos notables pre-calculados (comparación día N vs N-1), scoring determinista de 3 capas (astrológico 55% + numerológico con resonancia de perfil 30% + eventos 15%), ranking por días o meses, y formateo de resumen compacto para inyección al prompt de Claude. El oráculo ahora puede responder "¿cuál es el mejor día/mes para X?" con datos reales.
+
+### Backend — Archivos creados
+| Archivo | Descripción |
+|---------|-------------|
+| `alembic/versions/011_eventos_transitos.py` | Migración: columna `eventos` JSONB en `transitos_diarios` |
+| `app/oraculo/detector_intent.py` | Detector de intent temporal: ventana, granularidad, área de vida (regex, sin IA) |
+| `app/oraculo/scorer_transitos.py` | Scorer determinista: astro (casas+planetas natales), numero (resonancia perfil), eventos; ranking días/meses; formateador de resumen |
+| `scripts/backfill_eventos.py` | Script de backfill de eventos para las 731 filas existentes |
+| `tests/servicios/test_detector_intent.py` | 20 tests: detección básica, ventanas, áreas |
+| `tests/servicios/test_scorer_transitos.py` | 16 tests: scores individuales, ponderación, ranking, formateador |
+| `tests/servicios/test_eventos_notables.py` | 8 tests: cambios de signo, retrogradaciones, aspectos exactos, fases |
+| `context/criterio-chatbot.md` | Documento de criterios completo del chatbot oráculo |
+
+### Backend — Archivos modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `app/modelos/transito_diario.py` | Agrega campo `eventos` JSONB nullable |
+| `app/servicios/servicio_transitos_persistidos.py` | Agrega función `calcular_eventos()` (comparación día N vs N-1) |
+| `app/servicios/servicio_oraculo.py` | Agrega `_generar_analisis_temporal()`, acepta `sesion` en `consultar()`, inyecta scoring al prompt |
+| `app/servicios/bot_telegram.py` | Pasa `sesion` al oráculo |
+| `app/rutas/v1/chat.py` | Pasa `sesion=db` al oráculo |
+| `app/oraculo/system_prompt.md` | Agrega sección de instrucciones para consultas temporales |
+| `claude.md` | Registra `criterio-chatbot.md` en tabla de archivos de contexto |
+
+### Tests
+44 tests nuevos (20 detector + 16 scorer + 8 eventos), todos pasando. Suite completa: 580 passed, 1 failed (pre-existente mercadopago), 1 skipped.
+
+### Como funciona
+1. Cuando el usuario pregunta "¿cuál es el mejor día para viajar en junio?", el detector de intent (regex puro) extrae: ventana=junio, área=viajes, granularidad=día.
+2. Se consultan los tránsitos de junio desde la DB (ya precalculados con planetas, aspectos y eventos notables).
+3. Para cada día se calcula un score ponderado: (a) score astrológico cruzando tránsitos con casas y planetas natales del usuario, (b) score numerológico con resonancia entre día personal y sendero de vida/expresión/alma, (c) score de eventos con bonus/penalty por fases lunares, retrogradaciones y cambios de signo.
+4. Se genera un ranking (top 5 días + días a evitar) formateado en ~400 tokens.
+5. Este resumen se inyecta como sección adicional en el system prompt de Claude.
+6. Claude interpreta los datos deterministas y responde en lenguaje natural, en máximo 3 líneas, conectando con el perfil personal del usuario.
+7. Todo el scoring es determinista (sin IA, sin tokens). Claude solo interviene al final para humanizar la respuesta.
+
+---
+
+## Sesion: Ajuste estructural de Carta Astral — hero limpio y rail contextual fijo
+**Fecha:** 2026-03-31 ~11:47 (ARG)
+
+### Que se hizo
+Se simplificó la experiencia desktop de Carta Astral para alinearla mejor con la referencia `ui-ciruela`: se eliminó la acción de nuevo cálculo dentro del hero, se quitó el contenedor padre redondeado que envolvía toda la pantalla y se reemplazó el split resizable por un rail contextual fijo más liviano.
+
+### Frontend — Archivos modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Elimina `react-resizable-panels`, remueve la lógica de `Nuevo cálculo`, abre el layout desktop sobre el fondo y reemplaza el split view por una grilla con rail derecho fijo |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Quita el botón `Nuevo cálculo` y deja el hero con un único CTA de consulta para la rueda natal |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Agrega modo `movil/escritorio`, compacta tipografía y tarjetas, y reemplaza las grillas rígidas de 3 columnas por grillas adaptativas para evitar que el rail derecho se rompa |
+
+### Tests
+Sin tests nuevos ni modificados. `eslint` pasó sobre `page.tsx`, `hero-carta.tsx` y `panel-contextual.tsx`. `vitest` no se ejecutó por la incompatibilidad conocida del entorno con Node `v18.17.1`.
+
+### Como funciona
+1. La experiencia principal de Carta Astral mantiene la rueda fuera del lienzo y deja un solo CTA de consulta: `Ver rueda natal`.
+2. En desktop, el contenido central ya no vive dentro de un shell con borde redondeado; ahora respira directamente sobre el fondo ciruela en una composición abierta similar a Podcasts.
+3. El panel derecho ya no depende de un separador resizable. Queda como un rail fijo, con scroll propio y proporción más estable.
+4. Las vistas internas del panel contextual ahora usan métricas adaptativas en lugar de grillas rígidas, por lo que planeta, casa, aspecto y tríada ya no colapsan visualmente en ancho angosto.
+
+---
+
+## Sesion: Rail lateral compartido y compactación premium de Carta Astral
+**Fecha:** 2026-03-31 ~12:31 (ARG)
+
+### Que se hizo
+Se llevó `Carta Astral` a un patrón más sistémico: se creó un rail lateral compartido inspirado en la transcripción de Podcasts, se reutilizó también en el panel de lyrics para unificar lenguaje visual, y se compactó el primer viewport de la carta para que entregue valor antes y con menos masa visual.
+
+### Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/layouts/rail-lateral.tsx` | Nuevo shell lateral compartido con header fino, blur, borde izquierdo y soporte para modo fijo u overlay |
+| `frontend/src/componentes/layouts/panel-lyrics.tsx` | Migra la transcripción de podcasts al nuevo shell compartido y limpia la animación de montaje |
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Reemplaza la columna lateral actual por el rail compartido y usa metadata contextual dinámica en el header del panel |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Expone metadata de encabezado para el rail, oculta cabeceras internas en desktop y mantiene la lectura contextual con scroll independiente |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Reduce la altura del hero, recupera una síntesis más valiosa con `generarEsencia` y deja una entrada más compacta |
+| `frontend/src/componentes/carta-natal/seccion-triada.tsx` | Compacta las tarjetas de Sol, Luna y Ascendente para reducir altura y mover el peso explicativo al rail lateral |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Compacta el bloque de pulso dominante y reduce la densidad editorial de la lectura rápida |
+
+### Tests
+Sin tests nuevos ni modificados. `eslint` pasó sobre `page.tsx`, `hero-carta.tsx`, `panel-contextual.tsx`, `seccion-triada.tsx`, `distribucion-energetica.tsx`, `rail-lateral.tsx` y `panel-lyrics.tsx`. `vitest` no se ejecutó por la incompatibilidad conocida del entorno con Node `v18.17.1`.
+
+### Como funciona
+1. En desktop, `Carta Astral` ahora reserva una banda lateral fija que mantiene scroll independiente y usa el mismo lenguaje material que la transcripción de Podcasts.
+2. El header del rail cambia según lo que el usuario selecciona: planeta, aspecto, casa o tríada, evitando duplicar jerarquías dentro del panel.
+3. El contenido principal gana aire útil porque el hero se reduce y las tarjetas de la tríada y del pulso dominante dejan de cargar tanta explicación embebida.
+4. El patrón resultante queda listo para reutilizarse en `Diseño Humano` y `Numerología`, sin volver a inventar otro tipo de side panel.
+
+---
+
+## Sesion: Corrección visual fuerte de Carta Astral tras revisión en pantalla
+**Fecha:** 2026-03-31 ~13:13 (ARG)
+
+### Que se hizo
+Se ajustó `Carta Astral` después de revisar la captura real de la interfaz. El objetivo fue hacer más evidente la reducción del hero, compactar de verdad las cards del primer viewport y secar el estado default del rail derecho para que deje de verse como una columna de tarjetas grandes.
+
+### Frontend — Archivos modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/layouts/rail-lateral.tsx` | Reduce el ancho fijo del rail para devolver más aire al contenido central |
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Amplía el ancho máximo útil del contenido central para evitar cortes innecesarios en el hero |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Reordena el hero a una cabecera más lineal, evita el título partido y elimina peso lateral innecesario |
+| `frontend/src/componentes/carta-natal/seccion-triada.tsx` | Elimina el párrafo descriptivo dentro de cada card y reduce padding/íconos para una tríada más compacta |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Simplifica todavía más el bloque de pulso dominante y reduce su masa editorial |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Replantea el estado default desktop del rail para que se lea como panel utilitario y no como mini-página |
+
+### Tests
+Sin tests nuevos ni modificados. `eslint` pasó sobre `page.tsx`, `hero-carta.tsx`, `seccion-triada.tsx`, `distribucion-energetica.tsx`, `panel-contextual.tsx` y `rail-lateral.tsx`. `vitest` no se ejecutó por la incompatibilidad conocida del entorno con Node `v18.17.1`.
+
+### Como funciona
+1. El hero ahora entra más rápido en valor: identidad de la pantalla, síntesis breve, chips base y CTA, sin dividir el ancho en una composición que rompía el título.
+2. Las cards de Sol, Luna y Ascendente dejan la explicación larga afuera y funcionan como puntos de entrada compactos al rail contextual.
+3. El bloque de pulso dominante queda más corto y deja el desarrollo interpretativo al panel derecho.
+4. El estado default del rail derecho se vuelve más seco y de sistema, con indicaciones y resúmenes breves en lugar de una gran tarjeta introductoria.
+
+---
+
+## Sesion: Corrección estructural del rail separado en Carta Astral
+**Fecha:** 2026-03-31 ~13:26 (ARG)
+
+### Que se hizo
+Se corrigió el problema estructural que impedía que el panel derecho de `Carta Astral` se comportara como un rail realmente separado. El scroll maestro del layout desktop dejó de gobernar esa ruta y el control del desplazamiento pasó a los contenedores internos de la pantalla.
+
+### Frontend — Archivos modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/layouts/layout-app.tsx` | Detecta la ruta de `Carta Astral` y desactiva el `overflow-y-auto` global del `<main>` para que la página pueda manejar scroll principal y rail de forma independiente |
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Hace scrollable los estados desktop de carga y cálculo manual para mantener coherencia una vez removido el scroll maestro del layout |
+
+### Tests
+Sin tests nuevos ni modificados. `eslint` pasó sobre `layout-app.tsx` y `page.tsx`. `vitest` no se ejecutó por la incompatibilidad conocida del entorno con Node `v18.17.1`.
+
+### Como funciona
+1. En desktop, la ruta `Carta Astral` ya no hereda el scroll general del `<main>` del layout de aplicación.
+2. El contenido central de la carta mantiene su propio scroll vertical dentro de la columna principal.
+3. El rail derecho conserva su scroll independiente y deja de desplazarse como si fuera simplemente otra parte del lienzo.
+4. Los estados sin datos y de carga también siguen siendo navegables porque ahora tienen scroll interno explícito dentro de la propia página.
+
+---
+
+## Sesion: Ajuste de altura útil y cabecera en Carta Astral
+**Fecha:** 2026-03-31 ~13:34 (ARG)
+
+### Que se hizo
+Se corrigió el problema por el cual el scroll de `Carta Astral` seguía sin responder correctamente en desktop después del cambio de rail, y se estabilizó el encabezado del hero para que no se rompa visualmente cuando convive con el panel derecho.
+
+### Frontend — Archivos modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/layouts/layout-app.tsx` | Agrega `min-h-0` y `min-w-0` al `<main>` para garantizar que el scroll anidado pueda funcionar dentro del layout desktop |
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Reemplaza la base de `FONDO_PAGINA` por una versión con `h-full/min-h-0` en desktop y ajusta el contenedor principal para heredar altura útil real |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Reordena el encabezado del hero para separar mejor título y metadata y evitar quiebres visuales con anchos intermedios |
+
+### Tests
+Sin tests nuevos ni modificados. `eslint` pasó sobre `layout-app.tsx`, `page.tsx` y `hero-carta.tsx`. `vitest` no se ejecutó por la incompatibilidad conocida del entorno con Node `v18.17.1`.
+
+### Como funciona
+1. El layout global ahora permite que `Carta Astral` se encoja correctamente dentro del viewport desktop, en lugar de forzar una altura ambigua que anulaba el scroll interno.
+2. La pantalla de la carta hereda una altura útil completa en desktop y puede repartirla entre la columna principal y el rail contextual.
+3. El scroll vuelve a responder dentro del contenido central sin depender del `<main>` global de la aplicación.
+4. El hero deja de mezclar título y metadata en una misma línea flexible, por lo que el encabezado se mantiene estable junto al rail derecho.
+
+---
+
+## Sesion: Distribución energética interactiva con lectura contextual
+**Fecha:** 2026-03-31 ~13:52 (ARG)
+
+### Que se hizo
+Se rediseñó la sección `Distribución energética` para que deje de funcionar como bloque descriptivo estático y pase a ser una superficie interactiva de lectura. Ahora los resúmenes, elementos y modalidades son clickeables y cada selección abre una explicación personalizada en el rail derecho.
+
+### Frontend — Archivos modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Reemplaza párrafos largos por tarjetas y píldoras clickeables, compacta la composición y conecta cada punto con el panel contextual |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Agrega nuevos estados contextuales para `pulso`, `elementos`, `modalidades`, `elemento` y `modalidad`, con explicaciones generales y lecturas personalizadas basadas en la distribución real del usuario |
+| `frontend/src/componentes/layouts/rail-lateral.tsx` | Incorpora transición suave de fade/slide entre contenidos del rail cuando cambia la selección |
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Conecta la nueva selección energética con el estado contextual de la página y le pasa al rail una clave de transición |
+
+### Tests
+Sin tests nuevos ni modificados. `eslint` pasó sobre `page.tsx`, `distribucion-energetica.tsx`, `panel-contextual.tsx` y `rail-lateral.tsx`. `vitest` no se ejecutó por la incompatibilidad conocida del entorno con Node `v18.17.1`.
+
+### Como funciona
+1. La sección `Distribución energética` ya no desarrolla explicaciones largas dentro de las cards: muestra títulos breves, barras y píldoras con foco en selección.
+2. Al hacer clic en `Pulso dominante`, `Elementos`, `Modalidades` o en una píldora puntual como `Fuego` o `Cardinal`, el panel derecho cambia de contexto.
+3. El rail ahora explica primero qué es esa capa astrológica y luego cómo se expresa específicamente en la carta del usuario según cantidad de planetas, peso relativo y focos activadores.
+4. El cambio de contenido del rail se acompaña con una transición suave de salida y entrada para que la lectura se sienta menos brusca y más consistente con el patrón premium de ASTRA.

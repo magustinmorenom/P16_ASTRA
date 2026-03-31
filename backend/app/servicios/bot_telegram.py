@@ -251,12 +251,13 @@ class BotTelegram:
             )
             historial = await repo_conv.obtener_historial(conversacion.id, limite=20)
 
-            # 6. Consultar al oráculo
+            # 6. Consultar al oráculo (con sesión para scoring temporal)
             respuesta, tokens = await ServicioOraculo.consultar(
                 mensaje_usuario=mensaje,
                 perfil_cosmico=perfil_cosmico,
                 transitos=transitos,
                 historial=historial,
+                sesion=sesion,
             )
 
             # 7. Guardar mensajes en conversación

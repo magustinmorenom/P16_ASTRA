@@ -13,6 +13,7 @@ from app.modelos.precio_plan import PrecioPlan
 from app.modelos.suscripcion import Suscripcion
 from app.modelos.usuario import Usuario
 from app.modelos.podcast import PodcastEpisodio
+from app.modelos.transito_diario import TransitoDiario
 from app.modelos.vinculo_telegram import VinculoTelegram
 
 __all__ = [
@@ -29,6 +30,7 @@ __all__ = [
     "Plan",
     "PrecioPlan",
     "Suscripcion",
+    "TransitoDiario",
     "Usuario",
     "VinculoTelegram",
 ]

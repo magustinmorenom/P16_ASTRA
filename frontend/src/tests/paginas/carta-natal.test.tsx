@@ -41,6 +41,14 @@ vi.mock("@/componentes/compuestos/formulario-nacimiento", () => ({
   ),
 }));
 
+vi.mock("react-resizable-panels", () => ({
+  Panel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Group: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Separator: ({ children, className }: { children?: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
+}));
+
 import PaginaCartaNatal from "@/app/(app)/carta-natal/page";
 
 const CARTA_NATAL_MOCK = {
@@ -77,7 +85,9 @@ describe("PaginaCartaNatal", () => {
     renderConProveedores(<PaginaCartaNatal />);
 
     expect(screen.getAllByText("Carta Astral").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole("button", { name: /ver rueda natal/i })).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: /ver rueda natal/i }).length,
+    ).toBeGreaterThanOrEqual(1);
     // Sol y Luna aparecen múltiples veces (planeta + aspecto), verificamos que existan
     expect(screen.getAllByText("Sol").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Luna").length).toBeGreaterThanOrEqual(1);
@@ -93,7 +103,8 @@ describe("PaginaCartaNatal", () => {
     const user = userEvent.setup();
     renderConProveedores(<PaginaCartaNatal />);
 
-    await user.click(screen.getByRole("button", { name: /ver rueda natal/i }));
+    const [botonVerRueda] = screen.getAllByRole("button", { name: /ver rueda natal/i });
+    await user.click(botonVerRueda);
 
     expect(screen.getByText("Mapa completo de la carta")).toBeInTheDocument();
     expect(screen.getByTestId("rueda-zodiacal")).toBeInTheDocument();

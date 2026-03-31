@@ -1,11 +1,11 @@
 export const SUPERFICIE_CLARA_CARTA =
-  "rounded-[24px] border border-white/65 bg-white/78 backdrop-blur-xl shadow-[0_18px_60px_rgba(60,24,113,0.10)]";
+  "rounded-[28px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] backdrop-blur-xl shadow-[0_18px_40px_rgba(8,3,20,0.22)]";
 
 export const SUPERFICIE_MEDIA_CARTA =
-  "rounded-[24px] border border-[#E7DFF6] bg-[#FCFAFF]/94 shadow-[0_18px_48px_rgba(78,40,140,0.08)]";
+  "rounded-[28px] border border-white/[0.08] bg-white/[0.04] shadow-[0_18px_36px_rgba(8,3,20,0.18)] backdrop-blur-xl";
 
 export const SUPERFICIE_OSCURA_CARTA =
-  "relative overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(212,162,52,0.12),transparent_22%),radial-gradient(circle_at_top_left,rgba(179,136,255,0.16),transparent_26%),linear-gradient(135deg,#170d2c_0%,#241148_52%,#34205f_100%)] shadow-[0_28px_90px_rgba(15,8,34,0.34)]";
+  "relative overflow-hidden rounded-[32px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.2),transparent_32%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] shadow-[0_24px_70px_rgba(8,2,22,0.38)]";
 
 export const ETIQUETA_CARTA =
   "text-[11px] font-semibold uppercase tracking-[0.18em]";

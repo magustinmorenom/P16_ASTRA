@@ -147,12 +147,13 @@ async def enviar_mensaje(
         conversacion.id, limite=MAX_HISTORIAL_CONTEXTO
     )
 
-    # Consultar al oráculo
+    # Consultar al oráculo (con sesión para scoring temporal)
     respuesta, tokens = await ServicioOraculo.consultar(
         mensaje_usuario=datos.mensaje,
         perfil_cosmico=perfil_cosmico,
         transitos=transitos,
         historial=historial,
+        sesion=db,
     )
 
     # Guardar mensaje del usuario

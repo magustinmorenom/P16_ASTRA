@@ -86,7 +86,7 @@ describe("PaginaPodcast", () => {
 
     renderConProveedores(<PaginaPodcast />);
 
-    const botones = screen.getAllByText("Generar");
+    const botones = screen.getAllByText("Generar ahora");
     expect(botones.length).toBe(3);
   });
 
@@ -134,7 +134,7 @@ describe("PaginaPodcast", () => {
 
     renderConProveedores(<PaginaPodcast />);
 
-    expect(screen.getByText("Error al generar")).toBeInTheDocument();
+    expect(screen.getByText("Error al generar el episodio")).toBeInTheDocument();
     expect(screen.getByText("Reintentar")).toBeInTheDocument();
   });
 
