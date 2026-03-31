@@ -2,12 +2,8 @@
 
 import { useCallback, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import {
-  Group as PanelGroup,
-  Panel,
-  Separator as PanelResizeHandle,
-} from "react-resizable-panels";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
+import { RailLateral } from "@/componentes/layouts/rail-lateral";
 import { IconoAstral } from "@/componentes/ui/icono-astral";
 import { Icono } from "@/componentes/ui/icono";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
@@ -26,21 +22,23 @@ import { CasasGrid } from "@/componentes/carta-natal/casas-grid";
 import { DistribucionEnergetica } from "@/componentes/carta-natal/distribucion-energetica";
 import { HeroCarta } from "@/componentes/carta-natal/hero-carta";
 import {
+  obtenerClavePanelContextual,
   PanelContextual,
+  obtenerMetaPanelContextual,
   type SeleccionContextual,
 } from "@/componentes/carta-natal/panel-contextual";
 import { PlanetasNarrativo } from "@/componentes/carta-natal/planetas-narrativo";
 import { SeccionTriada } from "@/componentes/carta-natal/seccion-triada";
 
 const FONDO_PAGINA =
-  "relative min-h-full overflow-hidden bg-[#F7F4FF]";
+  "relative min-h-full bg-[#16011B] lg:h-full lg:min-h-0 lg:overflow-hidden";
 
 function CapasFondo() {
   return (
     <>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(179,136,255,0.18),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(124,77,255,0.14),transparent_28%)]" />
-      <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-violet-300/18 blur-3xl" />
-      <div className="absolute left-0 top-1/3 h-64 w-64 rounded-full bg-fuchsia-200/18 blur-3xl" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,77,255,0.24),transparent_26%),radial-gradient(circle_at_top_right,rgba(179,136,255,0.16),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(76,35,140,0.18),transparent_30%)]" />
+      <div className="absolute right-[-80px] top-0 h-72 w-72 rounded-full bg-[#B388FF]/14 blur-3xl" />
+      <div className="absolute left-[-40px] top-1/3 h-64 w-64 rounded-full bg-[#7C4DFF]/12 blur-3xl" />
     </>
   );
 }
@@ -153,11 +151,6 @@ export default function PaginaCartaNatal() {
     );
   }
 
-  const reiniciarCalculo = useCallback(() => {
-    setModoManual(true);
-    setSeleccion({ tipo: "default" });
-  }, []);
-
   const seleccionarPlaneta = useCallback((planeta: Planeta) => {
     manejarSeleccion(setSeleccion, "planeta", planeta);
   }, []);
@@ -173,6 +166,13 @@ export default function PaginaCartaNatal() {
   const seleccionarTriada = useCallback(
     (subtipo: "sol" | "luna" | "ascendente") => {
       manejarSeleccion(setSeleccion, "triada", subtipo);
+    },
+    [],
+  );
+
+  const seleccionarEnergia = useCallback(
+    (valor: Extract<SeleccionContextual, { tipo: "energia" }>) => {
+      setSeleccion(valor);
     },
     [],
   );
@@ -196,19 +196,25 @@ export default function PaginaCartaNatal() {
         <div className={FONDO_PAGINA}>
           <CapasFondo />
 
-          <section className="relative z-10 flex flex-col gap-6 p-5 lg:p-[28px_32px]">
+          <section className="relative z-10 flex h-full flex-col gap-6 overflow-y-auto scroll-sutil p-5 lg:p-[28px_32px]">
             <div className={`${SUPERFICIE_OSCURA_CARTA} p-6 lg:p-8`}>
               <div className="absolute -right-14 top-8 h-36 w-36 rounded-full bg-[#B388FF]/18 blur-3xl" />
               <div className="relative z-10">
                 <p className={`${ETIQUETA_CARTA} text-violet-200/75`}>Carta astral</p>
-                <h1 className="mt-3 flex items-center gap-3 text-[26px] font-semibold tracking-tight text-white lg:text-[32px]">
-                  <IconoAstral nombre="astrologia" tamaño={30} className="text-[#D4A234]" />
-                  Carta Astral
-                </h1>
-                <p className="mt-3 max-w-3xl text-[14px] leading-relaxed text-violet-100/72">
-                  Estamos preparando la lectura base de tu carta para mostrarla
-                  con una jerarquía más sobria y útil.
-                </p>
+                <div className="mt-4 flex items-start gap-4">
+                  <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#B388FF] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
+                    <IconoAstral nombre="astrologia" tamaño={30} className="text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-[26px] font-semibold tracking-tight text-white lg:text-[32px]">
+                      Carta Astral
+                    </h1>
+                    <p className="mt-3 max-w-3xl text-[14px] leading-relaxed text-violet-100/72">
+                      Estamos preparando la lectura base de tu carta para mostrarla
+                      con una jerarquía más sobria y útil.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -222,7 +228,7 @@ export default function PaginaCartaNatal() {
 
             <div className={`${SUPERFICIE_CLARA_CARTA} flex items-center justify-center gap-3 px-5 py-4`}>
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#7C4DFF] border-t-transparent" />
-              <p className="text-[13px] text-[#6F6A65]">Cargando tu carta natal...</p>
+              <p className="text-[13px] text-white/62">Cargando tu carta natal...</p>
             </div>
           </section>
         </div>
@@ -237,7 +243,7 @@ export default function PaginaCartaNatal() {
         <div className={FONDO_PAGINA}>
           <CapasFondo />
 
-          <section className="relative z-10 flex flex-col gap-6 p-5 lg:p-[28px_32px]">
+          <section className="relative z-10 flex h-full flex-col gap-6 overflow-y-auto scroll-sutil p-5 lg:p-[28px_32px]">
             <div className={`${SUPERFICIE_OSCURA_CARTA} p-6 lg:p-8`}>
               <div className="absolute -right-16 top-0 h-44 w-44 rounded-full bg-[#B388FF]/18 blur-3xl" />
               <div className="absolute -left-10 bottom-0 h-36 w-36 rounded-full bg-[#7C4DFF]/16 blur-3xl" />
@@ -247,15 +253,21 @@ export default function PaginaCartaNatal() {
                   <p className={`${ETIQUETA_CARTA} text-violet-200/75`}>
                     Lectura guiada
                   </p>
-                  <h1 className="mt-3 flex items-center gap-3 text-[26px] font-semibold tracking-tight text-white lg:text-[32px]">
-                    <IconoAstral nombre="astrologia" tamaño={30} className="text-[#D4A234]" />
-                    Carta Astral
-                  </h1>
-                  <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-violet-100/72">
-                    Calculá la carta completa y recorré primero la lectura esencial:
-                    tríada, planetas, aspectos y casas. La rueda queda disponible
-                    aparte como artefacto de consulta.
-                  </p>
+                  <div className="mt-4 flex items-start gap-4">
+                    <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#B388FF] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
+                      <IconoAstral nombre="astrologia" tamaño={30} className="text-white" />
+                    </div>
+                    <div>
+                      <h1 className="text-[26px] font-semibold tracking-tight text-white lg:text-[32px]">
+                        Carta Astral
+                      </h1>
+                      <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-violet-100/72">
+                        Calculá tu mapa natal y leé primero la síntesis: tríada,
+                        planetas, aspectos y casas. La rueda queda como consulta,
+                        no como ruido visual.
+                      </p>
+                    </div>
+                  </div>
 
                   <div className="mt-5 grid gap-3 sm:grid-cols-2">
                     {[
@@ -282,11 +294,11 @@ export default function PaginaCartaNatal() {
                 </div>
 
                 <div className={`${SUPERFICIE_CLARA_CARTA} p-4 lg:p-5`}>
-                  <div className="rounded-[22px] border border-white/70 bg-white/92 p-5">
-                    <p className={`${ETIQUETA_CARTA} text-[#7C4DFF]`}>
+                  <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-5">
+                    <p className={`${ETIQUETA_CARTA} text-violet-200/72`}>
                       Datos de nacimiento
                     </p>
-                    <p className="mt-2 text-sm leading-relaxed text-[#6F6A65]">
+                    <p className="mt-2 text-sm leading-relaxed text-white/62">
                       Ingresá tus datos para generar la carta completa y abrir la
                       lectura contextual de planetas, aspectos y casas.
                     </p>
@@ -319,7 +331,9 @@ export default function PaginaCartaNatal() {
   const luna = datos.planetas.find((planeta) => planeta.nombre === "Luna");
   const planetaSeleccionadoNombre =
     seleccion.tipo === "planeta" ? seleccion.planeta.nombre : null;
+  const seleccionEnergeticaActiva = seleccion.tipo === "energia" ? seleccion : null;
   const haySeleccionMobile = seleccion.tipo !== "default";
+  const metaPanel = obtenerMetaPanelContextual(seleccion, datos);
 
   return (
     <>
@@ -327,13 +341,12 @@ export default function PaginaCartaNatal() {
       <div className={FONDO_PAGINA}>
         <CapasFondo />
 
-        <div className="relative z-10 h-full min-h-0 flex flex-col lg:flex-row lg:overflow-hidden">
+        <div className="relative z-10 flex min-h-full flex-col lg:h-full lg:min-h-0 lg:flex-row lg:overflow-hidden">
           <div className="lg:hidden flex-1 overflow-y-auto scroll-sutil">
             <div className="p-5 pb-24">
               <HeroCarta
                 datos={datos}
                 onAbrirRueda={abrirModalRueda}
-                onNuevoCalculo={reiniciarCalculo}
               />
               {sol && luna && (
                 <SeccionTriada
@@ -343,7 +356,11 @@ export default function PaginaCartaNatal() {
                   onSeleccionar={seleccionarTriada}
                 />
               )}
-              <DistribucionEnergetica planetas={datos.planetas} />
+              <DistribucionEnergetica
+                planetas={datos.planetas}
+                onSeleccionar={seleccionarEnergia}
+                seleccionActiva={seleccionEnergeticaActiva}
+              />
               <PlanetasNarrativo
                 planetas={datos.planetas}
                 planetaSeleccionado={planetaSeleccionadoNombre}
@@ -365,7 +382,7 @@ export default function PaginaCartaNatal() {
                 onClick={cerrarSeleccion}
                 className="fixed inset-0 z-40 bg-[#140c27]/45 backdrop-blur-[2px] lg:hidden"
               />
-              <div className="fixed inset-x-3 bottom-3 z-50 max-h-[72vh] overflow-hidden rounded-[28px] border border-white/12 bg-[radial-gradient(circle_at_top_right,rgba(212,162,52,0.12),transparent_24%),linear-gradient(135deg,#170d2c_0%,#241148_54%,#34205f_100%)] shadow-[0_28px_90px_rgba(15,8,34,0.42)] lg:hidden">
+              <div className="fixed inset-x-3 bottom-3 z-50 max-h-[72vh] overflow-hidden rounded-[28px] border border-white/12 bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.18),transparent_28%),linear-gradient(135deg,#170d2c_0%,#241148_54%,#34205f_100%)] shadow-[0_28px_90px_rgba(15,8,34,0.42)] lg:hidden">
                 <div className="flex justify-center py-2">
                   <div className="h-1 w-14 rounded-full bg-white/18" />
                 </div>
@@ -377,61 +394,63 @@ export default function PaginaCartaNatal() {
                     seleccion={seleccion}
                     datos={datos}
                     onCerrar={cerrarSeleccion}
+                    modo="movil"
                   />
                 </div>
               </div>
             </>
           )}
 
-          <div className="hidden lg:flex flex-1 min-h-0 p-5 lg:p-6">
-            <div className="flex-1 min-h-0 overflow-hidden rounded-[32px] border border-white/60 bg-white/42 backdrop-blur-2xl shadow-[0_28px_90px_rgba(46,16,92,0.14)]">
-              <PanelGroup orientation="horizontal" id="carta-natal-paneles">
-                <Panel defaultSize={72} minSize={58}>
-                  <section className="h-full overflow-y-auto scroll-sutil bg-transparent p-5 xl:p-6">
-                    <div className="mx-auto max-w-[1120px]">
-                      <HeroCarta
-                        datos={datos}
-                        onAbrirRueda={abrirModalRueda}
-                        onNuevoCalculo={reiniciarCalculo}
-                      />
-                      {sol && luna && (
-                        <SeccionTriada
-                          sol={sol}
-                          luna={luna}
-                          ascendente={datos.ascendente}
-                          onSeleccionar={seleccionarTriada}
-                        />
-                      )}
-                      <DistribucionEnergetica planetas={datos.planetas} />
-                      <PlanetasNarrativo
-                        planetas={datos.planetas}
-                        planetaSeleccionado={planetaSeleccionadoNombre}
-                        onSeleccionar={seleccionarPlaneta}
-                      />
-                      <AspectosNarrativo
-                        aspectos={datos.aspectos}
-                        onSeleccionar={seleccionarAspecto}
-                      />
-                      <CasasGrid casas={datos.casas} onSeleccionar={seleccionarCasa} />
-                    </div>
-                  </section>
-                </Panel>
+          <div className="hidden lg:flex flex-1 min-h-0">
+            <section className="min-w-0 flex-1 overflow-y-auto scroll-sutil px-6 py-6 xl:px-8 xl:py-7">
+              <div className="mx-auto max-w-[1120px]">
+                <HeroCarta
+                  datos={datos}
+                  onAbrirRueda={abrirModalRueda}
+                />
+                {sol && luna && (
+                  <SeccionTriada
+                    sol={sol}
+                    luna={luna}
+                    ascendente={datos.ascendente}
+                    onSeleccionar={seleccionarTriada}
+                  />
+                )}
+                <DistribucionEnergetica
+                  planetas={datos.planetas}
+                  onSeleccionar={seleccionarEnergia}
+                  seleccionActiva={seleccionEnergeticaActiva}
+                />
+                <PlanetasNarrativo
+                  planetas={datos.planetas}
+                  planetaSeleccionado={planetaSeleccionadoNombre}
+                  onSeleccionar={seleccionarPlaneta}
+                />
+                <AspectosNarrativo
+                  aspectos={datos.aspectos}
+                  onSeleccionar={seleccionarAspecto}
+                />
+                <CasasGrid casas={datos.casas} onSeleccionar={seleccionarCasa} />
+              </div>
+            </section>
 
-                <PanelResizeHandle className="group flex w-2 cursor-col-resize items-center justify-center bg-white/10 transition-colors hover:bg-[#7C4DFF]/20">
-                  <div className="h-10 w-0.5 rounded-full bg-white/30 transition-colors group-hover:bg-[#D4A234]" />
-                </PanelResizeHandle>
-
-                <Panel defaultSize={28} minSize={20} maxSize={34} collapsible>
-                  <aside className="h-full overflow-hidden border-l border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(212,162,52,0.12),transparent_24%),linear-gradient(135deg,#170d2c_0%,#241148_54%,#34205f_100%)]">
-                    <PanelContextual
-                      seleccion={seleccion}
-                      datos={datos}
-                      onCerrar={cerrarSeleccion}
-                    />
-                  </aside>
-                </Panel>
-              </PanelGroup>
-            </div>
+            <RailLateral
+              etiqueta={metaPanel.etiqueta}
+              titulo={metaPanel.titulo}
+              subtitulo={metaPanel.subtitulo}
+              onCerrar={seleccion.tipo !== "default" ? cerrarSeleccion : undefined}
+              cuerpoClassName="!p-0 overflow-hidden"
+              claveContenido={obtenerClavePanelContextual(seleccion)}
+            >
+              <div className="h-full min-h-0">
+                <PanelContextual
+                  seleccion={seleccion}
+                  datos={datos}
+                  onCerrar={cerrarSeleccion}
+                  modo="escritorio"
+                />
+              </div>
+            </RailLateral>
           </div>
         </div>
 

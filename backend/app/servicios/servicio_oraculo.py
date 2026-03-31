@@ -1,11 +1,12 @@
 """Servicio Oráculo — integración con Claude API (Anthropic)."""
 
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 import re
 
 import anthropic
 import pytz
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.configuracion import obtener_configuracion
 from app.registro import logger
@@ -63,6 +64,7 @@ class ServicioOraculo:
         cls,
         perfil_cosmico: dict | None = None,
         transitos: dict | None = None,
+        analisis_temporal: str | None = None,
     ) -> str:
         """Construye el system prompt completo con contexto del usuario."""
         prompt = cls._cargar_system_prompt()
@@ -95,6 +97,10 @@ class ServicioOraculo:
             prompt = prompt.replace("{{TRANSITOS}}", resumen_transitos)
         else:
             secciones_extra.append(f"\n## Tránsitos Actuales\n{resumen_transitos}")
+
+        # Análisis temporal (scoring de mejores días/meses)
+        if analisis_temporal:
+            secciones_extra.append(f"\n{analisis_temporal}")
 
         if secciones_extra:
             prompt += "\n" + "\n".join(secciones_extra)
@@ -157,13 +163,20 @@ class ServicioOraculo:
         numero = perfil.get("numerologia")
         if numero:
             partes.append("### Numerología")
-            nums = numero.get("numeros", {})
-            if isinstance(nums, dict):
-                for clave, valor in nums.items():
-                    if isinstance(valor, dict):
-                        partes.append(
-                            f"- {valor.get('nombre', clave)}: {valor.get('valor', '?')}"
-                        )
+            _CLAVES_NUMERO = [
+                ("camino_de_vida", "Camino de Vida"),
+                ("expresion", "Expresión"),
+                ("impulso_del_alma", "Impulso del Alma"),
+                ("personalidad", "Personalidad"),
+                ("numero_nacimiento", "Número de Nacimiento"),
+                ("anio_personal", "Año Personal"),
+            ]
+            for clave, nombre_display in _CLAVES_NUMERO:
+                valor = numero.get(clave)
+                if isinstance(valor, dict):
+                    partes.append(
+                        f"- {nombre_display}: {valor.get('numero', '?')} — {valor.get('descripcion', '')}"
+                    )
 
         return "\n".join(partes) if partes else "Perfil cósmico no disponible."
 
@@ -219,6 +232,12 @@ class ServicioOraculo:
 
         return "\n".join(partes)
 
+    # Patrón para detectar bullets con fechas/rangos (ej: "- 10-16 de abril —")
+    _RE_BULLET_FECHA = re.compile(
+        r"^[-•*]\s*\d{1,2}.*?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)",
+        re.IGNORECASE,
+    )
+
     @classmethod
     def _formatear_respuesta_chat(cls, texto: str) -> str:
         """Normaliza la salida del modelo para mantenerla conversacional y breve."""
@@ -227,9 +246,51 @@ class ServicioOraculo:
 
         texto = texto.replace("\r\n", "\n").replace("\r", "\n").strip()
         texto = re.sub(r"```.*?```", "", texto, flags=re.DOTALL)
+        # Limpiar negritas y cursivas
         texto = re.sub(r"\*\*(.*?)\*\*", r"\1", texto)
         texto = re.sub(r"\*(.*?)\*", r"\1", texto)
 
+        # Detectar si hay bullets con fechas (respuesta temporal)
+        tiene_bullets_fecha = any(
+            cls._RE_BULLET_FECHA.match(linea.strip())
+            for linea in texto.split("\n")
+        )
+
+        if tiene_bullets_fecha:
+            return cls._formatear_respuesta_temporal(texto)
+
+        return cls._formatear_respuesta_conversacional(texto)
+
+    @classmethod
+    def _formatear_respuesta_temporal(cls, texto: str) -> str:
+        """Formatea respuestas con bullets de fechas — preserva estructura."""
+        lineas_limpias: list[str] = []
+        for linea in texto.split("\n"):
+            linea = linea.strip()
+            if not linea:
+                continue
+            # Limpiar headers y quotes
+            linea = re.sub(r"^#{1,6}\s*", "", linea)
+            linea = re.sub(r"^>\s*", "", linea)
+            # Normalizar bullets a "- "
+            linea = re.sub(r"^[•*]\s*", "- ", linea)
+            linea = re.sub(r"\s+", " ", linea).strip()
+            if linea:
+                lineas_limpias.append(linea)
+
+        if not lineas_limpias:
+            return "Estoy acá.\nDecime un poco más y lo vemos juntos."
+
+        # Eliminar preguntas finales (último línea que termine en ?)
+        while lineas_limpias and lineas_limpias[-1].rstrip().endswith("?"):
+            lineas_limpias.pop()
+
+        # Limitar a 7 líneas máximo
+        return "\n".join(lineas_limpias[:7])
+
+    @classmethod
+    def _formatear_respuesta_conversacional(cls, texto: str) -> str:
+        """Formatea respuestas conversacionales normales — breve y directo."""
         lineas_limpias: list[str] = []
         for linea in texto.split("\n"):
             linea = linea.strip()
@@ -243,6 +304,13 @@ class ServicioOraculo:
             linea = re.sub(r"\s+", " ", linea).strip()
             if linea:
                 lineas_limpias.append(linea)
+
+        if not lineas_limpias:
+            return "Estoy acá.\nDecime un poco más y lo vemos juntos."
+
+        # Eliminar preguntas finales
+        while lineas_limpias and lineas_limpias[-1].rstrip().endswith("?"):
+            lineas_limpias.pop()
 
         if not lineas_limpias:
             return "Estoy acá.\nDecime un poco más y lo vemos juntos."
@@ -277,14 +345,97 @@ class ServicioOraculo:
         return "\n".join(lineas_finales[:3])
 
     @classmethod
+    async def _generar_analisis_temporal(
+        cls,
+        mensaje: str,
+        perfil_cosmico: dict | None,
+        sesion: AsyncSession | None,
+    ) -> str | None:
+        """Detecta intent temporal y genera análisis de scoring si aplica."""
+        if not sesion:
+            return None
+
+        from app.oraculo.detector_intent import detectar_intent
+
+        intent = detectar_intent(mensaje)
+        if not intent.es_temporal:
+            return None
+
+        logger.info(
+            "Intent temporal detectado: area=%s, ventana=%dd, granularidad=%s",
+            intent.area, intent.ventana_dias, intent.granularidad,
+        )
+
+        from app.datos.repositorio_transito import RepositorioTransito
+        from app.oraculo.scorer_transitos import (
+            formatear_resumen,
+            rankear_dias,
+            rankear_meses,
+        )
+
+        # Determinar rango de fechas
+        hoy = date.today()
+        if intent.mes_especifico:
+            anio = intent.anio or hoy.year
+            fecha_inicio = date(anio, intent.mes_especifico, 1)
+            # Último día del mes
+            if intent.mes_especifico == 12:
+                fecha_fin = date(anio, 12, 31)
+            else:
+                fecha_fin = date(anio, intent.mes_especifico + 1, 1) - timedelta(days=1)
+        elif intent.anio:
+            fecha_inicio = date(intent.anio, 1, 1)
+            fecha_fin = date(intent.anio, 12, 31)
+        else:
+            fecha_inicio = hoy
+            fecha_fin = hoy + timedelta(days=intent.ventana_dias)
+
+        # Query tránsitos de la DB
+        repo = RepositorioTransito(sesion)
+        transitos_db = await repo.obtener_rango(fecha_inicio, fecha_fin)
+
+        if not transitos_db:
+            return None
+
+        # Convertir a dicts
+        transitos_lista = [
+            {
+                "fecha": t.fecha,
+                "planetas": t.planetas,
+                "aspectos": t.aspectos,
+                "eventos": t.eventos,
+                "fase_lunar": t.fase_lunar,
+            }
+            for t in transitos_db
+        ]
+
+        area = intent.area or "carrera"  # default si no detectó área
+
+        # Scorear y rankear
+        if intent.granularidad == "mes":
+            ranking = rankear_meses(transitos_lista, perfil_cosmico, perfil_cosmico, area)
+        else:
+            ranking = rankear_dias(transitos_lista, perfil_cosmico, perfil_cosmico, area)
+
+        return formatear_resumen(ranking, area, intent.granularidad)
+
+    @classmethod
     async def consultar(
         cls,
         mensaje_usuario: str,
         perfil_cosmico: dict | None = None,
         transitos: dict | None = None,
         historial: list[dict] | None = None,
+        sesion: AsyncSession | None = None,
     ) -> tuple[str, int]:
         """Consulta al oráculo (Claude API).
+
+        Args:
+            mensaje_usuario: Texto del mensaje del usuario
+            perfil_cosmico: Perfil cósmico completo (natal, HD, numerología)
+            transitos: Tránsitos actuales (posiciones del momento)
+            historial: Historial de la conversación
+            sesion: Sesión de DB (para consultas temporales con scoring)
 
         Retorna (respuesta_texto, tokens_usados).
         """
@@ -306,8 +457,17 @@ class ServicioOraculo:
         else:
             logger.warning("Oráculo: SIN datos personales en perfil_cosmico")
 
+        # Detectar intent temporal y generar análisis de scoring
+        analisis_temporal = None
+        try:
+            analisis_temporal = await cls._generar_analisis_temporal(
+                mensaje_usuario, perfil_cosmico, sesion,
+            )
+        except Exception as e:
+            logger.warning("Error generando análisis temporal: %s", e)
+
         # Construir system prompt
-        system_prompt = cls._construir_system(perfil_cosmico, transitos)
+        system_prompt = cls._construir_system(perfil_cosmico, transitos, analisis_temporal)
 
         # Construir historial de mensajes
         mensajes = []
@@ -319,10 +479,13 @@ class ServicioOraculo:
         # Agregar mensaje actual
         mensajes.append({"role": "user", "content": mensaje_usuario})
 
+        # Si hay análisis temporal, dar más espacio a la respuesta
+        max_tokens = 350 if analisis_temporal else 220
+
         try:
             respuesta = await cliente.messages.create(
                 model=config.anthropic_modelo,
-                max_tokens=220,
+                max_tokens=max_tokens,
                 temperature=0.7,
                 system=system_prompt,
                 messages=mensajes,

@@ -1,8 +1,9 @@
-"""Servicio de tránsitos planetarios en tiempo real."""
+"""Servicio de tránsitos planetarios en tiempo real y persistidos."""
 
 from datetime import datetime, date, timedelta
 
 import pytz
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.nucleo.servicio_efemerides import ServicioEfemerides
 from app.nucleo.servicio_zona_horaria import ServicioZonaHoraria
@@ -143,6 +144,120 @@ class ServicioTransitos:
             dia = cls.obtener_transitos_fecha(fecha_actual.isoformat())
             dias.append(dia)
             fecha_actual += timedelta(days=1)
+
+        return {
+            "fecha_inicio": fecha_inicio,
+            "fecha_fin": fecha_fin,
+            "dias": dias,
+        }
+
+    # ------------------------------------------------------------------ #
+    # Métodos con persistencia (DB-first, fallback cálculo en vivo)      #
+    # ------------------------------------------------------------------ #
+
+    @classmethod
+    async def obtener_transitos_fecha_persistido(
+        cls, fecha: str, sesion: AsyncSession
+    ) -> dict:
+        """Busca tránsitos en DB; si no existen, calcula en vivo y persiste.
+
+        Args:
+            fecha: Fecha en formato YYYY-MM-DD
+            sesion: Sesión async de SQLAlchemy
+
+        Returns:
+            Dict con fecha, fecha_utc, dia_juliano, planetas, aspectos, fase_lunar
+        """
+        from app.datos.repositorio_transito import RepositorioTransito
+        from app.servicios.servicio_transitos_persistidos import (
+            calcular_transito_para_fecha,
+            _determinar_estado,
+        )
+
+        fecha_obj = date.fromisoformat(fecha)
+        repo = RepositorioTransito(sesion)
+        transito = await repo.obtener_por_fecha(fecha_obj)
+
+        if transito:
+            return {
+                "fecha": transito.fecha.isoformat(),
+                "fecha_utc": datetime(
+                    transito.fecha.year, transito.fecha.month, transito.fecha.day,
+                    12, 0, 0, tzinfo=pytz.UTC,
+                ).isoformat(),
+                "dia_juliano": transito.dia_juliano,
+                "planetas": transito.planetas,
+                "aspectos": transito.aspectos,
+                "fase_lunar": transito.fase_lunar,
+            }
+
+        # Fallback: calcular en vivo y persistir
+        datos = calcular_transito_para_fecha(fecha_obj)
+        datos["estado"] = _determinar_estado(fecha_obj, date.today())
+        await repo.crear_lote([datos])
+        await sesion.commit()
+
+        return {
+            "fecha": datos["fecha"].isoformat(),
+            "fecha_utc": datetime(
+                fecha_obj.year, fecha_obj.month, fecha_obj.day,
+                12, 0, 0, tzinfo=pytz.UTC,
+            ).isoformat(),
+            "dia_juliano": datos["dia_juliano"],
+            "planetas": datos["planetas"],
+            "aspectos": datos["aspectos"],
+            "fase_lunar": datos["fase_lunar"],
+        }
+
+    @classmethod
+    async def obtener_transitos_rango_persistido(
+        cls, fecha_inicio: str, fecha_fin: str, sesion: AsyncSession
+    ) -> dict:
+        """Obtiene tránsitos de un rango desde DB (sin límite de 31 días).
+
+        Fechas no encontradas en DB se calculan en vivo y se persisten.
+        """
+        from app.datos.repositorio_transito import RepositorioTransito
+        from app.servicios.servicio_transitos_persistidos import (
+            calcular_transito_para_fecha,
+            _determinar_estado,
+        )
+
+        inicio = date.fromisoformat(fecha_inicio)
+        fin = date.fromisoformat(fecha_fin)
+        if inicio > fin:
+            raise ValueError("La fecha de inicio debe ser anterior o igual a la fecha de fin")
+
+        repo = RepositorioTransito(sesion)
+        existentes = await repo.obtener_rango(inicio, fin)
+        fechas_existentes = {t.fecha for t in existentes}
+
+        # Calcular y persistir los faltantes
+        hoy = date.today()
+        faltantes = []
+        fecha_actual = inicio
+        while fecha_actual <= fin:
+            if fecha_actual not in fechas_existentes:
+                datos = calcular_transito_para_fecha(fecha_actual)
+                datos["estado"] = _determinar_estado(fecha_actual, hoy)
+                faltantes.append(datos)
+            fecha_actual += timedelta(days=1)
+
+        if faltantes:
+            await repo.crear_lote(faltantes)
+            await sesion.commit()
+            # Re-obtener todos
+            existentes = await repo.obtener_rango(inicio, fin)
+
+        dias = []
+        for t in existentes:
+            dias.append({
+                "fecha": t.fecha.isoformat(),
+                "dia_juliano": t.dia_juliano,
+                "planetas": t.planetas,
+                "aspectos": t.aspectos,
+                "fase_lunar": t.fase_lunar,
+            })
 
         return {
             "fecha_inicio": fecha_inicio,

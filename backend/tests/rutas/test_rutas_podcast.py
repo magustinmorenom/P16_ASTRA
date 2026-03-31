@@ -287,10 +287,11 @@ class TestPodcastAudio:
     """Tests para GET /podcast/audio/{episodio_id}."""
 
     @pytest.mark.anyio
-    async def test_retorna_url_presigned(
+    async def test_retorna_audio_stream(
         self, app_test, headers_auth, usuario_test
     ):
         ep = _crear_episodio(usuario_id=usuario_test.id, estado="listo")
+        audio_bytes = b"\xff\xfb\x90\x00" * 100  # bytes simulando MP3
 
         with (
             patch("app.dependencias_auth.RepositorioUsuario") as MockRepoUser,
@@ -304,7 +305,7 @@ class TestPodcastAudio:
             mock_repo = MockRepo.return_value
             mock_repo.obtener_episodio_por_id = AsyncMock(return_value=ep)
 
-            MockAlmacenamiento.obtener_url.return_value = "https://minio.local/presigned-url"
+            MockAlmacenamiento.obtener_objeto.return_value = audio_bytes
 
             async with AsyncClient(
                 transport=ASGITransport(app=app_test),
@@ -315,10 +316,8 @@ class TestPodcastAudio:
                 )
 
             assert resp.status_code == 200
-            datos = resp.json()
-            assert datos["exito"] is True
-            assert "url" in datos["datos"]
-            assert "presigned" in datos["datos"]["url"]
+            assert resp.headers["content-type"] == "audio/mpeg"
+            assert resp.content == audio_bytes
 
     @pytest.mark.anyio
     async def test_audio_no_disponible_retorna_404(
