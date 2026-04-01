@@ -33,6 +33,7 @@ from app.servicios.servicio_mercadopago import (
     MAPA_ESTADOS_SUSCRIPCION,
     ServicioMercadoPago,
 )
+from app.utilidades.planes import es_plan_pago
 
 logger = logging.getLogger(__name__)
 
@@ -213,7 +214,7 @@ async def verificar_estado(
         "exito": True,
         "datos": {
             "estado": suscripcion.estado,
-            "es_premium": plan_slug == "premium" and suscripcion.estado == "activa",
+            "es_premium": es_plan_pago(plan_slug) and suscripcion.estado == "activa",
             "plan_slug": plan_slug,
             "plan_nombre": plan.nombre if plan else None,
         },
@@ -292,12 +293,15 @@ async def suscribirse(
     if plan.slug == "gratis":
         raise ErrorPasarelaPago("No se puede suscribir al plan gratuito vía checkout")
 
-    # Validar que no sea ya Premium
+    # Validar que no tenga ya un plan pago activo
     suscripcion_actual = await repo_sus.obtener_activa(usuario.id)
     if suscripcion_actual:
         plan_actual = await repo_plan.obtener_por_id(suscripcion_actual.plan_id)
-        if plan_actual and plan_actual.slug == "premium":
-            raise CosmicEngineError("Ya tenés plan Premium activo", codigo=409)
+        if plan_actual and es_plan_pago(plan_actual.slug):
+            raise CosmicEngineError(
+                f"Ya tenés un plan pago activo ({plan_actual.nombre})",
+                codigo=409,
+            )
 
     # Obtener precio local
     precio = await repo_plan.obtener_precio(plan.id, datos.pais_codigo)

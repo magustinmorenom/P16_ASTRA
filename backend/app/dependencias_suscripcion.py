@@ -11,8 +11,7 @@ from app.excepciones import LimiteExcedido, SuscripcionNoEncontrada
 from app.modelos.suscripcion import Suscripcion
 from app.modelos.usuario import Usuario
 from app.principal import _obtener_db_placeholder
-
-JERARQUIA_PLANES = {"gratis": 0, "premium": 1}
+from app.utilidades.planes import cumple_nivel
 
 
 def requiere_plan(nivel_minimo: str = "premium"):
@@ -38,10 +37,7 @@ def requiere_plan(nivel_minimo: str = "premium"):
         if not plan:
             raise SuscripcionNoEncontrada("Plan asociado no encontrado")
 
-        nivel_actual = JERARQUIA_PLANES.get(plan.slug, 0)
-        nivel_requerido = JERARQUIA_PLANES.get(nivel_minimo, 0)
-
-        if nivel_actual < nivel_requerido:
+        if not cumple_nivel(plan.slug, nivel_minimo):
             raise LimiteExcedido(
                 f"Se requiere plan {nivel_minimo}. Tu plan actual es {plan.slug}."
             )

@@ -18,6 +18,7 @@ import {
   type PistaReproduccion,
 } from "@/lib/stores/store-ui";
 import type { PodcastEpisodio, TipoPodcast } from "@/lib/tipos";
+import { esPlanPago, obtenerEtiquetaPlan } from "@/lib/utilidades/planes";
 
 interface ContextoRuta {
   etiqueta: string;
@@ -255,6 +256,8 @@ export default function Navbar() {
 
   const nombreRaw = perfil?.nombre ?? usuario?.nombre ?? "Usuario";
   const nombreUsuario = formatearNombre(nombreRaw);
+  const etiquetaPlan = obtenerEtiquetaPlan(usuario?.plan_slug, usuario?.plan_nombre);
+  const esPremium = esPlanPago(usuario?.plan_slug);
   const contextoRuta = useMemo(() => obtenerContextoRuta(pathname), [pathname]);
 
   const mapaEpisodios = useMemo(
@@ -374,11 +377,8 @@ export default function Navbar() {
       chips: [
         {
           icono: "corona",
-          texto:
-            usuario?.plan_slug === "premium"
-              ? "Premium activo"
-              : "Plan gratis",
-          tono: usuario?.plan_slug === "premium" ? "oro" : "violeta",
+          texto: esPremium ? `${etiquetaPlan} activo` : "Plan Free",
+          tono: esPremium ? "oro" : "violeta",
         },
         {
           icono: "microfono",
@@ -397,7 +397,8 @@ export default function Navbar() {
     progresoSegundos,
     pronosticoDiario,
     reproduciendo,
-    usuario?.plan_slug,
+    etiquetaPlan,
+    esPremium,
   ]);
 
   const inicialesUsuario = (usuario?.nombre ?? "U")
@@ -406,8 +407,6 @@ export default function Navbar() {
     .join("")
     .slice(0, 2)
     .toUpperCase();
-
-  const esPremium = usuario?.plan_slug === "premium";
 
   function reproducirEpisodio(episodio: PodcastEpisodio) {
     const config = CONFIG_TIPO_PODCAST[episodio.tipo];
@@ -570,10 +569,10 @@ export default function Navbar() {
           >
             <span
               className={`h-2 w-2 rounded-full ${
-                esPremium ? "bg-[#D4A234]" : "bg-[#B388FF]"
+                esPremium ? "bg-[#D8C0FF]" : "bg-[#B388FF]"
               }`}
             />
-            {esPremium ? "Premium activo" : "Plan gratis"}
+            {esPremium ? `${etiquetaPlan} activo` : "Plan Free"}
           </Link>
 
           <div className="relative z-50" ref={refMenuUsuario}>
@@ -584,7 +583,7 @@ export default function Navbar() {
             >
               {inicialesUsuario}
               {esPremium && (
-                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#F0D68A] text-[8px] text-[#6C4B00]">
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#D8C0FF] text-[8px] text-[#3E1A74]">
                   <Icono nombre="corona" tamaño={10} />
                 </span>
               )}
@@ -606,11 +605,11 @@ export default function Navbar() {
                       <span
                         className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
                           esPremium
-                            ? "border-[#D4A234]/25 bg-[#D4A234]/10 text-[#F3DFA6]"
+                            ? "border-[#B388FF]/25 bg-[#B388FF]/12 text-[#E7DAFF]"
                             : "border-white/[0.08] bg-white/[0.05] text-white/70"
                         }`}
                       >
-                        {esPremium ? "Premium" : "Gratis"}
+                        {esPremium ? etiquetaPlan : "Free"}
                       </span>
                     </div>
 

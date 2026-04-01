@@ -1,5 +1,7 @@
 """Configuración de gating freemium/premium para features."""
 
+from app.utilidades.planes import es_plan_pago
+
 # Valores posibles: "freemium" (acceso libre) o "premium" (requiere suscripción)
 FEATURES_CONFIG = {
     "pronostico_clima": "freemium",
@@ -19,5 +21,5 @@ def obtener_acceso_pronostico(plan_usuario: str = "gratis") -> dict[str, bool]:
         if nivel == "freemium":
             acceso[feature] = True
         else:
-            acceso[feature] = plan_usuario == "premium"
+            acceso[feature] = es_plan_pago(plan_usuario)
     return acceso

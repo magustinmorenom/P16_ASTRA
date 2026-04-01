@@ -64,9 +64,25 @@ const PLAN_PREMIUM = {
   orden: 1,
 };
 
+const PLAN_MAX = {
+  id: "plan-max",
+  nombre: "Max",
+  slug: "max",
+  descripcion: "Capa máxima",
+  precio_usd_centavos: 0,
+  intervalo: "months",
+  limite_perfiles: -1,
+  limite_calculos_dia: -1,
+  features: ["todo_premium", "prioridad_maxima"],
+  activo: true,
+  orden: 2,
+};
+
 const SUSCRIPCION_GRATIS = {
   id: "sus-1",
   plan: PLAN_GRATIS,
+  plan_nombre: "Gratis",
+  plan_slug: "gratis",
   estado: "activa",
   pais_codigo: "AR",
   fecha_inicio: "2026-03-23",
@@ -82,11 +98,11 @@ describe("PaginaSuscripcion", () => {
       isLoading: false,
     });
     mockUsarSuscribirse.mockReturnValue({
-      mutateAsync: vi.fn(),
+      mutate: vi.fn(),
       isPending: false,
     });
     mockUsarCancelarSuscripcion.mockReturnValue({
-      mutateAsync: vi.fn(),
+      mutate: vi.fn(),
       isPending: false,
     });
     mockUsarPagos.mockReturnValue({
@@ -119,9 +135,9 @@ describe("PaginaSuscripcion", () => {
     });
   });
 
-  it("muestra los dos planes (gratis y premium)", () => {
+  it("muestra los tres planes visibles", () => {
     mockUsarPlanes.mockReturnValue({
-      data: [PLAN_GRATIS, PLAN_PREMIUM],
+      data: [PLAN_GRATIS, PLAN_PREMIUM, PLAN_MAX],
       isLoading: false,
     });
     mockUsarMiSuscripcion.mockReturnValue({
@@ -131,13 +147,14 @@ describe("PaginaSuscripcion", () => {
 
     renderConProveedores(<PaginaSuscripcion />);
 
-    expect(screen.getByText("Gratis")).toBeInTheDocument();
+    expect(screen.getAllByText("Free").length).toBeGreaterThan(0);
     expect(screen.getByText("Premium")).toBeInTheDocument();
+    expect(screen.getByText("Max")).toBeInTheDocument();
   });
 
   it("marca el plan actual como activo", () => {
     mockUsarPlanes.mockReturnValue({
-      data: [PLAN_GRATIS, PLAN_PREMIUM],
+      data: [PLAN_GRATIS, PLAN_PREMIUM, PLAN_MAX],
       isLoading: false,
     });
     mockUsarMiSuscripcion.mockReturnValue({
@@ -152,7 +169,7 @@ describe("PaginaSuscripcion", () => {
 
   it("muestra botón Actualizar a Premium", () => {
     mockUsarPlanes.mockReturnValue({
-      data: [PLAN_GRATIS, PLAN_PREMIUM],
+      data: [PLAN_GRATIS, PLAN_PREMIUM, PLAN_MAX],
       isLoading: false,
     });
     mockUsarMiSuscripcion.mockReturnValue({
@@ -167,7 +184,7 @@ describe("PaginaSuscripcion", () => {
 
   it("muestra features del plan premium", () => {
     mockUsarPlanes.mockReturnValue({
-      data: [PLAN_GRATIS, PLAN_PREMIUM],
+      data: [PLAN_GRATIS, PLAN_PREMIUM, PLAN_MAX],
       isLoading: false,
     });
     mockUsarMiSuscripcion.mockReturnValue({
@@ -183,7 +200,7 @@ describe("PaginaSuscripcion", () => {
 
   it("muestra info de suscripción actual", () => {
     mockUsarPlanes.mockReturnValue({
-      data: [PLAN_GRATIS, PLAN_PREMIUM],
+      data: [PLAN_GRATIS, PLAN_PREMIUM, PLAN_MAX],
       isLoading: false,
     });
     mockUsarMiSuscripcion.mockReturnValue({
@@ -193,7 +210,7 @@ describe("PaginaSuscripcion", () => {
 
     renderConProveedores(<PaginaSuscripcion />);
 
-    expect(screen.getByText(/Plan: Gratis/)).toBeInTheDocument();
-    expect(screen.getByText(/Activa/)).toBeInTheDocument();
+    expect(screen.getByText(/Plan: Free/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Activa/).length).toBeGreaterThan(0);
   });
 });

@@ -57,7 +57,7 @@ function TooltipDia({ dia, x, y, saliendo }: { dia: DiaSemanalDTO; x: number; y:
       }`}
       style={{ left: x, top: y }}
     >
-      <div className="backdrop-blur-3xl bg-[#1A1128]/50 border border-white/15 rounded-2xl px-4 py-3.5 shadow-[0_8px_40px_rgba(124,77,255,0.2),0_0_1px_rgba(255,255,255,0.1)] w-[220px]">
+      <div className="backdrop-blur-3xl bg-[#1A1128]/88 border border-white/15 rounded-2xl px-4 py-3.5 shadow-[0_8px_40px_rgba(124,77,255,0.2),0_0_1px_rgba(255,255,255,0.1)] w-[220px]">
         <div className="flex items-center gap-2 mb-2.5">
           <span className="text-[#f8f6ff] font-[family-name:var(--font-inria)] text-[20px] font-bold leading-none">
             {diaSem} {diaMes}
@@ -213,11 +213,18 @@ export function SemanaV2({
                   style={{ animationDelay: `${idx * 50}ms` }}
                 >
                   <PanelGlass
-                    className={`flex items-start gap-2.5 p-2.5 w-[160px] min-w-[160px] shrink-0 transition-all duration-200 group-hover:bg-white/[0.12] group-hover:border-white/20 ${
-                      hoy ? "ring-1 ring-white/30" : ""
+                    className={`relative flex items-start gap-2.5 p-2.5 w-[160px] min-w-[160px] shrink-0 transition-all duration-200 group-hover:bg-white/[0.12] group-hover:border-white/20 ${
+                      hoy ? "ring-1 ring-[#B388FF]/40 border-[#B388FF]/25 bg-white/[0.08]" : ""
                     }`}
                   >
-                    <div className="rounded-lg backdrop-blur-[21px] bg-white/[0.07] border border-white/[0.12] px-2 py-1.5 flex flex-col items-center justify-center gap-0.5 shrink-0 min-w-[40px]">
+                    {hoy && (
+                      <span className="absolute -top-1.5 -right-1.5 rounded-full bg-emerald-500/90 px-1.5 py-[1px] text-[8px] font-bold uppercase tracking-wider text-white shadow-[0_2px_6px_rgba(16,185,129,0.4)]">
+                        Hoy
+                      </span>
+                    )}
+                    <div className={`rounded-lg backdrop-blur-[21px] border px-2 py-1.5 flex flex-col items-center justify-center gap-0.5 shrink-0 min-w-[40px] ${
+                      hoy ? "bg-[#B388FF]/15 border-[#B388FF]/25" : "bg-white/[0.07] border-white/[0.12]"
+                    }`}>
                       <span className="text-white/90 text-[12px] font-medium text-center leading-tight">
                         {diaSem}
                       </span>

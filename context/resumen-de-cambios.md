@@ -1757,3 +1757,87 @@ Sin tests nuevos ni modificados. `eslint` pasó sobre `page.tsx`, `distribucion-
 2. Al hacer clic en `Pulso dominante`, `Elementos`, `Modalidades` o en una píldora puntual como `Fuego` o `Cardinal`, el panel derecho cambia de contexto.
 3. El rail ahora explica primero qué es esa capa astrológica y luego cómo se expresa específicamente en la carta del usuario según cantidad de planetas, peso relativo y focos activadores.
 4. El cambio de contenido del rail se acompaña con una transición suave de salida y entrada para que la lectura se sienta menos brusca y más consistente con el patrón premium de ASTRA.
+
+---
+
+## Sesion: Rediseño premium de Perfil y preparación del plan Max
+**Fecha:** 2026-04-01 ~04:42 (ARG)
+
+### Que se hizo
+Se rediseñó la pantalla `Perfil` con el lenguaje premium ciruela de ASTRA, reduciendo ruido visual y dejando sólo la información básica y útil para el usuario. Además se preparó el sistema de planes para convivir con `Free`, `Premium` y `Max`, sin definir todavía el acceso comercial de `Max`.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/perfil/page.tsx` | Reemplaza el layout utilitario por una composición premium limpia con hero breve, resumen de cuenta, datos base, accesos, Oráculo Telegram y bloque de privacidad |
+| `frontend/src/app/(app)/suscripcion/page.tsx` | Agrega visualización de tres planes (`Free`, `Premium`, `Max`), adapta copies a plan pago genérico y deja `Max` como opción visible en estado próximo |
+| `frontend/src/componentes/layouts/navbar.tsx` | Ajusta la lectura visual del plan del usuario para usar `Free / Premium / Max` y trata `Max` como plan pago |
+| `frontend/src/componentes/ui/bloqueo-premium.tsx` | Cambia el gating para considerar `Premium` y `Max` como planes pagos y actualiza el copy del bloqueo |
+| `frontend/src/lib/utilidades/planes.ts` | Centraliza helpers de frontend para etiquetas, frases y detección de planes pagos |
+| `frontend/src/tests/paginas/perfil.test.tsx` | Actualiza mocks y asserts a la nueva experiencia de Perfil |
+| `frontend/src/tests/paginas/suscripcion.test.tsx` | Ajusta pruebas a la presencia de `Free`, `Premium` y `Max` |
+| `backend/app/utilidades/planes.py` | Incorpora helpers comunes para jerarquía de planes y detección de planes pagos |
+| `backend/app/dependencias_suscripcion.py` | Reemplaza la verificación rígida por una comparación por nivel de plan |
+| `backend/app/configuracion_features.py` | Hace que los features pagos también queden habilitados para `Max` |
+| `backend/app/rutas/v1/chat.py` | Considera `Max` como plan pago para el acceso al chat/oráculo web |
+| `backend/app/rutas/v1/suscripcion.py` | Generaliza respuestas y validaciones para planes pagos, sin asumir sólo `Premium` |
+| `backend/app/servicios/bot_telegram.py` | Habilita el Oráculo Telegram para `Premium` y `Max` |
+
+### Tests
+Se modificaron 2 suites frontend y se validó el flujo de planes también en backend. Pasaron `17/17` tests de `vitest` (`perfil` y `suscripción`) y `56/56` tests de `pytest` (`chat` y `suscripción`). `eslint` pasó sobre los archivos tocados del frontend.
+
+### Como funciona
+1. La pantalla `Perfil` ahora arranca con un hero corto que muestra sólo identidad de cuenta, plan activo y estado general, sin títulos redundantes ni bloques administrativos repetidos.
+2. Los datos de nacimiento quedaron como bloque principal y editable, porque son la base de todas las cartas; el resto de la pantalla funciona como soporte de acceso y seguridad.
+3. La sección de suscripción ya expone tres niveles visibles (`Free`, `Premium` y `Max`), pero `Max` se muestra como próximo para no inventar todavía su modalidad de compra.
+4. Todo el sistema de gating dejó de depender de la comparación estricta con `premium`, por lo que cuando `Max` se active formalmente va a heredar el acceso pago sin tener que rehacer la lógica central.
+
+---
+
+## Sesion: Confirmación tipada en Perfil y refinamiento premium de Suscripción
+**Fecha:** 2026-04-01 ~05:05 (ARG)
+
+### Que se hizo
+Se achicó y limpió el hero de `Perfil`, se eliminó copy redundante y se agregó una confirmación tipada antes de guardar cambios de nacimiento. Además, la sección de `Suscripción` y `Facturación` se rediseñó con el mismo lenguaje glass ciruela para que ya no conviva con un layout genérico anterior.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/perfil/page.tsx` | Reduce la escala del título principal, elimina textos de relleno y agrega un modal premium de confirmación que exige escribir `editar` antes de persistir cambios |
+| `frontend/src/app/(app)/suscripcion/page.tsx` | Rehace hero, resumen, cards de planes, estado de suscripción y lista de facturación bajo superficies ciruela integradas |
+| `frontend/src/tests/paginas/perfil.test.tsx` | Ajusta el flujo de guardado al nuevo modal de confirmación y agrega cobertura para el diálogo |
+| `frontend/src/tests/paginas/suscripcion.test.tsx` | Actualiza asserts al nuevo layout premium, donde algunos textos se repiten entre hero y paneles |
+
+### Tests
+`eslint` pasó sobre `perfil/page.tsx`, `suscripcion/page.tsx`, `perfil.test.tsx` y `suscripcion.test.tsx`. `vitest` pasó `18/18` en las suites de perfil y suscripción.
+
+### Como funciona
+1. En `Perfil`, el usuario ya no guarda cambios de nacimiento de forma directa: primero ve un modal glass ciruela que explica el impacto de la edición y debe escribir `editar` para confirmar.
+2. El hero de `Perfil` queda más seco y útil: nombre, email, plan y estados, sin párrafos que repitan lo evidente.
+3. `Suscripción` ahora arranca con un hero premium de cuenta y facturación, muestra las capas `Free`, `Premium` y `Max` con cards consistentes y deja el estado actual en un panel separado y claro.
+4. `Facturación` deja la tabla administrativa y pasa a una lista premium más legible, con monto, estado, método y acceso directo al PDF cuando corresponde.
+
+---
+
+## Sesion: Diseño Humano alineado al patrón premium de Carta Astral
+**Fecha:** 2026-04-01 ~05:09 (ARG)
+
+### Que se hizo
+Se refactorizó la pantalla de `Diseño Humano` para que adopte la misma lógica visual y estructural de `Carta Astral`: hero más compacto, rail contextual fijo en desktop, bottom sheet en mobile y `Body Graph` relegado a un modal de consulta bajo demanda.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/diseno-humano/page.tsx` | Reestructura toda la página al patrón de `Carta Astral`, elimina el protagonismo del `Body Graph`, mueve el gráfico a un modal, compacta el hero y oscurece las superficies al lenguaje `ui-ciruela` |
+| `frontend/src/componentes/diseno-humano/panel-contextual.tsx` | Reescribe el panel contextual HD para que renderice contenido dentro del `RailLateral`, agrega helpers de metadata/clave y unifica la materialidad oscura del panel |
+| `frontend/src/componentes/layouts/layout-app.tsx` | Extiende el layout con rail separado para la ruta `/diseno-humano`, de modo que el contenido y el panel tengan scroll independiente |
+| `frontend/src/tests/paginas/diseno-humano.test.tsx` | Ajusta la suite al nuevo hero y cubre la apertura del `Body Graph` en modal desde el CTA dedicado |
+
+### Tests
+`eslint` pasó sobre `diseno-humano/page.tsx`, `componentes/diseno-humano/panel-contextual.tsx`, `componentes/layouts/layout-app.tsx` y `tests/paginas/diseno-humano.test.tsx`. `vitest` pasó `4/4` en `diseno-humano.test.tsx`.
+
+### Como funciona
+1. En desktop, `Diseño Humano` ahora comparte el mismo patrón de layout que `Carta Astral`: columna principal con scroll propio y rail contextual fijo a la derecha.
+2. El hero deja de usar el `Body Graph` como protagonista; ahora presenta la lectura, deja chips de entrada para `Tipo`, `Autoridad`, `Perfil` y `Definición`, y ofrece `Ver Body Graph` como CTA de consulta.
+3. El `Body Graph` ya no domina el lienzo principal: se abre desde un modal oscuro y premium, como artefacto visual secundario.
+4. Centros, canales, activaciones y cruz de encarnación siguen siendo clickeables, pero la explicación larga y personalizada vive en el panel derecho, no dentro de las cards del contenido.

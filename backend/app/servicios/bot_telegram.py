@@ -24,6 +24,7 @@ from app.datos.repositorio_telegram import RepositorioTelegram
 from app.registro import logger
 from app.servicios.servicio_oraculo import ServicioOraculo
 from app.servicios.servicio_transitos import ServicioTransitos
+from app.utilidades.planes import es_plan_pago
 
 
 # Límite de mensajes por hora
@@ -212,19 +213,19 @@ class BotTelegram:
                 )
                 return
 
-            # 2. Verificar plan premium
+            # 2. Verificar plan pago
             repo_sus = RepositorioSuscripcion(sesion)
             suscripcion = await repo_sus.obtener_activa(vinculo.usuario_id)
             es_premium = False
             if suscripcion:
                 repo_plan = RepositorioPlan(sesion)
                 plan = await repo_plan.obtener_por_id(suscripcion.plan_id)
-                if plan and plan.slug == "premium":
+                if plan and es_plan_pago(plan.slug):
                     es_premium = True
 
             if not es_premium:
                 await update.message.reply_text(
-                    "El Oráculo ASTRA es un servicio exclusivo del plan Premium.\n\n"
+                    "El Oráculo ASTRA es un servicio exclusivo de los planes Premium y Max.\n\n"
                     "Actualizá tu plan desde la web para acceder."
                 )
                 return
