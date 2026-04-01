@@ -12,34 +12,26 @@ interface MetaHeaderMobile {
 }
 
 interface HeaderMobileProps {
-  /** Titulo de la pagina */
   titulo?: string;
-  /** Texto breve superior para jerarquia */
   etiqueta?: string;
-  /** Subtitulo descriptivo */
   subtitulo?: string;
-  /** Mostrar boton de retroceso */
   mostrarAtras?: boolean;
-  /** Fondo transparente (para paginas inmersivas con gradient hero) */
   transparente?: boolean;
-  /** Elemento a la derecha del header (ej: icono settings) */
   accionDerecha?: React.ReactNode;
-  /** Metadatos utiles en chips */
   metas?: MetaHeaderMobile[];
-  /** Contenido custom en lugar de titulo */
   children?: React.ReactNode;
 }
 
 function obtenerClasesMeta(tono: MetaHeaderMobile["tono"] = "violeta"): string {
   switch (tono) {
     case "oro":
-      return "border-[#D4A234]/20 bg-[#D4A234]/10 text-[#7A5A08]";
+      return "border-[#D4A234]/25 bg-[#D4A234]/10 text-[#D4A234]";
     case "verde":
-      return "border-emerald-300/40 bg-emerald-50 text-emerald-700";
+      return "border-emerald-400/25 bg-emerald-400/10 text-emerald-300";
     case "rojo":
-      return "border-rose-200/60 bg-rose-50 text-rose-700";
+      return "border-rose-400/25 bg-rose-400/10 text-rose-300";
     default:
-      return "border-violet-200/70 bg-violet-50/90 text-violet-700";
+      return "border-[#B388FF]/20 bg-[#B388FF]/10 text-[#C4ADFF]";
   }
 }
 
@@ -63,10 +55,10 @@ export default function HeaderMobile({
       <div className="px-4 pb-3 pt-3">
         <div
           className={cn(
-            "overflow-hidden rounded-[28px] border shadow-[0_12px_32px_rgba(76,45,140,0.12)] backdrop-blur-xl",
+            "overflow-hidden rounded-[28px] border shadow-[0_12px_32px_rgba(10,4,25,0.4)] backdrop-blur-xl",
             transparente
-              ? "border-white/20 bg-white/[0.12]"
-              : "border-white/55 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(250,247,255,0.82))]"
+              ? "border-white/10 bg-white/[0.06]"
+              : "border-white/[0.10] bg-[#1A1128]/80"
           )}
         >
           <div className="relative px-3.5 py-3.5">
@@ -74,12 +66,7 @@ export default function HeaderMobile({
               {mostrarAtras && (
                 <button
                   onClick={() => router.back()}
-                  className={cn(
-                    "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors",
-                    transparente
-                      ? "border-white/20 bg-white/[0.08] text-white"
-                      : "border-[#E9E0FF] bg-white/80 text-[#4A2D8C]"
-                  )}
+                  className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.08] text-white/70 transition-colors hover:bg-white/[0.14] hover:text-white"
                   aria-label="Volver"
                 >
                   <Icono nombre="flechaIzquierda" tamaño={20} />
@@ -90,15 +77,15 @@ export default function HeaderMobile({
                 {children ?? (
                   <>
                     {etiqueta && (
-                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#7C4DFF]/60">
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#B388FF]/60">
                         {etiqueta}
                       </p>
                     )}
-                    <h1 className="truncate text-[18px] font-semibold text-[#2C2926]">
+                    <h1 className="truncate text-[18px] font-semibold text-white">
                       {titulo}
                     </h1>
                     {subtitulo && (
-                      <p className="mt-1 text-[12px] leading-relaxed text-[#6E6782]">
+                      <p className="mt-1 text-[12px] leading-relaxed text-white/45">
                         {subtitulo}
                       </p>
                     )}

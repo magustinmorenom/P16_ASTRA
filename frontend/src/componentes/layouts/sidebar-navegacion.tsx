@@ -251,7 +251,7 @@ export default function SidebarNavegacion() {
             className="lg:hidden fixed inset-0 bg-black/40 z-40"
             onClick={cerrarSidebar}
           />
-          <aside className="lg:hidden fixed top-[62px] left-0 bottom-0 w-[280px] z-50 shadow-xl overflow-y-auto bg-[#190223]">
+          <aside className="lg:hidden fixed top-[62px] left-0 bottom-0 w-[280px] z-50 shadow-[0_0_40px_rgba(10,4,25,0.5)] overflow-y-auto bg-gradient-to-b from-[#1C0627] to-[#12091F]">
             {/* Navegacion mobile (siempre expandida) */}
             <nav className="px-3 pt-4 pb-2">
               <ul className="flex flex-col gap-0.5">
