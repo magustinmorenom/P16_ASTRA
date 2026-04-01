@@ -50,10 +50,10 @@ export function HeroSeccion({
 }: HeroSeccionProps) {
   return (
     <div className="rounded-[10px] bg-gradient-to-b from-[#382954] to-[#6a4f99]">
-      {/* Fila superior: 3 columnas */}
-      <div className="grid grid-cols-[minmax(180px,1.2fr)_minmax(190px,1fr)_minmax(260px,1.4fr)] gap-0 min-h-[240px]">
+      {/* Layout responsive: stack mobile, 3-col desktop */}
+      <div className="flex flex-col lg:grid lg:grid-cols-[minmax(180px,1.2fr)_minmax(190px,1fr)_minmax(260px,1.4fr)] gap-0 lg:min-h-[240px]">
         {/* Columna izquierda — Fecha + Podcast */}
-        <div className="p-4 flex flex-col gap-2">
+        <div className="p-3 lg:p-4 flex flex-col gap-2">
           {/* Contenedor unificado: Fecha (izq) + Info podcast (der) */}
           <div className="rounded-2xl backdrop-blur-[21px] bg-white/[0.07] border border-white/[0.10] p-3 flex items-center gap-4">
             <TarjetaFecha fecha={fecha} />
@@ -113,12 +113,12 @@ export function HeroSeccion({
         </div>
 
         {/* Columna central — Momentos del día */}
-        <div className="rounded-[17px] bg-gradient-to-b from-[#9b8227] to-[#6a4f99] m-3 mr-1.5 self-stretch">
+        <div className="rounded-[17px] bg-gradient-to-b from-[#9b8227] to-[#6a4f99] mx-3 mb-2 lg:m-3 lg:mr-1.5 self-stretch">
           <MomentosDia momentos={momentos} />
         </div>
 
         {/* Columna derecha — Número + Luna + Niveles */}
-        <div className="p-3 pl-1.5 flex flex-col gap-1.5 justify-center">
+        <div className="p-3 lg:pl-1.5 flex flex-row lg:flex-col gap-1.5 justify-center overflow-x-auto">
           <NumeroDelDia numero={numero} />
           <LunaPosicion luna={luna} />
           <NivelesEnergia energia={energia} claridad={claridad} fuerza={fuerza} />

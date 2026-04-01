@@ -70,7 +70,7 @@ export default function BarraNavegacionInferior() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-[#E8E4E0]/60"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-[#12091F]/95 backdrop-blur-xl border-t border-white/[0.08]"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <div className="flex items-center justify-around h-[56px]">
@@ -82,7 +82,7 @@ export default function BarraNavegacionInferior() {
               href={tab.ruta}
               className={cn(
                 "touch-feedback flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[44px] px-2 rounded-lg transition-colors",
-                activo ? "text-[#7C4DFF]" : "text-[#8A8580]"
+                activo ? "text-[#B388FF]" : "text-white/40"
               )}
             >
               <Icono
