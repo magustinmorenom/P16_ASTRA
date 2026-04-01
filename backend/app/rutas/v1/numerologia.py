@@ -35,10 +35,10 @@ async def calcular_numerologia(
         sistema=datos.sistema,
     )
 
-    # 2. Cache Redis
+    # 2. Cache Redis (invalidar si faltan campos de versiones nuevas)
     cache = GestorCache(redis)
     resultado_cache = await cache.obtener(hash_params)
-    if resultado_cache is not None:
+    if resultado_cache is not None and "etapas_de_la_vida" in resultado_cache:
         if perfil_id:
             try:
                 repo = RepositorioCalculo(db)
@@ -59,7 +59,7 @@ async def calcular_numerologia(
         try:
             repo = RepositorioCalculo(db)
             calculo_db = await repo.obtener_por_perfil_y_tipo(perfil_id, TIPO_CALCULO)
-            if calculo_db:
+            if calculo_db and "etapas_de_la_vida" in calculo_db.resultado_json:
                 await cache.guardar(hash_params, calculo_db.resultado_json, TIPO_CALCULO)
                 return {"exito": True, "datos": calculo_db.resultado_json, "cache": True}
         except Exception as e:
@@ -77,15 +77,21 @@ async def calcular_numerologia(
     # 5. Cache
     await cache.guardar(hash_params, resultado, TIPO_CALCULO)
 
-    # 6. DB (con perfil_id si se proporcionó)
+    # 6. DB — actualizar existente o crear nuevo
     try:
         repo = RepositorioCalculo(db)
-        await repo.guardar(
-            perfil_id=perfil_id,
-            tipo=TIPO_CALCULO,
-            hash_parametros=hash_params,
-            resultado_json=resultado,
-        )
+        existente = await repo.obtener_por_perfil_y_tipo(perfil_id, TIPO_CALCULO) if perfil_id else None
+        if existente:
+            existente.resultado_json = resultado
+            existente.hash_parametros = hash_params
+            await db.commit()
+        else:
+            await repo.guardar(
+                perfil_id=perfil_id,
+                tipo=TIPO_CALCULO,
+                hash_parametros=hash_params,
+                resultado_json=resultado,
+            )
     except Exception as e:
         logger.warning("Error persistiendo cálculo numerología en DB: %s", e)
 

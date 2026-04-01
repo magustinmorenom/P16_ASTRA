@@ -1,13 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import {
-  Panel,
-  Group as PanelGroup,
-  Separator as PanelResizeHandle,
-} from "react-resizable-panels";
-
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
+import { RailLateral } from "@/componentes/layouts/rail-lateral";
 import { Boton } from "@/componentes/ui/boton";
 import { Badge } from "@/componentes/ui/badge";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
@@ -134,10 +129,9 @@ const META_NUMERO: Record<ClaveNumero, MetaNumero> = {
   },
 };
 
-const CAPITULOS = [
-  { id: "capitulo-nucleo", etiqueta: "Núcleo y misión" },
-  { id: "capitulo-ritmo", etiqueta: "Ritmo actual" },
-  { id: "capitulo-etapas", etiqueta: "Etapas de vida" },
+const NOMBRES_MES_CORTO = [
+  "", "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+  "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
 ];
 
 function calcularEdad(fechaNacimiento: string): number {
@@ -151,21 +145,50 @@ function calcularEdad(fechaNacimiento: string): number {
   return edad;
 }
 
+/** Reducción pitagórica preservando maestros 11, 22, 33. */
+function reducir(n: number): number {
+  while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
+    n = String(n).split("").reduce((s, d) => s + Number(d), 0);
+  }
+  return n;
+}
+
+const DESC_NUMERO: Record<number, string> = {
+  1: "Liderazgo, independencia, inicio",
+  2: "Cooperación, diplomacia, equilibrio",
+  3: "Expresión, creatividad, comunicación",
+  4: "Estructura, disciplina, construcción",
+  5: "Libertad, aventura, cambio",
+  6: "Responsabilidad, armonía, servicio",
+  7: "Análisis, espiritualidad, introspección",
+  8: "Poder, abundancia, logro material",
+  9: "Humanitarismo, compasión, culminación",
+  11: "Intuición elevada, inspiración, canal",
+  22: "Constructor maestro, visión, materialización",
+  33: "Maestro sanador, compasión universal, guía",
+};
+
+/** Recalcula año, mes y día personal en tiempo real. */
+function recalcularRitmo(fechaNacStr: string) {
+  const nac = new Date(fechaNacStr + "T12:00:00");
+  const hoy = new Date();
+
+  const dia = reducir(nac.getDate());
+  const mes = reducir(nac.getMonth() + 1);
+  const anioDigitos = String(hoy.getFullYear()).split("").reduce((s, d) => s + Number(d), 0);
+  const anioPersonal = reducir(dia + mes + reducir(anioDigitos));
+  const mesPersonal = reducir(anioPersonal + (hoy.getMonth() + 1));
+  const diaPersonal = reducir(mesPersonal + hoy.getDate());
+
+  return {
+    anio: { numero: anioPersonal, descripcion: DESC_NUMERO[anioPersonal] ?? "" },
+    mes: { numero: mesPersonal, descripcion: DESC_NUMERO[mesPersonal] ?? "" },
+    dia: { numero: diaPersonal, descripcion: DESC_NUMERO[diaPersonal] ?? "" },
+  };
+}
+
 function obtenerPrimerNombre(nombre: string) {
   return nombre.trim().split(/\s+/)[0] ?? nombre;
-}
-
-function resumirDescripcion(texto: string) {
-  if (!texto) return "—";
-  const [primera] = texto.split(". ");
-  return primera.endsWith(".") ? primera : `${primera}.`;
-}
-
-function navegarA(id: string) {
-  document.getElementById(id)?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
 }
 
 function crearDetalleNumero(
@@ -320,230 +343,6 @@ function normalizarNumerologia(datos: Numerologia): Numerologia {
   };
 }
 
-function TarjetaNumero({
-  dato,
-  meta,
-  onClick,
-  seleccionada,
-  destacada = false,
-}: {
-  dato: NumeroRespuesta;
-  meta: MetaNumero;
-  onClick: () => void;
-  seleccionada: boolean;
-  destacada?: boolean;
-}) {
-  const maestro = NUMEROS_MAESTROS.includes(dato.numero);
-
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "group rounded-[28px] border text-left transition-all duration-200",
-        destacada ? "p-6" : "p-5",
-        seleccionada
-          ? "border-[#B388FF]/36 bg-[#7C4DFF]/12 shadow-[0_18px_40px_rgba(124,77,255,0.18)]"
-          : "border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] hover:border-white/16 hover:bg-white/[0.06]",
-      )}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
-            {meta.categoria}
-          </p>
-          <h3 className={cn(
-            "mt-3 font-semibold tracking-[-0.02em] text-white",
-            destacada ? "text-2xl" : "text-lg",
-          )}>
-            {meta.titulo}
-          </h3>
-          <p className="mt-2 max-w-sm text-[14px] leading-6 text-white/60">
-            {meta.subtitulo}
-          </p>
-        </div>
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#7C4DFF]/12 text-[#D9C2FF]">
-          <IconoAstral nombre={meta.icono} tamaño={24} className="text-current" />
-        </div>
-      </div>
-
-      <div className="mt-6 flex items-end justify-between gap-4">
-        <div>
-          <p className={cn(
-            "font-semibold tracking-[-0.04em] leading-none",
-            destacada ? "text-[64px]" : "text-[46px]",
-            maestro ? "text-[#F0D68A]" : "text-[#D9C2FF]",
-          )}>
-            {dato.numero}
-          </p>
-          <p className="mt-3 text-[14px] leading-6 text-white/74">
-            {resumirDescripcion(dato.descripcion_larga || dato.descripcion)}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 self-end text-[12px] font-medium text-white/42 transition-colors group-hover:text-white/72">
-          <span>Abrir lectura</span>
-          <Icono nombre="caretDerecha" tamaño={14} />
-        </div>
-      </div>
-
-      {maestro && (
-        <Badge variante="advertencia" className="mt-4">
-          Número Maestro
-        </Badge>
-      )}
-    </button>
-  );
-}
-
-function TarjetaCiclo({
-  titulo,
-  etiqueta,
-  dato,
-  onClick,
-  seleccionada,
-  destacada = false,
-}: {
-  titulo: string;
-  etiqueta: string;
-  dato: NumeroRespuesta;
-  onClick: () => void;
-  seleccionada: boolean;
-  destacada?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "rounded-[28px] border p-5 text-left transition-all duration-200",
-        seleccionada
-          ? "border-[#B388FF]/36 bg-[#7C4DFF]/12 shadow-[0_18px_40px_rgba(124,77,255,0.18)]"
-          : "border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] hover:border-white/16 hover:bg-white/[0.06]",
-      )}
-    >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
-        {etiqueta}
-      </p>
-      <h3 className="mt-3 text-lg font-semibold tracking-[-0.02em] text-white">
-        {titulo}
-      </h3>
-      <p className={cn(
-        "mt-4 font-semibold tracking-[-0.04em] text-[#D9C2FF] leading-none",
-        destacada ? "text-[64px]" : "text-[42px]",
-      )}>
-        {dato.numero}
-      </p>
-      <p className="mt-3 text-[14px] leading-6 text-white/66">
-        {dato.descripcion}
-      </p>
-      <div className="mt-5 flex items-center gap-2 text-[12px] font-medium text-white/42">
-        <span>Ver lectura</span>
-        <Icono nombre="caretDerecha" tamaño={14} />
-      </div>
-    </button>
-  );
-}
-
-function TarjetaMes({
-  item,
-  activa,
-  seleccionada,
-  onClick,
-}: {
-  item: MesPersonalItem;
-  activa: boolean;
-  seleccionada: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "rounded-2xl border px-2 py-3 text-center transition-all duration-200",
-        seleccionada
-          ? "border-[#B388FF]/36 bg-[#7C4DFF]/12 shadow-[0_10px_20px_rgba(124,77,255,0.14)]"
-          : activa
-            ? "border-[#B388FF]/24 bg-white/[0.08]"
-            : "border-white/[0.08] bg-white/[0.04] hover:border-white/16 hover:bg-white/[0.06]",
-      )}
-    >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/46">
-        {item.nombre_mes.slice(0, 3)}
-      </p>
-      <p className={cn(
-        "mt-1 text-2xl font-semibold tracking-[-0.03em]",
-        activa ? "text-[#D9C2FF]" : "text-white/82",
-      )}>
-        {item.numero}
-      </p>
-      {activa && <div className="mx-auto mt-2 h-1.5 w-1.5 rounded-full bg-[#B388FF]" />}
-    </button>
-  );
-}
-
-function TarjetaEtapa({
-  etapa,
-  indice,
-  seleccionada,
-  activa,
-  edadActual,
-  onClick,
-}: {
-  etapa: EtapaVida;
-  indice: number;
-  seleccionada: boolean;
-  activa: boolean;
-  edadActual: number;
-  onClick: () => void;
-}) {
-  const maestro = NUMEROS_MAESTROS.includes(etapa.numero);
-  const pasada = etapa.edad_fin !== null && edadActual >= etapa.edad_fin;
-
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "rounded-[28px] border p-5 text-left transition-all duration-200",
-        seleccionada
-          ? "border-[#B388FF]/36 bg-[#7C4DFF]/12 shadow-[0_18px_40px_rgba(124,77,255,0.18)]"
-          : "border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] hover:border-white/16 hover:bg-white/[0.06]",
-        pasada && "opacity-55",
-      )}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
-            Capítulo {indice + 1}
-          </p>
-          <h3 className="mt-3 text-lg font-semibold tracking-[-0.02em] text-white">
-            {etapa.nombre || `Pináculo ${indice + 1}`}
-          </h3>
-        </div>
-        <div className="flex gap-2">
-          {activa && <Badge variante="info">Ahora</Badge>}
-          {maestro && <Badge variante="advertencia">Maestro</Badge>}
-        </div>
-      </div>
-
-      <div className="mt-5 flex items-end justify-between gap-4">
-        <div>
-          <p className={cn(
-            "text-[56px] font-semibold tracking-[-0.04em] leading-none",
-            maestro ? "text-[#F0D68A]" : "text-[#D9C2FF]",
-          )}>
-            {etapa.numero}
-          </p>
-          <p className="mt-3 text-[13px] text-white/56">
-            {etapa.edad_inicio} a {etapa.edad_fin ?? "∞"} años
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-[13px] leading-6 text-white/62">
-            {resumirDescripcion(etapa.descripcion_larga || etapa.descripcion)}
-          </p>
-        </div>
-      </div>
-    </button>
-  );
-}
 
 export default function PaginaNumerologia() {
   const mutacion = usarNumerologia();
@@ -554,6 +353,7 @@ export default function PaginaNumerologia() {
   const [modoManual, setModoManual] = useState(false);
   const [detalle, setDetalle] = useState<DetalleNumerologia | null>(null);
   const [detalleMovilAbierto, setDetalleMovilAbierto] = useState(false);
+  const [mesesExpandido, setMesesExpandido] = useState(false);
 
   const [nombre, setNombre] = useState("");
   const [fechaNacimiento, setFechaNacimiento] = useState("");
@@ -756,6 +556,30 @@ export default function PaginaNumerologia() {
   }
 
   const datosActuales = normalizarNumerologia(datos);
+
+  // Auto-recalcular si los datos persistidos no tienen etapas (versión vieja)
+  const yaRecalculo = useRef(false);
+  const datosIncompletos = !datosActuales.etapas_de_la_vida?.length && !datosManual;
+  useEffect(() => {
+    if (datosIncompletos && !yaRecalculo.current && !mutacion.isPending) {
+      yaRecalculo.current = true;
+      mutacion.mutate(
+        {
+          datos: {
+            nombre: datosActuales.nombre,
+            fecha_nacimiento: datosActuales.fecha_nacimiento,
+            sistema: (datosActuales.sistema as "pitagorico" | "caldeo") || "pitagorico",
+          },
+        },
+        {
+          onSuccess: (resultado) => {
+            setDatosManual(resultado);
+          },
+        },
+      );
+    }
+  }, [datosIncompletos]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const etapasDeVida: EtapaVida[] = Array.isArray(datosActuales.etapas_de_la_vida)
     ? datosActuales.etapas_de_la_vida
     : [];
@@ -776,9 +600,17 @@ export default function PaginaNumerologia() {
   const esencia = datosActuales.impulso_del_alma ?? NUMERO_VACIO_DEFAULT;
   const imagen = datosActuales.personalidad ?? NUMERO_VACIO_DEFAULT;
   const nacimiento = datosActuales.numero_nacimiento ?? NUMERO_VACIO_DEFAULT;
-  const anioPersonal = datosActuales.anio_personal ?? NUMERO_VACIO_DEFAULT;
-  const mesPersonal = datosActuales.mes_personal ?? NUMERO_VACIO_DEFAULT;
-  const diaPersonal = datosActuales.dia_personal ?? NUMERO_VACIO_DEFAULT;
+  // Recalcular ritmo en tiempo real (los datos persistidos pueden estar desactualizados)
+  const ritmoActual = recalcularRitmo(datosActuales.fecha_nacimiento);
+  const anioPersonal: NumeroRespuesta = ritmoActual.anio.numero
+    ? ritmoActual.anio
+    : (datosActuales.anio_personal ?? NUMERO_VACIO_DEFAULT);
+  const mesPersonal: NumeroRespuesta = ritmoActual.mes.numero
+    ? ritmoActual.mes
+    : (datosActuales.mes_personal ?? NUMERO_VACIO_DEFAULT);
+  const diaPersonal: NumeroRespuesta = ritmoActual.dia.numero
+    ? ritmoActual.dia
+    : (datosActuales.dia_personal ?? NUMERO_VACIO_DEFAULT);
 
   function seleccionarDetalle(nuevoDetalle: DetalleNumerologia) {
     setDetalle(nuevoDetalle);
@@ -803,301 +635,355 @@ export default function PaginaNumerologia() {
     setDetalleMovilAbierto(false);
   }
 
+  const nucleoDatos: { clave: ClaveNumero; dato: NumeroRespuesta }[] = [
+    { clave: "camino_de_vida", dato: senderoNatal },
+    { clave: "expresion", dato: destinoMision },
+    { clave: "impulso_del_alma", dato: esencia },
+    { clave: "personalidad", dato: imagen },
+    { clave: "numero_nacimiento", dato: nacimiento },
+  ];
+
+  const celdasRitmo: { clave: ClaveNumero; dato: NumeroRespuesta; etiqueta: string; destacada?: boolean }[] = [
+    { clave: "dia_personal", dato: diaPersonal, etiqueta: "Día Personal", destacada: true },
+    { clave: "mes_personal", dato: mesPersonal, etiqueta: "Mes Personal" },
+    { clave: "anio_personal", dato: anioPersonal, etiqueta: "Año Personal" },
+  ];
+
   const contenidoPrincipal = (
     <div className="relative min-h-full overflow-hidden bg-[#16011b]">
+      {/* background orbs */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_top_left,rgba(124,77,255,0.24),transparent_44%)]" />
       <div className="pointer-events-none absolute right-[-120px] top-24 h-72 w-72 rounded-full bg-[#B388FF]/10 blur-3xl" />
       <div className="pointer-events-none absolute left-10 top-[640px] h-64 w-64 rounded-full bg-[#7C4DFF]/10 blur-3xl" />
 
-      <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-5 py-8 pb-24 lg:px-7 lg:pb-8">
-        <section className="rounded-[32px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.2),transparent_32%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] px-6 py-7 shadow-[0_24px_70px_rgba(8,2,22,0.38)] sm:px-8 sm:py-8">
-          <div className="pointer-events-none absolute hidden" />
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.08] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/72">
-            <IconoAstral nombre="numerologia" tamaño={14} className="text-current" />
-            Carta numerológica
-          </span>
-
-          <div className="mt-5 flex items-start gap-4">
-            <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#D4A234] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
-              <IconoAstral nombre="numerologia" tamaño={30} className="text-white" />
+      <div className="relative mx-auto flex max-w-5xl flex-col gap-5 px-5 py-6 pb-24 lg:px-7 lg:pb-6">
+        {/* Hero compacto */}
+        <section className="rounded-[28px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.16),transparent_28%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] px-5 py-4 shadow-[0_18px_50px_rgba(8,2,22,0.32)] sm:px-6 sm:py-5">
+          <div className="flex items-start gap-3">
+            <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#D4A234] shadow-[0_14px_32px_rgba(34,12,72,0.36)] sm:flex">
+              <IconoAstral nombre="numerologia" tamaño={24} className="text-white" />
             </div>
-            <div className="max-w-3xl">
-              <h1 className="text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl">
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
+                Carta numerológica
+              </p>
+              <h1 className="mt-2 text-[24px] font-semibold tracking-[-0.04em] text-white sm:text-[28px]">
                 {construirTituloHero(datosActuales)}
               </h1>
-              <p className="mt-3 text-base leading-7 text-white/68 sm:text-lg">
-                Leé tu carta en capítulos: primero sendero, misión, esencia e imagen; después el ritmo actual y las etapas de vida. Toda la explicación técnica vive a la derecha y la interpretación baja a tu caso.
-              </p>
 
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Badge variante="info">{datosActuales.sistema === "pitagorico" ? "Sistema pitagórico" : "Sistema caldeo"}</Badge>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Badge variante="info">{datosActuales.sistema === "pitagorico" ? "Pitagórico" : "Caldeo"}</Badge>
                 {numerosMaestros.length > 0 && (
                   <Badge variante="advertencia">
                     Maestros: {numerosMaestros.join(", ")}
                   </Badge>
                 )}
-                <Badge className="bg-white/[0.08] text-white/78 border-white/10">
-                  {datosActuales.fecha_nacimiento}
-                </Badge>
               </div>
+            </div>
+          </div>
 
-              <div className="mt-6 flex flex-wrap gap-3">
+          <p className="mt-3 max-w-3xl text-[13px] leading-6 text-white/58">
+            Tocá cualquier número para abrir su lectura completa en el panel derecho.
+          </p>
+        </section>
+
+        {/* ── Núcleo ── */}
+        <section>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
+            Núcleo
+          </p>
+          <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03]">
+            {nucleoDatos.map(({ clave, dato }, idx) => {
+              const meta = META_NUMERO[clave];
+              const maestro = NUMEROS_MAESTROS.includes(dato.numero);
+              const seleccionado = detalleClave === clave;
+
+              return (
                 <button
-                  onClick={() => abrirNumero("camino_de_vida", senderoNatal)}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.08] px-4 py-2 text-sm font-medium text-white/82 transition-colors hover:bg-white/[0.14]"
+                  key={clave}
+                  onClick={() => abrirNumero(clave, dato)}
+                  className={cn(
+                    "group flex w-full items-center gap-3 border-l-2 px-4 py-3 text-left transition-all duration-200",
+                    idx > 0 && "border-t border-t-white/[0.06]",
+                    seleccionado
+                      ? "border-l-[#B388FF] bg-white/[0.06]"
+                      : "border-l-transparent hover:bg-white/[0.04]",
+                  )}
+                  style={{ animationDelay: `${idx * 40}ms` }}
                 >
-                  Leer sendero natal
-                  <Icono nombre="caretDerecha" tamaño={14} />
-                </button>
-                <button
-                  onClick={() => abrirNumero("dia_personal", diaPersonal)}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.08] px-4 py-2 text-sm font-medium text-white/82 transition-colors hover:bg-white/[0.14]"
-                >
-                  Ver tu día personal
-                  <Icono nombre="caretDerecha" tamaño={14} />
-                </button>
-                {etapaActiva && (
-                  <button
-                    onClick={() => abrirEtapa(etapaActiva, etapasDeVida.findIndex((item) => item === etapaActiva))}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.08] px-4 py-2 text-sm font-medium text-white/82 transition-colors hover:bg-white/[0.14]"
+                  <span
+                    className={cn(
+                      "shrink-0 text-[28px] font-semibold leading-none tracking-[-0.04em]",
+                      maestro ? "text-[#F0D68A]" : "text-[#D9C2FF]",
+                    )}
+                    style={{ minWidth: "2.2rem", textAlign: "center" }}
                   >
-                    Etapa actual
-                    <Icono nombre="caretDerecha" tamaño={14} />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
+                    {dato.numero}
+                  </span>
 
-        <div className="flex flex-wrap gap-2">
-          {CAPITULOS.map((capitulo) => (
-            <button
-              key={capitulo.id}
-              onClick={() => navegarA(capitulo.id)}
-              className="rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-medium text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
-            >
-              {capitulo.etiqueta}
-            </button>
-          ))}
-        </div>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14px] font-semibold text-white">
+                      {meta.titulo}
+                    </span>
+                    <span className="block truncate text-[13px] leading-5 text-white/60">
+                      {meta.subtitulo}
+                    </span>
+                  </span>
 
-        <section id="capitulo-nucleo" className="space-y-4">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/46">
-                Capítulo 1
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-white">
-                Núcleo y misión
-              </h2>
-            </div>
-            <p className="max-w-md text-sm leading-6 text-white/52">
-              Esta capa reúne las piezas más parecidas a la estructura clásica del manual: sendero, misión, esencia, imagen y don de nacimiento.
-            </p>
-          </div>
-
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-            <TarjetaNumero
-              dato={senderoNatal}
-              meta={META_NUMERO.camino_de_vida}
-              onClick={() => abrirNumero("camino_de_vida", senderoNatal)}
-              seleccionada={detalleClave === "camino_de_vida"}
-              destacada
-            />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <TarjetaNumero
-                dato={destinoMision}
-                meta={META_NUMERO.expresion}
-                onClick={() => abrirNumero("expresion", destinoMision)}
-                seleccionada={detalleClave === "expresion"}
-              />
-              <TarjetaNumero
-                dato={esencia}
-                meta={META_NUMERO.impulso_del_alma}
-                onClick={() => abrirNumero("impulso_del_alma", esencia)}
-                seleccionada={detalleClave === "impulso_del_alma"}
-              />
-              <TarjetaNumero
-                dato={imagen}
-                meta={META_NUMERO.personalidad}
-                onClick={() => abrirNumero("personalidad", imagen)}
-                seleccionada={detalleClave === "personalidad"}
-              />
-              <TarjetaNumero
-                dato={nacimiento}
-                meta={META_NUMERO.numero_nacimiento}
-                onClick={() => abrirNumero("numero_nacimiento", nacimiento)}
-                seleccionada={detalleClave === "numero_nacimiento"}
-              />
-            </div>
-          </div>
-        </section>
-
-        <section id="capitulo-ritmo" className="space-y-4">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/46">
-                Capítulo 2
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-white">
-                Ritmo actual
-              </h2>
-            </div>
-            <p className="max-w-md text-sm leading-6 text-white/52">
-              Acá se concentra el timing de tu carta: la vibración de hoy, el clima del mes y la atmósfera general del año.
-            </p>
-          </div>
-
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_320px]">
-            <TarjetaCiclo
-              titulo={META_NUMERO.dia_personal.titulo}
-              etiqueta={META_NUMERO.dia_personal.categoria}
-              dato={diaPersonal}
-              onClick={() => abrirNumero("dia_personal", diaPersonal)}
-              seleccionada={detalleClave === "dia_personal"}
-              destacada
-            />
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-              <TarjetaCiclo
-                titulo={META_NUMERO.anio_personal.titulo}
-                etiqueta={META_NUMERO.anio_personal.categoria}
-                dato={anioPersonal}
-                onClick={() => abrirNumero("anio_personal", anioPersonal)}
-                seleccionada={detalleClave === "anio_personal"}
-              />
-              <TarjetaCiclo
-                titulo={META_NUMERO.mes_personal.titulo}
-                etiqueta={META_NUMERO.mes_personal.categoria}
-                dato={mesPersonal}
-                onClick={() => abrirNumero("mes_personal", mesPersonal)}
-                seleccionada={detalleClave === "mes_personal"}
-              />
-            </div>
-          </div>
-
-          {mesesPersonales.length > 0 && (
-            <div className="rounded-[30px] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl">
-              <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
-                    Biblioteca del año
-                  </p>
-                  <h3 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-white">
-                    Tus 12 meses personales
-                  </h3>
-                </div>
-                <p className="max-w-md text-sm leading-6 text-white/52">
-                  Cada casilla abre la lectura breve del mes y cómo se integra con tu año personal {anioPersonal.numero}.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12">
-                {mesesPersonales.map((item) => (
-                  <TarjetaMes
-                    key={item.mes}
-                    item={item}
-                    activa={item.mes === mesActual}
-                    seleccionada={detalleClave === `mes:${item.mes}`}
-                    onClick={() => abrirMes(item)}
+                  <Icono
+                    nombre="caretDerecha"
+                    tamaño={14}
+                    className="shrink-0 text-white/30 transition-colors group-hover:text-white/60"
                   />
-                ))}
-              </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ── Ritmo actual ── */}
+        <section>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
+            Ritmo actual
+          </p>
+
+          {/* 3-cell console */}
+          <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03]">
+            <div className="grid grid-cols-3 divide-x divide-white/[0.08]">
+              {celdasRitmo.map(({ clave, dato, etiqueta, destacada }) => {
+                const seleccionado = detalleClave === clave;
+
+                return (
+                  <button
+                    key={clave}
+                    onClick={() => abrirNumero(clave, dato)}
+                    className={cn(
+                      "group relative flex flex-col items-center gap-1.5 py-4 px-2 transition-all duration-200",
+                      seleccionado
+                        ? "bg-white/[0.06]"
+                        : "hover:bg-white/[0.04]",
+                    )}
+                  >
+                    {destacada && (
+                      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(124,77,255,0.12),transparent_70%)]" />
+                    )}
+                    <span
+                      className={cn(
+                        "relative font-semibold tracking-[-0.04em] text-[#D9C2FF] leading-none",
+                        destacada ? "text-[36px]" : "text-[26px]",
+                      )}
+                    >
+                      {dato.numero}
+                    </span>
+                    <span className="relative text-[12px] font-semibold text-white/70">
+                      {etiqueta}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Expandable months bar */}
+          {mesesPersonales.length > 0 && (
+            <div className="mt-2 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03]">
+              <button
+                onClick={() => setMesesExpandido((v) => !v)}
+                className="flex w-full items-center justify-between px-4 py-2.5 text-[12px] font-medium text-white/50 transition-colors hover:text-white/70"
+              >
+                <span>Ver 12 meses</span>
+                <Icono
+                  nombre={mesesExpandido ? "caretArriba" : "caretAbajo"}
+                  tamaño={14}
+                  className="text-current"
+                />
+              </button>
+
+              {mesesExpandido && (
+                <div className="border-t border-white/[0.06] px-3 py-3">
+                  <div className="flex gap-1.5 overflow-x-auto scroll-sutil sm:grid sm:grid-cols-6 sm:overflow-x-visible lg:grid-cols-12">
+                    {mesesPersonales.map((item) => {
+                      const esActual = item.mes === mesActual;
+                      const seleccionado = detalleClave === `mes:${item.mes}`;
+
+                      return (
+                        <button
+                          key={item.mes}
+                          onClick={() => abrirMes(item)}
+                          className={cn(
+                            "flex min-w-[52px] flex-col items-center rounded-xl border px-2 py-2 transition-all duration-150",
+                            seleccionado
+                              ? "border-[#B388FF]/40 bg-[#7C4DFF]/14"
+                              : esActual
+                                ? "border-[#B388FF]/24 bg-white/[0.06]"
+                                : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05]",
+                          )}
+                        >
+                          <span className="flex items-center gap-1 text-[11px] font-medium uppercase text-white/50">
+                            {esActual && (
+                              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#B388FF]" />
+                            )}
+                            {NOMBRES_MES_CORTO[item.mes] || item.nombre_mes.slice(0, 3)}
+                          </span>
+                          <span
+                            className={cn(
+                              "mt-0.5 text-[16px] font-semibold leading-none",
+                              esActual ? "text-[#D9C2FF]" : "text-white/70",
+                            )}
+                          >
+                            {item.numero}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </section>
 
-        <section id="capitulo-etapas" className="space-y-4">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/46">
-                Capítulo 3
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-white">
-                Etapas de vida
-              </h2>
-            </div>
-            <p className="max-w-md text-sm leading-6 text-white/52">
-              Tus pináculos muestran grandes capítulos. Hoy tenés {edadActual} años y {etapaActiva ? `estás dentro de ${etapaActiva.nombre}.` : "podés abrir cada etapa para leerla."}
-            </p>
-          </div>
+        {/* ── Etapas ── */}
+        <section>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
+            Etapas
+          </p>
 
           {etapasDeVida.length > 0 ? (
-            <div className="grid gap-4 xl:grid-cols-2">
-              {etapasDeVida.map((etapa, indice) => (
-                <TarjetaEtapa
-                  key={`${etapa.numero}-${indice}`}
-                  etapa={etapa}
-                  indice={indice}
-                  edadActual={edadActual}
-                  activa={
+            <div className="overflow-x-auto scroll-sutil rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-5 sm:px-6">
+              {/* Timeline line + nodes */}
+              <div className="relative flex items-start justify-between" style={{ minWidth: `${Math.max(etapasDeVida.length * 100, 280)}px` }}>
+                {/* Connecting line background */}
+                <div className="pointer-events-none absolute left-0 right-0 top-[18px] h-px bg-white/[0.12]" />
+
+                {/* Active segment overlay */}
+                {(() => {
+                  const indiceActiva = etapasDeVida.findIndex(
+                    (e) => edadActual >= e.edad_inicio && (e.edad_fin === null || edadActual < e.edad_fin),
+                  );
+                  if (indiceActiva < 0) return null;
+                  const pct = (indiceActiva / Math.max(etapasDeVida.length - 1, 1)) * 100;
+                  return (
+                    <div
+                      className="pointer-events-none absolute left-0 top-[18px] h-px bg-[#B388FF]/40"
+                      style={{ width: `${pct}%` }}
+                    />
+                  );
+                })()}
+
+                {etapasDeVida.map((etapa, indice) => {
+                  const activa =
                     edadActual >= etapa.edad_inicio &&
-                    (etapa.edad_fin === null || edadActual < etapa.edad_fin)
-                  }
-                  seleccionada={detalleClave === `etapa:${indice}`}
-                  onClick={() => abrirEtapa(etapa, indice)}
-                />
-              ))}
+                    (etapa.edad_fin === null || edadActual < etapa.edad_fin);
+                  const pasada =
+                    etapa.edad_fin !== null && edadActual >= etapa.edad_fin;
+                  const maestro = NUMEROS_MAESTROS.includes(etapa.numero);
+                  const seleccionado = detalleClave === `etapa:${indice}`;
+                  const primerFrase = etapa.descripcion?.split(". ")[0] ?? "";
+
+                  return (
+                    <button
+                      key={`${etapa.numero}-${indice}`}
+                      onClick={() => abrirEtapa(etapa, indice)}
+                      className={cn(
+                        "group relative flex min-w-[110px] flex-1 flex-col items-center gap-1.5 px-2 transition-all duration-200",
+                        pasada && !seleccionado && "opacity-50",
+                      )}
+                    >
+                      {/* Node circle */}
+                      <div
+                        className={cn(
+                          "relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 text-[17px] font-semibold transition-all duration-200",
+                          activa
+                            ? "border-[#B388FF] bg-[#2a1548] text-[#D9C2FF] ring-2 ring-[#B388FF]/30"
+                            : pasada
+                              ? "border-white/[0.12] bg-[#1c0f2e] text-white/50"
+                              : "border-white/[0.12] bg-[#1c0f2e] text-white/60",
+                          maestro && !activa && "border-[#F0D68A]/40",
+                          seleccionado && "ring-2 ring-[#B388FF]/40",
+                          "group-hover:border-[#B388FF]/50",
+                        )}
+                      >
+                        <span className={cn(maestro ? "text-[#F0D68A]" : "")}>
+                          {etapa.numero}
+                        </span>
+                      </div>
+
+                      {/* "Ahora" chip */}
+                      {activa && (
+                        <span className="rounded-full bg-[#7C4DFF]/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#B388FF]">
+                          Ahora
+                        </span>
+                      )}
+
+                      {/* Name */}
+                      <span className="text-[12px] font-semibold text-white/80">
+                        {etapa.nombre || `Pináculo ${indice + 1}`}
+                      </span>
+
+                      {/* Age range */}
+                      <span className="text-[10px] text-white/40">
+                        {etapa.edad_inicio}–{etapa.edad_fin ?? "∞"} años
+                      </span>
+
+                      {/* Short description */}
+                      {primerFrase && (
+                        <span className="mt-0.5 max-w-[130px] text-center text-[11px] leading-4 text-white/36 line-clamp-2">
+                          {primerFrase}.
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ) : (
-            <div className="rounded-[30px] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
-                Etapas no disponibles
-              </p>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/64">
-                Esta carta guardada no trae los pináculos completos. Podés seguir
-                leyendo núcleo y ritmo actual, o recalcular la numerología para
-                regenerar las etapas de vida.
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4">
+              <p className="text-[13px] text-white/50">
+                Etapas no disponibles. Recalculá la numerología para generar los pináculos.
               </p>
             </div>
           )}
         </section>
 
-        <button
-          onClick={() => {
-            setModoManual(true);
-            setDatosManual(null);
-            setDetalle(null);
-            setDetalleMovilAbierto(false);
-          }}
-          className="inline-flex items-center gap-2 self-start rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-medium text-white/64 transition-colors hover:bg-white/[0.08] hover:text-white"
-        >
-          <Icono nombre="flechaIzquierda" tamaño={16} />
-          Nuevo cálculo
-        </button>
       </div>
     </div>
   );
 
+  const etiquetaPanel = detalle?.categoria ?? "Numerología";
+  const tituloPanel = detalle?.titulo ?? "Seleccioná un número";
+  const subtituloPanel = detalle?.subtitulo;
+
   return (
-    <div className="relative min-h-full bg-[#16011B] lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:overflow-hidden">
+    <div className="relative min-h-full bg-[#16011B] lg:h-full lg:min-h-0 lg:overflow-hidden">
       <HeaderMobile titulo="Numerología" mostrarAtras />
 
-      {esMobile ? (
-        <div className="flex-1 overflow-y-auto scroll-sutil">
+      <div className="relative z-10 flex min-h-full flex-col lg:h-full lg:min-h-0 lg:flex-row lg:overflow-hidden">
+        {/* Mobile — scroll simple */}
+        <div className="lg:hidden flex-1 overflow-y-auto scroll-sutil">
           {contenidoPrincipal}
         </div>
-      ) : (
-        <div className="flex h-full min-h-0 flex-1">
-          <PanelGroup orientation="horizontal" id="numerologia-paneles">
-            <Panel defaultSize={72} minSize={56}>
-              <div className="h-full overflow-y-auto scroll-sutil-dark">
-                {contenidoPrincipal}
-              </div>
-            </Panel>
 
-            <PanelResizeHandle className="flex w-1.5 cursor-col-resize items-center justify-center bg-white/[0.04] transition-colors hover:bg-[#7C4DFF]/24 group">
-              <div className="h-8 w-0.5 rounded-full bg-white/18 transition-colors group-hover:bg-[#B388FF]" />
-            </PanelResizeHandle>
+        {/* Desktop — contenido + rail lateral fijo */}
+        <div className="hidden lg:flex flex-1 min-h-0">
+          <section className="min-w-0 flex-1 overflow-y-auto scroll-sutil-dark">
+            {contenidoPrincipal}
+          </section>
 
-            <Panel defaultSize={28} minSize={22} maxSize={40} collapsible>
-              <aside className="h-full overflow-y-auto scroll-sutil-dark border-l border-white/[0.08] bg-[linear-gradient(180deg,#1C0627_0%,#140019_100%)]">
-                <PanelContextualNumerologia detalle={detalle} datos={datosActuales} />
-              </aside>
-            </Panel>
-          </PanelGroup>
+          <RailLateral
+            etiqueta={etiquetaPanel}
+            titulo={tituloPanel}
+            subtitulo={subtituloPanel}
+            onCerrar={detalle ? () => setDetalle(null) : undefined}
+            cuerpoClassName="!p-0 overflow-hidden"
+            claveContenido={detalleClave ?? "default"}
+          >
+            <div className="h-full min-h-0">
+              <PanelContextualNumerologia detalle={detalle} datos={datosActuales} />
+            </div>
+          </RailLateral>
         </div>
-      )}
+      </div>
 
       {esMobile && detalleMovilAbierto && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end lg:hidden">

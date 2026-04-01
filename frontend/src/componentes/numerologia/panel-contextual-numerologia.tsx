@@ -209,11 +209,6 @@ function VistaDetalle({
 
       <div className="rounded-[28px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-5 shadow-[0_18px_40px_rgba(8,2,22,0.22)]">
         <div className="flex items-center gap-4">
-          {detalle.icono && (
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#7C4DFF]/14 text-[#D9C2FF]">
-              <IconoAstral nombre={detalle.icono} tamaño={24} className="text-current" />
-            </div>
-          )}
           <div>
             <p className={cn(
               "text-5xl font-semibold leading-none",

@@ -279,14 +279,7 @@ export default function PaginaDashboard() {
               onGenerarPodcast={() => generarMutation.mutate("dia")}
             />
 
-            {/* 2. Mensaje Clave */}
-            <MensajeClave
-              nombreUsuario={nombreSaludo}
-              titulo={pronosticoDiario.clima.titulo}
-              fraseSintesis={pronosticoDiario.clima.frase_sintesis}
-            />
-
-            {/* 3. Áreas de Vida */}
+            {/* 2. Áreas de Vida */}
             <AreasVidaV2 areas={pronosticoDiario.areas} />
           </>
         )}

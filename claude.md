@@ -136,6 +136,16 @@ Ambos componentes están en `@/componentes/ui/icono-astral`. Usan CSS `mask-imag
 
 Los iconos Phosphor (`<Icono>`) siguen disponibles para UI genérica (navegación, formularios, acciones). Los iconos SVG astrales son obligatorios para contenido esotérico/astrológico.
 
+### Animaciones — Regla obligatoria
+
+**Todo componente nuevo y todo cambio de contenido renderizado debe usar animaciones smooth fade-in / fade-out.** No se permiten transiciones bruscas ni contenido que aparezca de golpe.
+
+- Usar `transition-all duration-200` o `duration-300` como base
+- Para contenido que aparece/desaparece: `animate-[fade-in_200ms_ease-out]` o transición de opacidad + translate sutil
+- Para cambio de tabs/contenido: fade-out del contenido anterior → fade-in del nuevo (usar estado intermedio si es necesario)
+- Para listas que cargan: escalonar la animación con `animationDelay` por índice (`idx * 50ms`)
+- Evitar `animate-bounce` o animaciones agresivas — el estilo ASTRA es suave y premium
+
 ### Pre-deploy — Regla obligatoria
 
 **SIEMPRE correr `cd frontend && npx tsc --noEmit` antes de pushear a main.** El build de Docker en producción corre TypeScript strict y cualquier error rompe el deploy.

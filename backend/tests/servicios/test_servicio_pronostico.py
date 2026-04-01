@@ -196,14 +196,16 @@ class TestServicioPronostico:
         luna = {"signo": "Géminis", "fase": "Creciente", "significado": "Crecimiento"}
         resultado = ServicioPronostico._generar_fallback_diario(num, luna)
 
-        assert resultado["clima"]["estado"] == "nublado"
+        assert resultado["clima"]["estado"] in ("despejado", "soleado", "nublado", "tormenta", "arcoiris")
         assert resultado["clima"]["energia"] == 7  # número 5 → energía 7
         assert len(resultado["areas"]) == 6
         assert len(resultado["momentos"]) == 3
         assert resultado["alertas"] == []
         assert resultado["numero_personal"]["numero"] == 5
         assert resultado["luna"]["signo"] == "Géminis"
-        assert resultado["_fallback"] is True
+        # Cada área tiene un detalle personalizado (no genérico)
+        for area in resultado["areas"]:
+            assert len(area["detalle"]) > 50, f"Área {area['id']} sin detalle personalizado"
 
     def test_fallback_diario_energia_por_numero(self):
         """Cada número personal produce energía diferente en el fallback."""

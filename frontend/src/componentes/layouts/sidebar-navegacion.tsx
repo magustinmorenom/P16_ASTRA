@@ -21,29 +21,42 @@ interface EnlaceNav {
   proximamente?: boolean;
 }
 
-const enlacesNavegacion: EnlaceNav[] = [
+interface EnlaceProximo {
+  etiqueta: string;
+  ruta: string;
+  icono: NombreIcono;
+  descripcion: string;
+}
+
+const enlacesActivos: EnlaceNav[] = [
   { etiqueta: "Inicio", ruta: "/dashboard", icono: "casa" },
   { etiqueta: "Podcasts", ruta: "/podcast", icono: "microfono" },
   { etiqueta: "Carta Astral", ruta: "/carta-natal", icono: "estrella" },
   { etiqueta: "Diseño Humano", ruta: "/diseno-humano", icono: "hexagono" },
   { etiqueta: "Numerología", ruta: "/numerologia", icono: "numeral" },
+];
+
+const enlacesProximamente: EnlaceProximo[] = [
   {
-    etiqueta: "Calendario",
+    etiqueta: "Calendario Cósmico",
     ruta: "/calendario-cosmico",
     icono: "planeta",
-    proximamente: true,
+    descripcion:
+      "Tu calendario personal con tránsitos planetarios, numerología diaria y los mejores momentos para cada decisión. Sincronizado con Google Calendar para que muevas siempre en tu mejor timing.",
   },
   {
     etiqueta: "Revolución Solar",
     ruta: "/retorno-solar",
     icono: "retornoSolar",
-    proximamente: true,
+    descripcion:
+      "Tu carta astral recalculada para cada cumpleaños. Descubrí las energías, desafíos y oportunidades que te esperan en tu próximo año solar.",
   },
   {
     etiqueta: "Match de Pareja",
     ruta: "/match-pareja",
     icono: "corazon",
-    proximamente: true,
+    descripcion:
+      "Compará tu carta natal con la de otra persona. Sinastría completa: compatibilidad emocional, sexual, intelectual y kármica entre dos almas.",
   },
 ];
 
@@ -56,6 +69,9 @@ export default function SidebarNavegacion() {
 
   const { data: perfil } = usarMiPerfil();
   const { data: calculos, isLoading: cargandoCalculos } = usarMisCalculos();
+
+  // --- Estado del acordeón próximamente ---
+  const [proximoAbierto, setProximoAbierto] = useState<string | null>(null);
 
   // --- Estado del modal de descarga ---
   const [modalDescarga, setModalDescarga] = useState(false);
@@ -134,7 +150,7 @@ export default function SidebarNavegacion() {
         {/* Navegacion */}
         <nav className={cn("pb-2 pt-5", colapsado ? "px-2" : "px-3")}>
           <ul className="flex flex-col gap-1">
-            {enlacesNavegacion.map((enlace) => {
+            {enlacesActivos.map((enlace) => {
               const estaActivo =
                 enlace.ruta === "/dashboard"
                   ? pathname === "/dashboard"
@@ -144,13 +160,7 @@ export default function SidebarNavegacion() {
                 <li key={enlace.ruta} className="group">
                   <Link
                     href={enlace.ruta}
-                    title={
-                      colapsado
-                        ? enlace.proximamente
-                          ? `${enlace.etiqueta} · Próximamente`
-                          : enlace.etiqueta
-                        : undefined
-                    }
+                    title={colapsado ? enlace.etiqueta : undefined}
                     className={cn(
                       "flex items-center rounded-xl text-[13px] font-medium transition-all duration-200",
                       colapsado
@@ -171,22 +181,100 @@ export default function SidebarNavegacion() {
                       )}
                     />
                     {!colapsado && (
-                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                        <span className="min-w-0 leading-none">
-                          {enlace.etiqueta}
-                        </span>
-                        {enlace.proximamente && (
-                          <span className="shrink-0 rounded-full border border-white/12 bg-white/[0.06] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-violet-100/78">
-                            Próximamente
-                          </span>
-                        )}
-                      </div>
+                      <span className="min-w-0 leading-none">
+                        {enlace.etiqueta}
+                      </span>
                     )}
                   </Link>
                 </li>
               );
             })}
           </ul>
+
+          {/* Sección Próximamente */}
+          <div
+            className={cn(
+              "mt-3 rounded-xl border border-[#B388FF]/10 bg-[#B388FF]/[0.04] transition-all duration-200",
+              colapsado ? "px-1 py-2" : "px-2 py-3"
+            )}
+          >
+            {!colapsado && (
+              <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-300/50">
+                Próximamente — Spoiler Alert
+              </p>
+            )}
+            <ul className="flex flex-col gap-0.5">
+              {enlacesProximamente.map((enlace) => {
+                const abierto = proximoAbierto === enlace.ruta;
+                return (
+                  <li key={enlace.ruta} className="group">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setProximoAbierto(abierto ? null : enlace.ruta)
+                      }
+                      title={
+                        colapsado
+                          ? `${enlace.etiqueta} · Próximamente`
+                          : undefined
+                      }
+                      className={cn(
+                        "flex w-full cursor-pointer items-center rounded-lg text-[13px] font-medium transition-all duration-200",
+                        colapsado
+                          ? "justify-center px-0 py-2.5"
+                          : "gap-3 px-2 py-2.5",
+                        abierto
+                          ? "text-[#D9C2FF] bg-white/[0.04]"
+                          : "text-white/45 hover:text-white/70 hover:bg-white/[0.03]"
+                      )}
+                    >
+                      <Icono
+                        nombre={enlace.icono}
+                        tamaño={18}
+                        peso="regular"
+                        className={cn(
+                          "shrink-0 transition-colors duration-200",
+                          abierto
+                            ? "text-[#B388FF]"
+                            : "text-white/30 group-hover:text-white/50"
+                        )}
+                      />
+                      {!colapsado && (
+                        <>
+                          <span className="min-w-0 flex-1 text-left leading-none">
+                            {enlace.etiqueta}
+                          </span>
+                          <Icono
+                            nombre="caretAbajo"
+                            tamaño={14}
+                            className={cn(
+                              "shrink-0 transition-transform duration-200",
+                              abierto ? "rotate-180" : ""
+                            )}
+                          />
+                        </>
+                      )}
+                    </button>
+                    {/* Descripción expandible */}
+                    {!colapsado && (
+                      <div
+                        className={cn(
+                          "grid transition-all duration-200 ease-out",
+                          abierto ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                        )}
+                      >
+                        <div className="overflow-hidden">
+                          <p className="px-2 pb-2 pt-1.5 text-[11px] leading-relaxed text-white/35">
+                            {enlace.descripcion}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </nav>
 
         {/* Separador */}
@@ -255,7 +343,7 @@ export default function SidebarNavegacion() {
             {/* Navegacion mobile (siempre expandida) */}
             <nav className="px-3 pt-4 pb-2">
               <ul className="flex flex-col gap-0.5">
-                {enlacesNavegacion.map((enlace) => {
+                {enlacesActivos.map((enlace) => {
                   const estaActivo =
                     enlace.ruta === "/dashboard"
                       ? pathname === "/dashboard"
@@ -272,9 +360,9 @@ export default function SidebarNavegacion() {
                             ? "bg-[#7C4DFF]/15 text-white border-[#7C4DFF]/20"
                             : "text-white/40 hover:text-white/80 hover:bg-white/[0.05] border-transparent"
                         )}
-                        >
-                          <Icono
-                            nombre={enlace.icono}
+                      >
+                        <Icono
+                          nombre={enlace.icono}
                           tamaño={20}
                           peso={estaActivo ? "fill" : "regular"}
                           className={cn(
@@ -282,19 +370,73 @@ export default function SidebarNavegacion() {
                             estaActivo ? "text-[#B388FF]" : "text-white/35"
                           )}
                         />
-                        <div className="flex min-w-0 items-center gap-2">
-                          <span className="truncate">{enlace.etiqueta}</span>
-                          {enlace.proximamente && (
-                            <span className="shrink-0 rounded-full border border-white/12 bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-100/78">
-                              Próximamente
-                            </span>
-                          )}
-                        </div>
+                        <span className="truncate">{enlace.etiqueta}</span>
                       </Link>
                     </li>
                   );
                 })}
               </ul>
+
+              {/* Sección Próximamente mobile */}
+              <div className="mt-3 rounded-xl border border-[#B388FF]/10 bg-[#B388FF]/[0.04] px-2 py-3">
+                <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-300/50">
+                  Próximamente — Spoiler Alert
+                </p>
+                <ul className="flex flex-col gap-0.5">
+                  {enlacesProximamente.map((enlace) => {
+                    const abierto = proximoAbierto === enlace.ruta;
+                    return (
+                      <li key={enlace.ruta} className="group">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setProximoAbierto(abierto ? null : enlace.ruta)
+                          }
+                          className={cn(
+                            "flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-2.5 text-[13px] font-medium transition-all duration-200",
+                            abierto
+                              ? "text-[#D9C2FF] bg-white/[0.04]"
+                              : "text-white/45 hover:text-white/70 hover:bg-white/[0.03]"
+                          )}
+                        >
+                          <Icono
+                            nombre={enlace.icono}
+                            tamaño={18}
+                            peso="regular"
+                            className={cn(
+                              "shrink-0 transition-colors duration-200",
+                              abierto ? "text-[#B388FF]" : "text-white/30"
+                            )}
+                          />
+                          <span className="flex-1 truncate text-left">
+                            {enlace.etiqueta}
+                          </span>
+                          <Icono
+                            nombre="caretAbajo"
+                            tamaño={14}
+                            className={cn(
+                              "shrink-0 transition-transform duration-200",
+                              abierto ? "rotate-180" : ""
+                            )}
+                          />
+                        </button>
+                        <div
+                          className={cn(
+                            "grid transition-all duration-200 ease-out",
+                            abierto ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                          )}
+                        >
+                          <div className="overflow-hidden">
+                            <p className="px-2 pb-2 pt-1.5 text-[11px] leading-relaxed text-white/35">
+                              {enlace.descripcion}
+                            </p>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             </nav>
 
             <div className="mx-4 my-3 h-px bg-white/[0.06]" />
