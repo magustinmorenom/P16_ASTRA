@@ -460,7 +460,10 @@ async def webhook_mercadopago(
     if config.mp_webhook_secret:
         x_signature = request.headers.get("x-signature", "")
         x_request_id = request.headers.get("x-request-id", "")
-        data_id = str(body.get("data", {}).get("id", ""))
+        # MP firma usando el data.id del query parameter, no del body
+        data_id = request.query_params.get("data.id", "") or str(
+            body.get("data", {}).get("id", "")
+        )
 
         if not ServicioMercadoPago.verificar_firma_webhook(
             x_signature=x_signature,
@@ -468,7 +471,11 @@ async def webhook_mercadopago(
             data_id=data_id,
             webhook_secret=config.mp_webhook_secret,
         ):
-            logger.warning("Firma de webhook inválida")
+            logger.warning(
+                "Firma de webhook inválida — data_id=%s x_signature=%s",
+                data_id,
+                x_signature[:20] if x_signature else "(vacío)",
+            )
             return {"exito": True, "mensaje": "Firma inválida"}
 
     # Idempotencia
@@ -479,9 +486,11 @@ async def webhook_mercadopago(
     if await repo_sus.evento_ya_procesado(evento_id):
         return {"exito": True, "mensaje": "Evento ya procesado"}
 
-    tipo = body.get("type", "")
+    tipo = body.get("type", "") or request.query_params.get("type", "")
     accion = body.get("action", "")
-    data_id = str(body.get("data", {}).get("id", ""))
+    data_id = request.query_params.get("data.id", "") or str(
+        body.get("data", {}).get("id", "")
+    )
 
     logger.info("Webhook MP recibido: tipo=%s accion=%s data_id=%s", tipo, accion, data_id)
 
