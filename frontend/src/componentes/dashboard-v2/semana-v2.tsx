@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { PanelGlass } from "./panel-glass";
 import { Icono } from "@/componentes/ui/icono";
 import { usarPronosticoSemanaSiguiente } from "@/lib/hooks/usar-pronostico";
@@ -90,7 +90,7 @@ function TooltipDia({ dia, x, y, saliendo }: { dia: DiaSemanalDTO; x: number; y:
 /** Esqueleto de carga para las cards de la semana. */
 function EsqueletoSemana() {
   return (
-    <div className="flex gap-2 overflow-hidden pb-1">
+    <div className="flex gap-2 overflow-hidden px-0.5 pt-2 pb-1">
       {Array.from({ length: 7 }, (_, i) => (
         <div
           key={i}
@@ -115,6 +115,7 @@ export function SemanaV2({
 }: SemanaV2Props) {
   const [verSiguiente, setVerSiguiente] = useState(false);
   const [animando, setAnimando] = useState(false);
+  const carruselRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch de la siguiente semana (solo cuando se activa)
   const fechaSiguiente = useMemo(() => lunesSiguienteSemana(), []);
@@ -180,6 +181,22 @@ export function SemanaV2({
   const mostrandoCarga = verSiguiente && cargandoSiguiente;
   const mostrarEsqueleto = mostrandoCarga && semanaVisible.length === 0;
 
+  useEffect(() => {
+    const carrusel = carruselRef.current;
+    if (!carrusel || mostrarEsqueleto) return;
+
+    const diaActual = new Date().getDay();
+    const abrirHaciaLaDerecha = !verSiguiente && diaActual !== 1 && diaActual !== 2;
+
+    const frame = window.requestAnimationFrame(() => {
+      carrusel.scrollLeft = abrirHaciaLaDerecha
+        ? Math.max(0, carrusel.scrollWidth - carrusel.clientWidth)
+        : 0;
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [mostrarEsqueleto, verSiguiente, semanaVisible.length]);
+
   return (
     <div className="flex flex-col gap-3">
       <h2 className="text-white text-[24px] font-normal transition-opacity duration-200">
@@ -198,7 +215,11 @@ export function SemanaV2({
               : "opacity-100 translate-y-0 scale-100"
           }`}
         >
-          <div className="flex gap-2 overflow-x-auto pb-1 scroll-sutil-dark">
+          <div
+            ref={carruselRef}
+            data-testid="carrusel-semana"
+            className="flex gap-2 overflow-x-auto px-0.5 pt-2 pb-1 scroll-sutil-dark"
+          >
             {semanaVisible.map((dia, idx) => {
               const diaSem = obtenerDiaSemana(dia.fecha);
               const diaMes = obtenerDiaMes(dia.fecha);

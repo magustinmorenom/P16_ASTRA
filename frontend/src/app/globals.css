@@ -358,6 +358,86 @@ body::-webkit-scrollbar-thumb {
 }
 
 /* ============================================
+   Podcast — Menú del header
+   ============================================ */
+@keyframes podcast-magia-aura {
+  0%, 100% {
+    opacity: 0.18;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 0.52;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes podcast-magia-orbita {
+  from {
+    transform: rotate(0deg) scale(0.96);
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.46;
+  }
+  to {
+    transform: rotate(360deg) scale(1.04);
+    opacity: 0.2;
+  }
+}
+
+@keyframes podcast-magia-destello {
+  0%, 100% {
+    opacity: 0.22;
+    transform: translate3d(0, 0, 0) scale(0.78);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(-2px, -4px, 0) scale(1.12);
+  }
+}
+
+.btn-podcast-menu {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-podcast-menu-aura,
+.btn-podcast-menu-orbita,
+.btn-podcast-menu-destello {
+  transition: opacity 220ms ease, transform 220ms ease;
+  opacity: 0;
+}
+
+.btn-podcast-menu[data-podcast-generando="true"] {
+  border-color: rgba(179, 136, 255, 0.34);
+  background:
+    radial-gradient(circle at top left, rgba(179, 136, 255, 0.26), transparent 38%),
+    linear-gradient(135deg, rgba(124, 77, 255, 0.22), rgba(255, 255, 255, 0.08));
+  box-shadow:
+    0 14px 36px rgba(26, 8, 58, 0.34),
+    0 0 0 1px rgba(179, 136, 255, 0.1);
+}
+
+.btn-podcast-menu[data-podcast-generando="true"] ~ .btn-podcast-menu-aura,
+.btn-podcast-menu[data-podcast-generando="true"] ~ .btn-podcast-menu-orbita,
+.btn-podcast-menu[data-podcast-generando="true"] ~ .btn-podcast-menu-destello {
+  opacity: 1;
+}
+
+.btn-podcast-menu[data-podcast-generando="true"] ~ .btn-podcast-menu-aura {
+  animation: podcast-magia-aura 2.2s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(124, 77, 255, 0.26), rgba(124, 77, 255, 0));
+}
+
+.btn-podcast-menu[data-podcast-generando="true"] ~ .btn-podcast-menu-orbita {
+  animation: podcast-magia-orbita 3.4s linear infinite;
+  border-color: rgba(179, 136, 255, 0.24);
+}
+
+.btn-podcast-menu[data-podcast-generando="true"] ~ .btn-podcast-menu-destello {
+  animation: podcast-magia-destello 1.6s ease-in-out infinite;
+}
+
+/* ============================================
    Mobile App — Touch Feedback
    ============================================ */
 .touch-feedback {

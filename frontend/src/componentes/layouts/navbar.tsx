@@ -9,6 +9,7 @@ import { Icono, type NombreIcono } from "@/componentes/ui/icono";
 import { IconoSigno } from "@/componentes/ui/icono-astral";
 import {
   usarMiPerfil,
+  usarGenerarPodcast,
   usarPodcastHoy,
   usarPronosticoDiario,
 } from "@/lib/hooks";
@@ -58,6 +59,37 @@ const CONFIG_TIPO_PODCAST: Record<
   mes: {
     icono: "luna",
     gradiente: "from-[#2D1B69] to-[#4A2D8C]",
+  },
+};
+
+const TIPOS_MENU_PODCAST: TipoPodcast[] = ["dia", "semana", "mes"];
+
+const CONFIG_MENU_PODCAST: Record<
+  TipoPodcast,
+  {
+    titulo: string;
+    descripcion: string;
+    icono: "sol" | "destello" | "luna";
+    gradiente: string;
+  }
+> = {
+  dia: {
+    titulo: "Día de hoy",
+    descripcion: "Una cápsula breve para arrancar con claridad.",
+    icono: "sol",
+    gradiente: "from-[#7C4DFF] to-[#B388FF]",
+  },
+  semana: {
+    titulo: "Tu semana cósmica",
+    descripcion: "El clima de los próximos días en una sola escucha.",
+    icono: "destello",
+    gradiente: "from-[#4A2D8C] to-[#7C4DFF]",
+  },
+  mes: {
+    titulo: "Tu mes cósmico",
+    descripcion: "Una lectura más amplia para el ciclo en curso.",
+    icono: "luna",
+    gradiente: "from-[#2D1B69] to-[#7C4DFF]",
   },
 };
 
@@ -235,18 +267,30 @@ export default function Navbar() {
 
   const { data: perfil } = usarMiPerfil();
   const { data: pronosticoDiario } = usarPronosticoDiario();
-  const { data: episodiosHoy = [] } = usarPodcastHoy();
+  const { data: episodiosHoy = [] } = usarPodcastHoy(true);
+  const generarPodcast = usarGenerarPodcast();
 
   const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false);
+  const [menuPodcastsAbierto, setMenuPodcastsAbierto] = useState(false);
   const refMenuUsuario = useRef<HTMLDivElement>(null);
+  const refMenuPodcasts = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function manejarClickFuera(evento: MouseEvent) {
+      const target = evento.target as Node;
+
       if (
         refMenuUsuario.current &&
-        !refMenuUsuario.current.contains(evento.target as Node)
+        !refMenuUsuario.current.contains(target)
       ) {
         setMenuUsuarioAbierto(false);
+      }
+
+      if (
+        refMenuPodcasts.current &&
+        !refMenuPodcasts.current.contains(target)
+      ) {
+        setMenuPodcastsAbierto(false);
       }
     }
 
@@ -266,11 +310,13 @@ export default function Navbar() {
   );
 
   const episodioDelDia = mapaEpisodios.get("dia");
-  const hayPodcastEnProceso = episodiosHoy.some(
-    (episodio) =>
-      episodio.estado === "generando_guion" ||
-      episodio.estado === "generando_audio"
-  );
+  const hayPodcastEnProceso =
+    generarPodcast.isPending ||
+    episodiosHoy.some(
+      (episodio) =>
+        episodio.estado === "generando_guion" ||
+        episodio.estado === "generando_audio"
+    );
 
   const alertaDestacada = useMemo(() => {
     return (
@@ -280,14 +326,16 @@ export default function Navbar() {
     );
   }, [pronosticoDiario]);
 
-  const estadoPodcast = useMemo(() => {
-    if (pistaActual?.tipo === "podcast") {
-      return reproduciendo ? "Reproduciendo ahora" : "Listo para continuar";
-    }
-    if (episodioDelDia?.estado === "listo") return "Podcast diario listo";
-    if (hayPodcastEnProceso) return "Audio en preparación";
-    return "Abrí tu audio del día";
-  }, [episodioDelDia?.estado, hayPodcastEnProceso, pistaActual, reproduciendo]);
+  const estadoPodcast =
+    pistaActual?.tipo === "podcast"
+      ? reproduciendo
+        ? "Reproduciendo ahora"
+        : "Listo para continuar"
+      : episodioDelDia?.estado === "listo"
+        ? "Podcast diario listo"
+        : hayPodcastEnProceso
+          ? "Audio en preparación"
+          : "Abrí tu audio del día";
 
   const estadoCabecera = useMemo<EstadoCabecera>(() => {
     if (pistaActual) {
@@ -429,18 +477,35 @@ export default function Navbar() {
     setPistaActual(pista);
   }
 
-  function manejarAccionRapida() {
-    if (pistaActual) {
-      toggleReproduccion();
+  function manejarSeleccionPodcast(tipo: TipoPodcast) {
+    const episodio = mapaEpisodios.get(tipo);
+    const estaGenerando =
+      (generarPodcast.isPending && generarPodcast.variables === tipo) ||
+      episodio?.estado === "generando_guion" ||
+      episodio?.estado === "generando_audio";
+
+    if (estaGenerando) {
       return;
     }
 
-    if (episodioDelDia?.estado === "listo") {
-      reproducirEpisodio(episodioDelDia);
+    setMenuPodcastsAbierto(false);
+
+    if (episodio?.estado === "listo") {
+      if (pistaActual?.tipo === "podcast" && pistaActual.id === episodio.id) {
+        toggleReproduccion();
+        return;
+      }
+
+      reproducirEpisodio(episodio);
       return;
     }
 
-    router.push("/podcast");
+    if (!esPremium) {
+      router.push("/suscripcion");
+      return;
+    }
+
+    generarPodcast.mutate(tipo);
   }
 
   function manejarCerrarSesion() {
@@ -449,21 +514,17 @@ export default function Navbar() {
     router.push("/login");
   }
 
-  const etiquetaAccionRapida = pistaActual
-    ? reproduciendo
-      ? "Pausar audio"
-      : "Continuar audio"
-    : episodioDelDia?.estado === "listo"
-      ? "Escuchar día"
-      : hayPodcastEnProceso
-        ? "Ver audio"
-        : "Abrir podcasts";
+  const etiquetaAccionRapida = hayPodcastEnProceso
+    ? "Preparando audio"
+    : pistaActual?.tipo === "podcast" || episodioDelDia?.estado === "listo"
+      ? "Escuchar"
+      : esPremium
+        ? "Podcasts"
+        : "Podcasts premium";
 
-  const iconoAccionRapida: NombreIcono = pistaActual
-    ? reproduciendo
-      ? "pausar"
-      : "reproducir"
-    : episodioDelDia?.estado === "listo"
+  const iconoAccionRapida: NombreIcono = hayPodcastEnProceso
+    ? "destello"
+    : pistaActual?.tipo === "podcast" || episodioDelDia?.estado === "listo"
       ? "reproducir"
       : "microfono";
 
@@ -555,13 +616,158 @@ export default function Navbar() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <button
-            onClick={manejarAccionRapida}
-            className="hidden items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.06] px-4 py-2 text-[12px] font-semibold text-white/88 transition-all duration-200 hover:border-[#B388FF]/28 hover:bg-[#7C4DFF]/14 xl:flex"
-          >
-            <Icono nombre={iconoAccionRapida} tamaño={15} peso="fill" />
-            {etiquetaAccionRapida}
-          </button>
+          <div className="relative z-50 hidden xl:block" ref={refMenuPodcasts}>
+            <button
+              type="button"
+              onClick={() => {
+                setMenuUsuarioAbierto(false);
+                setMenuPodcastsAbierto((estado) => !estado);
+              }}
+              aria-label="Abrir menú de podcasts"
+              aria-haspopup="menu"
+              aria-expanded={menuPodcastsAbierto}
+              aria-busy={hayPodcastEnProceso}
+              data-podcast-generando={hayPodcastEnProceso ? "true" : "false"}
+              className="btn-podcast-menu relative z-10 flex items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.06] px-4 py-2 text-[12px] font-semibold text-white/88 transition-all duration-200 hover:border-[#B388FF]/28 hover:bg-[#7C4DFF]/14"
+            >
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.08]">
+                <Icono nombre={iconoAccionRapida} tamaño={14} peso="fill" />
+              </span>
+              <span>{etiquetaAccionRapida}</span>
+              <Icono
+                nombre={menuPodcastsAbierto ? "caretArriba" : "caretAbajo"}
+                tamaño={14}
+              />
+            </button>
+
+            <span className="btn-podcast-menu-aura pointer-events-none absolute inset-0 z-0 rounded-full" />
+            <span className="btn-podcast-menu-orbita pointer-events-none absolute -inset-1 z-0 rounded-full border border-[#B388FF]/0" />
+            <span className="btn-podcast-menu-destello pointer-events-none absolute -right-1.5 -top-1.5 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-[#B388FF]/10 text-[#EADFFF] opacity-0">
+              <Icono nombre="destello" tamaño={10} peso="fill" />
+            </span>
+
+            {menuPodcastsAbierto && (
+              <div
+                role="menu"
+                aria-label="Opciones de podcasts"
+                className="absolute right-0 top-full z-[70] mt-3 w-[360px] rounded-[28px] border border-white/[0.08] bg-[#1B0B2C]/95 p-3 shadow-[0_26px_70px_rgba(8,2,20,0.45)] backdrop-blur-2xl"
+              >
+                <div className="mb-3 rounded-[22px] border border-white/[0.08] bg-white/[0.04] px-4 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-violet-200/58">
+                    Podcasts cósmicos
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-white/96">
+                    Elegí la capa que querés escuchar
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-white/56">
+                    Día, semana o mes. Si todavía no existe, lo generamos desde acá.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {TIPOS_MENU_PODCAST.map((tipo) => {
+                    const config = CONFIG_MENU_PODCAST[tipo];
+                    const episodio = mapaEpisodios.get(tipo);
+                    const estaGenerando =
+                      (generarPodcast.isPending && generarPodcast.variables === tipo) ||
+                      episodio?.estado === "generando_guion" ||
+                      episodio?.estado === "generando_audio";
+                    const estaListo = episodio?.estado === "listo";
+                    const estaActivo =
+                      !!episodio &&
+                      pistaActual?.tipo === "podcast" &&
+                      pistaActual.id === episodio.id;
+                    const requierePremium = !esPremium && !estaListo;
+
+                    const detalle = estaGenerando
+                      ? episodio?.estado === "generando_audio"
+                        ? "Generando audio..."
+                        : "Escribiendo guión..."
+                      : estaListo
+                        ? `${formatearDuracion(episodio?.duracion_segundos ?? 0)} · ${
+                            estaActivo
+                              ? reproduciendo
+                                ? "Sonando ahora"
+                                : "Listo para continuar"
+                              : "Disponible ahora"
+                          }`
+                        : requierePremium
+                          ? "Disponible con un plan pago"
+                          : episodio?.estado === "error"
+                            ? "Hubo un error. Podés volver a intentarlo."
+                            : "Todavía no existe para este período.";
+
+                    const accion = estaGenerando
+                      ? "En preparación"
+                      : estaListo
+                        ? estaActivo
+                          ? reproduciendo
+                            ? "Pausar"
+                            : "Continuar"
+                          : "Escuchar"
+                        : requierePremium
+                          ? "Ver plan"
+                          : episodio?.estado === "error"
+                            ? "Reintentar"
+                            : "Generar";
+
+                    return (
+                      <button
+                        key={tipo}
+                        type="button"
+                        role="menuitem"
+                        onClick={() => manejarSeleccionPodcast(tipo)}
+                        disabled={estaGenerando}
+                        className={`group/item flex items-center gap-3 rounded-[24px] border px-3.5 py-3 text-left transition-all duration-200 ${
+                          estaActivo
+                            ? "border-[#B388FF]/22 bg-[linear-gradient(135deg,rgba(124,77,255,0.22),rgba(179,136,255,0.08))] shadow-[0_12px_28px_rgba(20,8,42,0.26)]"
+                            : "border-white/[0.08] bg-black/10 hover:border-white/15 hover:bg-white/[0.05]"
+                        } disabled:cursor-not-allowed disabled:opacity-80`}
+                      >
+                        <div
+                          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${config.gradiente} shadow-[0_12px_28px_rgba(18,4,38,0.28)] ring-1 ring-white/15`}
+                        >
+                          {estaGenerando ? (
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/80 border-t-transparent" />
+                          ) : (
+                            <Icono
+                              nombre={config.icono}
+                              tamaño={18}
+                              peso="fill"
+                              className="text-white/92"
+                            />
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="truncate text-[13px] font-semibold text-white/94">
+                              {config.titulo}
+                            </p>
+                            {estaListo && (
+                              <span className="rounded-full border border-[#B388FF]/20 bg-[#7C4DFF]/12 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#E7DAFF]">
+                                Listo
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-0.5 text-[11px] text-white/50">
+                            {config.descripcion}
+                          </p>
+                          <p className="mt-1.5 text-[11px] text-white/68">
+                            {detalle}
+                          </p>
+                        </div>
+
+                        <span className="rounded-full border border-white/[0.08] bg-white/[0.06] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/74 transition-colors group-hover/item:border-[#B388FF]/18 group-hover/item:text-white">
+                          {accion}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
 
           <Link
             href="/suscripcion"
@@ -577,7 +783,10 @@ export default function Navbar() {
 
           <div className="relative z-50" ref={refMenuUsuario}>
             <button
-              onClick={() => setMenuUsuarioAbierto(!menuUsuarioAbierto)}
+              onClick={() => {
+                setMenuPodcastsAbierto(false);
+                setMenuUsuarioAbierto(!menuUsuarioAbierto);
+              }}
               className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-violet-500 to-violet-700 text-xs font-bold text-white shadow-[0_10px_24px_rgba(32,10,74,0.3)]"
               aria-label="Menu de usuario"
             >

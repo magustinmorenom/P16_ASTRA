@@ -1863,3 +1863,69 @@ Se eliminó la tarjeta redundante de “Estado actual” en `Suscripción`, se r
 1. El hero de `Suscripción` sigue mostrando el estado clave de la cuenta, pero el panel lateral deja de llamarse `Resumen` y pasa a reflejar mejor el contenido con `Mi suscripción`.
 2. La página ya no repite el mismo estado en una tarjeta adicional, por lo que el flujo queda más limpio y directo.
 3. Si el usuario tiene un plan pago, la gestión de cancelación aparece antes del historial de facturas; primero decide sobre su plan y después revisa cobros y comprobantes.
+
+---
+
+## Sesion: Corrección del badge de hoy en la semana del dashboard
+**Fecha:** 2026-04-01 ~07:31 (ARG)
+
+### Que se hizo
+Se corrigió el recorte visual de la tarjeta marcada como `Hoy` dentro del carrusel semanal del dashboard. El ajuste agrega respiración vertical al contenedor scrolleable para que el badge no choque contra el recorte implícito del `overflow-x-auto`.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/semana-v2.tsx` | Agrega padding superior y lateral al carrusel semanal y al esqueleto de carga para que el badge `Hoy` no se vea cortado |
+
+### Tests
+`eslint` pasó sobre `semana-v2.tsx`. La suite `dashboard.test.tsx` sigue fallando por asserts viejos de textos previos a la UI actual (`Clima Cósmico`, `Momentos del Día`, etc.), sin relación con este ajuste puntual.
+
+### Como funciona
+1. El carrusel semanal conserva el badge flotante `Hoy`, pero ahora tiene espacio interno suficiente para renderizarlo completo.
+2. El estado de carga usa el mismo padding, evitando saltos de altura entre esqueleto y contenido real.
+
+---
+
+## Sesion: Auto-scroll semanal orientado a días futuros
+**Fecha:** 2026-04-01 ~07:34 (ARG)
+
+### Que se hizo
+Se agregó auto-scroll al carrusel de la semana en el dashboard para que, desde miércoles en adelante, abra desplazado hacia la derecha y priorice la visualización de los días venideros.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/semana-v2.tsx` | Agrega un `ref` al carrusel y una lógica de `requestAnimationFrame` que lo posiciona al final cuando el día actual no es lunes ni martes |
+| `frontend/src/tests/componentes/semana-v2.test.tsx` | Nueva cobertura para verificar que el carrusel abre a la derecha en miércoles y se mantiene al inicio en lunes |
+
+### Tests
+`eslint` pasó sobre `semana-v2.tsx` y `semana-v2.test.tsx`. `vitest` pasó `2/2` en `semana-v2.test.tsx`.
+
+### Como funciona
+1. Si el usuario entra al dashboard en lunes o martes, el carrusel semanal permanece al inicio.
+2. Si entra cualquier otro día, el carrusel se desplaza automáticamente hacia la derecha para mostrar mejor el tramo final de la semana y los próximos días.
+3. Cuando se cambia a “siguiente semana”, el carrusel vuelve a abrir desde el inicio, porque toda esa vista ya es futura por definición.
+
+---
+
+## Sesion: Menú premium de podcasts en el header
+**Fecha:** 2026-04-01 ~07:56 (ARG)
+
+### Que se hizo
+Se reemplazó el CTA rápido `Escuchar día` del header por un botón premium con menú contextual para `día`, `semana` y `mes`. Además, cuando cualquier podcast está en generación, el botón ahora muestra una animación mágica localizada en el navbar para hacer visible el proceso sin sacar al usuario de la pantalla actual.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/layouts/navbar.tsx` | Convierte el CTA del header en un disparador de menú contextual, agrega acciones por tipo de podcast, reproduce si el episodio está listo, genera si falta y refleja el estado de preparación en tiempo real |
+| `frontend/src/app/globals.css` | Agrega keyframes y estilos para el aura, órbita y destello del nuevo botón mágico de podcasts en el header |
+| `frontend/src/tests/componentes/navbar.test.tsx` | Nueva cobertura para validar apertura del menú con `día / semana / mes` y el estado ocupado del botón cuando hay audio en generación |
+
+### Tests
+`eslint` pasó sobre `navbar.tsx` y `navbar.test.tsx`. `vitest` pasó `2/2` en `navbar.test.tsx`.
+
+### Como funciona
+1. El botón del header deja de ejecutar una sola acción y pasa a abrir un menú contextual con tres opciones: `Día de hoy`, `Tu semana cósmica` y `Tu mes cósmico`.
+2. Si el episodio elegido ya existe, el menú lo reproduce o lo continúa; si todavía no existe, lo genera desde ahí mismo.
+3. Si algún podcast está en `generando_guion` o `generando_audio`, el botón del navbar entra en estado mágico: glow ciruela, órbita suave y destello activo, además del texto `Preparando audio`.
+4. Si el usuario no tiene un plan pago y toca una opción aún no disponible, el flujo lo deriva a `Suscripción` en vez de disparar una generación que no podría completar.
