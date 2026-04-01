@@ -113,15 +113,12 @@ function ModalRuedaAstral({
         </div>
 
         <div className="max-h-[82vh] overflow-y-auto p-4 lg:p-6">
-          <div className="rounded-[28px] border border-white/60 bg-white/90 p-4 shadow-[0_22px_60px_rgba(22,6,39,0.18)]">
-            <RuedaZodiacal
-              planetas={datos.planetas}
-              casas={datos.casas}
-              aspectos={datos.aspectos}
-              claro
-              className="mx-auto"
-            />
-          </div>
+          <RuedaZodiacal
+            planetas={datos.planetas}
+            casas={datos.casas}
+            aspectos={datos.aspectos}
+            className="mx-auto max-w-[680px]"
+          />
         </div>
       </div>
     </div>
