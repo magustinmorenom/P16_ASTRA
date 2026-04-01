@@ -38,6 +38,7 @@ const tabs: TabInferior[] = [
       "/calendario-cosmico",
       "/retorno-solar",
       "/transitos",
+      "/match-pareja",
     ],
   },
   {

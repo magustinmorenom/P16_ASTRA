@@ -84,40 +84,162 @@ class ServicioPronostico:
         ) + timedelta(days=dias_hasta_lunes)
         return int((proximo_lunes - ahora).total_seconds()) + 3600
 
+    # Interpretaciones deterministas por signo lunar
+    _LUNA_EN_SIGNO = {
+        "Aries": {
+            "clima": "soleado",
+            "amor": ("Día de pasión directa", "La Luna en Aries enciende el deseo y la iniciativa. Es un buen momento para dar el primer paso en lo romántico, expresar lo que sentís sin filtros y conectar desde la autenticidad. Evitá discusiones impulsivas — canalizá esa energía en gestos espontáneos."),
+            "salud": ("Movete con intensidad", "Tu cuerpo pide acción. Aprovechá para entrenamientos de alta intensidad, caminatas enérgicas o cualquier actividad que descargue adrenalina. Cuidado con la cabeza y las tensiones cervicales — Aries gobierna esa zona."),
+            "trabajo": ("Liderá sin atropellar", "Tenés energía de sobra para arrancar proyectos nuevos o tomar decisiones rápidas. Es un día para actuar, no para planificar. Ojo con imponer tu ritmo a los demás — la iniciativa funciona mejor cuando inspirás que cuando empujás."),
+            "finanzas": ("Impulso para invertir", "La energía ariana te empuja a tomar decisiones financieras rápidas. Puede ser un buen día para iniciativas audaces, pero evitá compras compulsivas. Si algo te tienta, esperá 24 horas antes de decidir."),
+            "creatividad": ("Inspiración explosiva", "Las ideas llegan rápido y con fuerza. Es un día para empezar cosas nuevas, bocetar, improvisar. No busques perfección — buscá arranque. Lo que empieces hoy con pasión puede convertirse en algo grande."),
+            "crecimiento": ("Salí de la zona cómoda", "Aries te invita a enfrentar algo que venías postergando. El crecimiento hoy viene de la acción, no de la reflexión. Hacé algo que te dé un poco de miedo — ahí está la expansión."),
+        },
+        "Tauro": {
+            "clima": "despejado",
+            "amor": ("Conexión sensorial", "La Luna en Tauro favorece los encuentros tranquilos y sensoriales: una cena casera, un abrazo largo, estar en silencio cómodo con alguien. Hoy el amor se muestra en lo tangible — preparar algo rico, regalar algo con significado."),
+            "salud": ("Nutrite con calma", "Tu cuerpo pide placer y descanso. Priorizá comidas nutritivas, caminatas en la naturaleza y contacto con lo físico. Evitá excesos alimentarios — Tauro tiende a buscar confort en la comida cuando hay estrés."),
+            "trabajo": ("Avanzá con constancia", "No es día de grandes innovaciones sino de trabajo sólido y metódico. Terminá lo que empezaste, organizá tu espacio, cerrá temas pendientes. La productividad hoy está en la persistencia, no en la velocidad."),
+            "finanzas": ("Consolidá lo que tenés", "Excelente día para revisar tus finanzas, armar presupuestos o buscar formas de generar ingresos estables. Tauro favorece las inversiones seguras y a largo plazo. Evitá riesgos innecesarios."),
+            "creatividad": ("Creá con las manos", "La inspiración viene del mundo material: cocinar, dibujar, jardinear, construir algo tangible. Tauro conecta la creatividad con lo sensorial. Dejate llevar por lo que te da placer hacer."),
+            "crecimiento": ("Enraizá tus valores", "El crecimiento hoy pasa por preguntarte qué es realmente valioso para vos. No lo que el mundo dice que deberías querer, sino lo que genuinamente te da seguridad y satisfacción."),
+        },
+        "Géminis": {
+            "clima": "soleado",
+            "amor": ("Hablá y conectá", "La Luna en Géminis activa las conversaciones profundas y juguetonas. Es un gran día para conocer gente nueva, flirtear con ingenio o tener esa charla pendiente con tu pareja. El amor hoy entra por las palabras."),
+            "salud": ("Estimulá tu mente", "Tu sistema nervioso está más activo. Hacé pausas conscientes, meditaciones cortas o ejercicios de respiración entre actividades. Evitá el exceso de pantallas y la sobreestimulación. Una caminata charlando con alguien es ideal."),
+            "trabajo": ("Comunicá y conectá", "Día ideal para reuniones, presentaciones, emails importantes y networking. Tu capacidad verbal está al máximo. Aprovechá para negociar, proponer ideas y establecer contactos. Evitá dispersarte en demasiados frentes."),
+            "finanzas": ("Investigá opciones", "Buen momento para comparar precios, buscar información sobre inversiones o renegociar condiciones. Géminis favorece la investigación y las comparaciones. No cierres nada definitivo — hoy es para explorar."),
+            "creatividad": ("Escribí y expresate", "Las ideas fluyen rápido. Es un día perfecto para escribir, hacer brainstorming, combinar conceptos o aprender algo nuevo. La curiosidad es tu mejor aliada creativa hoy."),
+            "crecimiento": ("Aprendé algo nuevo", "El crecimiento viene de exponerte a perspectivas diferentes. Leé algo que no leerías normalmente, hablá con alguien de otro ámbito, escuchá un podcast que te desafíe. La versatilidad es expansión."),
+        },
+        "Cáncer": {
+            "clima": "nublado",
+            "amor": ("Cuidá y dejate cuidar", "La Luna en su domicilio intensifica las emociones. Es un día para la intimidad genuina, las demostraciones de afecto y la vulnerabilidad. Si estás en pareja, cocinale algo. Si estás solo/a, llamá a alguien que te haga sentir en casa."),
+            "salud": ("Escuchá tus emociones", "Tu cuerpo refleja tu estado emocional más que nunca. Si sentís malestar estomacal o retención, revisá qué emoción estás guardando. Hidratate bien, comé alimentos reconfortantes y date permiso para sentir."),
+            "trabajo": ("Intuición laboral activa", "Hoy captás el clima emocional de tu entorno laboral mejor que nadie. Usá esa sensibilidad para anticipar necesidades, mediar en conflictos o conectar con colegas. Evitá tomarte las cosas personalmente."),
+            "finanzas": ("Protegé tu nido", "Cáncer activa el instinto de seguridad. Es un buen día para ahorrar, revisar seguros o pensar en inversiones que protejan a tu familia. Evitá gastar por impulso emocional — comprá solo lo necesario."),
+            "creatividad": ("Creá desde la emoción", "La inspiración viene de los recuerdos, la nostalgia y lo que te conmueve. Escribí una carta, cociná una receta familiar, mirá fotos viejas. La creatividad canceriana nace de lo que te importa."),
+            "crecimiento": ("Saná lo familiar", "El crecimiento hoy pasa por tu relación con tus raíces: familia, hogar, pertenencia. ¿Hay algo pendiente con alguien cercano? ¿Necesitás reconfigurar tu espacio? Atender lo emocional es avanzar."),
+        },
+        "Leo": {
+            "clima": "soleado",
+            "amor": ("Brillá y enamorá", "La Luna en Leo activa el magnetismo personal. Es un día para citas especiales, gestos románticos grandiosos y dejarte ver. Si estás en pareja, hacé algo fuera de la rutina. Si estás buscando, mostrá tu mejor versión sin miedo."),
+            "salud": ("Recargá tu vitalidad", "Leo gobierna el corazón y la espalda. Hacé ejercicio que te haga sentir fuerte y radiante — no por obligación, sino por placer. Tomá sol si podés, bailá, movete con alegría. Tu cuerpo necesita expresión."),
+            "trabajo": ("Destacate con confianza", "Día excelente para presentaciones, liderazgo y visibilidad. Tu carisma está al máximo — usalo para inspirar a tu equipo o impresionar en una reunión. Ojo con el ego: brillar no es opacar a otros."),
+            "finanzas": ("Invertí en vos", "Leo favorece los gastos en imagen personal, formación o experiencias que te hagan sentir bien. No es tacañería — es inversión en tu marca personal. Eso sí, no exageres: el lujo tiene límites."),
+            "creatividad": ("Expresión máxima", "Tu creatividad está en su punto más alto. Es un día para crear algo que muestre quién sos: arte, contenido, un proyecto personal. No te autocensures — Leo pide autenticidad y drama."),
+            "crecimiento": ("Liderá tu vida", "El crecimiento viene de asumir protagonismo en tu propia historia. ¿En qué área te estás escondiendo? Leo te invita a ocupar ese espacio con orgullo y generosidad."),
+        },
+        "Virgo": {
+            "clima": "despejado",
+            "amor": ("Amá en los detalles", "La Luna en Virgo expresa amor a través del servicio: ordenar algo para el otro, resolver un problema práctico, estar presente en lo cotidiano. Hoy el romance no es un gran gesto — es atención genuina a los detalles."),
+            "salud": ("Optimizá tu rutina", "Día ideal para ajustar tu alimentación, empezar una rutina de ejercicio o hacerte ese chequeo pendiente. Virgo favorece la salud preventiva y los hábitos saludables. Tu cuerpo agradece la disciplina amorosa."),
+            "trabajo": ("Organizá y ejecutá", "Tu capacidad analítica está al máximo. Aprovechá para ordenar archivos, optimizar procesos, revisar detalles y corregir errores. No es día de grandes visiones sino de ejecución impecable."),
+            "finanzas": ("Revisá los números", "Excelente momento para hacer cuentas, encontrar gastos innecesarios, comparar proveedores u optimizar tu presupuesto. Virgo ve lo que otros pasan por alto — usá esa precisión a tu favor."),
+            "creatividad": ("Perfeccioná tu arte", "No es día de empezar sino de pulir. Revisá ese proyecto, editá ese texto, ajustá esos detalles. La creatividad virguiana está en la artesanía — el cuidado milimétrico que transforma algo bueno en algo excelente."),
+            "crecimiento": ("Mejorá un hábito", "El crecimiento hoy es práctico y concreto. Elegí UN hábito que quieras mejorar y empezá hoy. No hace falta una revolución — Virgo entiende que los cambios pequeños y constantes son los que transforman."),
+        },
+        "Libra": {
+            "clima": "despejado",
+            "amor": ("Armonía y conexión", "La Luna en Libra favorece el equilibrio en las relaciones. Es un gran día para resolver diferencias con elegancia, tener citas armoniosas o fortalecer vínculos. Buscá el punto medio — hoy el amor florece en la diplomacia."),
+            "salud": ("Buscá el equilibrio", "Libra gobierna los riñones y el equilibrio interno. Hidratate bien, evitá excesos y buscá actividades que armonicen cuerpo y mente: yoga, stretching, una caminata tranquila. Tu cuerpo pide simetría."),
+            "trabajo": ("Negociá y colaborá", "Día ideal para acuerdos, alianzas, trabajo en equipo y mediación. Tu diplomacia natural está potenciada. Si tenés que cerrar un trato o resolver un conflicto laboral, hoy es el momento."),
+            "finanzas": ("Asociate y compartí", "Libra favorece las sociedades y los acuerdos financieros equilibrados. Buen día para negociar, buscar socios o repartir responsabilidades económicas. Buscá el win-win — los tratos justos perduran."),
+            "creatividad": ("Estética y belleza", "Tu sentido estético está agudizado. Es un día para diseñar, decorar, armonizar espacios o crear algo visualmente bello. Libra conecta la creatividad con la proporción y la elegancia."),
+            "crecimiento": ("Equilibrá dar y recibir", "El crecimiento viene de revisar tus relaciones: ¿estás dando demasiado o recibiendo sin reciprocar? Libra te invita a encontrar el balance que te permita crecer sin desgastarte."),
+        },
+        "Escorpio": {
+            "clima": "tormenta",
+            "amor": ("Profundizá o soltá", "La Luna en Escorpio intensifica todo. Es un día para conversaciones profundas, intimidad genuina o para soltar relaciones que ya no te nutren. No hay grises hoy — el amor pide verdad absoluta."),
+            "salud": ("Limpiá y regenerá", "Tu cuerpo pide depuración: hidratación profunda, ayuno intermitente si te sienta bien, o simplemente soltar tensiones acumuladas. Escorpio gobierna la eliminación — dejá ir lo que tu cuerpo ya procesó."),
+            "trabajo": ("Investigá y transformá", "Día para ir al fondo de los temas: descubrir lo que otros no ven, resolver problemas complejos, transformar procesos. Tu capacidad de análisis profundo está al máximo. Usala estratégicamente."),
+            "finanzas": ("Revisá lo oculto", "Buen día para revisar deudas, seguros, impuestos o inversiones compartidas. Escorpio destapa lo que estaba escondido — puede aparecer un gasto olvidado o una oportunidad que no veías."),
+            "creatividad": ("Creá desde lo profundo", "La inspiración viene de las sombras, lo tabú, lo que otros no se animan a tocar. Si hacés arte, explorá temas intensos. Si escribís, andá donde duele. La creatividad escorpiana transforma dolor en poder."),
+            "crecimiento": ("Enfrentá tu sombra", "El crecimiento más potente hoy viene de mirar lo que preferirías evitar. ¿Qué patrón se repite? ¿Qué miedo te limita? Escorpio no acepta superficialidad — crecés cuando te animás a ver todo."),
+        },
+        "Sagitario": {
+            "clima": "soleado",
+            "amor": ("Aventura compartida", "La Luna en Sagitario pide libertad y exploración. Es un día para planes espontáneos, viajes cortos o conversaciones sobre el futuro. El amor hoy se alimenta de visiones compartidas y risas, no de rutina."),
+            "salud": ("Expandí tu cuerpo", "Tu cuerpo pide movimiento amplio: correr, andar en bici, hacer deporte al aire libre. Sagitario gobierna las caderas y los muslos — estirá bien esas zonas. La salud hoy mejora con naturaleza y libertad."),
+            "trabajo": ("Pensá en grande", "Día para planificación estratégica, expansión y visión a largo plazo. No te enredes en detalles — mirá el panorama completo. Si tenés que presentar un proyecto ambicioso o buscar oportunidades internacionales, es hoy."),
+            "finanzas": ("Expandí tus horizontes", "Sagitario favorece inversiones en educación, viajes o mercados internacionales. Es un buen día para pensar en grande financieramente, pero con pies en la tierra — el optimismo excesivo puede costarte."),
+            "creatividad": ("Inspirate viajando", "La creatividad viene de lo diferente: una cultura nueva, un libro de filosofía, una conversación con alguien de otro mundo. Sagitario expande la mente — dejá que la curiosidad te lleve lejos."),
+            "crecimiento": ("Buscá tu verdad", "El crecimiento hoy es filosófico y espiritual. ¿En qué creés realmente? ¿Hacia dónde apunta tu brújula interna? Sagitario te invita a alinear tu vida con tu sentido más profundo de dirección."),
+        },
+        "Capricornio": {
+            "clima": "nublado",
+            "amor": ("Compromiso real", "La Luna en Capricornio valora la estabilidad y el esfuerzo sostenido. No es día de fuegos artificiales sino de construir cimientos sólidos. Si estás en pareja, planifiquen algo juntos. Si buscás, priorizá personas serias y confiables."),
+            "salud": ("Disciplina saludable", "Tu cuerpo responde bien a la estructura hoy: rutinas de ejercicio fijas, horarios de comida regulares, descanso suficiente. Capricornio gobierna los huesos y las articulaciones — cuidá tu postura y tus rodillas."),
+            "trabajo": ("Construí con paciencia", "Excelente día para trabajo duro, planificación a largo plazo y asumir responsabilidades. Tu disciplina y resistencia están al máximo. Es momento de sentar bases, no de buscar atajos."),
+            "finanzas": ("Planificá a largo plazo", "Capricornio favorece el ahorro, las inversiones conservadoras y la planificación financiera. Es un día para pensar en tu retiro, revisar metas económicas a 5 años o reducir gastos innecesarios."),
+            "creatividad": ("Creá con estructura", "La inspiración viene de la disciplina: seguir un método, completar una técnica, dominar una herramienta. La creatividad capricorniana es artesanal — el resultado de horas de práctica deliberada."),
+            "crecimiento": ("Aceptá la responsabilidad", "El crecimiento viene de asumir lo que te toca sin quejas. ¿Qué área de tu vida necesita más madurez? Capricornio te enseña que la libertad real viene después de cumplir con tus compromisos."),
+        },
+        "Acuario": {
+            "clima": "arcoiris",
+            "amor": ("Libertad y originalidad", "La Luna en Acuario valora la independencia dentro del vínculo. Hoy el amor se expresa siendo auténtico, respetando el espacio del otro y conectando desde lo mental. Sorprendé con algo inesperado y poco convencional."),
+            "salud": ("Innová tu rutina", "Tu sistema nervioso está más activo. Probá algo diferente: un deporte nuevo, una app de meditación, técnicas de respiración que no conozcas. Acuario gobierna la circulación — mové las piernas y evitá estar mucho rato sentado/a."),
+            "trabajo": ("Innová sin miedo", "Día para proponer ideas disruptivas, cuestionar procesos establecidos y pensar fuera de la caja. Tu mente está conectada con el futuro. Si algo te parece demasiado loco, probablemente sea exactamente lo que hace falta."),
+            "finanzas": ("Explorá lo nuevo", "Acuario favorece las inversiones en tecnología, innovación y proyectos de impacto social. Es un buen día para explorar criptomonedas, fintech o economías alternativas — siempre con investigación previa."),
+            "creatividad": ("Rompé las reglas", "La creatividad acuariana es rebelde y visionaria. Mezclá géneros, desafiá convenciones, creá algo que no existía. Hoy no buscas gustar — buscas ser fiel a tu visión aunque sea rara."),
+            "crecimiento": ("Conectá con tu tribu", "El crecimiento viene de encontrar personas que piensen diferente y resonen con tu esencia. ¿Hay alguna comunidad, grupo o causa que te llame? Acuario crece en colectivo, no en soledad."),
+        },
+        "Piscis": {
+            "clima": "nublado",
+            "amor": ("Dejate sentir", "La Luna en Piscis disuelve las barreras emocionales. Es un día para la ternura, la compasión y la conexión espiritual con el otro. Si sentís ganas de llorar, llorá — Piscis sana a través de la entrega emocional."),
+            "salud": ("Descansá profundo", "Tu sensibilidad está al máximo y tu cuerpo absorbe las energías del entorno. Priorizá el descanso, evitá multitudes ruidosas y conectá con el agua: un baño largo, nadar, caminar junto al mar o un río."),
+            "trabajo": ("Fluí con la intuición", "No es día para lógica pura — dejá que tu intuición guíe tus decisiones laborales. Si algo no te cierra aunque los números digan que sí, hacele caso a esa corazonada. Piscis ve lo que la mente no alcanza."),
+            "finanzas": ("Intuición financiera", "Piscis puede captar oportunidades que otros no ven, pero también caer en engaños. Hoy confiá en tu instinto pero verificá los datos. Si algo parece demasiado bueno para ser verdad, probablemente lo sea."),
+            "creatividad": ("Canal abierto", "La creatividad pisciana es mística y fluida. Pintá, componé música, escribí poesía, dejate llevar sin rumbo fijo. Hoy no necesitás un plan — necesitás entregarte al flujo. Lo que salga puede ser mágico."),
+            "crecimiento": ("Conectá con lo sagrado", "El crecimiento hoy es espiritual. Meditá, rezá, caminá en silencio, contemplá algo bello. Piscis te recuerda que no todo se entiende con la mente — a veces crecer es simplemente confiar."),
+        },
+    }
+
     @classmethod
     def _generar_fallback_diario(
         cls, numero_personal: dict, luna_info: dict
     ) -> dict:
-        """Genera pronóstico genérico sin AI cuando Claude falla."""
+        """Genera pronóstico personalizado basado en datos deterministas (sin AI)."""
         num = numero_personal["numero"]
         desc = numero_personal["descripcion"]
 
-        # Energía base según número personal
         energia_base = {1: 8, 2: 5, 3: 7, 4: 4, 5: 7, 6: 6, 7: 3, 8: 8, 9: 6, 11: 9, 22: 7, 33: 8}
+
+        signo_luna = luna_info.get("signo", "Aries")
+        fase_luna = luna_info.get("fase", "")
+        significado_luna = luna_info.get("significado", "")
+
+        # Interpretación por signo lunar
+        interp = cls._LUNA_EN_SIGNO.get(signo_luna, cls._LUNA_EN_SIGNO["Aries"])
 
         return {
             "clima": {
-                "estado": "nublado",
-                "titulo": "Pronóstico Parcial",
-                "frase_sintesis": f"Tu número personal hoy es {num} — {desc}. "
-                                  f"La Luna transita por {luna_info.get('signo', '?')}.",
+                "estado": interp["clima"],
+                "titulo": f"Día {num} · Luna en {signo_luna}",
+                "frase_sintesis": (
+                    f"Hoy vibrás en la energía del {num}: {desc.lower()}. "
+                    f"La Luna en {signo_luna} "
+                    + (f"en fase de {fase_luna.lower()} " if fase_luna else "")
+                    + f"te invita a {significado_luna.lower() if significado_luna else 'sintonizar con tu intuición'}."
+                ),
                 "energia": energia_base.get(num, 5),
                 "claridad": 5,
                 "conexion": 5,
             },
             "areas": [
                 {"id": "trabajo", "nombre": "Trabajo", "nivel": "neutro", "icono": "briefcase",
-                 "frase": "Día para mantener el ritmo", "detalle": "Pronóstico detallado no disponible."},
+                 "frase": interp["trabajo"][0], "detalle": interp["trabajo"][1]},
                 {"id": "amor", "nombre": "Amor", "nivel": "neutro", "icono": "heart",
-                 "frase": "Escuchá tu intuición", "detalle": "Pronóstico detallado no disponible."},
+                 "frase": interp["amor"][0], "detalle": interp["amor"][1]},
                 {"id": "salud", "nombre": "Salud", "nivel": "neutro", "icono": "activity",
-                 "frase": "Cuidá tu energía", "detalle": "Pronóstico detallado no disponible."},
+                 "frase": interp["salud"][0], "detalle": interp["salud"][1]},
                 {"id": "finanzas", "nombre": "Finanzas", "nivel": "neutro", "icono": "wallet",
-                 "frase": "Prudencia financiera", "detalle": "Pronóstico detallado no disponible."},
+                 "frase": interp["finanzas"][0], "detalle": interp["finanzas"][1]},
                 {"id": "creatividad", "nombre": "Creatividad", "nivel": "neutro", "icono": "palette",
-                 "frase": "Dejá fluir las ideas", "detalle": "Pronóstico detallado no disponible."},
+                 "frase": interp["creatividad"][0], "detalle": interp["creatividad"][1]},
                 {"id": "crecimiento", "nombre": "Crecimiento", "nivel": "neutro", "icono": "trending-up",
-                 "frase": "Momento de reflexión", "detalle": "Pronóstico detallado no disponible."},
+                 "frase": interp["crecimiento"][0], "detalle": interp["crecimiento"][1]},
             ],
             "momentos": [
                 {"bloque": "manana", "titulo": "Mañana", "icono": "sunrise",
@@ -135,7 +257,6 @@ class ServicioPronostico:
             },
             "luna": luna_info,
             "numero_personal": numero_personal,
-            "_fallback": True,
         }
 
     @classmethod

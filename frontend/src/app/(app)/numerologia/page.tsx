@@ -1070,7 +1070,7 @@ export default function PaginaNumerologia() {
   );
 
   return (
-    <>
+    <div className="relative min-h-full bg-[#16011B] lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:overflow-hidden">
       <HeaderMobile titulo="Numerología" mostrarAtras />
 
       {esMobile ? (
@@ -1078,10 +1078,10 @@ export default function PaginaNumerologia() {
           {contenidoPrincipal}
         </div>
       ) : (
-        <div className="hidden h-full min-h-0 flex-1 lg:flex">
+        <div className="flex h-full min-h-0 flex-1">
           <PanelGroup orientation="horizontal" id="numerologia-paneles">
             <Panel defaultSize={72} minSize={56}>
-              <div className="h-full overflow-y-auto scroll-sutil">
+              <div className="h-full overflow-y-auto scroll-sutil-dark">
                 {contenidoPrincipal}
               </div>
             </Panel>
@@ -1091,7 +1091,7 @@ export default function PaginaNumerologia() {
             </PanelResizeHandle>
 
             <Panel defaultSize={28} minSize={22} maxSize={40} collapsible>
-              <aside className="h-full overflow-hidden border-l border-white/[0.08] bg-[linear-gradient(180deg,#1C0627_0%,#140019_100%)]">
+              <aside className="h-full overflow-y-auto scroll-sutil-dark border-l border-white/[0.08] bg-[linear-gradient(180deg,#1C0627_0%,#140019_100%)]">
                 <PanelContextualNumerologia detalle={detalle} datos={datosActuales} />
               </aside>
             </Panel>
@@ -1119,6 +1119,6 @@ export default function PaginaNumerologia() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

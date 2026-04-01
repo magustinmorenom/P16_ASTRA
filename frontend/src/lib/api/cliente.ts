@@ -62,8 +62,9 @@ class ClienteAPI {
       headers: { ...headers, ...opciones?.headers },
     });
 
-    // 401 → intentar renovar y reintentar una vez
-    if (respuesta.status === 401) {
+    // 401 → intentar renovar y reintentar una vez (salvo rutas de auth)
+    const esRutaAuth = ruta.startsWith("/auth/");
+    if (respuesta.status === 401 && !esRutaAuth) {
       const renovado = await this.intentarRenovar();
       if (renovado) {
         const headersNuevos = this.obtenerHeaders();

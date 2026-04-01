@@ -60,6 +60,15 @@ const cards: CardDescubrir[] = [
     gradiente: "from-[#2D1B69] to-[#0F0A1A]",
     iconoColor: "text-[#B388FF]/70",
   },
+  {
+    titulo: "Match de Pareja",
+    subtitulo: "Compatibilidad cruzando las tres disciplinas",
+    icono: "corazon",
+    ruta: "/match-pareja",
+    gradiente: "from-[#7C4DFF] via-[#C084FC] to-[#E879A8]",
+    iconoColor: "text-white/70",
+    proximamente: true,
+  },
 ];
 
 // ---------------------------------------------------------------------------

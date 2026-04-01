@@ -23,7 +23,7 @@ export default function LayoutApp({
   const { autenticado, cargando, usuario } = useStoreAuth();
   const esMobile = usarEsMobile();
   const usaRailContextualSeparado =
-    pathname.startsWith("/carta-natal") || pathname.startsWith("/diseno-humano");
+    pathname.startsWith("/carta-natal") || pathname.startsWith("/diseno-humano") || pathname.startsWith("/numerologia");
 
   useEffect(() => {
     if (!cargando && !autenticado) {

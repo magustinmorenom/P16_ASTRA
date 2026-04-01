@@ -35,7 +35,7 @@ interface ChipEstado {
 }
 
 interface EstadoCabecera {
-  etiqueta: string;
+  etiqueta?: string;
   titulo: string;
   descripcion: string;
   icono: NombreIcono;
@@ -388,9 +388,8 @@ export default function Navbar() {
 
     if (pronosticoDiario) {
       return {
-        etiqueta: "Pulso del día",
         titulo: pronosticoDiario.clima.titulo,
-        descripcion: truncarTexto(pronosticoDiario.clima.frase_sintesis, 84),
+        descripcion: truncarTexto(pronosticoDiario.clima.frase_sintesis, 120),
         icono: "destello",
         tonoIcono: "violeta",
         signoLuna: pronosticoDiario.luna.signo,

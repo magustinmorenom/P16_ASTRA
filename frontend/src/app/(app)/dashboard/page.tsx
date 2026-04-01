@@ -196,9 +196,11 @@ export default function PaginaDashboard() {
       {/* Header solo en mobile */}
       {esMobile && (
         <HeaderMobile
-          etiqueta="Pulso del día"
           titulo={`${saludo}, ${nombreSaludo}`}
-          subtitulo="Tu contexto esencial antes de empezar a explorar."
+          subtitulo={
+            pronosticoDiario?.clima.frase_sintesis
+              ?? "Cargando tu pronóstico personalizado..."
+          }
           metas={metasHeaderMobile}
           accionDerecha={
             <button
