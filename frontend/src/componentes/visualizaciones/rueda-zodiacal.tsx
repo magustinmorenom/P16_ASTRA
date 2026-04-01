@@ -1,22 +1,11 @@
 "use client";
 
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/utilidades/cn";
 import type { Planeta, Casa, Aspecto } from "@/lib/tipos";
-import {
-  glifoPath,
-  COLORES_PLANETAS,
-  COLORES_ELEMENTO,
-  ELEMENTO_SIGNO,
-  ESTILOS_ASPECTO,
-} from "./glifos-astrologicos";
-import {
-  polarAXY,
-  ajustarAngulo,
-  resolverColisiones,
-  generarArcoSVG,
-  ROMANO,
-  SIGNOS,
-} from "./utilidades-rueda";
+import { mapearPlanetas, mapearCuspides, nombreInglesAEspanol } from "./mapeador-astrochart";
+import { crearConfigAstrochart } from "./config-astrochart";
+import TooltipRueda, { type DatosTooltip } from "./tooltip-rueda";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -32,28 +21,24 @@ interface PropsRuedaZodiacal {
 }
 
 // ---------------------------------------------------------------------------
-// Constantes de layout — viewBox 800x800
+// Zona interactiva
 // ---------------------------------------------------------------------------
 
-const CX = 400;
-const CY = 400;
-
-const R_EXTERIOR = 380;      // borde externo del anillo zodiacal
-const R_ZODIACAL_INT = 320;  // borde interno del anillo zodiacal (donde van ticks)
-const R_TICKS_INT = 312;     // fin de tick marks
-const R_CASAS_EXT = 312;     // borde externo del area de casas
-const R_PLANETAS = 260;      // radio de planetas (display)
-const R_CONECTORA = 300;     // radio donde llega la linea conectora al grado real
-const R_ASPECTO = 175;       // radio maximo para lineas de aspectos
-const R_CENTRO = 70;         // circulo central
-
-// ---------------------------------------------------------------------------
-// Normalizador de clave (quitar acentos y minusculas)
-// ---------------------------------------------------------------------------
-
-function normClave(s: string): string {
-  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+interface ZonaInteractiva {
+  cx: number;
+  cy: number;
+  datos: DatosTooltip;
+  planeta?: Planeta;
 }
+
+const RADIO_ACTIVACION = 18;
+
+const SIGNOS_EN_A_ES: Record<string, string> = {
+  Aries: "Aries", Taurus: "Tauro", Gemini: "Géminis", Cancer: "Cáncer",
+  Leo: "Leo", Virgo: "Virgo", Libra: "Libra", Scorpio: "Escorpio",
+  Sagittarius: "Sagitario", Capricorn: "Capricornio", Aquarius: "Acuario",
+  Pisces: "Piscis",
+};
 
 // ---------------------------------------------------------------------------
 // Componente
@@ -67,364 +52,310 @@ export default function RuedaZodiacal({
   claro = false,
   onPlanetaClick,
 }: PropsRuedaZodiacal) {
+  const contenedorRef = useRef<HTMLDivElement>(null);
+  const zonasRef = useRef<ZonaInteractiva[]>([]);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const zonaActivaRef = useRef<ZonaInteractiva | null>(null);
+  const idBase = useId().replace(/:/g, "");
+  const idChart = `astrochart-${idBase}`;
+  const [montado, setMontado] = useState(false);
+  const [tooltip, setTooltip] = useState<{
+    datos: DatosTooltip;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [tooltipSaliendo, setTooltipSaliendo] = useState(false);
+
+  useEffect(() => { setMontado(true); }, []);
+
+  const mostrarEnPosicion = useCallback(
+    (datos: DatosTooltip, clientX: number, clientY: number) => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setTooltipSaliendo(false);
+      const x = Math.min(Math.max(8, clientX - 125), window.innerWidth - 258);
+      const y = Math.max(8, clientY - 140);
+      setTooltip({ datos, x, y });
+    },
+    []
+  );
+
+  const ocultarTooltip = useCallback(() => {
+    setTooltipSaliendo(true);
+    timeoutRef.current = setTimeout(() => {
+      setTooltip(null);
+      setTooltipSaliendo(false);
+      zonaActivaRef.current = null;
+    }, 200);
+  }, []);
+
+  // Mouse move — proximidad
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      const svg = contenedorRef.current?.querySelector("svg");
+      if (!svg || zonasRef.current.length === 0) return;
+
+      const rect = svg.getBoundingClientRect();
+      const svgW = svg.viewBox?.baseVal?.width || rect.width;
+      const escala = svgW / rect.width;
+      const mx = (e.clientX - rect.left) * escala;
+      const my = (e.clientY - rect.top) * escala;
+      const radio = RADIO_ACTIVACION * escala;
+
+      let mejorZona: ZonaInteractiva | null = null;
+      let mejorDist = Infinity;
+
+      for (const zona of zonasRef.current) {
+        const dx = zona.cx - mx;
+        const dy = zona.cy - my;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < radio && dist < mejorDist) {
+          mejorDist = dist;
+          mejorZona = zona;
+        }
+      }
+
+      if (mejorZona) {
+        if (zonaActivaRef.current !== mejorZona) {
+          zonaActivaRef.current = mejorZona;
+          mostrarEnPosicion(mejorZona.datos, e.clientX, e.clientY);
+        }
+      } else if (zonaActivaRef.current) {
+        ocultarTooltip();
+      }
+    },
+    [mostrarEnPosicion, ocultarTooltip]
+  );
+
+  const handleClick = useCallback(() => {
+    if (zonaActivaRef.current?.planeta && onPlanetaClick) {
+      onPlanetaClick(zonaActivaRef.current.planeta);
+    }
+  }, [onPlanetaClick]);
+
+  useEffect(() => {
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+  }, []);
+
+  // Crear chart
+  useEffect(() => {
+    if (!montado || !planetas || !casas || !contenedorRef.current) return;
+
+    const contenedor = contenedorRef.current;
+    const existente = contenedor.querySelector(`#${CSS.escape(idChart)}`);
+    if (existente) existente.remove();
+
+    const divChart = document.createElement("div");
+    divChart.id = idChart;
+    contenedor.insertBefore(divChart, contenedor.firstChild);
+
+    const ancho = contenedor.clientWidth || 600;
+    const alto = ancho;
+
+    import("@astrodraw/astrochart").then(({ default: Chart }) => {
+      if (!contenedorRef.current) return;
+
+      const config = crearConfigAstrochart(claro);
+      const chart = new Chart(idChart, ancho, alto, config);
+
+      const datosChart = {
+        planets: mapearPlanetas(planetas),
+        cusps: mapearCuspides(casas),
+      };
+
+      const radix = chart.radix(datosChart);
+      radix.aspects();
+
+      requestAnimationFrame(() => {
+        zonasRef.current = extraerZonas(contenedor, planetas, casas);
+      });
+    });
+
+    return () => {
+      const div = contenedor.querySelector(`#${CSS.escape(idChart)}`);
+      if (div) div.remove();
+      zonasRef.current = [];
+    };
+  }, [montado, planetas, casas, aspectos, claro, idChart]);
+
+  // Adjuntar eventos de mouse
+  useEffect(() => {
+    const contenedor = contenedorRef.current;
+    if (!contenedor) return;
+
+    contenedor.addEventListener("mousemove", handleMouseMove);
+    contenedor.addEventListener("click", handleClick);
+    contenedor.addEventListener("mouseleave", ocultarTooltip);
+
+    return () => {
+      contenedor.removeEventListener("mousemove", handleMouseMove);
+      contenedor.removeEventListener("click", handleClick);
+      contenedor.removeEventListener("mouseleave", ocultarTooltip);
+    };
+  }, [handleMouseMove, handleClick, ocultarTooltip]);
+
   if (!planetas || !casas) {
     return (
-      <div className={cn("flex items-center justify-center rounded-2xl bg-fondo-tarjeta p-8", className)}>
-        <p className="text-texto-secundario">Cargando rueda zodiacal...</p>
+      <div className={cn("flex items-center justify-center rounded-2xl p-8", className)}>
+        <p className="text-violet-200/50">Cargando rueda zodiacal...</p>
       </div>
     );
   }
 
-  const ascGrado = casas[0]?.grado ?? 0;
-
-  // Resolver colisiones de planetas
-  const planetasResueltos = resolverColisiones(planetas, ascGrado, 10);
-
-  // Colores segun tema
-  const t = claro
-    ? {
-        fondoExt: "#FAFAFA",
-        strokeAnillo: "#D0C4F0",
-        fondoCentro: "#F8F5FF",
-        strokeCasa: "#B0A4D0",
-        textoRomano: "#8A8580",
-        textoPlaneta: "#2C2926",
-        textoRetro: "#ef4444",
-        textoAsc: "#7C4DFF",
-        tickColor: "#C4B8E0",
-        centroStroke: "#D0C4F0",
-        ejeColor: "#7C4DFF",
-      }
-    : {
-        fondoExt: "#1e1b2e",
-        strokeAnillo: "#7C4DFF",
-        fondoCentro: "#1a0a3e",
-        strokeCasa: "#5A3FAA",
-        textoRomano: "#9575CD",
-        textoPlaneta: "#f5f5f5",
-        textoRetro: "#ef4444",
-        textoAsc: "#B388FF",
-        tickColor: "#5A3FAA",
-        centroStroke: "#7C4DFF",
-        ejeColor: "#B388FF",
-      };
-
   return (
-    <div className={cn("flex items-center justify-center", className)}>
-      <svg viewBox="0 0 800 800" className="w-full max-w-[600px]">
-        {/* Filter para hover glow */}
-        <defs>
-          <filter id="glow-planeta" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#7C4DFF" floodOpacity="0.6" />
-          </filter>
-        </defs>
+    <div className={cn("relative flex flex-col items-center", className)}>
+      <div
+        ref={contenedorRef}
+        className="w-full cursor-pointer"
+      />
 
-        {/* ============================================================= */}
-        {/* CAPA 1: Fondo */}
-        {/* ============================================================= */}
-        <circle cx={CX} cy={CY} r={R_EXTERIOR} fill={t.fondoExt} stroke={t.strokeAnillo} strokeWidth="1.5" />
-        <circle cx={CX} cy={CY} r={R_ZODIACAL_INT} fill={claro ? "#fff" : "#151024"} stroke={t.strokeAnillo} strokeWidth="0.8" />
-        <circle cx={CX} cy={CY} r={R_CENTRO} fill={t.fondoCentro} stroke={t.centroStroke} strokeWidth="0.8" opacity="0.6" />
-
-        {/* ============================================================= */}
-        {/* CAPA 2: Arcos zodiacales coloreados por elemento */}
-        {/* ============================================================= */}
-        {SIGNOS.map((signo, i) => {
-          const startLong = i * 30;
-          const endLong = (i + 1) * 30;
-          const startAng = ajustarAngulo(startLong, ascGrado);
-          const endAng = ajustarAngulo(endLong, ascGrado);
-          const elemento = ELEMENTO_SIGNO[signo];
-          const colores = elemento ? COLORES_ELEMENTO[elemento] : COLORES_ELEMENTO.Fuego;
-          const midAng = ajustarAngulo(startLong + 15, ascGrado);
-          const pGlifo = polarAXY(midAng, (R_EXTERIOR + R_ZODIACAL_INT) / 2, CX, CY);
-
-          const arcPath = generarArcoSVG(startAng, endAng, R_ZODIACAL_INT, R_EXTERIOR, CX, CY);
-          const pathData = glifoPath("signo", signo);
-
-          return (
-            <g key={signo}>
-              {/* Arco de fondo */}
-              <path
-                d={arcPath}
-                fill={claro ? colores.fondo : `${colores.borde}15`}
-                stroke={colores.borde}
-                strokeWidth="0.5"
-                opacity={claro ? 0.8 : 0.4}
-              />
-              {/* Glifo del signo */}
-              {pathData && (
-                <g transform={`translate(${pGlifo.x - 10}, ${pGlifo.y - 10}) scale(${20/24})`}>
-                  <path
-                    d={pathData}
-                    fill="none"
-                    stroke={claro ? colores.borde : colores.borde}
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    opacity={claro ? 0.9 : 0.8}
-                  />
-                </g>
-              )}
-            </g>
-          );
-        })}
-
-        {/* ============================================================= */}
-        {/* CAPA 3: Tick marks de grados */}
-        {/* ============================================================= */}
-        {Array.from({ length: 360 }, (_, deg) => {
-          const ang = ajustarAngulo(deg, ascGrado);
-          const esCadaCinco = deg % 5 === 0;
-          const esCadaTreinta = deg % 30 === 0;
-          if (!esCadaCinco) return null;
-
-          const rExt = R_ZODIACAL_INT;
-          const rInt = esCadaTreinta ? R_TICKS_INT - 6 : R_TICKS_INT;
-          const p1 = polarAXY(ang, rExt, CX, CY);
-          const p2 = polarAXY(ang, rInt, CX, CY);
-
-          return (
-            <line
-              key={`tick-${deg}`}
-              x1={p1.x} y1={p1.y}
-              x2={p2.x} y2={p2.y}
-              stroke={t.tickColor}
-              strokeWidth={esCadaTreinta ? 1.2 : 0.5}
-              opacity={esCadaTreinta ? 0.7 : 0.4}
-            />
-          );
-        })}
-
-        {/* ============================================================= */}
-        {/* CAPA 4: Lineas de casas + numeros romanos */}
-        {/* ============================================================= */}
-        {casas.map((casa, idx) => {
-          const angulo = ajustarAngulo(casa.grado, ascGrado);
-          const pExt = polarAXY(angulo, R_CASAS_EXT, CX, CY);
-          const pInt = polarAXY(angulo, R_CENTRO, CX, CY);
-          const esAngular = casa.numero === 1 || casa.numero === 4 || casa.numero === 7 || casa.numero === 10;
-
-          // Punto medio para numero romano: entre esta cuspide y la siguiente
-          const siguienteCasa = casas[(idx + 1) % casas.length];
-          let midGrado = (casa.grado + siguienteCasa.grado) / 2;
-          if (Math.abs(casa.grado - siguienteCasa.grado) > 180) {
-            midGrado = ((casa.grado + siguienteCasa.grado + 360) / 2) % 360;
-          }
-          const midAng = ajustarAngulo(midGrado, ascGrado);
-          const pNum = polarAXY(midAng, (R_CASAS_EXT + R_ASPECTO) / 2.2, CX, CY);
-
-          return (
-            <g key={`casa-${casa.numero}`}>
-              <line
-                x1={pExt.x} y1={pExt.y}
-                x2={pInt.x} y2={pInt.y}
-                stroke={t.strokeCasa}
-                strokeWidth={esAngular ? 1.8 : 0.6}
-                opacity={esAngular ? 0.8 : 0.4}
-              />
-              <text
-                x={pNum.x} y={pNum.y}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fill={t.textoRomano}
-                fontSize="12"
-                fontWeight={esAngular ? "bold" : "normal"}
-                opacity={0.7}
-              >
-                {ROMANO[casa.numero]}
-              </text>
-            </g>
-          );
-        })}
-
-        {/* ============================================================= */}
-        {/* CAPA 5: Ejes ASC / MC / DSC / IC */}
-        {/* ============================================================= */}
-        {(() => {
-          const ejes = [
-            { label: "ASC", grado: casas[0]?.grado ?? 0 },
-            { label: "IC", grado: casas[3]?.grado ?? 90 },
-            { label: "DSC", grado: casas[6]?.grado ?? 180 },
-            { label: "MC", grado: casas[9]?.grado ?? 270 },
-          ];
-          return ejes.map(({ label, grado }) => {
-            const ang = ajustarAngulo(grado, ascGrado);
-            const pBorde = polarAXY(ang, R_EXTERIOR + 2, CX, CY);
-            const pLabel = polarAXY(ang, R_EXTERIOR + 18, CX, CY);
-            return (
-              <g key={label}>
-                <text
-                  x={pLabel.x}
-                  y={pLabel.y}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill={t.ejeColor}
-                  fontSize="11"
-                  fontWeight="bold"
-                  opacity="0.9"
-                >
-                  {label}
-                </text>
-                {/* Marcador en el borde */}
-                <circle
-                  cx={pBorde.x} cy={pBorde.y} r="2.5"
-                  fill={t.ejeColor}
-                  opacity="0.6"
-                />
-              </g>
-            );
-          });
-        })()}
-
-        {/* ============================================================= */}
-        {/* CAPA 6: Lineas de aspectos (diferenciadas por tipo) */}
-        {/* ============================================================= */}
-        {aspectos?.map((asp, i) => {
-          const pr1 = planetasResueltos.find((p) => p.nombre === asp.planeta1);
-          const pr2 = planetasResueltos.find((p) => p.nombre === asp.planeta2);
-          if (!pr1 || !pr2) return null;
-
-          const pos1 = polarAXY(pr1.display, R_ASPECTO, CX, CY);
-          const pos2 = polarAXY(pr2.display, R_ASPECTO, CX, CY);
-          const tipoNorm = normClave(asp.tipo);
-          const estilo = ESTILOS_ASPECTO[tipoNorm];
-
-          return (
-            <line
-              key={`asp-${i}`}
-              x1={pos1.x} y1={pos1.y}
-              x2={pos2.x} y2={pos2.y}
-              stroke={estilo?.color ?? "#999"}
-              strokeWidth={estilo?.ancho ?? 0.8}
-              strokeDasharray={estilo?.dash ?? ""}
-              opacity={claro ? 0.35 : 0.45}
-            >
-              <title>{asp.planeta1} {asp.tipo} {asp.planeta2} (orbe: {asp.orbe?.toFixed(1)}°)</title>
-            </line>
-          );
-        })}
-
-        {/* ============================================================= */}
-        {/* CAPA 7: Planetas con glifos SVG + colision avoidance */}
-        {/* ============================================================= */}
-        {planetasResueltos.map((pr) => {
-          const planeta = planetas.find((p) => p.nombre === pr.nombre);
-          if (!planeta) return null;
-
-          const posDisplay = polarAXY(pr.display, R_PLANETAS, CX, CY);
-          const colorPlaneta = COLORES_PLANETAS[planeta.nombre] || "#7C4DFF";
-          const pathData = glifoPath("planeta", planeta.nombre);
-
-          // Si el display difiere significativamente del real, dibujar linea conectora
-          let diffAngulo = Math.abs(pr.display - pr.real);
-          if (diffAngulo > 180) diffAngulo = 360 - diffAngulo;
-          const necesitaConectora = diffAngulo > 2;
-
-          const posReal = polarAXY(pr.real, R_CONECTORA, CX, CY);
-          const posTick = polarAXY(pr.real, R_ZODIACAL_INT, CX, CY);
-
-          const glifoSize = 13;
-
-          return (
-            <g
-              key={planeta.nombre}
-              className={cn(
-                onPlanetaClick && "cursor-pointer",
-                "hover:[filter:url(#glow-planeta)]",
-              )}
-              onClick={() => onPlanetaClick?.(planeta)}
-            >
-              <title>
-                {planeta.nombre} {planeta.signo} {planeta.grado_en_signo?.toFixed(1)}°
-                {planeta.retrogrado ? " (R)" : ""}
-                {" — Casa "}{ROMANO[planeta.casa] ?? planeta.casa}
-              </title>
-
-              {/* Linea conectora al grado real */}
-              {necesitaConectora && (
-                <line
-                  x1={posDisplay.x} y1={posDisplay.y}
-                  x2={posReal.x} y2={posReal.y}
-                  stroke={colorPlaneta}
-                  strokeWidth="0.6"
-                  opacity="0.4"
-                  strokeDasharray="2 2"
-                />
-              )}
-
-              {/* Punto en el grado real (sobre el anillo de ticks) */}
-              <circle
-                cx={posTick.x} cy={posTick.y} r="2"
-                fill={colorPlaneta}
-                opacity="0.6"
-              />
-
-              {/* Circulo de fondo del planeta */}
-              <circle
-                cx={posDisplay.x} cy={posDisplay.y} r="16"
-                fill={claro ? "#fff" : "#1e1b2e"}
-                stroke={colorPlaneta}
-                strokeWidth={claro ? 1.5 : 1}
-                opacity="0.95"
-              />
-
-              {/* Glifo del planeta */}
-              {pathData ? (
-                <g transform={`translate(${posDisplay.x - glifoSize}, ${posDisplay.y - glifoSize}) scale(${(glifoSize * 2) / 24})`}>
-                  <path
-                    d={pathData}
-                    fill="none"
-                    stroke={planeta.retrogrado ? t.textoRetro : colorPlaneta}
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </g>
-              ) : (
-                <text
-                  x={posDisplay.x} y={posDisplay.y}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill={planeta.retrogrado ? t.textoRetro : colorPlaneta}
-                  fontSize="13"
-                  fontWeight="bold"
-                >
-                  {planeta.nombre[0]}
-                </text>
-              )}
-
-              {/* Indicador retrogrado */}
-              {planeta.retrogrado && (
-                <text
-                  x={posDisplay.x + 12} y={posDisplay.y - 12}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill={t.textoRetro}
-                  fontSize="9"
-                  fontWeight="bold"
-                >
-                  R
-                </text>
-              )}
-            </g>
-          );
-        })}
-
-        {/* ============================================================= */}
-        {/* CAPA 8: Centro — Cruz ASC/MC sutil */}
-        {/* ============================================================= */}
-        <line
-          x1={CX - R_CENTRO + 10} y1={CY}
-          x2={CX + R_CENTRO - 10} y2={CY}
-          stroke={t.centroStroke} strokeWidth="0.5" opacity="0.3"
+      {tooltip && (
+        <TooltipRueda
+          datos={tooltip.datos}
+          x={tooltip.x}
+          y={tooltip.y}
+          saliendo={tooltipSaliendo}
         />
-        <line
-          x1={CX} y1={CY - R_CENTRO + 10}
-          x2={CX} y2={CY + R_CENTRO - 10}
-          stroke={t.centroStroke} strokeWidth="0.5" opacity="0.3"
-        />
-      </svg>
+      )}
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Extraer zonas interactivas del SVG — usando IDs de grupo predecibles
+// ---------------------------------------------------------------------------
+
+function extraerZonas(
+  contenedor: HTMLElement,
+  planetas: Planeta[],
+  casas: Casa[]
+): ZonaInteractiva[] {
+  const svg = contenedor.querySelector("svg");
+  if (!svg) return [];
+
+  const zonas: ZonaInteractiva[] = [];
+
+  // ── Planetas ──
+  // astrochart genera grupos: *-radix-planets-Sun, *-radix-planets-Moon, etc.
+  for (const planeta of planetas) {
+    const nombreEn = mapearNombreAIngles(planeta.nombre);
+    const grupo = svg.querySelector(`[id$="-planets-${nombreEn}"]`);
+    if (!grupo) continue;
+
+    const centro = centroDeGrupo(grupo);
+    if (!centro) continue;
+
+    zonas.push({
+      cx: centro.cx,
+      cy: centro.cy,
+      datos: {
+        tipo: "planeta",
+        nombre: planeta.nombre,
+        signo: planeta.signo,
+        casa: planeta.casa,
+        retrogrado: planeta.retrogrado,
+      },
+      planeta,
+    });
+  }
+
+  // ── Signos ──
+  // Grupos: *-radix-signs-Aries, *-radix-signs-Taurus, etc.
+  for (const [en, es] of Object.entries(SIGNOS_EN_A_ES)) {
+    const grupo = svg.querySelector(`[id$="-signs-${en}"]`);
+    if (!grupo) continue;
+
+    const centro = centroDeGrupo(grupo);
+    if (!centro) continue;
+
+    zonas.push({
+      cx: centro.cx,
+      cy: centro.cy,
+      datos: { tipo: "signo", nombre: es },
+    });
+  }
+
+  // ── Casas ──
+  // Grupos: *-radix-cusps-1, *-radix-cusps-2, etc.
+  for (let i = 1; i <= 12; i++) {
+    const grupo = svg.querySelector(`[id$="-cusps-${i}"]`);
+    if (!grupo) continue;
+
+    const centro = centroDeGrupo(grupo);
+    if (!centro) continue;
+
+    const casa = casas.find((c) => c.numero === i);
+    zonas.push({
+      cx: centro.cx,
+      cy: centro.cy,
+      datos: { tipo: "casa", numero: i, signo: casa?.signo },
+    });
+  }
+
+  // ── Ejes ──
+  // Textos "As", "Ds", "Mc", "Ic" dentro del grupo axis
+  const grupoEjes = svg.querySelector(`[id$="-axis"]`);
+  if (grupoEjes) {
+    const textos = grupoEjes.querySelectorAll("text");
+    for (const texto of textos) {
+      const contenido = texto.textContent?.trim();
+      if (contenido && ["As", "Ds", "Mc", "Ic"].includes(contenido)) {
+        const centro = centroDeElemento(texto);
+        if (centro) {
+          zonas.push({
+            cx: centro.cx,
+            cy: centro.cy,
+            datos: { tipo: "eje", nombre: contenido },
+          });
+        }
+      }
+    }
+  }
+
+  return zonas;
+}
+
+function centroDeGrupo(grupo: Element): { cx: number; cy: number } | null {
+  // Buscar paths y texts dentro del grupo para calcular bounding box
+  const hijos = grupo.querySelectorAll("path, text, circle, use");
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  let found = false;
+
+  for (const hijo of hijos) {
+    try {
+      if (hijo instanceof SVGGraphicsElement) {
+        const bbox = hijo.getBBox();
+        if (bbox.width === 0 && bbox.height === 0) continue;
+        minX = Math.min(minX, bbox.x);
+        minY = Math.min(minY, bbox.y);
+        maxX = Math.max(maxX, bbox.x + bbox.width);
+        maxY = Math.max(maxY, bbox.y + bbox.height);
+        found = true;
+      }
+    } catch { /* getBBox puede fallar */ }
+  }
+
+  if (!found) return null;
+  return { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+}
+
+function centroDeElemento(el: Element): { cx: number; cy: number } | null {
+  try {
+    if (el instanceof SVGGraphicsElement) {
+      const bbox = el.getBBox();
+      if (bbox.width === 0 && bbox.height === 0) return null;
+      return { cx: bbox.x + bbox.width / 2, cy: bbox.y + bbox.height / 2 };
+    }
+  } catch { /* */ }
+  return null;
+}
+
+// Mapeo rápido español → inglés para buscar IDs en el SVG
+function mapearNombreAIngles(nombre: string): string {
+  const mapa: Record<string, string> = {
+    "Sol": "Sun", "Luna": "Moon", "Mercurio": "Mercury", "Venus": "Venus",
+    "Marte": "Mars", "Júpiter": "Jupiter", "Saturno": "Saturn",
+    "Urano": "Uranus", "Neptuno": "Neptune", "Plutón": "Pluto",
+    "Nodo Norte": "NNode", "Nodo Sur": "SNode", "Quirón": "Chiron",
+  };
+  return mapa[nombre] ?? nombre;
 }

@@ -1757,3 +1757,196 @@ Sin tests nuevos ni modificados. `eslint` pasó sobre `page.tsx`, `distribucion-
 2. Al hacer clic en `Pulso dominante`, `Elementos`, `Modalidades` o en una píldora puntual como `Fuego` o `Cardinal`, el panel derecho cambia de contexto.
 3. El rail ahora explica primero qué es esa capa astrológica y luego cómo se expresa específicamente en la carta del usuario según cantidad de planetas, peso relativo y focos activadores.
 4. El cambio de contenido del rail se acompaña con una transición suave de salida y entrada para que la lectura se sienta menos brusca y más consistente con el patrón premium de ASTRA.
+
+---
+
+## Sesion: Rediseño premium de Perfil y preparación del plan Max
+**Fecha:** 2026-04-01 ~04:42 (ARG)
+
+### Que se hizo
+Se rediseñó la pantalla `Perfil` con el lenguaje premium ciruela de ASTRA, reduciendo ruido visual y dejando sólo la información básica y útil para el usuario. Además se preparó el sistema de planes para convivir con `Free`, `Premium` y `Max`, sin definir todavía el acceso comercial de `Max`.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/perfil/page.tsx` | Reemplaza el layout utilitario por una composición premium limpia con hero breve, resumen de cuenta, datos base, accesos, Oráculo Telegram y bloque de privacidad |
+| `frontend/src/app/(app)/suscripcion/page.tsx` | Agrega visualización de tres planes (`Free`, `Premium`, `Max`), adapta copies a plan pago genérico y deja `Max` como opción visible en estado próximo |
+| `frontend/src/componentes/layouts/navbar.tsx` | Ajusta la lectura visual del plan del usuario para usar `Free / Premium / Max` y trata `Max` como plan pago |
+| `frontend/src/componentes/ui/bloqueo-premium.tsx` | Cambia el gating para considerar `Premium` y `Max` como planes pagos y actualiza el copy del bloqueo |
+| `frontend/src/lib/utilidades/planes.ts` | Centraliza helpers de frontend para etiquetas, frases y detección de planes pagos |
+| `frontend/src/tests/paginas/perfil.test.tsx` | Actualiza mocks y asserts a la nueva experiencia de Perfil |
+| `frontend/src/tests/paginas/suscripcion.test.tsx` | Ajusta pruebas a la presencia de `Free`, `Premium` y `Max` |
+| `backend/app/utilidades/planes.py` | Incorpora helpers comunes para jerarquía de planes y detección de planes pagos |
+| `backend/app/dependencias_suscripcion.py` | Reemplaza la verificación rígida por una comparación por nivel de plan |
+| `backend/app/configuracion_features.py` | Hace que los features pagos también queden habilitados para `Max` |
+| `backend/app/rutas/v1/chat.py` | Considera `Max` como plan pago para el acceso al chat/oráculo web |
+| `backend/app/rutas/v1/suscripcion.py` | Generaliza respuestas y validaciones para planes pagos, sin asumir sólo `Premium` |
+| `backend/app/servicios/bot_telegram.py` | Habilita el Oráculo Telegram para `Premium` y `Max` |
+
+### Tests
+Se modificaron 2 suites frontend y se validó el flujo de planes también en backend. Pasaron `17/17` tests de `vitest` (`perfil` y `suscripción`) y `56/56` tests de `pytest` (`chat` y `suscripción`). `eslint` pasó sobre los archivos tocados del frontend.
+
+### Como funciona
+1. La pantalla `Perfil` ahora arranca con un hero corto que muestra sólo identidad de cuenta, plan activo y estado general, sin títulos redundantes ni bloques administrativos repetidos.
+2. Los datos de nacimiento quedaron como bloque principal y editable, porque son la base de todas las cartas; el resto de la pantalla funciona como soporte de acceso y seguridad.
+3. La sección de suscripción ya expone tres niveles visibles (`Free`, `Premium` y `Max`), pero `Max` se muestra como próximo para no inventar todavía su modalidad de compra.
+4. Todo el sistema de gating dejó de depender de la comparación estricta con `premium`, por lo que cuando `Max` se active formalmente va a heredar el acceso pago sin tener que rehacer la lógica central.
+
+---
+
+## Sesion: Confirmación tipada en Perfil y refinamiento premium de Suscripción
+**Fecha:** 2026-04-01 ~05:05 (ARG)
+
+### Que se hizo
+Se achicó y limpió el hero de `Perfil`, se eliminó copy redundante y se agregó una confirmación tipada antes de guardar cambios de nacimiento. Además, la sección de `Suscripción` y `Facturación` se rediseñó con el mismo lenguaje glass ciruela para que ya no conviva con un layout genérico anterior.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/perfil/page.tsx` | Reduce la escala del título principal, elimina textos de relleno y agrega un modal premium de confirmación que exige escribir `editar` antes de persistir cambios |
+| `frontend/src/app/(app)/suscripcion/page.tsx` | Rehace hero, resumen, cards de planes, estado de suscripción y lista de facturación bajo superficies ciruela integradas |
+| `frontend/src/tests/paginas/perfil.test.tsx` | Ajusta el flujo de guardado al nuevo modal de confirmación y agrega cobertura para el diálogo |
+| `frontend/src/tests/paginas/suscripcion.test.tsx` | Actualiza asserts al nuevo layout premium, donde algunos textos se repiten entre hero y paneles |
+
+### Tests
+`eslint` pasó sobre `perfil/page.tsx`, `suscripcion/page.tsx`, `perfil.test.tsx` y `suscripcion.test.tsx`. `vitest` pasó `18/18` en las suites de perfil y suscripción.
+
+### Como funciona
+1. En `Perfil`, el usuario ya no guarda cambios de nacimiento de forma directa: primero ve un modal glass ciruela que explica el impacto de la edición y debe escribir `editar` para confirmar.
+2. El hero de `Perfil` queda más seco y útil: nombre, email, plan y estados, sin párrafos que repitan lo evidente.
+3. `Suscripción` ahora arranca con un hero premium de cuenta y facturación, muestra las capas `Free`, `Premium` y `Max` con cards consistentes y deja el estado actual en un panel separado y claro.
+4. `Facturación` deja la tabla administrativa y pasa a una lista premium más legible, con monto, estado, método y acceso directo al PDF cuando corresponde.
+
+---
+
+## Sesion: Diseño Humano alineado al patrón premium de Carta Astral
+**Fecha:** 2026-04-01 ~05:09 (ARG)
+
+### Que se hizo
+Se refactorizó la pantalla de `Diseño Humano` para que adopte la misma lógica visual y estructural de `Carta Astral`: hero más compacto, rail contextual fijo en desktop, bottom sheet en mobile y `Body Graph` relegado a un modal de consulta bajo demanda.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/diseno-humano/page.tsx` | Reestructura toda la página al patrón de `Carta Astral`, elimina el protagonismo del `Body Graph`, mueve el gráfico a un modal, compacta el hero y oscurece las superficies al lenguaje `ui-ciruela` |
+| `frontend/src/componentes/diseno-humano/panel-contextual.tsx` | Reescribe el panel contextual HD para que renderice contenido dentro del `RailLateral`, agrega helpers de metadata/clave y unifica la materialidad oscura del panel |
+| `frontend/src/componentes/layouts/layout-app.tsx` | Extiende el layout con rail separado para la ruta `/diseno-humano`, de modo que el contenido y el panel tengan scroll independiente |
+| `frontend/src/tests/paginas/diseno-humano.test.tsx` | Ajusta la suite al nuevo hero y cubre la apertura del `Body Graph` en modal desde el CTA dedicado |
+
+### Tests
+`eslint` pasó sobre `diseno-humano/page.tsx`, `componentes/diseno-humano/panel-contextual.tsx`, `componentes/layouts/layout-app.tsx` y `tests/paginas/diseno-humano.test.tsx`. `vitest` pasó `4/4` en `diseno-humano.test.tsx`.
+
+### Como funciona
+1. En desktop, `Diseño Humano` ahora comparte el mismo patrón de layout que `Carta Astral`: columna principal con scroll propio y rail contextual fijo a la derecha.
+2. El hero deja de usar el `Body Graph` como protagonista; ahora presenta la lectura, deja chips de entrada para `Tipo`, `Autoridad`, `Perfil` y `Definición`, y ofrece `Ver Body Graph` como CTA de consulta.
+3. El `Body Graph` ya no domina el lienzo principal: se abre desde un modal oscuro y premium, como artefacto visual secundario.
+4. Centros, canales, activaciones y cruz de encarnación siguen siendo clickeables, pero la explicación larga y personalizada vive en el panel derecho, no dentro de las cards del contenido.
+
+---
+
+## Sesion: Limpieza del estado actual en Suscripción
+**Fecha:** 2026-04-01 ~05:28 (ARG)
+
+### Que se hizo
+Se eliminó la tarjeta redundante de “Estado actual” en `Suscripción`, se renombró el panel del hero a “Mi suscripción” y se adelantó la acción de cancelación para que aparezca antes del bloque de facturación.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/suscripcion/page.tsx` | Quita el panel duplicado de estado, relabela el resumen del hero como `Mi suscripción`, reubica la cancelación antes de facturación y limpia una variable sin uso |
+| `frontend/src/tests/paginas/suscripcion.test.tsx` | Ajusta la expectativa del hero al nuevo rotulado `Mi suscripción` |
+
+### Tests
+`eslint` pasó sobre `suscripcion/page.tsx` y `suscripcion.test.tsx`. `vitest` pasó `5/5` en `suscripcion.test.tsx`.
+
+### Como funciona
+1. El hero de `Suscripción` sigue mostrando el estado clave de la cuenta, pero el panel lateral deja de llamarse `Resumen` y pasa a reflejar mejor el contenido con `Mi suscripción`.
+2. La página ya no repite el mismo estado en una tarjeta adicional, por lo que el flujo queda más limpio y directo.
+3. Si el usuario tiene un plan pago, la gestión de cancelación aparece antes del historial de facturas; primero decide sobre su plan y después revisa cobros y comprobantes.
+
+---
+
+## Sesion: Corrección del badge de hoy en la semana del dashboard
+**Fecha:** 2026-04-01 ~07:31 (ARG)
+
+### Que se hizo
+Se corrigió el recorte visual de la tarjeta marcada como `Hoy` dentro del carrusel semanal del dashboard. El ajuste agrega respiración vertical al contenedor scrolleable para que el badge no choque contra el recorte implícito del `overflow-x-auto`.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/semana-v2.tsx` | Agrega padding superior y lateral al carrusel semanal y al esqueleto de carga para que el badge `Hoy` no se vea cortado |
+
+### Tests
+`eslint` pasó sobre `semana-v2.tsx`. La suite `dashboard.test.tsx` sigue fallando por asserts viejos de textos previos a la UI actual (`Clima Cósmico`, `Momentos del Día`, etc.), sin relación con este ajuste puntual.
+
+### Como funciona
+1. El carrusel semanal conserva el badge flotante `Hoy`, pero ahora tiene espacio interno suficiente para renderizarlo completo.
+2. El estado de carga usa el mismo padding, evitando saltos de altura entre esqueleto y contenido real.
+
+---
+
+## Sesion: Auto-scroll semanal orientado a días futuros
+**Fecha:** 2026-04-01 ~07:34 (ARG)
+
+### Que se hizo
+Se agregó auto-scroll al carrusel de la semana en el dashboard para que, desde miércoles en adelante, abra desplazado hacia la derecha y priorice la visualización de los días venideros.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/semana-v2.tsx` | Agrega un `ref` al carrusel y una lógica de `requestAnimationFrame` que lo posiciona al final cuando el día actual no es lunes ni martes |
+| `frontend/src/tests/componentes/semana-v2.test.tsx` | Nueva cobertura para verificar que el carrusel abre a la derecha en miércoles y se mantiene al inicio en lunes |
+
+### Tests
+`eslint` pasó sobre `semana-v2.tsx` y `semana-v2.test.tsx`. `vitest` pasó `2/2` en `semana-v2.test.tsx`.
+
+### Como funciona
+1. Si el usuario entra al dashboard en lunes o martes, el carrusel semanal permanece al inicio.
+2. Si entra cualquier otro día, el carrusel se desplaza automáticamente hacia la derecha para mostrar mejor el tramo final de la semana y los próximos días.
+3. Cuando se cambia a “siguiente semana”, el carrusel vuelve a abrir desde el inicio, porque toda esa vista ya es futura por definición.
+
+---
+
+## Sesion: Menú premium de podcasts en el header
+**Fecha:** 2026-04-01 ~07:56 (ARG)
+
+### Que se hizo
+Se reemplazó el CTA rápido `Escuchar día` del header por un botón premium con menú contextual para `día`, `semana` y `mes`. Además, cuando cualquier podcast está en generación, el botón ahora muestra una animación mágica localizada en el navbar para hacer visible el proceso sin sacar al usuario de la pantalla actual.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/layouts/navbar.tsx` | Convierte el CTA del header en un disparador de menú contextual, agrega acciones por tipo de podcast, reproduce si el episodio está listo, genera si falta y refleja el estado de preparación en tiempo real |
+| `frontend/src/app/globals.css` | Agrega keyframes y estilos para el aura, órbita y destello del nuevo botón mágico de podcasts en el header |
+| `frontend/src/tests/componentes/navbar.test.tsx` | Nueva cobertura para validar apertura del menú con `día / semana / mes` y el estado ocupado del botón cuando hay audio en generación |
+
+### Tests
+`eslint` pasó sobre `navbar.tsx` y `navbar.test.tsx`. `vitest` pasó `2/2` en `navbar.test.tsx`.
+
+### Como funciona
+1. El botón del header deja de ejecutar una sola acción y pasa a abrir un menú contextual con tres opciones: `Día de hoy`, `Tu semana cósmica` y `Tu mes cósmico`.
+2. Si el episodio elegido ya existe, el menú lo reproduce o lo continúa; si todavía no existe, lo genera desde ahí mismo.
+3. Si algún podcast está en `generando_guion` o `generando_audio`, el botón del navbar entra en estado mágico: glow ciruela, órbita suave y destello activo, además del texto `Preparando audio`.
+4. Si el usuario no tiene un plan pago y toca una opción aún no disponible, el flujo lo deriva a `Suscripción` en vez de disparar una generación que no podría completar.
+
+---
+
+## Sesion: Compactación del menú de podcasts del header
+**Fecha:** 2026-04-01 ~08:24 (ARG)
+
+### Que se hizo
+Se redujo la densidad visual del menú contextual de podcasts en el header: se eliminó el bloque explicativo superior, se quitaron las descripciones redundantes de cada capa y el trigger dejó de mostrar el texto `Escuchar` para pasar a una versión más compacta basada en icono.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/layouts/navbar.tsx` | Hace el menú más angosto y compacto, elimina la cabecera explicativa, quita descripciones de `día / semana / mes`, reduce los items y reemplaza la acción textual `Escuchar` por controles iconográficos |
+
+### Tests
+`eslint` pasó sobre `navbar.tsx` y `navbar.test.tsx`. `vitest` pasó `2/2` en `navbar.test.tsx`.
+
+### Como funciona
+1. El disparador de podcasts del header mantiene el menú contextual, pero visualmente ya no depende de una etiqueta textual grande; queda resuelto con icono y caret.
+2. El menú ya no muestra párrafos explicativos ni subtítulos por capa, solo el nombre de cada podcast y su estado útil.
+3. Las acciones listas para reproducir quedan representadas con ícono play, haciendo la interacción más directa y menos cargada.

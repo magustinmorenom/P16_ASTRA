@@ -40,13 +40,20 @@ class EsquemaLogout(BaseModel):
 
 
 class EsquemaSolicitarReset(BaseModel):
-    """Datos para solicitar reset de contraseña."""
+    """Datos para solicitar reset de contraseña (envía OTP por email)."""
 
     email: EmailStr
 
 
+class EsquemaVerificarOTP(BaseModel):
+    """Datos para verificar código OTP."""
+
+    email: EmailStr
+    codigo: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+
+
 class EsquemaConfirmarReset(BaseModel):
-    """Datos para confirmar reset de contraseña."""
+    """Datos para confirmar reset de contraseña con OTP verificado."""
 
     token: str
     contrasena_nueva: str = Field(min_length=8, max_length=128)

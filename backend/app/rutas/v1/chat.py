@@ -21,6 +21,7 @@ from app.principal import _obtener_db_placeholder, _obtener_redis_placeholder
 from app.registro import logger
 from app.servicios.servicio_oraculo import ServicioOraculo
 from app.servicios.servicio_transitos import ServicioTransitos
+from app.utilidades.planes import es_plan_pago
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
@@ -46,7 +47,7 @@ class RespuestaMensajeChat(RespuestaBase):
 # ── Helpers ───────────────────────────────────────────────────
 
 async def _es_premium(db: AsyncSession, usuario_id: uuid.UUID) -> bool:
-    """Verifica si el usuario tiene plan premium activo."""
+    """Verifica si el usuario tiene un plan pago activo."""
     repo_sus = RepositorioSuscripcion(db)
     suscripcion = await repo_sus.obtener_activa(usuario_id)
     if not suscripcion:
@@ -54,7 +55,7 @@ async def _es_premium(db: AsyncSession, usuario_id: uuid.UUID) -> bool:
 
     repo_plan = RepositorioPlan(db)
     plan = await repo_plan.obtener_por_id(suscripcion.plan_id)
-    return plan is not None and plan.slug == "premium"
+    return plan is not None and es_plan_pago(plan.slug)
 
 
 async def _verificar_limite(

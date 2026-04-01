@@ -6,7 +6,6 @@ import {
   ETIQUETA_CARTA,
   SUPERFICIE_OSCURA_CARTA,
 } from "@/componentes/carta-natal/estilos";
-import { generarEsencia } from "@/lib/utilidades/interpretaciones-natal";
 import type { CartaNatal } from "@/lib/tipos";
 
 interface HeroCartaProps {
@@ -17,10 +16,6 @@ interface HeroCartaProps {
 export function HeroCarta({ datos, onAbrirRueda }: HeroCartaProps) {
   const sol = datos.planetas.find((planeta) => planeta.nombre === "Sol");
   const luna = datos.planetas.find((planeta) => planeta.nombre === "Luna");
-  const esencia =
-    sol && luna
-      ? generarEsencia(sol.signo, luna.signo, datos.ascendente.signo)
-      : null;
 
   const resumen = [
     { etiqueta: "Sol", valor: sol?.signo ?? "—" },
@@ -50,15 +45,6 @@ export function HeroCarta({ datos, onAbrirRueda }: HeroCartaProps) {
                   <h1 className="text-[24px] font-semibold tracking-[-0.04em] text-white sm:text-[28px]">
                     Carta Astral
                   </h1>
-                  <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-white/46 sm:text-[12px]">
-                    {datos.nombre} · {datos.fecha_nacimiento} · {datos.ciudad}, {datos.pais}
-                  </p>
-
-                  {esencia ? (
-                    <p className="mt-3 max-w-3xl text-[14px] leading-6 text-white/74">
-                      {esencia}.
-                    </p>
-                  ) : null}
                 </div>
               </div>
             </div>
@@ -66,9 +52,9 @@ export function HeroCarta({ datos, onAbrirRueda }: HeroCartaProps) {
             <button
               type="button"
               onClick={onAbrirRueda}
-              className="inline-flex items-center gap-2 self-start rounded-full border border-white/10 bg-white/[0.08] px-4 py-2 text-sm font-medium text-white/82 transition-colors hover:bg-white/[0.14]"
+              className="inline-flex items-center gap-2 self-start rounded-full border border-[#B388FF]/30 bg-gradient-to-r from-[#7C4DFF]/20 to-[#B388FF]/14 px-4 py-2 text-sm font-medium text-[#D9C2FF] transition-all hover:border-[#B388FF]/50 hover:from-[#7C4DFF]/30 hover:to-[#B388FF]/22 hover:text-white hover:shadow-[0_4px_20px_rgba(124,77,255,0.25)]"
             >
-              <Icono nombre="ojo" tamaño={16} />
+              <Icono nombre="planeta" tamaño={18} peso="fill" />
               Ver rueda natal
             </button>
           </div>

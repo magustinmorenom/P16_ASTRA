@@ -7,6 +7,7 @@ export {
   usarCambiarContrasena,
   usarGoogleAuthUrl,
   usarSolicitarReset,
+  usarVerificarOTP,
   usarConfirmarReset,
   usarEliminarCuenta,
 } from "./usar-auth";

@@ -5,6 +5,7 @@ import { type ReactNode } from "react";
 import { Icono } from "@/componentes/ui/icono";
 import { Boton } from "@/componentes/ui/boton";
 import { useStoreAuth } from "@/lib/stores/store-auth";
+import { esPlanPago } from "@/lib/utilidades/planes";
 
 interface BloqueoPremiumProps {
   children: ReactNode;
@@ -12,17 +13,17 @@ interface BloqueoPremiumProps {
 }
 
 /**
- * Wrapper que bloquea el contenido si el usuario no es Premium.
+ * Wrapper que bloquea el contenido si el usuario no tiene un plan pago.
  * Muestra un overlay con blur + CTA a /suscripcion.
  */
 export function BloqueoPremium({
   children,
-  mensaje = "Esta función es exclusiva del plan Premium",
+  mensaje = "Esta función es exclusiva de los planes Premium y Max",
 }: BloqueoPremiumProps) {
   const usuario = useStoreAuth((s) => s.usuario);
-  const esPremium = usuario?.plan_slug === "premium";
+  const tienePlanPago = esPlanPago(usuario?.plan_slug);
 
-  if (esPremium) {
+  if (tienePlanPago) {
     return <>{children}</>;
   }
 
@@ -41,7 +42,7 @@ export function BloqueoPremium({
         <Link href="/suscripcion">
           <Boton variante="primario" tamaño="sm">
             <Icono nombre="corona" tamaño={14} />
-            Actualizar a Premium
+            Ver planes
           </Boton>
         </Link>
       </div>

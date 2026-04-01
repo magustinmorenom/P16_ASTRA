@@ -39,6 +39,12 @@ const enlacesNavegacion: EnlaceNav[] = [
     icono: "retornoSolar",
     proximamente: true,
   },
+  {
+    etiqueta: "Match de Pareja",
+    ruta: "/match-pareja",
+    icono: "corazon",
+    proximamente: true,
+  },
 ];
 
 // ---------------------------------------------------------------------------

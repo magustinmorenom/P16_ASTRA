@@ -90,17 +90,14 @@ function ModalRuedaAstral({
         className="relative z-10 w-full max-w-[980px] overflow-hidden rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.16),transparent_28%),linear-gradient(135deg,#170d2c_0%,#241148_54%,#34205f_100%)] shadow-[0_30px_100px_rgba(10,4,25,0.48)]"
         onClick={(evento) => evento.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4 lg:px-6">
+        <div className="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-3 lg:px-6">
           <div>
             <p className={`${ETIQUETA_CARTA} text-violet-200/70`}>
               Rueda natal
             </p>
-            <h2 className="mt-2 text-[22px] font-semibold tracking-tight text-white">
+            <h2 className="mt-1 text-[20px] font-semibold tracking-tight text-white">
               Mapa completo de la carta
             </h2>
-            <p className="mt-1 text-[13px] text-violet-100/66">
-              Vista de consulta del gráfico astral. Sin interacción directa.
-            </p>
           </div>
 
           <button
@@ -112,16 +109,13 @@ function ModalRuedaAstral({
           </button>
         </div>
 
-        <div className="max-h-[82vh] overflow-y-auto p-4 lg:p-6">
-          <div className="rounded-[28px] border border-white/60 bg-white/90 p-4 shadow-[0_22px_60px_rgba(22,6,39,0.18)]">
-            <RuedaZodiacal
-              planetas={datos.planetas}
-              casas={datos.casas}
-              aspectos={datos.aspectos}
-              claro
-              className="mx-auto"
-            />
-          </div>
+        <div className="flex items-center justify-center p-3 lg:p-4" style={{ height: "80vh" }}>
+          <RuedaZodiacal
+            planetas={datos.planetas}
+            casas={datos.casas}
+            aspectos={datos.aspectos}
+            className="mx-auto h-full w-auto max-w-full aspect-square"
+          />
         </div>
       </div>
     </div>

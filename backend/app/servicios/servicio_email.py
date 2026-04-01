@@ -104,13 +104,22 @@ class ServicioEmail:
 
     @staticmethod
     async def enviar_reset_password(email: str, nombre: str, token: str) -> Optional[str]:
-        """Email para restablecer contraseña."""
+        """Email para restablecer contraseña (legacy con enlace)."""
         enlace = f"{ServicioEmail._url_app()}/reset-password?token={token}"
         html = _cargar_template("reset_password", {
             "nombre": nombre,
             "enlace_reset": enlace,
         })
         return await ServicioEmail.enviar(email, "Restablecer contraseña — ASTRA", html)
+
+    @staticmethod
+    async def enviar_codigo_otp(email: str, nombre: str, codigo: str) -> Optional[str]:
+        """Email con código OTP para restablecer contraseña."""
+        html = _cargar_template("codigo_otp", {
+            "nombre": nombre,
+            "codigo": codigo,
+        })
+        return await ServicioEmail.enviar(email, "Tu código de verificación — ASTRA", html)
 
     @staticmethod
     async def enviar_suscripcion_activa(email: str, nombre: str, plan: str) -> Optional[str]:

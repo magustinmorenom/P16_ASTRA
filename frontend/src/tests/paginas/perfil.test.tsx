@@ -42,10 +42,14 @@ const mockDisenoHumanoMutateAsync = vi.fn();
 const mockNumerologiaMutateAsync = vi.fn();
 const mockRetornoSolarMutateAsync = vi.fn();
 const mockCancelarMutate = vi.fn();
+const mockEliminarCuentaMutate = vi.fn();
+const mockDesvincularMutate = vi.fn();
+const mockGenerarCodigoMutate = vi.fn();
 
 let mockPerfilData: typeof PERFIL_MOCK | null = PERFIL_MOCK;
 let mockPerfilLoading = false;
 let mockSuscripcionData: { estado: string; plan_slug: string } | null = null;
+let mockVinculacionData: { vinculado: boolean; telegram_username?: string | null } | null = null;
 
 vi.mock("@/lib/hooks", () => ({
   usarCambiarContrasena: () => ({
@@ -79,6 +83,23 @@ vi.mock("@/lib/hooks", () => ({
   }),
   usarMiSuscripcion: () => ({
     data: mockSuscripcionData,
+  }),
+  usarEliminarCuenta: () => ({
+    mutate: mockEliminarCuentaMutate,
+    isPending: false,
+    error: null,
+  }),
+  usarGenerarCodigo: () => ({
+    mutate: mockGenerarCodigoMutate,
+    isPending: false,
+  }),
+  usarEstadoVinculacion: () => ({
+    data: mockVinculacionData,
+    isLoading: false,
+  }),
+  usarDesvincular: () => ({
+    mutate: mockDesvincularMutate,
+    isPending: false,
   }),
 }));
 
@@ -118,6 +139,7 @@ describe("PaginaPerfil — Datos de Nacimiento", () => {
     mockPerfilLoading = false;
     mockActualizarPending = false;
     mockSuscripcionData = null;
+    mockVinculacionData = null;
     mockActualizarMutateAsync.mockResolvedValue({
       ...PERFIL_MOCK,
       datos_nacimiento_cambiaron: false,
@@ -142,7 +164,7 @@ describe("PaginaPerfil — Datos de Nacimiento", () => {
   it("muestra boton Editar cuando hay perfil", () => {
     renderConProveedores(<PaginaPerfil />);
 
-    expect(screen.getByRole("button", { name: /editar/i })).toBeInTheDocument();
+    expect(screen.getByText("Editar")).toBeInTheDocument();
   });
 
   it("muestra mensaje cuando no hay perfil", () => {
@@ -202,6 +224,8 @@ describe("PaginaPerfil — Datos de Nacimiento", () => {
     await user.type(inputNombre, "Nombre Editado");
 
     await user.click(screen.getByRole("button", { name: /guardar/i }));
+    await user.type(screen.getByLabelText(/escribí editar para continuar/i), "editar");
+    await user.click(screen.getByRole("button", { name: /confirmar cambios/i }));
 
     await waitFor(() => {
       expect(mockActualizarMutateAsync).toHaveBeenCalledWith({
@@ -236,6 +260,8 @@ describe("PaginaPerfil — Datos de Nacimiento", () => {
     await user.type(inputCiudad, "Córdoba");
 
     await user.click(screen.getByRole("button", { name: /guardar/i }));
+    await user.type(screen.getByLabelText(/escribí editar para continuar/i), "editar");
+    await user.click(screen.getByRole("button", { name: /confirmar cambios/i }));
 
     await waitFor(() => {
       expect(mockCartaNatalMutateAsync).toHaveBeenCalled();
@@ -266,6 +292,8 @@ describe("PaginaPerfil — Datos de Nacimiento", () => {
 
     await user.click(screen.getByRole("button", { name: /editar/i }));
     await user.click(screen.getByRole("button", { name: /guardar/i }));
+    await user.type(screen.getByLabelText(/escribí editar para continuar/i), "editar");
+    await user.click(screen.getByRole("button", { name: /confirmar cambios/i }));
 
     await waitFor(() => {
       expect(
@@ -274,10 +302,21 @@ describe("PaginaPerfil — Datos de Nacimiento", () => {
     });
   });
 
-  it("muestra seccion Configuracion con acordeon de contrasena", () => {
+  it("abre un modal de confirmacion antes de guardar", async () => {
     renderConProveedores(<PaginaPerfil />);
 
-    expect(screen.getByText("Configuracion")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /editar/i }));
+    await user.click(screen.getByRole("button", { name: /guardar/i }));
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText(/confirmá la edición/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /confirmar cambios/i })).toBeDisabled();
+  });
+
+  it("muestra secciones de seguridad y cuenta", () => {
+    renderConProveedores(<PaginaPerfil />);
+
+    expect(screen.getByText("Accesos y seguridad")).toBeInTheDocument();
     expect(screen.getByText("Cambiar contrasena")).toBeInTheDocument();
     expect(screen.getByText("Cerrar sesion")).toBeInTheDocument();
   });

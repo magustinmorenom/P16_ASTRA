@@ -1,9 +1,14 @@
 "use client";
 
-import { useState, type ComponentProps } from "react";
+import { useCallback, useState, type ComponentProps } from "react";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
 import { FormularioNacimiento } from "@/componentes/compuestos/formulario-nacimiento";
-import { PanelContextualHD } from "@/componentes/diseno-humano/panel-contextual";
+import {
+  PanelContextualHD,
+  obtenerClavePanelContextualHD,
+  obtenerMetaPanelContextualHD,
+} from "@/componentes/diseno-humano/panel-contextual";
+import { RailLateral } from "@/componentes/layouts/rail-lateral";
 import { Icono } from "@/componentes/ui/icono";
 import { IconoAstral } from "@/componentes/ui/icono-astral";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
@@ -29,6 +34,12 @@ const PANEL_OSCURO =
 const TARJETA_TECNICA =
   "rounded-[24px] border border-white/[0.08] bg-white/[0.05] shadow-[0_18px_45px_rgba(8,3,20,0.2)] backdrop-blur-xl transition-all duration-200";
 
+const FONDO_PAGINA_HD =
+  "relative min-h-full bg-[#16011B] lg:h-full lg:min-h-0 lg:overflow-hidden";
+
+const PANEL_SECUNDARIO =
+  "rounded-[28px] border border-white/[0.08] bg-white/[0.05] shadow-[0_18px_50px_rgba(8,3,20,0.2)] backdrop-blur-xl";
+
 type ModoExploracion = "centros" | "canales" | "activaciones";
 
 function obtenerEstadoCentro(estado: string) {
@@ -43,29 +54,13 @@ function obtenerEstadoCentro(estado: string) {
   };
 }
 
-function irACapitulo(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function BotonCapitulo({
-  titulo,
-  descripcion,
-  onClick,
-}: {
-  titulo: string;
-  descripcion: string;
-  onClick: () => void;
-}) {
+function CapasFondoHD() {
   return (
-    <button
-      onClick={onClick}
-      className="rounded-full border border-white/12 bg-white/[0.08] px-4 py-2 text-left backdrop-blur-md transition-colors hover:bg-white/[0.14]"
-    >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-100/88">
-        {titulo}
-      </p>
-      <p className="mt-1 text-[12px] text-violet-100/60">{descripcion}</p>
-    </button>
+    <>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,77,255,0.24),transparent_26%),radial-gradient(circle_at_top_right,rgba(179,136,255,0.16),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(76,35,140,0.16),transparent_30%)]" />
+      <div className="absolute right-[-80px] top-0 h-72 w-72 rounded-full bg-[#B388FF]/14 blur-3xl" />
+      <div className="absolute left-[-40px] top-1/3 h-64 w-64 rounded-full bg-[#7C4DFF]/12 blur-3xl" />
+    </>
   );
 }
 
@@ -88,14 +83,14 @@ function TarjetaAtributo({
     <button
       onClick={onClick}
       className={cn(
-        "group rounded-[26px] border p-5 text-left transition-all duration-200",
+        "group rounded-[24px] border p-4 text-left transition-all duration-200",
         activa
-          ? "border-[#B388FF]/40 bg-[linear-gradient(135deg,rgba(124,77,255,0.16),rgba(179,136,255,0.08))] shadow-[0_16px_36px_rgba(60,24,118,0.18)]"
-          : "border-[#ECE2FF] bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(248,242,255,0.82))] hover:border-[#B388FF]/30 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(244,236,255,0.9))]",
+          ? "border-[#B388FF]/40 bg-[linear-gradient(135deg,rgba(124,77,255,0.22),rgba(179,136,255,0.1))] shadow-[0_16px_36px_rgba(60,24,118,0.2)]"
+          : "border-white/10 bg-white/[0.04] hover:border-[#B388FF]/28 hover:bg-white/[0.08]",
       )}
     >
       <div className="flex items-start justify-between gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(124,77,255,0.22),rgba(179,136,255,0.14))] text-[#6B3ED8]">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(124,77,255,0.3),rgba(179,136,255,0.14))] text-white">
           <Icono nombre={icono} tamaño={22} />
         </div>
         <Icono
@@ -108,13 +103,13 @@ function TarjetaAtributo({
         />
       </div>
 
-      <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7C4DFF]">
+      <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/74">
         {etiqueta}
       </p>
-      <p className="mt-2 text-[22px] font-semibold leading-tight text-[#21192F]">
+      <p className="mt-2 text-[20px] font-semibold leading-tight text-white">
         {valor}
       </p>
-      <p className="mt-3 text-[14px] leading-relaxed text-[#5D546B]">
+      <p className="mt-2 text-[13px] leading-relaxed text-violet-100/62">
         {descripcion}
       </p>
     </button>
@@ -286,14 +281,14 @@ function TarjetaCruz({
       className={cn(
         "rounded-[24px] border p-4 text-left transition-all",
         activo
-          ? "border-[#B388FF]/35 bg-[linear-gradient(135deg,rgba(124,77,255,0.16),rgba(179,136,255,0.08))]"
-          : "border-[#E8DDFC] bg-white/72 hover:border-[#B388FF]/28",
+          ? "border-[#B388FF]/35 bg-[linear-gradient(135deg,rgba(124,77,255,0.2),rgba(179,136,255,0.08))]"
+          : "border-white/10 bg-white/[0.04] hover:border-[#B388FF]/28 hover:bg-white/[0.08]",
       )}
     >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7C4DFF]">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/74">
         {etiqueta}
       </p>
-      <p className="mt-3 text-[26px] font-semibold text-[#21192F]">
+      <p className="mt-3 text-[24px] font-semibold text-white">
         {puerta ?? "—"}
       </p>
     </button>
@@ -308,6 +303,170 @@ function ListaVacia({ texto }: { texto: string }) {
   );
 }
 
+function HeroDisenoHumano({
+  datos,
+  nombrePersona,
+  onAbrirBodyGraph,
+  onSeleccionar,
+}: {
+  datos: DisenoHumano;
+  nombrePersona: string;
+  onAbrirBodyGraph: () => void;
+  onSeleccionar: (seleccion: SeleccionContextualHD) => void;
+}) {
+  const titularEditorial = construirTitularEditorialHD(datos);
+  const bajadaEditorial = construirBajadaEditorialHD(datos);
+  const chips = [
+    { etiqueta: "Tipo", valor: datos.tipo, seleccion: { tipo: "tipo" } as const },
+    {
+      etiqueta: "Autoridad",
+      valor: datos.autoridad,
+      seleccion: { tipo: "autoridad" } as const,
+    },
+    { etiqueta: "Perfil", valor: datos.perfil, seleccion: { tipo: "perfil" } as const },
+    {
+      etiqueta: "Definición",
+      valor: datos.definicion,
+      seleccion: { tipo: "definicion" } as const,
+    },
+  ];
+  const centrosDefinidos = Object.values(datos.centros ?? {}).filter(
+    (valor) => normalizarClaveHD(valor) === "definido",
+  ).length;
+
+  return (
+    <section className={cn(PANEL_OSCURO, "p-6 lg:p-7")}>
+      <div className="absolute -right-16 top-8 h-44 w-44 rounded-full bg-[#B388FF]/16 blur-3xl" />
+      <div className="absolute left-12 top-14 h-24 w-24 rounded-full bg-[#D4A234]/10 blur-3xl" />
+
+      <div className="relative z-10">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-200/72">
+          Lectura HD
+        </p>
+
+        <div className="mt-4 flex items-start gap-4">
+          <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,rgba(124,77,255,0.48),rgba(179,136,255,0.22))] text-white shadow-[0_16px_40px_rgba(20,8,42,0.3)] sm:flex">
+            <IconoAstral nombre="personal" tamaño={30} className="text-white" />
+          </div>
+
+          <div className="min-w-0">
+            <h1 className="text-[28px] font-semibold tracking-tight text-white lg:text-[34px]">
+              Diseño Humano
+            </h1>
+            {nombrePersona ? (
+              <p className="mt-2 text-[12px] uppercase tracking-[0.14em] text-violet-100/48">
+                Perfil calculado para {nombrePersona}
+              </p>
+            ) : null}
+            <p className="mt-4 max-w-3xl text-[20px] font-semibold leading-tight text-white lg:text-[24px]">
+              {titularEditorial}
+            </p>
+            <p className="mt-3 max-w-3xl text-[14px] leading-relaxed text-violet-100/68">
+              {bajadaEditorial}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-wrap gap-2">
+          {chips.map((chip) => (
+            <button
+              key={chip.etiqueta}
+              type="button"
+              onClick={() => onSeleccionar(chip.seleccion)}
+              className="rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-2 text-left transition-colors hover:bg-white/[0.1]"
+            >
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-200/64">
+                {chip.etiqueta}
+              </span>
+              <span className="ml-2 text-[13px] font-medium text-white">
+                {chip.valor}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-5 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={onAbrirBodyGraph}
+            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.08] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-white/[0.14]"
+          >
+            <Icono nombre="ojo" tamaño={16} />
+            Ver Body Graph
+          </button>
+          <button
+            type="button"
+            onClick={() => onSeleccionar({ tipo: "default" })}
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-transparent px-4 py-2.5 text-[13px] font-medium text-violet-100/78 transition-colors hover:bg-white/[0.06] hover:text-white"
+          >
+            <Icono nombre="destello" tamaño={16} />
+            Abrir guía
+          </button>
+          <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-[12px] text-violet-100/64">
+            {centrosDefinidos} centros definidos · {(datos.canales ?? []).length} canales activos
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ModalBodyGraph({
+  abierta,
+  datos,
+  onCerrar,
+}: {
+  abierta: boolean;
+  datos: DisenoHumano | null;
+  onCerrar: () => void;
+}) {
+  if (!abierta || !datos) return null;
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#11091f]/72 px-4 backdrop-blur-md">
+      <button
+        type="button"
+        aria-label="Cerrar Body Graph"
+        onClick={onCerrar}
+        className="absolute inset-0"
+      />
+
+      <div
+        className="relative z-10 w-full max-w-[920px] overflow-hidden rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.16),transparent_28%),linear-gradient(135deg,#170d2c_0%,#241148_54%,#34205f_100%)] shadow-[0_30px_100px_rgba(10,4,25,0.48)]"
+        onClick={(evento) => evento.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4 lg:px-6">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-200/72">
+              Body Graph
+            </p>
+            <h2 className="mt-2 text-[22px] font-semibold tracking-tight text-white">
+              Mapa completo del diseño
+            </h2>
+            <p className="mt-1 text-[13px] text-violet-100/66">
+              Vista de consulta del gráfico. La interpretación vive en el panel contextual.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onCerrar}
+            className="rounded-full border border-white/10 bg-white/[0.08] p-2 text-violet-100/75 transition-colors hover:bg-white/[0.14] hover:text-white"
+          >
+            <Icono nombre="x" tamaño={18} />
+          </button>
+        </div>
+
+        <div className="max-h-[82vh] overflow-y-auto p-4 lg:p-6">
+          <div className="mx-auto flex max-w-[640px] items-center justify-center rounded-[28px] border border-white/10 bg-[#110A21]/70 p-5 lg:p-8">
+            <BodyGraph datos={datos} className="min-h-[520px]" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PaginaDisenoHumano() {
   const mutacion = usarDisenoHumano();
   const { data: calculos, isLoading: cargandoCalculos } = usarMisCalculos();
@@ -316,6 +475,7 @@ export default function PaginaDisenoHumano() {
   const [datosManual, setDatosManual] = useState<DisenoHumano | null>(null);
   const [modoManual, setModoManual] = useState(false);
   const [modoExploracion, setModoExploracion] = useState<ModoExploracion>("centros");
+  const [modalBodyGraphAbierto, setModalBodyGraphAbierto] = useState(false);
   const [seleccion, setSeleccion] = useState<SeleccionContextualHD>({ tipo: "default" });
 
   const datos =
@@ -335,28 +495,37 @@ export default function PaginaDisenoHumano() {
     );
   }
 
+  const abrirModalBodyGraph = useCallback(() => {
+    setModalBodyGraphAbierto(true);
+  }, []);
+
+  const cerrarModalBodyGraph = useCallback(() => {
+    setModalBodyGraphAbierto(false);
+  }, []);
+
+  const cerrarSeleccion = useCallback(() => {
+    setSeleccion({ tipo: "default" });
+  }, []);
+
   if (cargandoCalculos && !modoManual) {
     return (
       <>
         <HeaderMobile titulo="Diseño Humano" mostrarAtras />
-        <div className="relative min-h-full overflow-hidden bg-[#14081F]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(179,136,255,0.18),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(124,77,255,0.14),transparent_26%)]" />
-          <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-[#B388FF]/12 blur-3xl" />
-          <div className="absolute left-0 top-1/3 h-72 w-72 rounded-full bg-[#7C4DFF]/12 blur-3xl" />
+        <div className={FONDO_PAGINA_HD}>
+          <CapasFondoHD />
 
-          <section className="relative z-10 flex flex-col gap-6 p-5 lg:p-[28px_32px]">
+          <section className="relative z-10 flex h-full flex-col gap-6 overflow-y-auto scroll-sutil p-5 lg:p-[28px_32px]">
             <div className={cn(PANEL_OSCURO, "p-6 lg:p-8")}>
               <div className="absolute -right-14 top-10 h-36 w-36 rounded-full bg-[#B388FF]/18 blur-3xl" />
               <div className="relative z-10">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-200/75">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-200/72">
                   Diseño Humano
                 </p>
-                <h1 className="mt-3 flex items-center gap-3 text-[30px] font-semibold tracking-tight text-white lg:text-[38px]">
-                  <IconoAstral nombre="personal" tamaño={32} className="text-[#D4A234]" />
+                <h1 className="mt-3 text-[28px] font-semibold tracking-tight text-white lg:text-[34px]">
                   Diseño Humano
                 </h1>
-                <p className="mt-3 max-w-3xl text-[15px] leading-relaxed text-violet-100/72">
-                  Estamos preparando tu Body Graph, tus capas técnicas y el panel contextual para una lectura más clara.
+                <p className="mt-3 max-w-3xl text-[14px] leading-relaxed text-violet-100/68">
+                  Estamos preparando tu lectura HD para mostrarla con el mismo patrón premium, contextual y sobrio de la Carta Astral.
                 </p>
               </div>
             </div>
@@ -385,12 +554,10 @@ export default function PaginaDisenoHumano() {
     return (
       <>
         <HeaderMobile titulo="Diseño Humano" mostrarAtras />
-        <div className="relative min-h-full overflow-hidden bg-[#14081F]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(179,136,255,0.18),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(124,77,255,0.16),transparent_30%)]" />
-          <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-[#B388FF]/12 blur-3xl" />
-          <div className="absolute left-0 top-1/3 h-72 w-72 rounded-full bg-[#7C4DFF]/12 blur-3xl" />
+        <div className={FONDO_PAGINA_HD}>
+          <CapasFondoHD />
 
-          <section className="relative z-10 flex flex-col gap-6 p-5 lg:p-[28px_32px]">
+          <section className="relative z-10 flex h-full flex-col gap-6 overflow-y-auto scroll-sutil p-5 lg:p-[28px_32px]">
             <div className={cn(PANEL_OSCURO, "p-6 lg:p-8")}>
               <div className="absolute -right-16 top-0 h-44 w-44 rounded-full bg-[#B388FF]/18 blur-3xl" />
               <div className="absolute -left-10 bottom-0 h-36 w-36 rounded-full bg-[#7C4DFF]/16 blur-3xl" />
@@ -480,12 +647,8 @@ export default function PaginaDisenoHumano() {
   const activacionesConscientes = datos.activaciones_conscientes ?? [];
   const activacionesInconscientes = datos.activaciones_inconscientes ?? [];
   const activacionesTotal = activacionesConscientes.length + activacionesInconscientes.length;
-  const titularEditorial = construirTitularEditorialHD(datos);
-  const bajadaEditorial = construirBajadaEditorialHD(datos);
-  const canalSeleccionado =
-    seleccion.tipo === "canal" ? crearIdCanal(seleccion.canal) : null;
-  const centroSeleccionado =
-    seleccion.tipo === "centro" ? seleccion.clave : null;
+  const haySeleccionMobile = seleccion.tipo !== "default";
+  const metaPanel = obtenerMetaPanelContextualHD(seleccion, datos);
   const cruzItems = [
     {
       clave: "sol_consciente" as const,
@@ -514,28 +677,28 @@ export default function PaginaDisenoHumano() {
       tipo: "tipo" as const,
       etiqueta: "Tipo",
       valor: datos.tipo,
-      descripcion: "Tu mecánica base para entrar en relación con la vida.",
+      descripcion: "Tu forma base de moverte.",
       icono: "hexagono" as const,
     },
     {
       tipo: "autoridad" as const,
       etiqueta: "Autoridad",
       valor: datos.autoridad,
-      descripcion: "La señal interna que conviene escuchar para decidir bien.",
+      descripcion: "La señal que conviene seguir.",
       icono: "brujula" as const,
     },
     {
       tipo: "perfil" as const,
       etiqueta: "Perfil",
       valor: datos.perfil,
-      descripcion: "Cómo aprendés, vinculas y cómo te encuentra el entorno.",
+      descripcion: "Tu estilo de aprendizaje.",
       icono: "usuario" as const,
     },
     {
       tipo: "definicion" as const,
       etiqueta: "Definición",
       valor: datos.definicion,
-      descripcion: "Cómo se organiza la conexión interna entre tus áreas definidas.",
+      descripcion: "Cómo se enlaza tu energía.",
       icono: "grafico" as const,
     },
   ];
@@ -619,147 +782,29 @@ export default function PaginaDisenoHumano() {
   return (
     <>
       <HeaderMobile titulo="Diseño Humano" mostrarAtras />
-      <div className="relative min-h-full overflow-hidden bg-[#14081F]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(179,136,255,0.18),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(124,77,255,0.12),transparent_30%)]" />
-        <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-[#B388FF]/10 blur-3xl" />
-        <div className="absolute left-0 top-1/3 h-72 w-72 rounded-full bg-[#7C4DFF]/10 blur-3xl" />
+      <div className={FONDO_PAGINA_HD}>
+        <CapasFondoHD />
 
-        <section className="relative z-10 flex flex-col gap-6 p-5 lg:p-[28px_32px]">
-          <div className={cn(PANEL_OSCURO, "p-6 lg:p-8")}>
-            <div className="absolute -right-16 top-10 h-44 w-44 rounded-full bg-[#B388FF]/16 blur-3xl" />
-            <div className="absolute left-12 top-14 h-24 w-24 rounded-full bg-[#D4A234]/10 blur-3xl" />
+        <div className="relative z-10 flex min-h-full flex-col lg:h-full lg:min-h-0 lg:flex-row lg:overflow-hidden">
+          <div className="flex-1 overflow-y-auto scroll-sutil lg:hidden">
+            <div className="p-5 pb-24">
+              <HeroDisenoHumano
+                datos={datos}
+                nombrePersona={nombrePersona}
+                onAbrirBodyGraph={abrirModalBodyGraph}
+                onSeleccionar={setSeleccion}
+              />
 
-            <div className="relative z-10 grid gap-6 xl:grid-cols-[minmax(0,1.18fr)_340px]">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-200/75">
-                  {nombrePersona ? `Diseño Humano de ${nombrePersona}` : "Tu Diseño Humano"}
-                </p>
-                <div className="mt-3 flex items-start gap-4">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,rgba(124,77,255,0.48),rgba(179,136,255,0.22))] text-white shadow-[0_16px_40px_rgba(20,8,42,0.3)]">
-                    <IconoAstral nombre="personal" tamaño={30} className="text-white" />
-                  </div>
-                  <div className="min-w-0">
-                    <h1 className="text-[32px] font-semibold leading-[1.05] tracking-[-0.03em] text-white lg:text-[46px]">
-                      {titularEditorial}
-                    </h1>
-                    <p className="mt-4 max-w-3xl text-[15px] leading-relaxed text-violet-100/72">
-                      {bajadaEditorial}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-2">
-                  <BotonCapitulo
-                    titulo="Esencia"
-                    descripcion="Tipo, autoridad, perfil y definición."
-                    onClick={() => irACapitulo("esencia")}
-                  />
-                  <BotonCapitulo
-                    titulo="Mapa"
-                    descripcion="Centros, canales y activaciones."
-                    onClick={() => irACapitulo("mapa")}
-                  />
-                  <BotonCapitulo
-                    titulo="Propósito"
-                    descripcion="Cruz y capas dominantes."
-                    onClick={() => irACapitulo("proposito")}
-                  />
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-2">
-                  <span className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-1 text-[11px] font-medium text-violet-100/84">
-                    {centrosDefinidos} centros definidos
-                  </span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-1 text-[11px] font-medium text-violet-100/84">
-                    {canales.length} canales activos
-                  </span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-1 text-[11px] font-medium text-violet-100/84">
-                    {activacionesTotal} activaciones técnicas
-                  </span>
-                </div>
-              </div>
-
-              <div className="rounded-[28px] border border-white/12 bg-white/[0.08] p-5 backdrop-blur-xl">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
-                      Mecánica base
-                    </p>
-                    <p className="mt-2 text-[18px] font-semibold text-white">
-                      {datos.tipo}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      setModoManual(true);
-                      setDatosManual(null);
-                      setSeleccion({ tipo: "default" });
-                    }}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.08] px-4 py-2 text-[13px] font-medium text-violet-100/84 transition-colors hover:bg-white/[0.14] hover:text-white"
-                  >
-                    <Icono nombre="flechaIzquierda" tamaño={16} />
-                    Nuevo cálculo
-                  </button>
-                </div>
-
-                <div className="mt-5 grid gap-3">
-                  {[
-                    { etiqueta: "Autoridad", valor: datos.autoridad },
-                    { etiqueta: "Perfil", valor: datos.perfil },
-                    { etiqueta: "Definición", valor: datos.definicion },
-                  ].map((item) => (
-                    <button
-                      key={item.etiqueta}
-                      onClick={() =>
-                        setSeleccion(
-                          item.etiqueta === "Autoridad"
-                            ? { tipo: "autoridad" }
-                            : item.etiqueta === "Perfil"
-                              ? { tipo: "perfil" }
-                              : { tipo: "definicion" },
-                        )
-                      }
-                      className="flex items-center justify-between rounded-[22px] border border-white/10 bg-white/[0.05] px-4 py-3 text-left transition-colors hover:bg-white/[0.08]"
-                    >
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-                          {item.etiqueta}
-                        </p>
-                        <p className="mt-1 text-[15px] font-medium text-white">
-                          {item.valor}
-                        </p>
-                      </div>
-                      <Icono nombre="caretDerecha" tamaño={16} className="text-violet-200/78" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="flex flex-col gap-6">
-              <section id="esencia" className={cn(PANEL_CLARO, "p-5 lg:p-6")}>
+              <section className={cn(PANEL_SECUNDARIO, "mt-6 p-5 lg:p-6")}>
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7C4DFF]">
-                      Capítulo 1
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                      Esencia
                     </p>
-                    <h2 className="mt-2 text-[26px] font-semibold tracking-[-0.02em] text-[#21192F]">
+                    <h2 className="mt-2 text-[24px] font-semibold tracking-tight text-white">
                       Tus pilares de lectura
                     </h2>
-                    <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-[#5D546B]">
-                      Empezá por estas cuatro piezas. Desde acá se ordena todo lo demás.
-                    </p>
                   </div>
-                  <button
-                    onClick={() => setSeleccion({ tipo: "default" })}
-                    className="inline-flex items-center gap-2 self-start rounded-full border border-[#E7DBFF] bg-white/72 px-4 py-2 text-[13px] font-medium text-[#6B3ED8] transition-colors hover:bg-[#F6F1FF]"
-                  >
-                    <Icono nombre="info" tamaño={16} />
-                    Abrir resumen
-                  </button>
                 </div>
 
                 <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -777,93 +822,108 @@ export default function PaginaDisenoHumano() {
                 </div>
               </section>
 
-              <section id="mapa" className={cn(PANEL_OSCURO, "p-5 lg:p-6")}>
+              <section className={cn(PANEL_OSCURO, "mt-6 p-5 lg:p-6")}>
                 <div className="absolute -left-10 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-[#B388FF]/10 blur-3xl" />
 
                 <div className="relative z-10">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
-                        Capítulo 2
+                        Lectura técnica
                       </p>
-                      <h2 className="mt-2 text-[26px] font-semibold tracking-[-0.02em] text-white">
-                        Cabina de lectura técnica
+                      <h2 className="mt-2 text-[24px] font-semibold tracking-tight text-white">
+                        Abrí una capa del diseño
                       </h2>
-                      <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-violet-100/68">
-                        El Body Graph es tu mapa maestro. Podés tocar centros, canales y activaciones para abrir una explicación breve en el panel derecho.
+                      <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-violet-100/68">
+                        Centros, canales y activaciones viven acá. El Body Graph queda como consulta visual bajo demanda.
                       </p>
                     </div>
 
-                    <button
-                      onClick={() => setSeleccion({ tipo: "bodygraph" })}
-                      className="inline-flex items-center gap-2 self-start rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[13px] font-medium text-violet-100/82 transition-colors hover:bg-white/[0.1] hover:text-white"
-                    >
-                      <Icono nombre="destello" tamaño={16} />
-                      Cómo leer este mapa
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setSeleccion({ tipo: "bodygraph" })}
+                        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[13px] font-medium text-violet-100/82 transition-colors hover:bg-white/[0.1] hover:text-white"
+                      >
+                        <Icono nombre="destello" tamaño={16} />
+                        Cómo leer este sistema
+                      </button>
+                      <button
+                        onClick={abrirModalBodyGraph}
+                        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[13px] font-medium text-violet-100/82 transition-colors hover:bg-white/[0.1] hover:text-white"
+                      >
+                        <Icono nombre="ojo" tamaño={16} />
+                        Ver Body Graph
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,0.72fr)_minmax(0,0.88fr)]">
-                    <div className="rounded-[28px] border border-white/10 bg-[#110A21]/68 p-4 lg:p-6">
-                      <BodyGraph
-                        datos={datos}
-                        className="min-h-[460px]"
-                        centroSeleccionado={centroSeleccionado}
-                        canalSeleccionado={canalSeleccionado}
-                        onCentroClick={(clave, estado) => setSeleccion({ tipo: "centro", clave, estado })}
-                        onCanalClick={(canal) => setSeleccion({ tipo: "canal", canal })}
+                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                    <div className={cn(TARJETA_TECNICA, "p-4")}>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                        Centros definidos
+                      </p>
+                      <p className="mt-2 text-[22px] font-semibold text-white">
+                        {centrosDefinidos}
+                      </p>
+                    </div>
+                    <div className={cn(TARJETA_TECNICA, "p-4")}>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                        Canales activos
+                      </p>
+                      <p className="mt-2 text-[22px] font-semibold text-white">
+                        {canales.length}
+                      </p>
+                    </div>
+                    <div className={cn(TARJETA_TECNICA, "p-4")}>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                        Activaciones
+                      </p>
+                      <p className="mt-2 text-[22px] font-semibold text-white">
+                        {activacionesTotal}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className={cn(TARJETA_TECNICA, "mt-4 p-4")}>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                      Qué explorar
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <BotonModo
+                        activo={modoExploracion === "centros"}
+                        titulo="Centros"
+                        contador={centrosEntries.length}
+                        onClick={() => setModoExploracion("centros")}
+                      />
+                      <BotonModo
+                        activo={modoExploracion === "canales"}
+                        titulo="Canales"
+                        contador={canales.length}
+                        onClick={() => setModoExploracion("canales")}
+                      />
+                      <BotonModo
+                        activo={modoExploracion === "activaciones"}
+                        titulo="Activaciones"
+                        contador={activacionesTotal}
+                        onClick={() => setModoExploracion("activaciones")}
                       />
                     </div>
-
-                    <div className="flex flex-col gap-4">
-                      <div className={cn(TARJETA_TECNICA, "p-4")}>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
-                          Qué explorar
-                        </p>
-                        <p className="mt-2 text-[14px] leading-relaxed text-violet-100/66">
-                          Toda la información técnica es clickeable. Primero entendé la pieza, después mirá cómo se expresa en vos.
-                        </p>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <BotonModo
-                            activo={modoExploracion === "centros"}
-                            titulo="Centros"
-                            contador={centrosEntries.length}
-                            onClick={() => setModoExploracion("centros")}
-                          />
-                          <BotonModo
-                            activo={modoExploracion === "canales"}
-                            titulo="Canales"
-                            contador={canales.length}
-                            onClick={() => setModoExploracion("canales")}
-                          />
-                          <BotonModo
-                            activo={modoExploracion === "activaciones"}
-                            titulo="Activaciones"
-                            contador={activacionesTotal}
-                            onClick={() => setModoExploracion("activaciones")}
-                          />
-                        </div>
-                      </div>
-
-                      <div className={cn(TARJETA_TECNICA, "max-h-[540px] overflow-y-auto p-4 scroll-sutil")}>
-                        {exploracionActual}
-                      </div>
-                    </div>
                   </div>
+
+                  <div className={cn(TARJETA_TECNICA, "mt-4 p-4")}>{exploracionActual}</div>
                 </div>
               </section>
 
-              <section id="proposito" className="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
-                <div className={cn(PANEL_CLARO, "p-5 lg:p-6")}>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7C4DFF]">
-                    Capítulo 3
+              <section className="mt-6 grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
+                <div className={cn(PANEL_SECUNDARIO, "p-5 lg:p-6")}>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                    Propósito
                   </p>
-                  <h2 className="mt-2 text-[24px] font-semibold tracking-[-0.02em] text-[#21192F]">
+                  <h2 className="mt-2 text-[24px] font-semibold tracking-tight text-white">
                     Cruz de encarnación
                   </h2>
-                  <p className="mt-2 text-[15px] leading-relaxed text-[#5D546B]">
-                    Estos cuatro ejes organizan el clima general de tu propósito. Cada puerta se puede abrir en el panel contextual.
+                  <p className="mt-2 text-[14px] leading-relaxed text-violet-100/68">
+                    Estos cuatro ejes ordenan el tono general del diseño. Cada puerta abre su explicación en el panel contextual.
                   </p>
 
                   <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -886,31 +946,31 @@ export default function PaginaDisenoHumano() {
                   </div>
                 </div>
 
-                <div className={cn(PANEL_CLARO, "p-5 lg:p-6")}>
+                <div className={cn(PANEL_SECUNDARIO, "p-5 lg:p-6")}>
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7C4DFF]">
-                        Lectura fina
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                        Activaciones
                       </p>
-                      <h2 className="mt-2 text-[24px] font-semibold tracking-[-0.02em] text-[#21192F]">
-                        Activaciones dominantes
+                      <h2 className="mt-2 text-[24px] font-semibold tracking-tight text-white">
+                        Señales dominantes
                       </h2>
                     </div>
-                    <div className="rounded-full bg-[#F3ECFF] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7C4DFF]">
-                      {activacionesTotal} señales disponibles
+                    <div className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-200/70">
+                      {activacionesTotal} disponibles
                     </div>
                   </div>
 
                   {activacionesTotal === 0 ? (
-                    <div className="mt-5 rounded-[24px] border border-dashed border-[#E7DBFF] bg-white/70 px-4 py-8 text-center">
-                      <p className="text-[14px] text-[#5D546B]">
+                    <div className="mt-5 rounded-[24px] border border-dashed border-white/12 bg-white/[0.04] px-4 py-8 text-center">
+                      <p className="text-[14px] text-violet-100/62">
                         No se encontraron activaciones dominantes para mostrar.
                       </p>
                     </div>
                   ) : (
                     <div className="mt-5 grid gap-4 xl:grid-cols-2">
-                      <div className="rounded-[24px] border border-[#E8DDFC] bg-white/72 p-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7C4DFF]">
+                      <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
                           Conscientes
                         </p>
                         <div className="mt-3 flex flex-col gap-3">
@@ -918,12 +978,12 @@ export default function PaginaDisenoHumano() {
                             <button
                               key={`bloque-consciente-${activacion.planeta}-${activacion.puerta}-${activacion.linea}`}
                               onClick={() => setSeleccion({ tipo: "activacion", activacion, origen: "consciente" })}
-                              className="rounded-[20px] border border-[#EEE4FF] bg-[#FBF8FF] px-4 py-3 text-left transition-colors hover:border-[#B388FF]/35"
+                              className="rounded-[20px] border border-white/10 bg-white/[0.05] px-4 py-3 text-left transition-colors hover:bg-white/[0.08]"
                             >
-                              <p className="text-[14px] font-semibold text-[#21192F]">
+                              <p className="text-[14px] font-semibold text-white">
                                 {activacion.planeta}
                               </p>
-                              <p className="mt-1 text-[13px] text-[#5D546B]">
+                              <p className="mt-1 text-[13px] text-violet-100/62">
                                 Puerta {activacion.puerta} · Línea {activacion.linea} · Color {activacion.color}
                               </p>
                             </button>
@@ -931,8 +991,8 @@ export default function PaginaDisenoHumano() {
                         </div>
                       </div>
 
-                      <div className="rounded-[24px] border border-[#E8DDFC] bg-white/72 p-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7C4DFF]">
+                      <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
                           Inconscientes
                         </p>
                         <div className="mt-3 flex flex-col gap-3">
@@ -940,12 +1000,12 @@ export default function PaginaDisenoHumano() {
                             <button
                               key={`bloque-inconsciente-${activacion.planeta}-${activacion.puerta}-${activacion.linea}`}
                               onClick={() => setSeleccion({ tipo: "activacion", activacion, origen: "inconsciente" })}
-                              className="rounded-[20px] border border-[#EEE4FF] bg-[#FBF8FF] px-4 py-3 text-left transition-colors hover:border-[#B388FF]/35"
+                              className="rounded-[20px] border border-white/10 bg-white/[0.05] px-4 py-3 text-left transition-colors hover:bg-white/[0.08]"
                             >
-                              <p className="text-[14px] font-semibold text-[#21192F]">
+                              <p className="text-[14px] font-semibold text-white">
                                 {activacion.planeta}
                               </p>
-                              <p className="mt-1 text-[13px] text-[#5D546B]">
+                              <p className="mt-1 text-[13px] text-violet-100/62">
                                 Puerta {activacion.puerta} · Línea {activacion.linea} · Color {activacion.color}
                               </p>
                             </button>
@@ -957,37 +1017,286 @@ export default function PaginaDisenoHumano() {
                 </div>
               </section>
             </div>
+          </div>
 
-            <aside className="hidden lg:block">
-              <div className="sticky top-6 overflow-hidden rounded-[30px] border border-white/10 shadow-[0_26px_80px_rgba(8,2,22,0.22)]">
+          {haySeleccionMobile && (
+            <div className="fixed inset-0 z-50 flex items-end lg:hidden">
+              <button
+                onClick={cerrarSeleccion}
+                className="absolute inset-0 bg-[#05020B]/52 backdrop-blur-[1px]"
+                aria-label="Cerrar detalle"
+              />
+              <div className="relative z-10 max-h-[85vh] w-full overflow-hidden rounded-t-[28px]">
                 <PanelContextualHD
                   seleccion={seleccion}
                   datos={datos}
-                  onCerrar={() => setSeleccion({ tipo: "default" })}
+                  onCerrar={cerrarSeleccion}
+                  modo="movil"
                 />
               </div>
-            </aside>
-          </div>
-        </section>
-      </div>
+            </div>
+          )}
 
-      {seleccion.tipo !== "default" && (
-        <div className="fixed inset-0 z-50 flex items-end lg:hidden">
-          <button
-            onClick={() => setSeleccion({ tipo: "default" })}
-            className="absolute inset-0 bg-[#05020B]/52 backdrop-blur-[1px]"
-            aria-label="Cerrar detalle"
-          />
-          <div className="relative z-10 max-h-[85vh] w-full overflow-hidden">
-            <PanelContextualHD
-              seleccion={seleccion}
-              datos={datos}
-              onCerrar={() => setSeleccion({ tipo: "default" })}
-              modoMovil
-            />
+          <div className="hidden lg:flex flex-1 min-h-0">
+            <section className="min-w-0 flex-1 overflow-y-auto scroll-sutil px-6 py-6 xl:px-8 xl:py-7">
+              <div className="mx-auto max-w-[1120px]">
+                <HeroDisenoHumano
+                  datos={datos}
+                  nombrePersona={nombrePersona}
+                  onAbrirBodyGraph={abrirModalBodyGraph}
+                  onSeleccionar={setSeleccion}
+                />
+
+                <section className={cn(PANEL_SECUNDARIO, "mt-6 p-5 lg:p-6")}>
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                        Esencia
+                      </p>
+                      <h2 className="mt-2 text-[24px] font-semibold tracking-tight text-white">
+                        Tus pilares de lectura
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    {atributos.map((atributo) => (
+                      <TarjetaAtributo
+                        key={atributo.etiqueta}
+                        etiqueta={atributo.etiqueta}
+                        valor={atributo.valor}
+                        descripcion={atributo.descripcion}
+                        icono={atributo.icono}
+                        activa={seleccion.tipo === atributo.tipo}
+                        onClick={() => setSeleccion({ tipo: atributo.tipo })}
+                      />
+                    ))}
+                  </div>
+                </section>
+
+                <section className={cn(PANEL_OSCURO, "mt-6 p-5 lg:p-6")}>
+                  <div className="absolute -left-10 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-[#B388FF]/10 blur-3xl" />
+
+                  <div className="relative z-10">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                          Lectura técnica
+                        </p>
+                        <h2 className="mt-2 text-[24px] font-semibold tracking-tight text-white">
+                          Abrí una capa del diseño
+                        </h2>
+                        <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-violet-100/68">
+                          Centros, canales y activaciones viven acá. El Body Graph queda como consulta visual bajo demanda.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => setSeleccion({ tipo: "bodygraph" })}
+                          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[13px] font-medium text-violet-100/82 transition-colors hover:bg-white/[0.1] hover:text-white"
+                        >
+                          <Icono nombre="destello" tamaño={16} />
+                          Cómo leer este sistema
+                        </button>
+                        <button
+                          onClick={abrirModalBodyGraph}
+                          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[13px] font-medium text-violet-100/82 transition-colors hover:bg-white/[0.1] hover:text-white"
+                        >
+                          <Icono nombre="ojo" tamaño={16} />
+                          Ver Body Graph
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                      <div className={cn(TARJETA_TECNICA, "p-4")}>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                          Centros definidos
+                        </p>
+                        <p className="mt-2 text-[22px] font-semibold text-white">
+                          {centrosDefinidos}
+                        </p>
+                      </div>
+                      <div className={cn(TARJETA_TECNICA, "p-4")}>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                          Canales activos
+                        </p>
+                        <p className="mt-2 text-[22px] font-semibold text-white">
+                          {canales.length}
+                        </p>
+                      </div>
+                      <div className={cn(TARJETA_TECNICA, "p-4")}>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                          Activaciones
+                        </p>
+                        <p className="mt-2 text-[22px] font-semibold text-white">
+                          {activacionesTotal}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className={cn(TARJETA_TECNICA, "mt-4 p-4")}>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                        Qué explorar
+                      </p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <BotonModo
+                          activo={modoExploracion === "centros"}
+                          titulo="Centros"
+                          contador={centrosEntries.length}
+                          onClick={() => setModoExploracion("centros")}
+                        />
+                        <BotonModo
+                          activo={modoExploracion === "canales"}
+                          titulo="Canales"
+                          contador={canales.length}
+                          onClick={() => setModoExploracion("canales")}
+                        />
+                        <BotonModo
+                          activo={modoExploracion === "activaciones"}
+                          titulo="Activaciones"
+                          contador={activacionesTotal}
+                          onClick={() => setModoExploracion("activaciones")}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={cn(TARJETA_TECNICA, "mt-4 p-4")}>{exploracionActual}</div>
+                  </div>
+                </section>
+
+                <section className="mt-6 grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
+                  <div className={cn(PANEL_SECUNDARIO, "p-5 lg:p-6")}>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                      Propósito
+                    </p>
+                    <h2 className="mt-2 text-[24px] font-semibold tracking-tight text-white">
+                      Cruz de encarnación
+                    </h2>
+                    <p className="mt-2 text-[14px] leading-relaxed text-violet-100/68">
+                      Estos cuatro ejes ordenan el tono general del diseño. Cada puerta abre su explicación en el panel contextual.
+                    </p>
+
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                      {cruzItems.map((item) => (
+                        <TarjetaCruz
+                          key={item.etiqueta}
+                          etiqueta={item.etiqueta}
+                          puerta={item.valor}
+                          activo={seleccion.tipo === "cruz" && seleccion.clave === item.clave}
+                          onClick={() =>
+                            setSeleccion({
+                              tipo: "cruz",
+                              clave: item.clave,
+                              etiqueta: item.etiqueta,
+                              puerta: item.valor,
+                            })
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={cn(PANEL_SECUNDARIO, "p-5 lg:p-6")}>
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                          Activaciones
+                        </p>
+                        <h2 className="mt-2 text-[24px] font-semibold tracking-tight text-white">
+                          Señales dominantes
+                        </h2>
+                      </div>
+                      <div className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-200/70">
+                        {activacionesTotal} disponibles
+                      </div>
+                    </div>
+
+                    {activacionesTotal === 0 ? (
+                      <div className="mt-5 rounded-[24px] border border-dashed border-white/12 bg-white/[0.04] px-4 py-8 text-center">
+                        <p className="text-[14px] text-violet-100/62">
+                          No se encontraron activaciones dominantes para mostrar.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-5 grid gap-4 xl:grid-cols-2">
+                        <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                            Conscientes
+                          </p>
+                          <div className="mt-3 flex flex-col gap-3">
+                            {activacionesConscientes.slice(0, 6).map((activacion) => (
+                              <button
+                                key={`bloque-consciente-${activacion.planeta}-${activacion.puerta}-${activacion.linea}`}
+                                onClick={() => setSeleccion({ tipo: "activacion", activacion, origen: "consciente" })}
+                                className="rounded-[20px] border border-white/10 bg-white/[0.05] px-4 py-3 text-left transition-colors hover:bg-white/[0.08]"
+                              >
+                                <p className="text-[14px] font-semibold text-white">
+                                  {activacion.planeta}
+                                </p>
+                                <p className="mt-1 text-[13px] text-violet-100/62">
+                                  Puerta {activacion.puerta} · Línea {activacion.linea} · Color {activacion.color}
+                                </p>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+                            Inconscientes
+                          </p>
+                          <div className="mt-3 flex flex-col gap-3">
+                            {activacionesInconscientes.slice(0, 6).map((activacion) => (
+                              <button
+                                key={`bloque-inconsciente-${activacion.planeta}-${activacion.puerta}-${activacion.linea}`}
+                                onClick={() => setSeleccion({ tipo: "activacion", activacion, origen: "inconsciente" })}
+                                className="rounded-[20px] border border-white/10 bg-white/[0.05] px-4 py-3 text-left transition-colors hover:bg-white/[0.08]"
+                              >
+                                <p className="text-[14px] font-semibold text-white">
+                                  {activacion.planeta}
+                                </p>
+                                <p className="mt-1 text-[13px] text-violet-100/62">
+                                  Puerta {activacion.puerta} · Línea {activacion.linea} · Color {activacion.color}
+                                </p>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </div>
+            </section>
+
+            <RailLateral
+              etiqueta={metaPanel.etiqueta}
+              titulo={metaPanel.titulo}
+              subtitulo={metaPanel.subtitulo}
+              onCerrar={seleccion.tipo !== "default" ? cerrarSeleccion : undefined}
+              cuerpoClassName="!p-0 overflow-hidden"
+              claveContenido={obtenerClavePanelContextualHD(seleccion)}
+            >
+              <div className="h-full min-h-0">
+                <PanelContextualHD
+                  seleccion={seleccion}
+                  datos={datos}
+                  onCerrar={cerrarSeleccion}
+                  modo="escritorio"
+                />
+              </div>
+            </RailLateral>
           </div>
         </div>
-      )}
-    </>
-  );
-}
+
+        <ModalBodyGraph
+          abierta={modalBodyGraphAbierto}
+          datos={datos}
+          onCerrar={cerrarModalBodyGraph}
+        />
+      </div>
+      </>
+    );
+  }
