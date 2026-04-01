@@ -109,12 +109,12 @@ function ModalRuedaAstral({
           </button>
         </div>
 
-        <div className="flex items-center justify-center p-3 lg:p-4" style={{ height: "calc(90vh - 72px)" }}>
+        <div className="flex items-center justify-center p-3 lg:p-4" style={{ height: "80vh" }}>
           <RuedaZodiacal
             planetas={datos.planetas}
             casas={datos.casas}
             aspectos={datos.aspectos}
-            className="mx-auto h-full max-h-full w-full max-w-[90vh]"
+            className="mx-auto h-full w-auto max-w-full aspect-square"
           />
         </div>
       </div>

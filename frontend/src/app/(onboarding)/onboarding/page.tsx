@@ -25,24 +25,26 @@ interface DatosFormulario {
   hora_nacimiento: string;
   ciudad_nacimiento: string;
   pais_nacimiento: string;
+  latitud?: number;
+  longitud_geo?: number;
+  zona_horaria?: string;
 }
 
 const TEXTOS_PANEL: Record<number, string> = {
   0: "Tu información de nacimiento es la clave para descifrar tu mapa estelar",
-  1: "La ubicación exacta nos permite calcular con precisión tu carta natal",
-  2: "",
+  1: "",
 };
 
-/* ---------- Barra de progreso (4 segmentos) ---------- */
+/* ---------- Barra de progreso (2 segmentos) ---------- */
 
 function BarraProgreso({ paso }: { paso: number }) {
   return (
     <div className="flex flex-col gap-2 mb-8">
       <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-violet-500">
-        Paso {paso + 1} de 3
+        Paso {paso + 1} de 2
       </p>
       <div className="flex gap-2">
-        {[0, 1, 2].map((i) => (
+        {[0, 1].map((i) => (
           <div
             key={i}
             className={cn(
@@ -71,8 +73,8 @@ export default function PaginaOnboarding() {
     pais_nacimiento: "",
   });
 
-  // Paso 2 usa layout oscuro full-screen
-  if (paso === 2) {
+  // Paso 1 usa layout oscuro full-screen
+  if (paso === 1) {
     return (
       <LayoutOnboarding modoOscuro>
         <BarraProgresoOscuro />
@@ -93,18 +95,10 @@ export default function PaginaOnboarding() {
       <BarraProgreso paso={paso} />
 
       {paso === 0 && (
-        <PasoDatosPersonales
+        <PasoDatosCompletos
           datos={datos}
           onChange={(parcial) => setDatos({ ...datos, ...parcial })}
           onSiguiente={() => setPaso(1)}
-        />
-      )}
-      {paso === 1 && (
-        <PasoLugarNacimiento
-          datos={datos}
-          onChange={(parcial) => setDatos({ ...datos, ...parcial })}
-          onSiguiente={() => setPaso(2)}
-          onAtras={() => setPaso(0)}
         />
       )}
     </LayoutOnboarding>
@@ -117,10 +111,10 @@ function BarraProgresoOscuro() {
   return (
     <div className="flex flex-col gap-2 mb-10">
       <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-violet-300">
-        Paso 3 de 3
+        Paso 2 de 2
       </p>
       <div className="flex gap-2">
-        {[0, 1, 2].map((i) => (
+        {[0, 1].map((i) => (
           <div key={i} className="h-1 flex-1 rounded-sm bg-violet-500" />
         ))}
       </div>
@@ -128,9 +122,19 @@ function BarraProgresoOscuro() {
   );
 }
 
-/* ========== Paso 0: Datos Personales ========== */
+/* ========== Paso único: Datos Personales + Lugar ========== */
 
-function PasoDatosPersonales({
+interface ResultadoGeo {
+  nombre_mostrar: string;
+  ciudad: string;
+  estado: string;
+  pais: string;
+  latitud: number;
+  longitud: number;
+  zona_horaria: string;
+}
+
+function PasoDatosCompletos({
   datos,
   onChange,
   onSiguiente,
@@ -139,23 +143,108 @@ function PasoDatosPersonales({
   onChange: (parcial: Partial<DatosFormulario>) => void;
   onSiguiente: () => void;
 }) {
+  const [consulta, setConsulta] = useState(
+    datos.ciudad_nacimiento
+      ? `${datos.ciudad_nacimiento}, ${datos.pais_nacimiento}`
+      : ""
+  );
+  const [resultados, setResultados] = useState<ResultadoGeo[]>([]);
+  const [buscando, setBuscando] = useState(false);
+  const [lugarSeleccionado, setLugarSeleccionado] = useState(!!datos.latitud);
+  const [abierto, setAbierto] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const puedeAvanzar =
     datos.nombre.trim() !== "" &&
     datos.fecha_nacimiento !== "" &&
-    datos.hora_nacimiento !== "";
+    datos.hora_nacimiento !== "" &&
+    lugarSeleccionado &&
+    datos.ciudad_nacimiento.trim() !== "";
+
+  // Buscar ubicaciones con debounce
+  const buscar = useCallback(async (texto: string) => {
+    if (texto.length < 3) {
+      setResultados([]);
+      setAbierto(false);
+      return;
+    }
+    setBuscando(true);
+    try {
+      const res = await fetch(
+        `/api/v1/geo/buscar?q=${encodeURIComponent(texto)}&limite=6`
+      );
+      if (res.ok) {
+        const json = await res.json();
+        const d = json.datos ?? json;
+        setResultados(Array.isArray(d) ? d : []);
+        setAbierto(true);
+      }
+    } catch {
+      setResultados([]);
+    } finally {
+      setBuscando(false);
+    }
+  }, []);
+
+  const handleLugarChange = (texto: string) => {
+    setConsulta(texto);
+    setLugarSeleccionado(false);
+    onChange({
+      ciudad_nacimiento: "",
+      pais_nacimiento: "",
+      latitud: undefined,
+      longitud_geo: undefined,
+      zona_horaria: undefined,
+    });
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => buscar(texto), 400);
+  };
+
+  const seleccionar = (resultado: ResultadoGeo) => {
+    setConsulta(resultado.nombre_mostrar);
+    setLugarSeleccionado(true);
+    setAbierto(false);
+    setResultados([]);
+    onChange({
+      ciudad_nacimiento: resultado.ciudad,
+      pais_nacimiento: resultado.pais,
+      latitud: resultado.latitud,
+      longitud_geo: resultado.longitud,
+      zona_horaria: resultado.zona_horaria,
+    });
+  };
+
+  // Cerrar dropdown al hacer click afuera
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setAbierto(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  useEffect(() => {
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, []);
+
+  const inputClase = "h-12 w-full px-4 rounded-xl bg-violet-50 border border-gray-200 text-gray-800 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-colors";
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <div>
         <h2 className="text-[26px] font-semibold text-gray-800 leading-tight">
-          Tus datos personales
+          Datos de nacimiento
         </h2>
         <p className="mt-2 text-gray-500 text-sm">
-          Necesitamos tu información de nacimiento para calcular tu mapa cósmico con precisión
+          Necesitamos esta información para calcular tu mapa cósmico
         </p>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3.5">
+        {/* Nombre */}
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-gray-600">Nombre completo</label>
           <input
@@ -163,36 +252,98 @@ function PasoDatosPersonales({
             placeholder="Tu nombre"
             value={datos.nombre}
             onChange={(e) => onChange({ nombre: e.target.value })}
-            className="h-12 px-4 rounded-xl bg-violet-50 border border-gray-200 text-gray-800 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-colors"
+            className={inputClase}
           />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-600">Fecha de nacimiento</label>
-          <input
-            type="date"
-            value={datos.fecha_nacimiento}
-            onChange={(e) => onChange({ fecha_nacimiento: e.target.value })}
-            className="h-12 px-4 rounded-xl bg-violet-50 border border-gray-200 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-colors"
-          />
+        {/* Fecha y hora en fila */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-gray-600">Fecha de nacimiento</label>
+            <input
+              type="date"
+              value={datos.fecha_nacimiento}
+              onChange={(e) => onChange({ fecha_nacimiento: e.target.value })}
+              className={inputClase}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-gray-600">Hora de nacimiento</label>
+            <input
+              type="time"
+              value={datos.hora_nacimiento}
+              onChange={(e) => onChange({ hora_nacimiento: e.target.value })}
+              className={inputClase}
+            />
+          </div>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-600">Hora de nacimiento</label>
-          <input
-            type="time"
-            value={datos.hora_nacimiento}
-            onChange={(e) => onChange({ hora_nacimiento: e.target.value })}
-            className="h-12 px-4 rounded-xl bg-violet-50 border border-gray-200 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-colors"
-          />
+        {/* Lugar de nacimiento — autocomplete */}
+        <div ref={dropdownRef} className="relative flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-gray-600">Lugar de nacimiento</label>
+          <div className="relative">
+            <Icono
+              nombre="ubicacion"
+              tamaño={18}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-violet-400 pointer-events-none"
+            />
+            <input
+              type="text"
+              placeholder="Ej: Buenos Aires, Argentina"
+              value={consulta}
+              onChange={(e) => handleLugarChange(e.target.value)}
+              onFocus={() => resultados.length > 0 && setAbierto(true)}
+              className={cn(
+                "h-12 w-full pl-11 pr-10 rounded-xl bg-violet-50 border text-gray-800 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition-colors",
+                lugarSeleccionado
+                  ? "border-emerald-400 bg-emerald-50/50"
+                  : "border-gray-200 focus:border-violet-400"
+              )}
+            />
+            {buscando && (
+              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-300 border-t-violet-600" />
+              </div>
+            )}
+            {lugarSeleccionado && !buscando && (
+              <Icono
+                nombre="check"
+                tamaño={18}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500"
+              />
+            )}
+          </div>
+
+          {/* Dropdown */}
+          {abierto && resultados.length > 0 && (
+            <div className="absolute top-[calc(100%+6px)] z-50 w-full rounded-xl border border-gray-200 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] overflow-hidden">
+              {resultados.map((r, i) => (
+                <button
+                  key={`${r.latitud}-${r.longitud}-${i}`}
+                  type="button"
+                  onClick={() => seleccionar(r)}
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-violet-50 transition-colors border-b border-gray-100 last:border-b-0"
+                >
+                  <Icono nombre="ubicacion" tamaño={15} className="text-violet-400 shrink-0" />
+                  <p className="text-sm text-gray-800 truncate">{r.nombre_mostrar}</p>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {abierto && resultados.length === 0 && !buscando && consulta.length >= 3 && (
+            <div className="absolute top-[calc(100%+6px)] z-50 w-full rounded-xl border border-gray-200 bg-white shadow-lg px-4 py-3">
+              <p className="text-sm text-gray-400 text-center">No se encontraron ubicaciones</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Nota informativa */}
-      <div className="flex gap-3 bg-violet-50 rounded-xl p-4">
-        <Icono nombre="info" tamaño={18} className="text-violet-500 mt-0.5 shrink-0" />
+      {/* Nota hora */}
+      <div className="flex gap-3 bg-violet-50 rounded-xl p-3.5">
+        <Icono nombre="info" tamaño={16} className="text-violet-500 mt-0.5 shrink-0" />
         <p className="text-xs text-violet-700 leading-relaxed">
-          Si no conoces tu hora exacta de nacimiento, puedes usar las 12:00. Algunos cálculos como las casas astrológicas pueden variar.
+          Si no conocés tu hora exacta, usá 12:00. Algunos cálculos pueden variar.
         </p>
       </div>
 
@@ -200,93 +351,11 @@ function PasoDatosPersonales({
         type="button"
         onClick={onSiguiente}
         disabled={!puedeAvanzar}
-        className="w-full h-12 rounded-xl bg-violet-500 text-white font-semibold text-sm hover:bg-violet-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="w-full h-12 rounded-xl bg-violet-500 text-white font-semibold text-sm hover:bg-violet-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
       >
-        Continuar
+        <Icono nombre="destello" tamaño={18} />
+        Calcular mi perfil
       </button>
-    </div>
-  );
-}
-
-/* ========== Paso 1: Lugar de Nacimiento ========== */
-
-function PasoLugarNacimiento({
-  datos,
-  onChange,
-  onSiguiente,
-  onAtras,
-}: {
-  datos: DatosFormulario;
-  onChange: (parcial: Partial<DatosFormulario>) => void;
-  onSiguiente: () => void;
-  onAtras: () => void;
-}) {
-  const puedeAvanzar =
-    datos.ciudad_nacimiento.trim() !== "" &&
-    datos.pais_nacimiento.trim() !== "";
-
-  return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-[26px] font-semibold text-gray-800 leading-tight">
-          Lugar de nacimiento
-        </h2>
-        <p className="mt-2 text-gray-500 text-sm">
-          La ubicación exacta es clave para la precisión de tu carta astral
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-600">Ciudad de nacimiento</label>
-          <input
-            type="text"
-            placeholder="Ej: Buenos Aires"
-            value={datos.ciudad_nacimiento}
-            onChange={(e) => onChange({ ciudad_nacimiento: e.target.value })}
-            className="h-12 px-4 rounded-xl bg-violet-50 border border-gray-200 text-gray-800 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-colors"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-600">País de nacimiento</label>
-          <input
-            type="text"
-            placeholder="Ej: Argentina"
-            value={datos.pais_nacimiento}
-            onChange={(e) => onChange({ pais_nacimiento: e.target.value })}
-            className="h-12 px-4 rounded-xl bg-violet-50 border border-gray-200 text-gray-800 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-colors"
-          />
-        </div>
-      </div>
-
-      {/* Nota con icono ubicación */}
-      <div className="flex gap-3 bg-violet-50 rounded-xl p-4">
-        <Icono nombre="ubicacion" tamaño={18} className="text-violet-500 mt-0.5 shrink-0" />
-        <p className="text-xs text-violet-700 leading-relaxed">
-          Usamos geocodificación para obtener las coordenadas exactas de tu lugar de nacimiento y calcular las zonas horarias históricas.
-        </p>
-      </div>
-
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={onAtras}
-          className="flex-1 h-12 rounded-xl border-2 border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-        >
-          <Icono nombre="flechaIzquierda" tamaño={16} />
-          Volver
-        </button>
-        <button
-          type="button"
-          onClick={onSiguiente}
-          disabled={!puedeAvanzar}
-          className="flex-1 h-12 rounded-xl bg-violet-500 text-white font-semibold text-sm hover:bg-violet-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-        >
-          <Icono nombre="destello" tamaño={18} />
-          Calcular mi perfil
-        </button>
-      </div>
     </div>
   );
 }
@@ -333,6 +402,9 @@ function PasoCalculando({
       hora_nacimiento: datos.hora_nacimiento,
       ciudad_nacimiento: datos.ciudad_nacimiento,
       pais_nacimiento: datos.pais_nacimiento,
+      ...(datos.latitud != null && { latitud: datos.latitud }),
+      ...(datos.longitud_geo != null && { longitud: datos.longitud_geo }),
+      ...(datos.zona_horaria && { zona_horaria: datos.zona_horaria }),
     };
 
     const datosNumerologia: DatosNumerologia = {

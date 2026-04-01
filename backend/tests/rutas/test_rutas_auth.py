@@ -479,7 +479,7 @@ class TestLoginUsuarioDesactivado:
         )
 
         assert resp.status_code == 401
-        assert "desactivado" in resp.json()["detalle"].lower()
+        assert "desactivada" in resp.json()["detalle"].lower()
 
 
 # ── Gap #2: Login con usuario Google (sin hash_contrasena) ──────

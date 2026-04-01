@@ -68,26 +68,22 @@ const CONFIG_MENU_PODCAST: Record<
   TipoPodcast,
   {
     titulo: string;
-    descripcion: string;
     icono: "sol" | "destello" | "luna";
     gradiente: string;
   }
 > = {
   dia: {
     titulo: "Día de hoy",
-    descripcion: "Una cápsula breve para arrancar con claridad.",
     icono: "sol",
     gradiente: "from-[#7C4DFF] to-[#B388FF]",
   },
   semana: {
     titulo: "Tu semana cósmica",
-    descripcion: "El clima de los próximos días en una sola escucha.",
     icono: "destello",
     gradiente: "from-[#4A2D8C] to-[#7C4DFF]",
   },
   mes: {
     titulo: "Tu mes cósmico",
-    descripcion: "Una lectura más amplia para el ciclo en curso.",
     icono: "luna",
     gradiente: "from-[#2D1B69] to-[#7C4DFF]",
   },
@@ -633,7 +629,7 @@ export default function Navbar() {
               <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.08]">
                 <Icono nombre={iconoAccionRapida} tamaño={14} peso="fill" />
               </span>
-              <span>{etiquetaAccionRapida}</span>
+              <span className="sr-only">{etiquetaAccionRapida}</span>
               <Icono
                 nombre={menuPodcastsAbierto ? "caretArriba" : "caretAbajo"}
                 tamaño={14}
@@ -650,21 +646,9 @@ export default function Navbar() {
               <div
                 role="menu"
                 aria-label="Opciones de podcasts"
-                className="absolute right-0 top-full z-[70] mt-3 w-[360px] rounded-[28px] border border-white/[0.08] bg-[#1B0B2C]/95 p-3 shadow-[0_26px_70px_rgba(8,2,20,0.45)] backdrop-blur-2xl"
+                className="absolute right-0 top-full z-[70] mt-3 w-[312px] rounded-[24px] border border-white/[0.08] bg-[#1B0B2C]/95 p-2.5 shadow-[0_26px_70px_rgba(8,2,20,0.45)] backdrop-blur-2xl"
               >
-                <div className="mb-3 rounded-[22px] border border-white/[0.08] bg-white/[0.04] px-4 py-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-violet-200/58">
-                    Podcasts cósmicos
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-white/96">
-                    Elegí la capa que querés escuchar
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-white/56">
-                    Día, semana o mes. Si todavía no existe, lo generamos desde acá.
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1.5">
                   {TIPOS_MENU_PODCAST.map((tipo) => {
                     const config = CONFIG_MENU_PODCAST[tipo];
                     const episodio = mapaEpisodios.get(tipo);
@@ -691,25 +675,39 @@ export default function Navbar() {
                                 : "Listo para continuar"
                               : "Disponible ahora"
                           }`
-                        : requierePremium
-                          ? "Disponible con un plan pago"
-                          : episodio?.estado === "error"
-                            ? "Hubo un error. Podés volver a intentarlo."
-                            : "Todavía no existe para este período.";
+                      : requierePremium
+                        ? "Plan pago"
+                        : episodio?.estado === "error"
+                          ? "Error al generar"
+                          : "Sin generar";
 
-                    const accion = estaGenerando
-                      ? "En preparación"
+                    const accionIcono: NombreIcono = estaGenerando
+                      ? "destello"
                       : estaListo
                         ? estaActivo
                           ? reproduciendo
-                            ? "Pausar"
-                            : "Continuar"
-                          : "Escuchar"
+                            ? "pausar"
+                            : "reproducir"
+                          : "reproducir"
                         : requierePremium
-                          ? "Ver plan"
+                          ? "corona"
                           : episodio?.estado === "error"
-                            ? "Reintentar"
-                            : "Generar";
+                            ? "destello"
+                            : "destello";
+
+                    const accionAria = estaGenerando
+                      ? `Podcast ${config.titulo} en preparación`
+                      : estaListo
+                        ? estaActivo
+                          ? reproduciendo
+                            ? `Pausar ${config.titulo}`
+                            : `Continuar ${config.titulo}`
+                          : `Escuchar ${config.titulo}`
+                        : requierePremium
+                          ? `Ver plan para ${config.titulo}`
+                          : episodio?.estado === "error"
+                            ? `Reintentar ${config.titulo}`
+                            : `Generar ${config.titulo}`;
 
                     return (
                       <button
@@ -718,14 +716,14 @@ export default function Navbar() {
                         role="menuitem"
                         onClick={() => manejarSeleccionPodcast(tipo)}
                         disabled={estaGenerando}
-                        className={`group/item flex items-center gap-3 rounded-[24px] border px-3.5 py-3 text-left transition-all duration-200 ${
+                        className={`group/item flex items-center gap-3 rounded-[20px] border px-3 py-2.5 text-left transition-all duration-200 ${
                           estaActivo
                             ? "border-[#B388FF]/22 bg-[linear-gradient(135deg,rgba(124,77,255,0.22),rgba(179,136,255,0.08))] shadow-[0_12px_28px_rgba(20,8,42,0.26)]"
                             : "border-white/[0.08] bg-black/10 hover:border-white/15 hover:bg-white/[0.05]"
                         } disabled:cursor-not-allowed disabled:opacity-80`}
                       >
                         <div
-                          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${config.gradiente} shadow-[0_12px_28px_rgba(18,4,38,0.28)] ring-1 ring-white/15`}
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br ${config.gradiente} shadow-[0_12px_28px_rgba(18,4,38,0.28)] ring-1 ring-white/15`}
                         >
                           {estaGenerando ? (
                             <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/80 border-t-transparent" />
@@ -741,7 +739,7 @@ export default function Navbar() {
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="truncate text-[13px] font-semibold text-white/94">
+                            <p className="truncate text-[12px] font-semibold text-white/94">
                               {config.titulo}
                             </p>
                             {estaListo && (
@@ -750,16 +748,25 @@ export default function Navbar() {
                               </span>
                             )}
                           </div>
-                          <p className="mt-0.5 text-[11px] text-white/50">
-                            {config.descripcion}
-                          </p>
-                          <p className="mt-1.5 text-[11px] text-white/68">
+                          <p className="mt-1 text-[11px] text-white/68">
                             {detalle}
                           </p>
                         </div>
 
-                        <span className="rounded-full border border-white/[0.08] bg-white/[0.06] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/74 transition-colors group-hover/item:border-[#B388FF]/18 group-hover/item:text-white">
-                          {accion}
+                        <span
+                          aria-label={accionAria}
+                          title={accionAria}
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                            estaActivo
+                              ? "border-[#B388FF]/28 bg-[#7C4DFF]/18 text-white"
+                              : "border-white/[0.08] bg-white/[0.06] text-white/78 group-hover/item:border-[#B388FF]/18 group-hover/item:text-white"
+                          }`}
+                        >
+                          <Icono
+                            nombre={accionIcono}
+                            tamaño={15}
+                            peso="fill"
+                          />
                         </span>
                       </button>
                     );

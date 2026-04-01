@@ -1,6 +1,8 @@
 """Rutas de autenticación."""
 
 import logging
+import random
+import re
 import uuid
 
 import jwt
@@ -23,6 +25,7 @@ from app.esquemas.auth import (
     EsquemaRegistro,
     EsquemaRenovarToken,
     EsquemaSolicitarReset,
+    EsquemaVerificarOTP,
 )
 from app.excepciones import (
     CosmicEngineError,
@@ -112,13 +115,13 @@ async def login(
 
     usuario = await repo.obtener_por_email(datos.email)
     if not usuario or not usuario.hash_contrasena:
-        raise ErrorAutenticacion("Email o contraseña incorrectos")
+        raise ErrorAutenticacion("El email o la contraseña son incorrectos. Verificá tus datos e intentá de nuevo.")
 
     if not ServicioAuth.verificar_contrasena(datos.contrasena, usuario.hash_contrasena):
-        raise ErrorAutenticacion("Email o contraseña incorrectos")
+        raise ErrorAutenticacion("El email o la contraseña son incorrectos. Verificá tus datos e intentá de nuevo.")
 
     if not usuario.activo:
-        raise ErrorAutenticacion("Usuario desactivado")
+        raise ErrorAutenticacion("Tu cuenta está desactivada. Contactá soporte para más información.")
 
     # Actualizar último acceso
     await repo.actualizar_ultimo_acceso(usuario.id)
@@ -282,13 +285,31 @@ async def google_callback(
     }
 
 
+def _validar_contrasena_fuerte(contrasena: str) -> None:
+    """Valida que la contraseña cumpla requisitos de seguridad."""
+    errores = []
+    if len(contrasena) < 8:
+        errores.append("mínimo 8 caracteres")
+    if not re.search(r"[A-Z]", contrasena):
+        errores.append("al menos una mayúscula")
+    if not re.search(r"\d", contrasena):
+        errores.append("al menos un número")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>\-_=+\[\]\\;'/`~]", contrasena):
+        errores.append("al menos un símbolo")
+    if errores:
+        raise CosmicEngineError(
+            f"La contraseña debe tener: {', '.join(errores)}",
+            codigo=422,
+        )
+
+
 @router.post("/solicitar-reset")
 async def solicitar_reset(
     datos: EsquemaSolicitarReset,
     db: AsyncSession = Depends(_obtener_db_placeholder),
     redis: Redis = Depends(_obtener_redis_placeholder),
 ):
-    """Solicita un enlace de reset de contraseña por email.
+    """Envía un código OTP de 6 dígitos por email para restablecer contraseña.
 
     Siempre retorna 200 para no revelar si el email existe.
     """
@@ -296,16 +317,52 @@ async def solicitar_reset(
     usuario = await repo.obtener_por_email(datos.email)
 
     if usuario and usuario.proveedor_auth == "local" and usuario.activo:
-        token = str(uuid.uuid4())
-        await redis.set(f"reset:{token}", str(usuario.id), ex=3600)
+        codigo = f"{random.randint(0, 999999):06d}"
+        await redis.set(
+            f"otp:{datos.email.lower()}", codigo, ex=600,  # 10 minutos
+        )
         try:
-            await ServicioEmail.enviar_reset_password(
-                usuario.email, usuario.nombre, token
+            await ServicioEmail.enviar_codigo_otp(
+                usuario.email, usuario.nombre, codigo
             )
         except Exception:
-            logger.warning("No se pudo enviar email de reset a %s", datos.email)
+            logger.warning("No se pudo enviar OTP a %s", datos.email)
 
-    return {"exito": True, "mensaje": "Si el email está registrado, recibirás un enlace para restablecer tu contraseña"}
+    return {"exito": True, "mensaje": "Si el email está registrado, recibirás un código de verificación"}
+
+
+@router.post("/verificar-otp")
+async def verificar_otp(
+    datos: EsquemaVerificarOTP,
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+    redis: Redis = Depends(_obtener_redis_placeholder),
+):
+    """Verifica el código OTP y retorna un token temporal para cambiar la contraseña."""
+    clave = f"otp:{datos.email.lower()}"
+    codigo_guardado = await redis.get(clave)
+
+    if not codigo_guardado:
+        raise ErrorTokenInvalido("Código expirado. Solicitá uno nuevo.")
+
+    if isinstance(codigo_guardado, bytes):
+        codigo_guardado = codigo_guardado.decode()
+
+    if codigo_guardado != datos.codigo:
+        raise ErrorAutenticacion("Código incorrecto")
+
+    # OTP válido — generar token temporal para el paso de nueva contraseña
+    repo = RepositorioUsuario(db)
+    usuario = await repo.obtener_por_email(datos.email)
+    if not usuario or not usuario.activo:
+        raise ErrorTokenInvalido("Código expirado. Solicitá uno nuevo.")
+
+    token_reset = str(uuid.uuid4())
+    await redis.set(f"reset:{token_reset}", str(usuario.id), ex=900)  # 15 min
+
+    # Eliminar OTP (uso único)
+    await redis.delete(clave)
+
+    return {"exito": True, "datos": {"token": token_reset}}
 
 
 @router.post("/confirmar-reset")
@@ -314,24 +371,24 @@ async def confirmar_reset(
     db: AsyncSession = Depends(_obtener_db_placeholder),
     redis: Redis = Depends(_obtener_redis_placeholder),
 ):
-    """Confirma el reset de contraseña con un token válido."""
+    """Confirma el reset de contraseña con un token válido (post-OTP)."""
+    _validar_contrasena_fuerte(datos.contrasena_nueva)
+
     user_id_str = await redis.get(f"reset:{datos.token}")
     if not user_id_str:
-        raise ErrorTokenInvalido("Enlace expirado o inválido")
+        raise ErrorTokenInvalido("Sesión expirada. Volvé a iniciar el proceso.")
 
-    # Redis puede devolver bytes
     if isinstance(user_id_str, bytes):
         user_id_str = user_id_str.decode()
 
     repo = RepositorioUsuario(db)
     usuario = await repo.obtener_por_id(uuid.UUID(user_id_str))
     if not usuario or not usuario.activo:
-        raise ErrorTokenInvalido("Enlace expirado o inválido")
+        raise ErrorTokenInvalido("Sesión expirada. Volvé a iniciar el proceso.")
 
     nuevo_hash = ServicioAuth.hashear_contrasena(datos.contrasena_nueva)
     await repo.cambiar_contrasena(usuario.id, nuevo_hash)
 
-    # Uso único — eliminar token
     await redis.delete(f"reset:{datos.token}")
 
     return {"exito": True, "mensaje": "Contraseña actualizada correctamente"}

@@ -1929,3 +1929,24 @@ Se reemplazó el CTA rápido `Escuchar día` del header por un botón premium co
 2. Si el episodio elegido ya existe, el menú lo reproduce o lo continúa; si todavía no existe, lo genera desde ahí mismo.
 3. Si algún podcast está en `generando_guion` o `generando_audio`, el botón del navbar entra en estado mágico: glow ciruela, órbita suave y destello activo, además del texto `Preparando audio`.
 4. Si el usuario no tiene un plan pago y toca una opción aún no disponible, el flujo lo deriva a `Suscripción` en vez de disparar una generación que no podría completar.
+
+---
+
+## Sesion: Compactación del menú de podcasts del header
+**Fecha:** 2026-04-01 ~08:24 (ARG)
+
+### Que se hizo
+Se redujo la densidad visual del menú contextual de podcasts en el header: se eliminó el bloque explicativo superior, se quitaron las descripciones redundantes de cada capa y el trigger dejó de mostrar el texto `Escuchar` para pasar a una versión más compacta basada en icono.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/layouts/navbar.tsx` | Hace el menú más angosto y compacto, elimina la cabecera explicativa, quita descripciones de `día / semana / mes`, reduce los items y reemplaza la acción textual `Escuchar` por controles iconográficos |
+
+### Tests
+`eslint` pasó sobre `navbar.tsx` y `navbar.test.tsx`. `vitest` pasó `2/2` en `navbar.test.tsx`.
+
+### Como funciona
+1. El disparador de podcasts del header mantiene el menú contextual, pero visualmente ya no depende de una etiqueta textual grande; queda resuelto con icono y caret.
+2. El menú ya no muestra párrafos explicativos ni subtítulos por capa, solo el nombre de cada podcast y su estado útil.
+3. Las acciones listas para reproducir quedan representadas con ícono play, haciendo la interacción más directa y menos cargada.

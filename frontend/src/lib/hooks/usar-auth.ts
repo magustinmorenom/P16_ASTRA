@@ -101,6 +101,14 @@ export function usarSolicitarReset() {
   });
 }
 
+/** Hook para verificar código OTP. */
+export function usarVerificarOTP() {
+  return useMutation({
+    mutationFn: (datos: { email: string; codigo: string }) =>
+      clienteApi.post<{ token: string }>("/auth/verificar-otp", datos),
+  });
+}
+
 /** Hook para confirmar reset de contraseña con token. */
 export function usarConfirmarReset() {
   return useMutation({
