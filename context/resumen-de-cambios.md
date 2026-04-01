@@ -1841,3 +1841,25 @@ Se refactorizó la pantalla de `Diseño Humano` para que adopte la misma lógica
 2. El hero deja de usar el `Body Graph` como protagonista; ahora presenta la lectura, deja chips de entrada para `Tipo`, `Autoridad`, `Perfil` y `Definición`, y ofrece `Ver Body Graph` como CTA de consulta.
 3. El `Body Graph` ya no domina el lienzo principal: se abre desde un modal oscuro y premium, como artefacto visual secundario.
 4. Centros, canales, activaciones y cruz de encarnación siguen siendo clickeables, pero la explicación larga y personalizada vive en el panel derecho, no dentro de las cards del contenido.
+
+---
+
+## Sesion: Limpieza del estado actual en Suscripción
+**Fecha:** 2026-04-01 ~05:28 (ARG)
+
+### Que se hizo
+Se eliminó la tarjeta redundante de “Estado actual” en `Suscripción`, se renombró el panel del hero a “Mi suscripción” y se adelantó la acción de cancelación para que aparezca antes del bloque de facturación.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/suscripcion/page.tsx` | Quita el panel duplicado de estado, relabela el resumen del hero como `Mi suscripción`, reubica la cancelación antes de facturación y limpia una variable sin uso |
+| `frontend/src/tests/paginas/suscripcion.test.tsx` | Ajusta la expectativa del hero al nuevo rotulado `Mi suscripción` |
+
+### Tests
+`eslint` pasó sobre `suscripcion/page.tsx` y `suscripcion.test.tsx`. `vitest` pasó `5/5` en `suscripcion.test.tsx`.
+
+### Como funciona
+1. El hero de `Suscripción` sigue mostrando el estado clave de la cuenta, pero el panel lateral deja de llamarse `Resumen` y pasa a reflejar mejor el contenido con `Mi suscripción`.
+2. La página ya no repite el mismo estado en una tarjeta adicional, por lo que el flujo queda más limpio y directo.
+3. Si el usuario tiene un plan pago, la gestión de cancelación aparece antes del historial de facturas; primero decide sobre su plan y después revisa cobros y comprobantes.

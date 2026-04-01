@@ -210,7 +210,7 @@ describe("PaginaSuscripcion", () => {
 
     renderConProveedores(<PaginaSuscripcion />);
 
-    expect(screen.getByText(/Plan: Free/)).toBeInTheDocument();
+    expect(screen.getByText("Mi suscripción")).toBeInTheDocument();
     expect(screen.getAllByText(/Activa/).length).toBeGreaterThan(0);
   });
 });

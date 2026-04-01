@@ -242,7 +242,7 @@ export default function PaginaSuscripcion() {
   const [premiumConfirmado, setPremiumConfirmado] = useState(false);
 
   const { data: planes, isLoading: cargandoPlanes } = usarPlanes();
-  const { data: miSuscripcion, isLoading: cargandoSuscripcion } = usarMiSuscripcion();
+  const { data: miSuscripcion } = usarMiSuscripcion();
   const suscribirse = usarSuscribirse();
   const cancelar = usarCancelarSuscripcion();
   const { data: pagos, isLoading: cargandoPagos } = usarPagos();
@@ -398,7 +398,7 @@ export default function PaginaSuscripcion() {
                 </div>
 
                 <div className="rounded-[26px] border border-white/[0.08] bg-white/[0.05] p-5 backdrop-blur-xl">
-                  <EtiquetaPanel>Resumen</EtiquetaPanel>
+                  <EtiquetaPanel>Mi suscripción</EtiquetaPanel>
                   <div className="mt-3 flex items-start justify-between gap-4">
                   <div>
                       <p className="text-2xl font-semibold tracking-[-0.02em] text-white">
@@ -469,7 +469,7 @@ export default function PaginaSuscripcion() {
             </div>
           </section>
 
-          <div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="mt-6">
             <section className={`${SUPERFICIE_PANEL} p-5 lg:p-6`}>
               <EtiquetaPanel>Planes disponibles</EtiquetaPanel>
               <h2 className="mt-2 text-lg font-semibold tracking-tight text-white">
@@ -585,136 +585,80 @@ export default function PaginaSuscripcion() {
                 </div>
               )}
             </section>
-
-            <section className={`${SUPERFICIE_PANEL} p-5 lg:p-6`}>
-              <EtiquetaPanel>Mi suscripción</EtiquetaPanel>
-              <h2 className="mt-2 text-lg font-semibold tracking-tight text-white">
-                Estado actual
-              </h2>
-
-              {cargandoSuscripcion ? (
-                <Esqueleto className="mt-5 h-40 rounded-[28px]" />
-              ) : (
-                <div className="mt-5 space-y-4">
-                  <div className={`${SUPERFICIE_ITEM} p-4`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-                          Plan
-                        </p>
-                        <p className="mt-2 text-lg font-semibold text-white">
-                          Plan: {etiquetaPlanActual}
-                        </p>
-                      </div>
-                      {miSuscripcion
-                        ? badgeEstado(miSuscripcion.estado)
-                        : <PillEstado tono="neutral">Free</PillEstado>}
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">
-                          Inicio
-                        </p>
-                        <p className="mt-2 text-sm text-white/78">
-                          {miSuscripcion?.fecha_inicio
-                            ? formatearFecha(miSuscripcion.fecha_inicio)
-                            : "—"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">
-                          Fin
-                        </p>
-                        <p className="mt-2 text-sm text-white/78">
-                          {miSuscripcion?.fecha_fin
-                            ? formatearFecha(miSuscripcion.fecha_fin)
-                            : "—"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">
-                          País
-                        </p>
-                        <p className="mt-2 text-sm text-white/78">
-                          {miSuscripcion?.pais_codigo ?? paisSeleccionado}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {miSuscripcion?.cancelacion_programada && (
-                    <div className="rounded-[24px] border border-rose-400/18 bg-rose-500/[0.06] p-4">
-                      <p className="text-sm leading-6 text-rose-100/78">
-                        Tu suscripción {etiquetaPlanActual} sigue activa hasta el{" "}
-                        <span className="font-medium text-white">
-                          {miSuscripcion.fecha_fin ? formatearFecha(miSuscripcion.fecha_fin) : "—"}
-                        </span>
-                        . Después de esa fecha, la cuenta vuelve a Free.
-                      </p>
-                    </div>
-                  )}
-
-                  {!miSuscripcion && (
-                    <div className={`${SUPERFICIE_ITEM} p-4`}>
-                      <p className="text-sm leading-6 text-white/60">
-                        No tenés una suscripción paga activa en este momento.
-                      </p>
-                    </div>
-                  )}
-
-                  {miSuscripcion?.estado === "activa" &&
-                    miSuscripcion.plan_slug !== "gratis" &&
-                    !miSuscripcion.cancelacion_programada && (
-                      <div className={`${SUPERFICIE_ITEM} p-4`}>
-                        {!mostrarConfirmacionCancelar ? (
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <p className="text-sm leading-6 text-white/58">
-                              Si necesitás frenar renovaciones, podés cancelar el
-                              débito recurrente.
-                            </p>
-                            <Boton
-                              variante="fantasma"
-                              onClick={() => setMostrarConfirmacionCancelar(true)}
-                              className="rounded-full border border-white/10 bg-transparent px-4 text-white/72 hover:bg-white/[0.06] hover:text-white"
-                            >
-                              Cancelar suscripción
-                            </Boton>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            <p className="text-sm font-medium text-white">
-                              ¿Querés cancelar tu plan {etiquetaPlanActual}?
-                            </p>
-                            <p className="text-xs leading-5 text-white/52">
-                              Se frena el cobro recurrente y mantenés acceso hasta
-                              cerrar el período ya abonado.
-                            </p>
-                            <div className="flex flex-wrap gap-3">
-                              <Boton
-                                variante="primario"
-                                onClick={manejarCancelar}
-                                cargando={cancelar.isPending}
-                                className="rounded-full bg-[#E57373] px-4 text-white hover:bg-[#ef8484]"
-                              >
-                                Sí, cancelar
-                              </Boton>
-                              <Boton
-                                variante="fantasma"
-                                onClick={() => setMostrarConfirmacionCancelar(false)}
-                                className="rounded-full border border-white/10 bg-transparent px-4 text-white/72 hover:bg-white/[0.06] hover:text-white"
-                              >
-                                No, mantener
-                              </Boton>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                </div>
-              )}
-            </section>
           </div>
+
+          {miSuscripcion?.cancelacion_programada && (
+            <section className={`${SUPERFICIE_PANEL} mt-6 p-5 lg:p-6`}>
+              <EtiquetaPanel>Gestión del plan</EtiquetaPanel>
+              <h2 className="mt-2 text-lg font-semibold tracking-tight text-white">
+                Cancelación programada
+              </h2>
+              <div className="mt-5 rounded-[24px] border border-rose-400/18 bg-rose-500/[0.06] p-4">
+                <p className="text-sm leading-6 text-rose-100/78">
+                  Tu suscripción {etiquetaPlanActual} sigue activa hasta el{" "}
+                  <span className="font-medium text-white">
+                    {miSuscripcion.fecha_fin ? formatearFecha(miSuscripcion.fecha_fin) : "—"}
+                  </span>
+                  . Después de esa fecha, la cuenta vuelve a Free.
+                </p>
+              </div>
+            </section>
+          )}
+
+          {miSuscripcion?.estado === "activa" &&
+            miSuscripcion.plan_slug !== "gratis" &&
+            !miSuscripcion.cancelacion_programada && (
+              <section className={`${SUPERFICIE_PANEL} mt-6 p-5 lg:p-6`}>
+                <EtiquetaPanel>Gestión del plan</EtiquetaPanel>
+                <h2 className="mt-2 text-lg font-semibold tracking-tight text-white">
+                  Cancelar suscripción
+                </h2>
+                <div className={`${SUPERFICIE_ITEM} mt-5 p-4`}>
+                  {!mostrarConfirmacionCancelar ? (
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-sm leading-6 text-white/58">
+                        Si necesitás frenar renovaciones, podés cancelar el débito
+                        recurrente antes de facturación.
+                      </p>
+                      <Boton
+                        variante="fantasma"
+                        onClick={() => setMostrarConfirmacionCancelar(true)}
+                        className="rounded-full border border-white/10 bg-transparent px-4 text-white/72 hover:bg-white/[0.06] hover:text-white"
+                      >
+                        Cancelar suscripción
+                      </Boton>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-white">
+                        ¿Querés cancelar tu plan {etiquetaPlanActual}?
+                      </p>
+                      <p className="text-xs leading-5 text-white/52">
+                        Se frena el cobro recurrente y mantenés acceso hasta cerrar
+                        el período ya abonado.
+                      </p>
+                      <div className="flex flex-wrap gap-3">
+                        <Boton
+                          variante="primario"
+                          onClick={manejarCancelar}
+                          cargando={cancelar.isPending}
+                          className="rounded-full bg-[#E57373] px-4 text-white hover:bg-[#ef8484]"
+                        >
+                          Sí, cancelar
+                        </Boton>
+                        <Boton
+                          variante="fantasma"
+                          onClick={() => setMostrarConfirmacionCancelar(false)}
+                          className="rounded-full border border-white/10 bg-transparent px-4 text-white/72 hover:bg-white/[0.06] hover:text-white"
+                        >
+                          No, mantener
+                        </Boton>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
 
           <section className={`${SUPERFICIE_PANEL} mt-6 p-5 lg:p-6`}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
