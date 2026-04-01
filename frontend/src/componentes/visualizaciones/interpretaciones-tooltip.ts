@@ -151,22 +151,53 @@ export function interpretacionPlaneta(nombre: string, signo: string): string {
   return `${nombre} influye en tu carta de forma sutil.`;
 }
 
-// ── Casas → frase personal ──
+// ── Casas → tema base ──
 
-export const INTERPRETACION_CASA: Record<number, string> = {
-  1: "Cómo te presentás al mundo y la primera impresión que das.",
-  2: "Tu relación con el dinero, los recursos y lo que valorás.",
-  3: "Cómo pensás, hablás y te conectás con tu entorno.",
-  4: "Tus raíces, tu hogar y tu mundo emocional más íntimo.",
-  5: "Tu creatividad, lo que te divierte y cómo vivís el romance.",
-  6: "Tu rutina diaria, tu salud y cómo servís a los demás.",
-  7: "Qué buscás en una pareja y cómo te vinculás en sociedad.",
-  8: "Tus procesos de transformación y lo que compartís con otros.",
-  9: "Tu filosofía de vida, viajes largos y búsqueda de verdad.",
-  10: "Tu vocación, reputación pública y metas de vida.",
-  11: "Tus ideales, amistades y los grupos donde encontrás lugar.",
-  12: "Tu mundo interior, espiritualidad y lo que no se ve.",
+const TEMA_CASA: Record<number, string> = {
+  1: "tu imagen y cómo te presentás al mundo",
+  2: "tu relación con el dinero y lo que valorás",
+  3: "tu forma de pensar, comunicar y aprender",
+  4: "tu hogar, raíces y mundo emocional íntimo",
+  5: "tu creatividad, diversión y forma de amar",
+  6: "tu rutina, salud y forma de servir",
+  7: "tus relaciones de pareja y asociaciones",
+  8: "tus transformaciones profundas y lo compartido",
+  9: "tu filosofía de vida, viajes y expansión",
+  10: "tu vocación, reputación y metas de vida",
+  11: "tus ideales, amistades y proyectos colectivos",
+  12: "tu mundo interior, espiritualidad y lo oculto",
 };
+
+// Cómo el signo MODIFICA la expresión de la casa
+const SIGNO_EN_CASA: Record<string, string> = {
+  Aries: "con impulso, coraje y acción directa",
+  Tauro: "con calma, sensualidad y perseverancia",
+  "Géminis": "con curiosidad, versatilidad y muchas ideas",
+  "Cáncer": "con sensibilidad, intuición y necesidad de contención",
+  Leo: "con carisma, generosidad y ganas de brillar",
+  Virgo: "con precisión, análisis y atención al detalle",
+  Libra: "buscando equilibrio, armonía y belleza",
+  Escorpio: "con intensidad, profundidad y poder transformador",
+  Sagitario: "con optimismo, aventura y visión amplia",
+  Capricornio: "con disciplina, ambición y sentido práctico",
+  Acuario: "con originalidad, independencia y visión de futuro",
+  Piscis: "con empatía, imaginación y conexión espiritual",
+};
+
+/**
+ * Genera interpretación personalizada de una casa según su signo.
+ * "Vivís [tema de la casa] [cómo lo hacés según el signo]."
+ */
+export function interpretacionCasa(numero: number, signo?: string): string {
+  const tema = TEMA_CASA[numero];
+  if (!tema) return "";
+  if (!signo) return `Área de ${tema}.`;
+
+  const como = SIGNO_EN_CASA[signo];
+  if (!como) return `Área de ${tema} — con la energía de ${signo}.`;
+
+  return `Vivís ${tema} ${como}.`;
+}
 
 // ── Ejes → frase personal ──
 

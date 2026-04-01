@@ -8,7 +8,7 @@ import {
 } from "@/lib/utilidades/interpretaciones-natal";
 import {
   interpretacionPlaneta,
-  INTERPRETACION_CASA,
+  interpretacionCasa,
   INTERPRETACION_EJE,
   INTERPRETACION_SIGNO,
 } from "./interpretaciones-tooltip";
@@ -131,18 +131,14 @@ function ContenidoSigno({ datos }: { datos: DatosTooltipSigno }) {
 }
 
 function ContenidoCasa({ datos }: { datos: DatosTooltipCasa }) {
-  const interpretacion = INTERPRETACION_CASA[datos.numero] ?? "";
+  const interpretacion = interpretacionCasa(datos.numero, datos.signo);
 
   return (
     <>
       <p className="text-[#f8f6ff] text-[15px] font-semibold leading-none mb-1.5">
         Casa {ROMANO[datos.numero] ?? datos.numero}
+        {datos.signo ? ` en ${datos.signo}` : ""}
       </p>
-      {datos.signo && (
-        <p className="text-white/45 text-[11px] mb-2">
-          en {datos.signo}
-        </p>
-      )}
       <p className="text-white/85 text-[13px] leading-[1.45]">
         {interpretacion}
       </p>

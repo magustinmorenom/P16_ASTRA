@@ -59,7 +59,6 @@ export default function RuedaZodiacal({
   const idBase = useId().replace(/:/g, "");
   const idChart = `astrochart-${idBase}`;
   const [montado, setMontado] = useState(false);
-  const [zoom, setZoom] = useState(1);
   const [tooltip, setTooltip] = useState<{
     datos: DatosTooltip;
     x: number;
@@ -194,15 +193,6 @@ export default function RuedaZodiacal({
     };
   }, [handleMouseMove, handleClick, ocultarTooltip]);
 
-  // Zoom con rueda del mouse
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    setZoom((prev) => {
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      return Math.min(3, Math.max(0.5, prev + delta));
-    });
-  }, []);
-
   if (!planetas || !casas) {
     return (
       <div className={cn("flex items-center justify-center rounded-2xl p-8", className)}>
@@ -213,50 +203,10 @@ export default function RuedaZodiacal({
 
   return (
     <div className={cn("relative flex flex-col items-center", className)}>
-      {/* Controles de zoom */}
-      <div className="absolute top-2 right-2 z-10 flex gap-1">
-        <button
-          type="button"
-          onClick={() => setZoom((z) => Math.min(3, z + 0.2))}
-          className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/[0.08] text-[15px] font-medium text-white/70 transition-colors hover:bg-white/[0.15] hover:text-white"
-        >
-          +
-        </button>
-        <button
-          type="button"
-          onClick={() => setZoom((z) => Math.max(0.5, z - 0.2))}
-          className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/[0.08] text-[15px] font-medium text-white/70 transition-colors hover:bg-white/[0.15] hover:text-white"
-        >
-          −
-        </button>
-        {zoom !== 1 && (
-          <button
-            type="button"
-            onClick={() => setZoom(1)}
-            className="flex h-7 items-center justify-center rounded-lg border border-white/10 bg-white/[0.08] px-2 text-[11px] text-white/50 transition-colors hover:bg-white/[0.15] hover:text-white"
-          >
-            {Math.round(zoom * 100)}%
-          </button>
-        )}
-      </div>
-
-      {/* Chart con zoom */}
       <div
         ref={contenedorRef}
-        onWheel={handleWheel}
-        className="w-full cursor-crosshair overflow-auto"
-        style={{
-          maxHeight: "calc(80vh - 80px)",
-        }}
-      >
-        <div
-          style={{
-            transform: `scale(${zoom})`,
-            transformOrigin: "center top",
-            transition: "transform 150ms ease-out",
-          }}
-        />
-      </div>
+        className="w-full cursor-pointer"
+      />
 
       {tooltip && (
         <TooltipRueda
