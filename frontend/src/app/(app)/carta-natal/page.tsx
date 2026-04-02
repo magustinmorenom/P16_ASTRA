@@ -33,6 +33,8 @@ import { SeccionTriada } from "@/componentes/carta-natal/seccion-triada";
 const FONDO_PAGINA =
   "relative min-h-full bg-[#16011B] lg:h-full lg:min-h-0 lg:overflow-hidden";
 
+type VistaExplorador = "planetas" | "aspectos" | "casas";
+
 function CapasFondo() {
   return (
     <>
@@ -129,6 +131,7 @@ export default function PaginaCartaNatal() {
   const [modoManual, setModoManual] = useState(false);
   const [modalRuedaAbierta, setModalRuedaAbierta] = useState(false);
   const [seleccion, setSeleccion] = useState<SeleccionContextual>({ tipo: "default" });
+  const [vistaExplorador, setVistaExplorador] = useState<VistaExplorador>("planetas");
 
   const datos = datosManual ?? (calculos?.natal as CartaNatal | null) ?? null;
 
@@ -245,44 +248,31 @@ export default function PaginaCartaNatal() {
               <div className="relative z-10 grid gap-6 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
                 <div>
                   <p className={`${ETIQUETA_CARTA} text-violet-200/75`}>
-                    Lectura guiada
+                    Lectura natal
                   </p>
                   <div className="mt-4 flex items-start gap-4">
                     <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#B388FF] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
                       <IconoAstral nombre="astrologia" tamaño={30} className="text-white" />
                     </div>
                     <div>
-                      <h1 className="text-[26px] font-semibold tracking-tight text-white lg:text-[32px]">
-                        Carta Astral
+                      <h1 className="text-[24px] font-semibold tracking-tight text-white lg:text-[28px]">
+                        Calculá tu carta
                       </h1>
-                      <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-violet-100/72">
-                        Calculá tu mapa natal y leé primero la síntesis: tríada,
-                        planetas, aspectos y casas. La rueda queda como consulta,
-                        no como ruido visual.
+                      <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-violet-100/68">
+                        Ingresá tus datos y abrí una lectura base compacta: tríada,
+                        pulso, planetas, aspectos y casas; la rueda queda sólo como apoyo.
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                    {[
-                      {
-                        titulo: "Lectura por capas",
-                        descripcion: "Entrás por la síntesis y después profundizás sólo donde hace falta.",
-                      },
-                      {
-                        titulo: "Rueda en modal",
-                        descripcion: "El gráfico natal queda disponible bajo demanda, sin dominar toda la pantalla.",
-                      },
-                    ].map((item) => (
-                      <div
-                        key={item.titulo}
-                        className="rounded-2xl border border-white/10 bg-white/[0.08] p-4 backdrop-blur-md"
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {["Tríada", "Pulso", "Planetas", "Rueda a pedido"].map((item) => (
+                      <span
+                        key={item}
+                        className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-1.5 text-[11px] font-medium text-white/72"
                       >
-                        <p className="text-sm font-semibold text-white">{item.titulo}</p>
-                        <p className="mt-2 text-[13px] leading-relaxed text-violet-100/66">
-                          {item.descripcion}
-                        </p>
-                      </div>
+                        {item}
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -328,6 +318,87 @@ export default function PaginaCartaNatal() {
   const seleccionEnergeticaActiva = seleccion.tipo === "energia" ? seleccion : null;
   const haySeleccionMobile = seleccion.tipo !== "default";
   const metaPanel = obtenerMetaPanelContextual(seleccion, datos);
+  const vistasExplorador: { clave: VistaExplorador; etiqueta: string }[] = [
+    { clave: "planetas", etiqueta: "Planetas" },
+    { clave: "aspectos", etiqueta: "Aspectos" },
+    { clave: "casas", etiqueta: "Casas" },
+  ];
+
+  const contenidoPrincipal = (
+    <div className="relative min-h-full overflow-hidden bg-[#16011b]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_top_left,rgba(124,77,255,0.24),transparent_44%)]" />
+      <div className="pointer-events-none absolute right-[-120px] top-24 h-72 w-72 rounded-full bg-[#B388FF]/10 blur-3xl" />
+      <div className="pointer-events-none absolute left-10 top-[640px] h-64 w-64 rounded-full bg-[#7C4DFF]/10 blur-3xl" />
+
+      <div className="relative mx-auto flex max-w-5xl flex-col gap-5 px-5 py-6 pb-24 lg:px-7 lg:pb-6">
+        <HeroCarta
+          datos={datos}
+          onAbrirRueda={abrirModalRueda}
+        />
+
+        <section className={`${SUPERFICIE_CLARA_CARTA} p-3.5 sm:p-4`}>
+          <div className="grid gap-3 xl:grid-cols-[1.08fr_0.92fr]">
+            {sol && luna ? (
+              <SeccionTriada
+                sol={sol}
+                luna={luna}
+                ascendente={datos.ascendente}
+                onSeleccionar={seleccionarTriada}
+              />
+            ) : null}
+
+            <DistribucionEnergetica
+              planetas={datos.planetas}
+              onSeleccionar={seleccionarEnergia}
+              seleccionActiva={seleccionEnergeticaActiva}
+            />
+          </div>
+        </section>
+
+        <section className={`${SUPERFICIE_CLARA_CARTA} p-3.5 sm:p-4`}>
+          <div className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.03] p-1">
+            {vistasExplorador.map((vista) => (
+              <button
+                key={vista.clave}
+                type="button"
+                onClick={() => setVistaExplorador(vista.clave)}
+                className={`rounded-full px-3 py-1.5 text-[11px] font-medium transition-all ${
+                  vistaExplorador === vista.clave
+                    ? "bg-[#7C4DFF]/18 text-[#D9C2FF]"
+                    : "text-white/48 hover:text-white/72"
+                }`}
+              >
+                {vista.etiqueta}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-3 overflow-hidden">
+            {vistaExplorador === "planetas" && (
+              <PlanetasNarrativo
+                planetas={datos.planetas}
+                planetaSeleccionado={planetaSeleccionadoNombre}
+                onSeleccionar={seleccionarPlaneta}
+              />
+            )}
+
+            {vistaExplorador === "aspectos" && (
+              <AspectosNarrativo
+                aspectos={datos.aspectos}
+                onSeleccionar={seleccionarAspecto}
+              />
+            )}
+
+            {vistaExplorador === "casas" && (
+              <div className="p-3.5 sm:p-4">
+                <CasasGrid casas={datos.casas} onSeleccionar={seleccionarCasa} />
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -337,35 +408,7 @@ export default function PaginaCartaNatal() {
 
         <div className="relative z-10 flex min-h-full flex-col lg:h-full lg:min-h-0 lg:flex-row lg:overflow-hidden">
           <div className="lg:hidden flex-1 overflow-y-auto scroll-sutil">
-            <div className="p-5 pb-24">
-              <HeroCarta
-                datos={datos}
-                onAbrirRueda={abrirModalRueda}
-              />
-              {sol && luna && (
-                <SeccionTriada
-                  sol={sol}
-                  luna={luna}
-                  ascendente={datos.ascendente}
-                  onSeleccionar={seleccionarTriada}
-                />
-              )}
-              <DistribucionEnergetica
-                planetas={datos.planetas}
-                onSeleccionar={seleccionarEnergia}
-                seleccionActiva={seleccionEnergeticaActiva}
-              />
-              <PlanetasNarrativo
-                planetas={datos.planetas}
-                planetaSeleccionado={planetaSeleccionadoNombre}
-                onSeleccionar={seleccionarPlaneta}
-              />
-              <AspectosNarrativo
-                aspectos={datos.aspectos}
-                onSeleccionar={seleccionarAspecto}
-              />
-              <CasasGrid casas={datos.casas} onSeleccionar={seleccionarCasa} />
-            </div>
+            {contenidoPrincipal}
           </div>
 
           {haySeleccionMobile && (
@@ -396,36 +439,8 @@ export default function PaginaCartaNatal() {
           )}
 
           <div className="hidden lg:flex flex-1 min-h-0">
-            <section className="min-w-0 flex-1 overflow-y-auto scroll-sutil px-6 py-6 xl:px-8 xl:py-7">
-              <div className="mx-auto max-w-[1120px]">
-                <HeroCarta
-                  datos={datos}
-                  onAbrirRueda={abrirModalRueda}
-                />
-                {sol && luna && (
-                  <SeccionTriada
-                    sol={sol}
-                    luna={luna}
-                    ascendente={datos.ascendente}
-                    onSeleccionar={seleccionarTriada}
-                  />
-                )}
-                <DistribucionEnergetica
-                  planetas={datos.planetas}
-                  onSeleccionar={seleccionarEnergia}
-                  seleccionActiva={seleccionEnergeticaActiva}
-                />
-                <PlanetasNarrativo
-                  planetas={datos.planetas}
-                  planetaSeleccionado={planetaSeleccionadoNombre}
-                  onSeleccionar={seleccionarPlaneta}
-                />
-                <AspectosNarrativo
-                  aspectos={datos.aspectos}
-                  onSeleccionar={seleccionarAspecto}
-                />
-                <CasasGrid casas={datos.casas} onSeleccionar={seleccionarCasa} />
-              </div>
+            <section className="min-w-0 flex-1 overflow-y-auto scroll-sutil-dark">
+              {contenidoPrincipal}
             </section>
 
             <RailLateral

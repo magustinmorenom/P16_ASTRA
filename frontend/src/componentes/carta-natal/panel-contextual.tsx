@@ -204,6 +204,34 @@ function SeccionPanel({
   );
 }
 
+function ResumenLinea({
+  etiqueta,
+  valor,
+  descripcion,
+}: {
+  etiqueta: string;
+  valor: string | number;
+  descripcion: string;
+}) {
+  return (
+    <div className="rounded-[22px] border border-white/[0.08] bg-white/[0.04] px-4 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
+            {etiqueta}
+          </p>
+          <p className="mt-1 text-[13px] leading-6 text-white/62">
+            {descripcion}
+          </p>
+        </div>
+        <span className="shrink-0 text-[20px] font-semibold tracking-[-0.03em] text-[#D9C2FF]">
+          {valor}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function CabeceraPanel({
   etiqueta,
   titulo,
@@ -526,8 +554,8 @@ export function obtenerMetaPanelContextual(
     const badge = BADGE_ASPECTO[clave];
     return {
       etiqueta: "Aspecto",
-      titulo: `${seleccion.aspecto.planeta1} · ${badge?.label || seleccion.aspecto.tipo} · ${seleccion.aspecto.planeta2}`,
-      subtitulo: `${seleccion.aspecto.aplicativo ? "Aplicativo" : "Separativo"} · Orbe ${seleccion.aspecto.orbe.toFixed(1)}°`,
+      titulo: `${seleccion.aspecto.planeta1} y ${seleccion.aspecto.planeta2}`,
+      subtitulo: `${badge?.label || seleccion.aspecto.tipo} · ${seleccion.aspecto.aplicativo ? "Aplicativo" : "Separativo"} · Orbe ${seleccion.aspecto.orbe.toFixed(1)}°`,
     };
   }
 
@@ -569,8 +597,8 @@ export function obtenerMetaPanelContextual(
 
   return {
     etiqueta: "Lectura contextual",
-    titulo: "Carta Astral",
-    subtitulo: "Elegí un punto de tu carta para ampliar qué es y qué significa para vos.",
+    titulo: "Seleccioná un punto",
+    subtitulo: "Abrí tríada, pulso, planeta, aspecto o casa para leerlo con contexto.",
   };
 }
 
@@ -695,134 +723,48 @@ function VistaDefault({
   const modalidadDominante = Object.entries(dist.modalidades).sort(
     (a, b) => b[1] - a[1],
   )[0];
-
-  if (modo === "escritorio") {
-    return (
-      <div className="p-5">
-        <p className="text-[13px] leading-6 text-violet-100/62">
-          Elegí un punto de tu carta para ver primero qué representa y luego qué
-          significa específicamente para vos.
-        </p>
-
-        <div className="mt-4 grid gap-3">
-          <div className={TARJETA_PANEL}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-              Elemento dominante
-            </p>
-            <div className="mt-2 flex items-center gap-2">
-              <div
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: COLORES_ELEMENTO[elementoDominante[0]] }}
-              />
-              <p className="text-sm font-semibold text-white">{elementoDominante[0]}</p>
-            </div>
-            <p className="mt-1 text-[12px] text-violet-100/60">
-              {elementoDominante[1]} planetas sostienen este tono.
-            </p>
-          </div>
-
-          <div className={TARJETA_PANEL}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-              Modalidad dominante
-            </p>
-            <p className="mt-2 text-sm font-semibold text-white">{modalidadDominante[0]}</p>
-            <p className="mt-1 text-[12px] text-violet-100/60">
-              {modalidadDominante[1]} planetas repiten este patrón.
-            </p>
-          </div>
-
-          <div className={TARJETA_PANEL}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-              Qué podés abrir
-            </p>
-            <div className="mt-3 space-y-2">
-              {[
-                "Tríada para leer identidad, emoción y presencia.",
-                "Planetas para entender cómo se expresa cada función.",
-                "Aspectos y casas para ubicar vínculos y escenarios.",
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-2xl border border-white/10 bg-white/[0.05] px-3.5 py-3"
-                >
-                  <p className="text-[12px] leading-relaxed text-violet-50/82">
-                    {item}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const sol = datos.planetas.find((planeta) => planeta.nombre === "Sol");
+  const luna = datos.planetas.find((planeta) => planeta.nombre === "Luna");
 
   return (
-    <div className="p-5 lg:p-6">
-      <div className="flex h-full flex-col">
-        <div className="rounded-[24px] border border-white/10 bg-white/[0.08] p-5 backdrop-blur-xl">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.08] text-[#B388FF]">
-            <Icono nombre="destello" tamaño={22} peso="fill" />
-          </div>
+    <div className="p-5">
+      <div className="rounded-[28px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-5 shadow-[0_18px_40px_rgba(8,2,22,0.24)]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/48">
+          Lectura inicial
+        </p>
+        <h3 className="mt-3 text-[16px] font-semibold tracking-[-0.02em] text-white sm:text-[18px]">
+          {sol && luna
+            ? `Sol ${sol.signo} · Luna ${luna.signo} · Asc ${datos.ascendente.signo}`
+            : "Tu carta empieza por la tríada."}
+        </h3>
+        <p className={modo === "escritorio"
+          ? "mt-3 text-[13px] leading-7 text-white/62"
+          : "mt-3 text-[13px] leading-7 text-white/72"}>
+          Empezá por Sol, Luna y Ascendente. Después abrí el punto técnico que necesites para ampliar lectura, dinámica y escenario.
+        </p>
+      </div>
 
-          <p className={`${ETIQUETA_CARTA} mt-4 text-violet-200/72`}>
-            Guía de lectura
-          </p>
-          <h2 className="mt-2 text-[20px] font-semibold tracking-tight text-white">
-            Abrí un punto de tu carta
-          </h2>
-          <p className="mt-3 text-[13px] leading-relaxed text-violet-100/68">
-            Cada bloque técnico es clickeable. Primero ves qué representa ese dato
-            en astrología y luego cómo se manifiesta específicamente en tu carta.
-          </p>
-        </div>
-
-        <div className="mt-4 grid gap-3">
-          <div className={TARJETA_PANEL}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-              Elemento dominante
-            </p>
-            <div className="mt-2 flex items-center gap-2">
-              <div
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: COLORES_ELEMENTO[elementoDominante[0]] }}
-              />
-              <p className="text-sm font-semibold text-white">{elementoDominante[0]}</p>
-            </div>
-            <p className="mt-1 text-[12px] text-violet-100/62">
-              {elementoDominante[1]} planetas sostienen este tono.
-            </p>
-          </div>
-
-          <div className={TARJETA_PANEL}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-              Modalidad dominante
-            </p>
-            <p className="mt-2 text-sm font-semibold text-white">{modalidadDominante[0]}</p>
-            <p className="mt-1 text-[12px] text-violet-100/62">
-              {modalidadDominante[1]} planetas repiten este patrón.
-            </p>
-          </div>
-
-          <div className={TARJETA_PANEL}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-              Qué podés abrir
-            </p>
-            <div className="mt-3 grid gap-2">
-              {[
-                "Rueda y tríada para leer el mapa general.",
-                "Planetas y aspectos para ver dinámica interna.",
-                "Casas para ubicar dónde se juega cada tema.",
-              ].map((item) => (
-                <div key={item} className={TARJETA_PANEL_SUAVE}>
-                  <p className="text-[12px] leading-relaxed text-violet-50/84">
-                    {item}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+      <div className="mt-5 space-y-3">
+        <ResumenLinea
+          etiqueta="Sol"
+          valor={sol?.signo ?? "—"}
+          descripcion="Identidad, dirección y tono vital."
+        />
+        <ResumenLinea
+          etiqueta="Luna"
+          valor={luna?.signo ?? "—"}
+          descripcion="Clima emocional y forma de procesar."
+        />
+        <ResumenLinea
+          etiqueta="Ascendente"
+          valor={datos.ascendente.signo}
+          descripcion="Presencia, arranque y primera lectura."
+        />
+        <ResumenLinea
+          etiqueta="Pulso"
+          valor={`${elementoDominante[0]} + ${modalidadDominante[0]}`}
+          descripcion="Combinación base entre elemento y modo de activación."
+        />
       </div>
     </div>
   );
@@ -1074,25 +1016,23 @@ function VistaAspecto({
       {modo === "movil" ? (
         <CabeceraPanel
           etiqueta="Aspecto"
-          titulo={`${aspecto.planeta1} · ${badge?.label || aspecto.tipo} · ${aspecto.planeta2}`}
-          subtitulo={`${aspecto.aplicativo ? "Aplicativo" : "Separativo"} · Orbe ${aspecto.orbe.toFixed(1)}°`}
+          titulo={`${aspecto.planeta1} y ${aspecto.planeta2}`}
+          subtitulo={`${badge?.label || aspecto.tipo} · ${aspecto.aplicativo ? "Aplicativo" : "Separativo"} · Orbe ${aspecto.orbe.toFixed(1)}°`}
           onCerrar={onCerrar}
         />
       ) : null}
 
-      <div className={`${modo === "movil" ? "mt-4 " : ""}${GRILLA_PANEL_METRICAS}`}>
-        {[
-          { etiqueta: "Planeta 1", valor: aspecto.planeta1 },
-          { etiqueta: "Aspecto", valor: badge?.label || aspecto.tipo },
-          { etiqueta: "Planeta 2", valor: aspecto.planeta2 },
-        ].map((item) => (
-          <div key={item.etiqueta} className={TARJETA_PANEL_SUAVE}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-              {item.etiqueta}
-            </p>
-            <p className="mt-2 text-[13px] font-semibold text-white">{item.valor}</p>
-          </div>
-        ))}
+      <div className={`${modo === "movil" ? "mt-4 " : ""}rounded-[22px] border border-white/[0.08] bg-white/[0.05] p-4`}>
+        <div className="flex items-center gap-2 text-[13px] font-semibold text-white">
+          <span>{aspecto.planeta1}</span>
+          <span className="text-white/28">·</span>
+          <span className="text-violet-200">{badge?.label || aspecto.tipo}</span>
+          <span className="text-white/28">·</span>
+          <span>{aspecto.planeta2}</span>
+        </div>
+        <p className="mt-2 text-[11px] text-violet-100/58">
+          {aspecto.aplicativo ? "Aplicativo" : "Separativo"} · Orbe {aspecto.orbe.toFixed(1)}°
+        </p>
       </div>
 
       <div className="mt-4 space-y-3">
