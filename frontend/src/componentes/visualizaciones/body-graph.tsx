@@ -98,7 +98,7 @@ function DibujarCentro({
       : relacionado
         ? "rgba(211,184,255,0.72)"
         : "rgba(255,255,255,0.24)";
-  const tam = 34;
+  const tam = activo ? 40 : 38;
   const brillo = activo ? "0 0 18px rgba(179,136,255,0.45)" : undefined;
 
   function manejarAccion() {
@@ -162,7 +162,7 @@ function DibujarCentro({
         y={centro.y + tam / 2 + 16}
         textAnchor="middle"
         fill={activo ? "#FFFFFF" : definido ? "#FFFFFF" : "rgba(233,213,255,0.72)"}
-        fontSize="9"
+        fontSize="10"
         fontWeight={activo || definido ? "600" : "500"}
       >
         {centro.nombre}
@@ -244,7 +244,11 @@ export default function BodyGraph({
 
   return (
     <div className={cn("flex items-center justify-center", className)}>
-      <svg viewBox="0 0 400 440" className="w-full max-w-[360px] overflow-visible">
+      <svg
+        viewBox="0 0 400 440"
+        preserveAspectRatio="xMidYMid meet"
+        className="w-full max-w-[440px] overflow-visible sm:max-w-[480px]"
+      >
         <defs>
           <radialGradient id="hdGlow" cx="50%" cy="40%" r="70%">
             <stop offset="0%" stopColor="rgba(179,136,255,0.20)" />
@@ -252,7 +256,7 @@ export default function BodyGraph({
           </radialGradient>
         </defs>
 
-        <circle cx="200" cy="220" r="158" fill="url(#hdGlow)" />
+          <circle cx="200" cy="220" r="166" fill="url(#hdGlow)" />
 
         {CONEXIONES.map(([a, b], i) => {
           const ca = obtenerPosCentro(a);
