@@ -86,7 +86,7 @@ describe("PaginaCartaNatal", () => {
 
     expect(screen.getAllByText("Carta Astral").length).toBeGreaterThanOrEqual(1);
     expect(
-      screen.getAllByRole("button", { name: /ver rueda/i }).length,
+      screen.getAllByRole("button", { name: /rueda natal/i }).length,
     ).toBeGreaterThanOrEqual(1);
     // Sol y Luna aparecen múltiples veces (planeta + aspecto), verificamos que existan
     expect(screen.getAllByText("Sol").length).toBeGreaterThanOrEqual(1);
@@ -103,7 +103,7 @@ describe("PaginaCartaNatal", () => {
     const user = userEvent.setup();
     renderConProveedores(<PaginaCartaNatal />);
 
-    const [botonVerRueda] = screen.getAllByRole("button", { name: /ver rueda/i });
+    const [botonVerRueda] = screen.getAllByRole("button", { name: /rueda natal/i });
     await user.click(botonVerRueda);
 
     expect(screen.getByText("Mapa completo de la carta")).toBeInTheDocument();

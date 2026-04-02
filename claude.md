@@ -146,6 +146,53 @@ Los iconos Phosphor (`<Icono>`) siguen disponibles para UI genérica (navegació
 - Para listas que cargan: escalonar la animación con `animationDelay` por índice (`idx * 50ms`)
 - Evitar `animate-bounce` o animaciones agresivas — el estilo ASTRA es suave y premium
 
+### Concepto de Diseño Premium Compacto — Regla preferente
+
+Cuando una pantalla ASTRA ya tenga la paleta correcta pero siga sintiéndose pesada, la solución **no** es agregar más tarjetas ni más títulos: hay que pasar de una lógica de “página con bloques” a una lógica de **consola de lectura**.
+
+Principios obligatorios para nuevas iteraciones visuales:
+
+- **Pensar en artefactos, no en cards.**
+  - Priorizar rails, docks, bandas, timelines, matrices compactas, strips interactivos y nodos de lectura.
+  - Una `card` solo se justifica si realmente encapsula una decisión o una acción.
+
+- **Menos capítulos explícitos.**
+  - Evitar rótulos como `Capítulo 1`, `Capítulo 2`, `Sección`, `Bloque`, etc.
+  - Si una zona necesita demasiados títulos para entenderse, la estructura está mal resuelta.
+
+- **Tipografía contenida.**
+  - Premium no significa títulos gigantes ni números inflados.
+  - Solo debe existir un foco tipográfico dominante por viewport.
+  - Labels pequeños y claros; títulos medianos; números grandes solo cuando de verdad mandan la lectura.
+  - En paneles laterales, tarjetas contextuales y módulos secundarios no usar títulos heroicos: preferir escalas contenidas, normalmente entre `text-[16px]` y `text-[20px]`.
+
+- **El centro muestra estructura; el panel derecho explica.**
+  - La vista principal debe quedarse con síntesis, selección y navegación.
+  - La explicación larga, el detalle técnico y la interpretación personalizada viven en el panel derecho o en un sheet contextual.
+  - No duplicar explicación en ambos lados.
+
+- **Cero redundancia visual.**
+  - Si un texto no cambia comprensión ni acción, sobra.
+  - Si dos bloques explican lo mismo con distinto wording, sobra uno.
+  - Si un artefacto visual no ayuda a decidir ni a leer mejor, debe bajar de nivel o pasar a modal.
+
+- **Aprovechar el viewport.**
+  - Evitar stacks verticales de tarjetas altas cuando el contenido puede resolverse en una banda, una matriz o una grilla compacta.
+  - Desktop debe sentirse como mesa de lectura o cabina interactiva, no como landing larga.
+
+- **Los componentes deben ser clickeables por semántica, no por decoración.**
+  - Todo dato técnico o estructural importante debe poder abrir contexto.
+  - El hover y el activo deben sugerir “esto se puede leer” o “esto controla algo”.
+
+Patrones recomendados para ASTRA:
+
+- `Dock` de acceso rápido para cambiar foco entre capas.
+- `Rail` compacto para resúmenes clave.
+- `Timeline` o `Stepper` cuando hay progresión temporal.
+- `Matriz` para datos secundarios.
+- `Listas densas` para items técnicos repetitivos.
+- `Modal` o `artefacto secundario` para gráficos que no deben dominar la pantalla.
+
 ### Pre-deploy — Regla obligatoria
 
 **SIEMPRE correr `cd frontend && npx tsc --noEmit` antes de pushear a main.** El build de Docker en producción corre TypeScript strict y cualquier error rompe el deploy.

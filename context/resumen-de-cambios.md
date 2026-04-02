@@ -1950,3 +1950,164 @@ Se redujo la densidad visual del menú contextual de podcasts en el header: se e
 1. El disparador de podcasts del header mantiene el menú contextual, pero visualmente ya no depende de una etiqueta textual grande; queda resuelto con icono y caret.
 2. El menú ya no muestra párrafos explicativos ni subtítulos por capa, solo el nombre de cada podcast y su estado útil.
 3. Las acciones listas para reproducir quedan representadas con ícono play, haciendo la interacción más directa y menos cargada.
+
+---
+
+## Sesion: Carta Astral como consola compacta premium
+**Fecha:** 2026-04-02 ~12:31 (ARG)
+
+### Que se hizo
+Se actualizó `claude.md` con el nuevo criterio de diseño premium compacto y se rediseñó la pantalla de Carta Astral para que deje de leerse como una página de secciones y pase a funcionar como una consola de lectura: hero breve, barra de anclas, bloques densos y menos texto redundante.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `claude.md` | Incorpora el criterio de “consola de lectura” con reglas de artefactos compactos, menor redundancia y panel derecho como lugar de explicación |
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Reorganiza la pantalla con hero compacto, barra de anclas, layout por superficies densas y navegación rápida con anclas separadas para mobile y desktop |
+| `frontend/src/componentes/carta-natal/barra-anclas.tsx` | Nuevo componente de acceso rápido para saltar entre tríada, pulso, planetas, aspectos y casas |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Ajusta el hero a un formato más corto y editorial, con CTA de rueda más sobrio y resumen técnico compacto |
+| `frontend/src/componentes/carta-natal/seccion-triada.tsx` | Elimina encabezados grandes y convierte la tríada en una superficie compacta de tres anclas semánticas |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Reconvierte la distribución energética en un bloque de pulso más denso, sin títulos de capítulo ni tarjetas altas redundantes |
+| `frontend/src/componentes/carta-natal/planetas-narrativo.tsx` | Saca la narrativa larga del centro y deja a los planetas como focos técnicos compactos que delegan la explicación al panel derecho |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Colapsa los grupos de aspectos en una lista más compacta, con badges y estados útiles sin tarjetas intermedias |
+| `frontend/src/componentes/carta-natal/casas-grid.tsx` | Reduce la escala visual de las casas y las convierte en una matriz compacta más eficiente en viewport |
+| `frontend/src/tests/paginas/carta-natal.test.tsx` | Actualiza la suite a la nueva CTA `Rueda natal` y mantiene cobertura sobre carga, datos persistidos y apertura del modal |
+
+### Tests
+`eslint` pasó sobre los archivos tocados de Carta Astral. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/carta-natal.test.tsx`.
+
+### Como funciona
+1. La pantalla abre con un hero corto y una barra de anclas que permite saltar a `Tríada`, `Pulso`, `Planetas`, `Aspectos` y `Casas` sin gastar viewport en títulos de capítulo.
+2. El bloque central muestra estructura y selección: la tríada, la distribución energética, los planetas, los aspectos y las casas quedan condensados en superficies compactas, con menos texto y mayor densidad útil.
+3. Toda la profundidad sigue viviendo en el panel derecho contextual, por lo que el centro ya no repite interpretación larga ni explicación técnica redundante.
+4. La rueda natal permanece disponible como artefacto secundario en modal, para consulta puntual sin volver a dominar la interfaz principal.
+
+---
+
+## Sesion: Reorientación de Carta Astral según el patrón de Numerología
+**Fecha:** 2026-04-02 ~13:11 (ARG)
+
+### Que se hizo
+Se rehízo la última iteración de Carta Astral porque la versión anterior seguía viéndose fragmentada y demasiado mecánica. La pantalla ahora toma como referencia directa a `Numerología`: hero editorial, columna central limpia, exploración tabulada y panel derecho útil desde el estado inicial.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Reestructura la pantalla para que funcione como una experiencia lineal: hero, tríada, pulso y explorador con tabs para `planetas / aspectos / casas` |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Reemplaza el hero anterior por una versión más cercana a Numerología: una sola tesis principal, chips breves y CTA de rueda sin cajas extras |
+| `frontend/src/componentes/carta-natal/seccion-triada.tsx` | Convierte la tríada en una lista editorial de tres filas en lugar de tres tarjetas independientes |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Simplifica `Pulso` a una consola de tres celdas (`pulso`, `elemento`, `modalidad`) sin subtarjetas internas |
+| `frontend/src/componentes/carta-natal/planetas-narrativo.tsx` | Pasa de una grilla de tarjetas a una lista densa más alineada con el patrón de lectura de Numerología |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Aplana los aspectos en una lista única, con menos envoltorios y mejor lectura jerárquica |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Rehace la vista default del panel derecho para que empiece con una guía útil y resúmenes de `Sol`, `Luna`, `Ascendente` y `Pulso` |
+| `frontend/src/tests/paginas/carta-natal.test.tsx` | Mantiene cobertura de CTA, carga y modal sobre la nueva composición |
+| `context/resumen-de-cambios.md` | Registra esta segunda iteración visual |
+
+### Tests
+`eslint` pasó sobre la pantalla y componentes tocados. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/carta-natal.test.tsx`.
+
+### Como funciona
+1. La pantalla de Carta Astral ya no depende de una barra de anclas ni de bloques visuales excesivos; arranca con un hero corto y una tesis principal basada en la tríada.
+2. La columna central se organiza en cuatro pasos claros: `Tríada`, `Pulso` y un explorador tabulado que deja elegir entre `Planetas`, `Aspectos` y `Casas` sin apilar todo al mismo tiempo.
+3. Cada fila o celda sigue siendo clickeable y alimenta el panel derecho, donde vive la explicación general y la interpretación específica de ese punto.
+4. El panel contextual también quedó alineado con Numerología: en estado vacío ya ofrece una lectura inicial útil en vez de repetir instrucciones o mostrar bloques genéricos.
+
+---
+
+## Sesion: Carta Astral — reducción de chips y superficies anidadas
+**Fecha:** 2026-04-02 ~16:46 (ARG)
+
+### Que se hizo
+Se hizo una pasada de refinamiento sobre Carta Astral para bajar la escala visual, sacar pills innecesarias y limpiar contenedores anidados. El objetivo fue mantener el layout que ya funcionaba, pero con una lectura más compacta y menos “UI encima de UI”.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Limpia el bloque explorador: saca encabezado redundante y elimina un contenedor interno extra para que tabs y contenido respiren sobre la misma superficie |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Reduce el tamaño del H1, reemplaza los chips de `Sol/Luna/Asc` por una línea textual compacta y acorta la bajada |
+| `frontend/src/componentes/carta-natal/seccion-triada.tsx` | Quita la caja interna de la tríada y reemplaza chips por metadata lineal más sobria |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Elimina la superficie duplicada dentro del bloque de pulso, baja la escala tipográfica y compacta `elemento/modalidad` |
+| `frontend/src/componentes/carta-natal/planetas-narrativo.tsx` | Reemplaza badges y chips por metadatos en línea para que cada planeta ocupe menos alto visual |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Simplifica la cabecera de cada aspecto y reduce el chrome de badges decorativos |
+| `frontend/src/componentes/carta-natal/casas-grid.tsx` | Cambia los chips inferiores por una línea de metadata compacta y ajusta tamaños |
+| `context/resumen-de-cambios.md` | Documenta esta pasada de limpieza visual |
+
+### Tests
+`eslint` pasó sobre la página y componentes tocados. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/carta-natal.test.tsx`.
+
+### Como funciona
+1. El hero sigue marcando la entrada a la experiencia, pero ahora lo hace con una tesis más corta y una sola línea técnica en vez de tres chips compitiendo.
+2. La tríada, el pulso y el explorador usan menos superficies internas, así que la columna central se siente más liviana y continua.
+3. Planetas, aspectos y casas siguen siendo interactivos, pero ocupan menos alto porque su metadata pasó de pills a líneas compactas.
+4. El panel derecho conserva la profundidad interpretativa, por lo que el centro puede sostener una lectura más limpia sin perder información útil.
+
+---
+
+## Sesion: Carta Astral — pulso unificado y escala reducida
+**Fecha:** 2026-04-02 ~17:22 (ARG)
+
+### Que se hizo
+Se compactó aún más el bloque energético de Carta Astral. `Pulso dominante`, `Elemento` y `Modalidad` dejaron de verse como piezas separadas y pasaron a una sola unidad visual, con el valor principal mucho más chico para que no robe protagonismo al resto de la pantalla.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Unifica `pulso`, `elemento` y `modalidad` en una sola superficie; reduce la escala de `Fuego + Cardinal` y convierte los secundarios en una continuación del mismo artefacto |
+| `context/resumen-de-cambios.md` | Documenta esta pasada puntual sobre jerarquía visual |
+
+### Tests
+`eslint` pasó sobre `distribucion-energetica.tsx`, `page.tsx` y la suite de página. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/carta-natal.test.tsx`.
+
+### Como funciona
+1. El bloque energético ahora entra como una sola lectura compacta en vez de tres tarjetas visualmente autónomas.
+2. `Pulso dominante` sigue siendo el punto principal, pero el valor se ve más contenido y ya no compite con el hero ni con la tríada.
+3. `Elemento` y `Modalidad` siguen siendo clickeables para abrir su lectura en el panel derecho, pero quedaron integrados debajo del pulso como continuación natural del mismo sistema.
+
+---
+
+## Sesion: Carta Astral — hero y aspectos más directos
+**Fecha:** 2026-04-02 ~17:28 (ARG)
+
+### Que se hizo
+Se limpió el hero de Carta Astral para que destaque la tríada real del usuario y se simplificó la lectura de aspectos tanto en el centro como en el panel derecho. La idea fue sacar texto decorativo y ordenar mejor la información relacional.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Quita `Lectura base`, elimina la tesis genérica `tu carta abre en agua cardinal`, pone la tríada `Sol/Luna/Asc` como dato principal y vuelve más llamativo el botón `Rueda natal` |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Quita el punto decorativo del rótulo `Pulso dominante` |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Reordena cada aspecto en dos zonas: vínculo a la izquierda y tipo/orbe a la derecha, con una separación más clara |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Simplifica la vista contextual de aspectos: cambia el título a `planeta y planeta` y reemplaza la grilla de `Planeta 1 / Aspecto / Planeta 2` por un único resumen compacto |
+| `context/resumen-de-cambios.md` | Documenta esta pasada de limpieza sobre hero y aspectos |
+
+### Tests
+`eslint` pasó sobre `hero-carta.tsx`, `distribucion-energetica.tsx`, `aspectos-narrativo.tsx`, `panel-contextual.tsx`, `page.tsx` y la suite de página. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/carta-natal.test.tsx`.
+
+### Como funciona
+1. El hero ya no intenta explicar una abstracción genérica; ahora introduce la carta por la tríada concreta del usuario, que es la información que realmente importa al entrar.
+2. `Rueda natal` quedó más visible como acción secundaria fuerte dentro del hero.
+3. En la lista de aspectos, el vínculo entre planetas y el tipo de aspecto ahora se leen como dos columnas distintas, con mejor delimitación.
+4. En el panel derecho, al abrir un aspecto se ve primero un resumen corto del vínculo en una sola pieza, en vez de tres tarjetas técnicas que ocupaban demasiado espacio.
+
+---
+
+## Sesion: Panel contextual — escala tipográfica contenida
+**Fecha:** 2026-04-02 ~17:32 (ARG)
+
+### Que se hizo
+Se redujo la escala del estado inicial del panel contextual de Carta Astral y se formalizó en `claude.md` una regla más estricta para evitar títulos heroicos dentro de paneles laterales y tarjetas contextuales.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Quita el ícono de la tarjeta inicial, reemplaza la frase larga por `Sol/Luna/Asc` en una línea más directa y baja la escala del título |
+| `claude.md` | Agrega una regla explícita: en paneles laterales y tarjetas contextuales usar títulos contenidos, normalmente entre `text-[16px]` y `text-[20px]` |
+| `context/resumen-de-cambios.md` | Documenta esta pasada de tipografía y jerarquía |
+
+### Tests
+`eslint` pasó sobre `panel-contextual.tsx` y la suite de página. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/carta-natal.test.tsx`.
+
+### Como funciona
+1. El panel derecho ya no abre con una tarjeta que compite en tamaño con el contenido principal.
+2. La lectura inicial muestra directamente la tríada (`Sol/Luna/Asc`) en formato corto, sin ícono decorativo ni una frase grandilocuente.
+3. La regla nueva en `claude.md` obliga a mantener esa contención tipográfica en futuras iteraciones del sistema.
