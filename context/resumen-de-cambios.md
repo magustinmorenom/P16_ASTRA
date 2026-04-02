@@ -1950,3 +1950,288 @@ Se redujo la densidad visual del menú contextual de podcasts en el header: se e
 1. El disparador de podcasts del header mantiene el menú contextual, pero visualmente ya no depende de una etiqueta textual grande; queda resuelto con icono y caret.
 2. El menú ya no muestra párrafos explicativos ni subtítulos por capa, solo el nombre de cada podcast y su estado útil.
 3. Las acciones listas para reproducir quedan representadas con ícono play, haciendo la interacción más directa y menos cargada.
+
+---
+
+## Sesion: Carta Astral como consola compacta premium
+**Fecha:** 2026-04-02 ~12:31 (ARG)
+
+### Que se hizo
+Se actualizó `claude.md` con el nuevo criterio de diseño premium compacto y se rediseñó la pantalla de Carta Astral para que deje de leerse como una página de secciones y pase a funcionar como una consola de lectura: hero breve, barra de anclas, bloques densos y menos texto redundante.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `claude.md` | Incorpora el criterio de “consola de lectura” con reglas de artefactos compactos, menor redundancia y panel derecho como lugar de explicación |
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Reorganiza la pantalla con hero compacto, barra de anclas, layout por superficies densas y navegación rápida con anclas separadas para mobile y desktop |
+| `frontend/src/componentes/carta-natal/barra-anclas.tsx` | Nuevo componente de acceso rápido para saltar entre tríada, pulso, planetas, aspectos y casas |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Ajusta el hero a un formato más corto y editorial, con CTA de rueda más sobrio y resumen técnico compacto |
+| `frontend/src/componentes/carta-natal/seccion-triada.tsx` | Elimina encabezados grandes y convierte la tríada en una superficie compacta de tres anclas semánticas |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Reconvierte la distribución energética en un bloque de pulso más denso, sin títulos de capítulo ni tarjetas altas redundantes |
+| `frontend/src/componentes/carta-natal/planetas-narrativo.tsx` | Saca la narrativa larga del centro y deja a los planetas como focos técnicos compactos que delegan la explicación al panel derecho |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Colapsa los grupos de aspectos en una lista más compacta, con badges y estados útiles sin tarjetas intermedias |
+| `frontend/src/componentes/carta-natal/casas-grid.tsx` | Reduce la escala visual de las casas y las convierte en una matriz compacta más eficiente en viewport |
+| `frontend/src/tests/paginas/carta-natal.test.tsx` | Actualiza la suite a la nueva CTA `Rueda natal` y mantiene cobertura sobre carga, datos persistidos y apertura del modal |
+
+### Tests
+`eslint` pasó sobre los archivos tocados de Carta Astral. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/carta-natal.test.tsx`.
+
+### Como funciona
+1. La pantalla abre con un hero corto y una barra de anclas que permite saltar a `Tríada`, `Pulso`, `Planetas`, `Aspectos` y `Casas` sin gastar viewport en títulos de capítulo.
+2. El bloque central muestra estructura y selección: la tríada, la distribución energética, los planetas, los aspectos y las casas quedan condensados en superficies compactas, con menos texto y mayor densidad útil.
+3. Toda la profundidad sigue viviendo en el panel derecho contextual, por lo que el centro ya no repite interpretación larga ni explicación técnica redundante.
+4. La rueda natal permanece disponible como artefacto secundario en modal, para consulta puntual sin volver a dominar la interfaz principal.
+
+---
+
+## Sesion: Reorientación de Carta Astral según el patrón de Numerología
+**Fecha:** 2026-04-02 ~13:11 (ARG)
+
+### Que se hizo
+Se rehízo la última iteración de Carta Astral porque la versión anterior seguía viéndose fragmentada y demasiado mecánica. La pantalla ahora toma como referencia directa a `Numerología`: hero editorial, columna central limpia, exploración tabulada y panel derecho útil desde el estado inicial.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Reestructura la pantalla para que funcione como una experiencia lineal: hero, tríada, pulso y explorador con tabs para `planetas / aspectos / casas` |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Reemplaza el hero anterior por una versión más cercana a Numerología: una sola tesis principal, chips breves y CTA de rueda sin cajas extras |
+| `frontend/src/componentes/carta-natal/seccion-triada.tsx` | Convierte la tríada en una lista editorial de tres filas en lugar de tres tarjetas independientes |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Simplifica `Pulso` a una consola de tres celdas (`pulso`, `elemento`, `modalidad`) sin subtarjetas internas |
+| `frontend/src/componentes/carta-natal/planetas-narrativo.tsx` | Pasa de una grilla de tarjetas a una lista densa más alineada con el patrón de lectura de Numerología |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Aplana los aspectos en una lista única, con menos envoltorios y mejor lectura jerárquica |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Rehace la vista default del panel derecho para que empiece con una guía útil y resúmenes de `Sol`, `Luna`, `Ascendente` y `Pulso` |
+| `frontend/src/tests/paginas/carta-natal.test.tsx` | Mantiene cobertura de CTA, carga y modal sobre la nueva composición |
+| `context/resumen-de-cambios.md` | Registra esta segunda iteración visual |
+
+### Tests
+`eslint` pasó sobre la pantalla y componentes tocados. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/carta-natal.test.tsx`.
+
+### Como funciona
+1. La pantalla de Carta Astral ya no depende de una barra de anclas ni de bloques visuales excesivos; arranca con un hero corto y una tesis principal basada en la tríada.
+2. La columna central se organiza en cuatro pasos claros: `Tríada`, `Pulso` y un explorador tabulado que deja elegir entre `Planetas`, `Aspectos` y `Casas` sin apilar todo al mismo tiempo.
+3. Cada fila o celda sigue siendo clickeable y alimenta el panel derecho, donde vive la explicación general y la interpretación específica de ese punto.
+4. El panel contextual también quedó alineado con Numerología: en estado vacío ya ofrece una lectura inicial útil en vez de repetir instrucciones o mostrar bloques genéricos.
+
+---
+
+## Sesion: Carta Astral — reducción de chips y superficies anidadas
+**Fecha:** 2026-04-02 ~16:46 (ARG)
+
+### Que se hizo
+Se hizo una pasada de refinamiento sobre Carta Astral para bajar la escala visual, sacar pills innecesarias y limpiar contenedores anidados. El objetivo fue mantener el layout que ya funcionaba, pero con una lectura más compacta y menos “UI encima de UI”.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Limpia el bloque explorador: saca encabezado redundante y elimina un contenedor interno extra para que tabs y contenido respiren sobre la misma superficie |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Reduce el tamaño del H1, reemplaza los chips de `Sol/Luna/Asc` por una línea textual compacta y acorta la bajada |
+| `frontend/src/componentes/carta-natal/seccion-triada.tsx` | Quita la caja interna de la tríada y reemplaza chips por metadata lineal más sobria |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Elimina la superficie duplicada dentro del bloque de pulso, baja la escala tipográfica y compacta `elemento/modalidad` |
+| `frontend/src/componentes/carta-natal/planetas-narrativo.tsx` | Reemplaza badges y chips por metadatos en línea para que cada planeta ocupe menos alto visual |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Simplifica la cabecera de cada aspecto y reduce el chrome de badges decorativos |
+| `frontend/src/componentes/carta-natal/casas-grid.tsx` | Cambia los chips inferiores por una línea de metadata compacta y ajusta tamaños |
+| `context/resumen-de-cambios.md` | Documenta esta pasada de limpieza visual |
+
+### Tests
+`eslint` pasó sobre la página y componentes tocados. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/carta-natal.test.tsx`.
+
+### Como funciona
+1. El hero sigue marcando la entrada a la experiencia, pero ahora lo hace con una tesis más corta y una sola línea técnica en vez de tres chips compitiendo.
+2. La tríada, el pulso y el explorador usan menos superficies internas, así que la columna central se siente más liviana y continua.
+3. Planetas, aspectos y casas siguen siendo interactivos, pero ocupan menos alto porque su metadata pasó de pills a líneas compactas.
+4. El panel derecho conserva la profundidad interpretativa, por lo que el centro puede sostener una lectura más limpia sin perder información útil.
+
+---
+
+## Sesion: Carta Astral — pulso unificado y escala reducida
+**Fecha:** 2026-04-02 ~17:22 (ARG)
+
+### Que se hizo
+Se compactó aún más el bloque energético de Carta Astral. `Pulso dominante`, `Elemento` y `Modalidad` dejaron de verse como piezas separadas y pasaron a una sola unidad visual, con el valor principal mucho más chico para que no robe protagonismo al resto de la pantalla.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Unifica `pulso`, `elemento` y `modalidad` en una sola superficie; reduce la escala de `Fuego + Cardinal` y convierte los secundarios en una continuación del mismo artefacto |
+| `context/resumen-de-cambios.md` | Documenta esta pasada puntual sobre jerarquía visual |
+
+### Tests
+`eslint` pasó sobre `distribucion-energetica.tsx`, `page.tsx` y la suite de página. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/carta-natal.test.tsx`.
+
+### Como funciona
+1. El bloque energético ahora entra como una sola lectura compacta en vez de tres tarjetas visualmente autónomas.
+2. `Pulso dominante` sigue siendo el punto principal, pero el valor se ve más contenido y ya no compite con el hero ni con la tríada.
+3. `Elemento` y `Modalidad` siguen siendo clickeables para abrir su lectura en el panel derecho, pero quedaron integrados debajo del pulso como continuación natural del mismo sistema.
+
+---
+
+## Sesion: Carta Astral — hero y aspectos más directos
+**Fecha:** 2026-04-02 ~17:28 (ARG)
+
+### Que se hizo
+Se limpió el hero de Carta Astral para que destaque la tríada real del usuario y se simplificó la lectura de aspectos tanto en el centro como en el panel derecho. La idea fue sacar texto decorativo y ordenar mejor la información relacional.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Quita `Lectura base`, elimina la tesis genérica `tu carta abre en agua cardinal`, pone la tríada `Sol/Luna/Asc` como dato principal y vuelve más llamativo el botón `Rueda natal` |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Quita el punto decorativo del rótulo `Pulso dominante` |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Reordena cada aspecto en dos zonas: vínculo a la izquierda y tipo/orbe a la derecha, con una separación más clara |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Simplifica la vista contextual de aspectos: cambia el título a `planeta y planeta` y reemplaza la grilla de `Planeta 1 / Aspecto / Planeta 2` por un único resumen compacto |
+| `context/resumen-de-cambios.md` | Documenta esta pasada de limpieza sobre hero y aspectos |
+
+### Tests
+`eslint` pasó sobre `hero-carta.tsx`, `distribucion-energetica.tsx`, `aspectos-narrativo.tsx`, `panel-contextual.tsx`, `page.tsx` y la suite de página. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/carta-natal.test.tsx`.
+
+### Como funciona
+1. El hero ya no intenta explicar una abstracción genérica; ahora introduce la carta por la tríada concreta del usuario, que es la información que realmente importa al entrar.
+2. `Rueda natal` quedó más visible como acción secundaria fuerte dentro del hero.
+3. En la lista de aspectos, el vínculo entre planetas y el tipo de aspecto ahora se leen como dos columnas distintas, con mejor delimitación.
+4. En el panel derecho, al abrir un aspecto se ve primero un resumen corto del vínculo en una sola pieza, en vez de tres tarjetas técnicas que ocupaban demasiado espacio.
+
+---
+
+## Sesion: Panel contextual — escala tipográfica contenida
+**Fecha:** 2026-04-02 ~17:32 (ARG)
+
+### Que se hizo
+Se redujo la escala del estado inicial del panel contextual de Carta Astral y se formalizó en `claude.md` una regla más estricta para evitar títulos heroicos dentro de paneles laterales y tarjetas contextuales.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Quita el ícono de la tarjeta inicial, reemplaza la frase larga por `Sol/Luna/Asc` en una línea más directa y baja la escala del título |
+| `claude.md` | Agrega una regla explícita: en paneles laterales y tarjetas contextuales usar títulos contenidos, normalmente entre `text-[16px]` y `text-[20px]` |
+| `context/resumen-de-cambios.md` | Documenta esta pasada de tipografía y jerarquía |
+
+### Tests
+`eslint` pasó sobre `panel-contextual.tsx` y la suite de página. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/carta-natal.test.tsx`.
+
+### Como funciona
+1. El panel derecho ya no abre con una tarjeta que compite en tamaño con el contenido principal.
+2. La lectura inicial muestra directamente la tríada (`Sol/Luna/Asc`) en formato corto, sin ícono decorativo ni una frase grandilocuente.
+3. La regla nueva en `claude.md` obliga a mantener esa contención tipográfica en futuras iteraciones del sistema.
+
+---
+
+## Sesion: Diseño Humano — compactación premium ciruela
+**Fecha:** 2026-04-02 ~17:42 (ARG)
+
+### Que se hizo
+Se rediseñó la sección de Diseño Humano para que deje de sentirse como una landing de cards apiladas y pase a leerse como una consola compacta, alineada con Carta Astral. Se recortó el hero, se eliminaron chips y bloques redundantes, se integró la exploración técnica y se volvió más sobrio el panel contextual derecho.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/diseno-humano/page.tsx` | Recorta el hero, elimina chips y métricas redundantes, fusiona los cuatro pilares en un rail compacto, convierte el explorador técnico en una sola superficie y simplifica cruz/activaciones |
+| `frontend/src/componentes/diseno-humano/panel-contextual.tsx` | Reduce la escala tipográfica, elimina la tarjeta separada de `Claves de lectura`, deja solo `Qué es`, `En vos` y `Datos técnicos`, y acorta el subtítulo del rail |
+| `frontend/src/lib/utilidades/interpretaciones-diseno-humano.ts` | Compacta el copy contextual para evitar repeticiones entre resumen, significado y claves; limpia contenido no usado |
+| `frontend/src/tests/paginas/diseno-humano.test.tsx` | Ajusta la expectativa del hero al nuevo lenguaje más corto y directo |
+| `context/resumen-de-cambios.md` | Documenta esta iteración de diseño y contenido |
+
+### Tests
+`eslint` pasó limpio sobre los archivos tocados. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/diseno-humano.test.tsx` ejecutado con `npx -y node@20 ./node_modules/vitest/vitest.mjs run ...` porque el `node` local del entorno sigue en v18.
+
+### Como funciona
+1. El hero ahora presenta una sola entrada clara: nombre de la sección, una frase de uso y una línea técnica compacta con `Tipo`, `Autoridad`, `Perfil` y `Definición`.
+2. Los cuatro pilares ya no ocupan cuatro tarjetas altas con iconos y descripciones; viven en un rail integrado que abre el panel contextual con menos ruido visual.
+3. El explorador de `Centros`, `Canales` y `Activaciones` quedó unificado en una sola consola, sin cards métricas previas ni subtítulos redundantes.
+4. `Cruz` y `Activaciones` bajaron su peso visual: menos títulos, menos chrome y filas más densas para que el viewport muestre más información útil.
+5. El panel derecho ahora sirve de verdad como contexto: explica qué es, qué implica en el caso del usuario y, si hace falta, deja ver lo técnico sin convertir cada estado en otra columna de tarjetas.
+
+---
+
+## Sesion: Diseño Humano — depuración final de instrumentos
+**Fecha:** 2026-04-02 ~18:19 (ARG)
+
+### Que se hizo
+Se hizo una pasada más estricta sobre Diseño Humano para quitar relleno visual y conceptual. El hero quedó reducido a título + línea técnica, se eliminó `Datos técnicos` del panel derecho y el bloque independiente de `Activaciones` salió del centro para que la pantalla se lea más como instrumento y menos como colección de tarjetas.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/diseno-humano/page.tsx` | Quita la frase de apoyo del hero, conserva solo la línea técnica compacta, elimina la sección autónoma de activaciones y deja únicamente el instrumento de `Cruz` |
+| `frontend/src/componentes/diseno-humano/panel-contextual.tsx` | Elimina por completo `Datos técnicos` y deja una sola superficie de lectura con `Qué es` y `En vos` |
+| `frontend/src/lib/utilidades/interpretaciones-diseno-humano.ts` | Simplifica el contrato contextual, elimina arrays de apoyo y datos técnicos, y deja solo contenido interpretativo esencial |
+| `frontend/src/tests/paginas/diseno-humano.test.tsx` | Ajusta la aserción del hero a la nueva línea técnica compacta |
+| `context/resumen-de-cambios.md` | Documenta esta depuración final |
+
+### Tests
+`eslint` pasó limpio sobre los archivos tocados. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/diseno-humano.test.tsx` ejecutado con `npx -y node@20 ./node_modules/vitest/vitest.mjs run ...`.
+
+### Como funciona
+1. La entrada a la pantalla quedó reducida a lo indispensable: sección, identidad técnica y acceso al `Body Graph`.
+2. Los pilares siguen siendo interactivos, pero ahora viven en un rail más seco y sin narrativa repetida.
+3. La exploración técnica conserva `Activaciones` como modo de lectura, pero ya no la duplica en un bloque propio más abajo.
+4. El panel derecho dejó de explicar de más y ya no muestra listas o tablas técnicas; solo define y aterriza el significado para el usuario.
+
+---
+
+## Sesion: Diseño Humano — compactación de superficies y orden de lectura
+**Fecha:** 2026-04-02 ~18:31 (ARG)
+
+### Que se hizo
+Se ajustó la pantalla de Diseño Humano para hacerla más compacta y más instrumental: radios menores, mejor separación entre hero y pilares, `Cruz` movida antes del explorador técnico y `Activaciones` convertidas en una lista densa de una sola línea por fila.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/diseno-humano/page.tsx` | Reduce radios de hero, paneles y filas; agrega espacio entre hero y pilares; mueve `Cruz` al tercer bloque; elimina la frase `Se sostiene con continuidad.` en centros definidos; capitaliza nombres de centros en canales; compacta activaciones en filas técnicas `P/L/C` |
+| `frontend/src/componentes/diseno-humano/panel-contextual.tsx` | Baja el radio del panel contextual para alinearlo con la nueva densidad visual de la pantalla |
+| `context/resumen-de-cambios.md` | Documenta esta pasada de compactación visual y orden de lectura |
+
+### Tests
+`eslint` pasó limpio sobre `src/app/(app)/diseno-humano/page.tsx`, `src/componentes/diseno-humano/panel-contextual.tsx` y `src/tests/paginas/diseno-humano.test.tsx`. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/diseno-humano.test.tsx`, ejecutado con `npx -y node@20 ./node_modules/vitest/vitest.mjs run ...`.
+
+### Como funciona
+1. El hero respira mejor respecto del rail de `Tipo`, `Autoridad`, `Perfil` y `Definición`, así que el primer viewport ya no se siente pegado.
+2. `Cruz` aparece antes del explorador de `Centros`, `Canales` y `Activaciones`, ordenando la lectura de identidad antes de la capa técnica.
+3. En `Centros`, los definidos ya no repiten una frase de relleno; los abiertos siguen mostrando solo la aclaración útil.
+4. En `Canales`, los nombres de centros ahora se leen con mayúscula inicial y más consistencia editorial.
+5. En `Activaciones`, cada fila quedó reducida a `planeta` + `P/L/C` + origen, para que las 26 entradas entren como lista compacta y no como mini tarjetas.
+
+---
+
+## Sesion: Diseño Humano — explorador estilo núcleo y Body Graph reforzado
+**Fecha:** 2026-04-02 ~18:40 (ARG)
+
+### Que se hizo
+Se llevó el explorador de `Centros`, `Canales` y `Activaciones` al lenguaje visual del bloque `Núcleo` de Numerología, con filas instrumentales más oscuras y sin apariencia de tarjeta. Además se rediseñó el acceso a `Body Graph` y se amplió el modal para que el gráfico gane presencia real.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/diseno-humano/page.tsx` | Convierte el explorador técnico a un listado oscuro con separators y borde activo lateral, oscurece el fondo interno, aplica al botón `Body Graph` el mismo patrón de `Rueda natal` y amplía el modal del gráfico |
+| `frontend/src/componentes/visualizaciones/body-graph.tsx` | Agranda el SVG, aumenta el tamaño de centros y etiquetas, y mejora la escala general del `Body Graph` |
+| `context/resumen-de-cambios.md` | Documenta esta iteración de explorador y modal |
+
+### Tests
+`eslint` pasó limpio sobre `src/app/(app)/diseno-humano/page.tsx`, `src/componentes/visualizaciones/body-graph.tsx`, `src/componentes/diseno-humano/panel-contextual.tsx`, `src/tests/paginas/diseno-humano.test.tsx` y `src/tests/componentes/body-graph.test.tsx`. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `5/5` en `src/tests/paginas/diseno-humano.test.tsx` y `src/tests/componentes/body-graph.test.tsx`, ejecutado con `npx -y node@20 ./node_modules/vitest/vitest.mjs run ...`.
+
+### Como funciona
+1. El bloque de exploración ya no presenta `Centros`, `Canales` y `Activaciones` como tarjetas sueltas; ahora se leen como una consola de filas, igual que el patrón de `Núcleo` en Numerología.
+2. La superficie interna del explorador quedó más oscura, con menos ruido visual y más contraste útil para sostener la lectura densa.
+3. El botón `Body Graph` ahora usa el mismo lenguaje visual de `Rueda natal`, así que la acción se percibe como artefacto principal y no como botón secundario genérico.
+4. El modal del `Body Graph` ganó ancho, soporte visual y escala, y el SVG mismo se renderiza más grande y legible.
+
+---
+
+## Sesion: Diseño Humano — explorador sin caja anidada
+**Fecha:** 2026-04-02 ~18:50 (ARG)
+
+### Que se hizo
+Se corrigió el explorador técnico de Diseño Humano para que no aparezca como un cuadro dentro de otro. La lista de `Centros`, `Canales` y `Activaciones` ahora vive directamente sobre la misma superficie del panel, con un único tono de fondo y divisores internos.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/diseno-humano/page.tsx` | Reemplaza la caja interna del explorador por una lista plana con divisores, unifica el color de fondo del bloque y elimina el efecto de panel anidado |
+| `context/resumen-de-cambios.md` | Documenta esta corrección visual del explorador |
+
+### Tests
+`eslint` pasó limpio sobre `src/app/(app)/diseno-humano/page.tsx`. `npx tsc --noEmit` pasó limpio en `frontend`. `vitest` pasó `4/4` en `src/tests/paginas/diseno-humano.test.tsx`, ejecutado con `npx -y node@20 ./node_modules/vitest/vitest.mjs run ...`.
+
+### Como funciona
+1. El bloque de exploración ya no tiene una segunda caja oscura dentro del panel principal.
+2. `Centros`, `Canales` y `Activaciones` se leen ahora como una sola consola continua, más cerca del patrón de `Núcleo` en Numerología.
+3. La jerarquía mejora porque el usuario percibe una sola superficie de trabajo, no un mosaico de contenedores superpuestos.

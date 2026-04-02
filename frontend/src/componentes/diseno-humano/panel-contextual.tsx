@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Icono } from "@/componentes/ui/icono";
 import { cn } from "@/lib/utilidades/cn";
 import {
@@ -17,10 +17,7 @@ interface PanelContextualHDProps {
 }
 
 const TARJETA_PANEL =
-  "rounded-[18px] border border-white/10 bg-white/[0.06] p-4 backdrop-blur-xl";
-
-const TARJETA_PANEL_ACENTO =
-  "rounded-[18px] border border-[#B388FF]/18 bg-[linear-gradient(135deg,rgba(124,77,255,0.16),rgba(179,136,255,0.08))] p-4";
+  "rounded-[16px] border border-white/10 bg-white/[0.05] backdrop-blur-xl";
 
 export function obtenerClavePanelContextualHD(seleccion: SeleccionContextualHD) {
   switch (seleccion.tipo) {
@@ -54,10 +51,7 @@ export function obtenerMetaPanelContextualHD(
   return {
     etiqueta: detalle.sobrelinea,
     titulo: detalle.titulo,
-    subtitulo:
-      seleccion.tipo === "default"
-        ? "Elegí un punto del diseño para ampliar qué es y qué significa para vos."
-        : detalle.resumen,
+    subtitulo: undefined,
   };
 }
 
@@ -67,7 +61,6 @@ export function PanelContextualHD({
   onCerrar,
   modo = "movil",
 }: PanelContextualHDProps) {
-  const [mostrarTecnico, setMostrarTecnico] = useState(false);
   const esMovil = modo === "movil";
 
   const detalle = useMemo(
@@ -80,7 +73,7 @@ export function PanelContextualHD({
       className={cn(
         "flex h-full min-h-0 flex-col text-white",
         esMovil &&
-          "rounded-t-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.18),transparent_28%),linear-gradient(135deg,#170d2c_0%,#241148_54%,#34205f_100%)]",
+          "rounded-t-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.18),transparent_28%),linear-gradient(135deg,#170d2c_0%,#241148_54%,#34205f_100%)]",
       )}
     >
       {esMovil ? (
@@ -89,7 +82,7 @@ export function PanelContextualHD({
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#D2BAFF]">
               {detalle.sobrelinea}
             </p>
-            <h3 className="mt-2 text-[20px] font-semibold leading-tight text-white">
+            <h3 className="mt-2 text-[17px] font-semibold leading-tight text-white">
               {detalle.titulo}
             </h3>
           </div>
@@ -105,77 +98,27 @@ export function PanelContextualHD({
       ) : null}
 
       <div className="flex-1 overflow-y-auto scroll-sutil px-5 py-5">
-        <div className="flex flex-col gap-4">
-          <article className={TARJETA_PANEL}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+        <article className={cn(TARJETA_PANEL, "overflow-hidden")}>
+          <section className="px-4 py-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/62">
               Qué es
             </p>
-            <p className="mt-3 text-[14px] leading-relaxed text-violet-50/84">
+            <p className="mt-2.5 text-[13px] leading-7 text-violet-50/82">
               {detalle.resumen}
             </p>
-          </article>
+          </section>
 
-          <article className={TARJETA_PANEL_ACENTO}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#E1CFFF]">
-              Qué significa para vos
+          <div className="border-t border-white/8" />
+
+          <section className="px-4 py-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/62">
+              En vos
             </p>
-            <p className="mt-3 text-[14px] leading-relaxed text-white/90">
+            <p className="mt-2.5 text-[13px] leading-7 text-white/84">
               {detalle.significadoUsuario}
             </p>
-          </article>
-
-          <article className={TARJETA_PANEL}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
-              Claves de lectura
-            </p>
-            <div className="mt-3 flex flex-col gap-2.5">
-              {detalle.claves.map((clave) => (
-                <div
-                  key={clave}
-                  className="flex items-start gap-3 rounded-2xl bg-white/[0.04] px-3 py-3"
-                >
-                  <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#D4A234]" />
-                  <p className="text-[13px] leading-relaxed text-violet-50/80">
-                    {clave}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </article>
-
-          <article className={TARJETA_PANEL}>
-            <button
-              onClick={() => setMostrarTecnico((valor) => !valor)}
-              className="flex w-full items-center justify-between text-left text-violet-100/78"
-            >
-              <span className="text-[11px] font-semibold uppercase tracking-[0.16em]">
-                Datos técnicos
-              </span>
-              <Icono
-                nombre={mostrarTecnico ? "caretArriba" : "caretAbajo"}
-                tamaño={16}
-              />
-            </button>
-
-            {mostrarTecnico ? (
-              <div className="mt-3 flex flex-col gap-2">
-                {detalle.tecnico.map((fila) => (
-                  <div
-                    key={`${fila.etiqueta}-${fila.valor}`}
-                    className="flex items-center justify-between gap-4 rounded-2xl bg-white/[0.04] px-3 py-2.5"
-                  >
-                    <span className="text-[12px] text-violet-100/56">
-                      {fila.etiqueta}
-                    </span>
-                    <span className="text-[12px] font-medium text-white/86">
-                      {fila.valor}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </article>
-        </div>
+          </section>
+        </article>
       </div>
     </div>
   );

@@ -26,8 +26,6 @@ export interface DetalleContextualHD {
   titulo: string;
   resumen: string;
   significadoUsuario: string;
-  claves: string[];
-  tecnico: Array<{ etiqueta: string; valor: string }>;
 }
 
 interface DescriptorBasico {
@@ -279,15 +277,6 @@ const DESCRIPCIONES_LINEAS: Record<number, string> = {
   6: "la línea 6 observa, madura por etapas y termina enseñando con el ejemplo",
 };
 
-const DESCRIPCIONES_COLOR: Record<number, string> = {
-  1: "enfatiza base, foco y necesidad de fundamento",
-  2: "subraya dirección, gusto y selección natural",
-  3: "mueve a prueba, adaptación y ajuste fino",
-  4: "organiza desde red, cercanía y sostén humano",
-  5: "activa proyección, impacto y resolución práctica",
-  6: "lleva a visión amplia, sensibilidad y perspectiva",
-};
-
 const DESCRIPCIONES_LINEA_PERFIL: Record<number, { titulo: string; texto: string }> = {
   1: {
     titulo: "Investigador",
@@ -462,29 +451,11 @@ export function construirDetalleContextualHD(
   datos: DisenoHumano,
 ): DetalleContextualHD {
   if (seleccion.tipo === "default" || seleccion.tipo === "bodygraph") {
-    const centrosDefinidos = Object.values(datos.centros ?? {}).filter(
-      (valor) => valor === "definido",
-    ).length;
-
     return {
-      sobrelinea: "Cabina de lectura",
+      sobrelinea: "Diseño Humano",
       titulo: `${descriptorTipo(datos.tipo).titulo} · ${descriptorAutoridad(datos.autoridad).titulo}`,
-      resumen:
-        "Leé tu diseño desde adentro hacia afuera: tipo, autoridad, centros, canales y activaciones. El gráfico no es el destino; es el mapa.",
-      significadoUsuario: `${descriptorTipo(datos.tipo).practica} En tu caso, la autoridad ${descriptorAutoridad(
-        datos.autoridad,
-      ).titulo.toLowerCase()} es la llave para interpretar el resto del sistema sin quedarte solo en lo técnico.`,
-      claves: [
-        `${centrosDefinidos} centro(s) definidos sostienen tu señal más estable.`,
-        `${(datos.canales ?? []).length} canal(es) muestran dónde esa energía circula con continuidad.`,
-        `El perfil ${datos.perfil} indica cómo vivís tu proceso y cómo te encuentra el entorno.`,
-      ],
-      tecnico: [
-        { etiqueta: "Tipo", valor: datos.tipo },
-        { etiqueta: "Autoridad", valor: datos.autoridad },
-        { etiqueta: "Perfil", valor: datos.perfil },
-        { etiqueta: "Definición", valor: datos.definicion },
-      ],
+      resumen: "Empezá por tipo, autoridad, perfil o definición. Después abrí centros o canales solo donde necesites detalle.",
+      significadoUsuario: `En tu caso la señal principal pasa por ${descriptorAutoridad(datos.autoridad).titulo.toLowerCase()}. Eso ordena el resto del sistema sin tener que leer todo a la vez.`,
     };
   }
 
@@ -494,17 +465,7 @@ export function construirDetalleContextualHD(
       sobrelinea: "Mecánica base",
       titulo: descriptor.titulo,
       resumen: descriptor.queEs,
-      significadoUsuario: `${descriptor.practica} En tu diseño esto tiene que coordinarse con una autoridad ${datos.autoridad.toLowerCase()} y con el ritmo que marcan tus centros definidos.`,
-      claves: [
-        `No tomes este dato aislado: se activa de verdad cuando la autoridad acompaña.`,
-        `Tu perfil ${datos.perfil} le da estilo relacional a esta mecánica.`,
-        `Los canales activos muestran dónde esta energía se vuelve más visible.`,
-      ],
-      tecnico: [
-        { etiqueta: "Tipo", valor: datos.tipo },
-        { etiqueta: "Autoridad asociada", valor: datos.autoridad },
-        { etiqueta: "Perfil", valor: datos.perfil },
-      ],
+      significadoUsuario: `${descriptor.practica} Leelo junto a tu autoridad ${datos.autoridad.toLowerCase()}, porque ahí se ordena esta mecánica.`,
     };
   }
 
@@ -514,17 +475,7 @@ export function construirDetalleContextualHD(
       sobrelinea: "Toma de decisiones",
       titulo: descriptor.titulo,
       resumen: descriptor.queEs,
-      significadoUsuario: `${descriptor.practica} Para vos este es el filtro principal antes de interpretar canales, centros o activaciones: si la autoridad no acompaña, el resto se vuelve ruido.`,
-      claves: [
-        `La autoridad vale más que la urgencia de la mente.`,
-        `Tu tipo ${datos.tipo} necesita apoyarse en esta señal para moverse con menos resistencia.`,
-        `Cuando dudás, revisá si estás decidiendo desde cuerpo, emoción o presión externa.`,
-      ],
-      tecnico: [
-        { etiqueta: "Autoridad", valor: datos.autoridad },
-        { etiqueta: "Tipo", valor: datos.tipo },
-        { etiqueta: "Definición", valor: datos.definicion },
-      ],
+      significadoUsuario: `${descriptor.practica} Si la autoridad no acompaña, el resto del gráfico mete más ruido que claridad.`,
     };
   }
 
@@ -537,24 +488,10 @@ export function construirDetalleContextualHD(
       sobrelinea: "Estilo de aprendizaje",
       titulo: `Perfil ${datos.perfil}`,
       resumen:
-        "El perfil combina dos líneas: la primera describe cómo vivís tu proceso de forma más consciente y la segunda muestra cómo te encuentra el mundo.",
+        "El perfil combina cómo vivís tu proceso y cómo te encuentra el entorno.",
       significadoUsuario: `En vos conviven ${
         lineaConsciente?.titulo.toLowerCase() ?? "una línea consciente"
-      } y ${lineaInconsciente?.titulo.toLowerCase() ?? "una línea inconsciente"}. Eso hace que tu diseño no solo tenga una mecánica energética, sino también un estilo particular para aprender, vincularte y ser leído.`,
-      claves: [
-        lineaConsciente
-          ? `Línea ${lineas[0]}: ${lineaConsciente.texto}`
-          : "Tu primera línea muestra cómo te vivís por dentro.",
-        lineaInconsciente
-          ? `Línea ${lineas[1]}: ${lineaInconsciente.texto}`
-          : "Tu segunda línea explica cómo suele percibirte el entorno.",
-        "Leer el perfil junto al tipo evita convertirlo en una etiqueta rígida.",
-      ],
-      tecnico: [
-        { etiqueta: "Perfil", valor: datos.perfil },
-        { etiqueta: "Línea consciente", valor: String(lineas[0] ?? "—") },
-        { etiqueta: "Línea inconsciente", valor: String(lineas[1] ?? "—") },
-      ],
+      } y ${lineaInconsciente?.titulo.toLowerCase() ?? "una línea inconsciente"}. Eso define el estilo con que aprendés, te vinculás y sos leído.`,
     };
   }
 
@@ -568,27 +505,13 @@ export function construirDetalleContextualHD(
       sobrelinea: "Arquitectura interna",
       titulo: descriptor.titulo,
       resumen: descriptor.queEs,
-      significadoUsuario: `${descriptor.practica} En tu gráfico esto se refleja en ${centrosDefinidos} centro(s) definidos y en cómo tus canales conectan bloques internos de energía.`,
-      claves: [
-        "La definición habla de integración interna, no de valor personal.",
-        "Si hay partes separadas, el vínculo correcto puede ordenar la percepción sin completarte.",
-        "Conviene leerla junto a centros y canales, no en abstracto.",
-      ],
-      tecnico: [
-        { etiqueta: "Definición", valor: datos.definicion },
-        {
-          etiqueta: "Centros definidos",
-          valor: String(centrosDefinidos),
-        },
-        { etiqueta: "Canales activos", valor: String((datos.canales ?? []).length) },
-      ],
+      significadoUsuario: `${descriptor.practica} En tu gráfico esto aparece en ${centrosDefinidos} centro(s) definidos y en cómo se conectan tus canales.`,
     };
   }
 
   if (seleccion.tipo === "centro") {
     const descriptor = descriptorCentro(seleccion.clave);
     const definido = normalizar(seleccion.estado) === "definido";
-    const canales = obtenerCanalesDeCentro(datos, seleccion.clave);
     const autoridadTocaCentro =
       (normalizar(datos.autoridad).includes("emocional") &&
         normalizar(seleccion.clave).includes("plexo")) ||
@@ -606,28 +529,14 @@ export function construirDetalleContextualHD(
       significadoUsuario: definido
         ? `En vos este centro trabaja de manera más constante. ${
             autoridadTocaCentro
-              ? "Además, toca directamente tu autoridad, así que conviene escucharlo con prioridad en decisiones."
-              : "Eso hace que este tema se note con continuidad en tu forma de vivir."
+              ? "Además toca tu autoridad, así que conviene escucharlo con prioridad."
+              : "Por eso este tema se repite con continuidad."
           }`
         : `En vos este centro funciona como zona abierta: capta, amplifica y aprende por experiencia. ${
             autoridadTocaCentro
               ? "Como además roza tu autoridad, distinguir lo propio de lo ambiental es clave."
-              : "La práctica consiste en observar cuándo estás sintiendo algo tuyo y cuándo algo prestado."
+              : "La práctica es notar cuándo algo es tuyo y cuándo es del ambiente."
           }`,
-      claves: [
-        definido ? "La consistencia es recurso." : "La apertura es sensibilidad, no carencia.",
-        canales.length > 0
-          ? `${canales.length} canal(es) activos conectan este centro con el resto del gráfico.`
-          : "Sin canales activos, este centro se entiende más por estado que por conexión fija.",
-        autoridadTocaCentro
-          ? "Este centro participa directamente en tu forma de decidir."
-          : "Leelo junto a la autoridad para no sobredimensionar su voz.",
-      ],
-      tecnico: [
-        { etiqueta: "Centro", valor: nombreCentroHD(seleccion.clave) },
-        { etiqueta: "Estado", valor: definido ? "Definido" : "Abierto" },
-        { etiqueta: "Canales conectados", valor: String(canales.length) },
-      ],
     };
   }
 
@@ -636,24 +545,8 @@ export function construirDetalleContextualHD(
       sobrelinea: "Circuito definido",
       titulo: seleccion.canal.nombre,
       resumen:
-        "Un canal une dos centros y muestra por dónde la energía circula con continuidad. Cuando está definido, ese puente se vuelve una firma estable de tu diseño.",
+        "Un canal une dos centros y muestra por dónde la energía circula con continuidad.",
       significadoUsuario: `En tu caso este canal enlaza ${seleccion.canal.centros[0]} y ${seleccion.canal.centros[1]}. Eso hace que el tema de este canal no aparezca como algo ocasional, sino como una cualidad que tiende a repetirse con constancia en tu manera de funcionar.`,
-      claves: [
-        `Puertas ${seleccion.canal.puertas[0]}–${seleccion.canal.puertas[1]}.`,
-        `Conecta ${seleccion.canal.centros[0]} con ${seleccion.canal.centros[1]}.`,
-        "Leelo como un tono estable, no como una tarea para forzar.",
-      ],
-      tecnico: [
-        { etiqueta: "Canal", valor: seleccion.canal.nombre },
-        {
-          etiqueta: "Puertas",
-          valor: `${seleccion.canal.puertas[0]}–${seleccion.canal.puertas[1]}`,
-        },
-        {
-          etiqueta: "Centros",
-          valor: `${seleccion.canal.centros[0]} · ${seleccion.canal.centros[1]}`,
-        },
-      ],
     };
   }
 
@@ -662,20 +555,10 @@ export function construirDetalleContextualHD(
       sobrelinea: "Propósito estructural",
       titulo: seleccion.etiqueta,
       resumen:
-        "La cruz de encarnación reúne cuatro activaciones eje. No describe una misión rígida, sino un patrón recurrente de enfoque, tensión y dirección.",
+        "La cruz reúne cuatro activaciones eje y marca un patrón recurrente de dirección.",
       significadoUsuario: `${resumenCruz(seleccion.clave)} En tu diseño esta pieza aparece como puerta ${
         seleccion.puerta ?? "—"
       }, así que conviene leerla como parte del tono vital que organiza tu presencia más que como una tarea literal.`,
-      claves: [
-        "La cruz se entiende mejor como clima de vida que como mandato.",
-        "Cada eje toma más sentido cuando se mira junto al tipo y la autoridad.",
-        "Las cuatro activaciones trabajan en conjunto; ninguna explica todo sola.",
-      ],
-      tecnico: [
-        { etiqueta: "Eje", valor: seleccion.etiqueta },
-        { etiqueta: "Puerta", valor: String(seleccion.puerta ?? "—") },
-        { etiqueta: "Perfil", valor: datos.perfil },
-      ],
     };
   }
 
@@ -685,10 +568,6 @@ export function construirDetalleContextualHD(
   const descripcionLinea =
     DESCRIPCIONES_LINEAS[seleccion.activacion.linea] ??
     "la línea agrega un tono particular a la activación";
-  const descripcionColor =
-    DESCRIPCIONES_COLOR[seleccion.activacion.color] ??
-    "el color ajusta el matiz fino con que se expresa la activación";
-
   return {
     sobrelinea:
       seleccion.origen === "consciente"
@@ -696,7 +575,7 @@ export function construirDetalleContextualHD(
         : "Activación inconsciente",
     titulo: `${seleccion.activacion.planeta} · Puerta ${seleccion.activacion.puerta}.${seleccion.activacion.linea}`,
     resumen:
-      "Una activación muestra cómo un planeta se imprime en una puerta y línea específicas del diseño. Es una pieza técnica, pero su valor aparece cuando se integra al resto del gráfico.",
+      "Una activación muestra cómo un planeta se imprime en una puerta y línea del diseño.",
     significadoUsuario: `Acá ${seleccion.activacion.planeta} trae el tema de ${descripcionPlaneta} a la puerta ${seleccion.activacion.puerta}. En vos se expresa a través de ${descripcionLinea}. Al vivirla en la capa ${
       seleccion.origen === "consciente" ? "consciente" : "inconsciente"
     }, este matiz puede sentirse ${
@@ -704,21 +583,5 @@ export function construirDetalleContextualHD(
         ? "más identificable y narrable"
         : "más corporal, automático o menos verbal"
     }.`,
-    claves: [
-      `Línea ${seleccion.activacion.linea}: ${descripcionLinea}.`,
-      `Color ${seleccion.activacion.color}: ${descripcionColor}.`,
-      `Leela junto a tu tipo ${datos.tipo} y tu autoridad ${datos.autoridad} para darle contexto.`,
-    ],
-    tecnico: [
-      { etiqueta: "Planeta", valor: seleccion.activacion.planeta },
-      { etiqueta: "Puerta", valor: String(seleccion.activacion.puerta) },
-      { etiqueta: "Línea", valor: String(seleccion.activacion.linea) },
-      { etiqueta: "Color", valor: String(seleccion.activacion.color) },
-      {
-        etiqueta: "Capa",
-        valor:
-          seleccion.origen === "consciente" ? "Consciente" : "Inconsciente",
-      },
-    ],
   };
 }

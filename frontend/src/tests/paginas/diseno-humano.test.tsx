@@ -68,7 +68,7 @@ describe("PaginaDisenoHumano", () => {
     renderConProveedores(<PaginaDisenoHumano />);
 
     expect(screen.getAllByText("Diseño Humano").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/Perfil calculado para Test/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Generador · Sacral · Perfil 2/4 · Simple").length).toBeGreaterThanOrEqual(1);
     // El tipo puede aparecer en más de un bloque del layout premium
     expect(screen.getAllByText("Generador").length).toBeGreaterThanOrEqual(1);
     // "Sacral" aparece como autoridad y como nombre de centro
