@@ -31,6 +31,9 @@ class Usuario(ModeloBase):
     ultimo_acceso: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    rol: Mapped[str] = mapped_column(
+        String(20), default="usuario", server_default="usuario"
+    )
 
     perfiles: Mapped[list["Perfil"]] = relationship(  # noqa: F821
         back_populates="usuario",
