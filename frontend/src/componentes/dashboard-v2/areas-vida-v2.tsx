@@ -58,7 +58,7 @@ export function AreasVidaV2({ areas }: AreasVidaV2Props) {
     }, 180);
   }
   return (
-    <div className="animate-[fade-in_300ms_ease-out_both] overflow-hidden rounded-[18px] border border-white/[0.08] bg-[#160d23] shadow-[0_18px_48px_rgba(8,2,22,0.28)]">
+    <div className="animate-[fade-in_300ms_ease-out_both] rounded-[18px] border border-white/[0.08] bg-[#160d23] shadow-[0_18px_48px_rgba(8,2,22,0.28)]">
       <div className="flex items-center gap-2 overflow-x-auto border-b border-white/[0.08] px-2.5 py-2 scroll-sutil-dark">
         {areas.map((area, i) => {
           const icono: NombreIcono = ICONO_MAP[area.icono] ?? "destello";
@@ -81,7 +81,7 @@ export function AreasVidaV2({ areas }: AreasVidaV2Props) {
         })}
       </div>
 
-      <div className="min-h-[112px] px-4 py-4">
+      <div className="min-h-[136px] px-4 py-4 lg:pb-5">
         <div
           key={tabVisible}
           className={`transition-all duration-180 ease-out ${

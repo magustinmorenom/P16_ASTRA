@@ -210,15 +210,6 @@ function formatearDuracion(segundos: number): string {
   return `${minutos}:${resto.toString().padStart(2, "0")}`;
 }
 
-function obtenerClasesIcono(tono: EstadoCabecera["tonoIcono"]): string {
-  switch (tono) {
-    case "rojo":
-      return "border-[#E57373]/20 bg-[#E57373]/12 text-[#FFC7C7]";
-    default:
-      return "border-[#B388FF]/20 bg-[#7C4DFF]/16 text-[#E8DAFF]";
-  }
-}
-
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -447,7 +438,7 @@ export default function Navbar() {
     <nav className="relative z-40 shrink-0 overflow-visible border-b border-white/[0.08] bg-[linear-gradient(180deg,#2A1247_0%,#17041F_100%)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(179,136,255,0.24),transparent_28%),radial-gradient(circle_at_78%_20%,rgba(212,162,52,0.08),transparent_22%)]" />
 
-      <div className="relative mx-auto flex h-[78px] items-center justify-between gap-4 px-4 lg:px-6">
+      <div className="relative mx-auto flex h-[70px] items-center justify-between gap-4 px-4 lg:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <Link href="/dashboard" className="flex shrink-0 items-center">
             <Image
@@ -479,34 +470,24 @@ export default function Navbar() {
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="mx-auto flex max-w-[860px] items-center gap-3 rounded-[24px] border border-white/[0.08] bg-[linear-gradient(135deg,rgba(255,255,255,0.1),rgba(255,255,255,0.04))] px-4 py-3 shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl">
-            <div
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] border ${obtenerClasesIcono(
-                estadoCabecera.tonoIcono
-              )}`}
-            >
-              <Icono nombre={estadoCabecera.icono} tamaño={20} peso="fill" />
-            </div>
-
-            <div className="min-w-0 flex-1">
+          <div className="mx-auto flex max-w-[860px] items-center px-3 py-1.5">
+            <div className="min-w-0 flex-1 rounded-[10px] bg-[linear-gradient(135deg,rgba(124,77,255,0.16),rgba(36,14,54,0.04))] px-4 py-2.5">
               {estadoCabecera.etiqueta && (
-                <div className="mb-0.5 flex items-center gap-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-violet-200/58">
-                    {estadoCabecera.etiqueta}
-                  </span>
-                </div>
+                <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-200/56">
+                  {estadoCabecera.etiqueta}
+                </p>
               )}
 
-              <p className="text-[15px] font-semibold leading-tight text-white/96">
+              <p className="line-clamp-1 text-[14px] font-semibold leading-tight text-white/96">
                 {estadoCabecera.titulo}
               </p>
               {estadoCabecera.descripcion && (
-                <p className="mt-1 text-[12px] leading-5 text-white/56">
+                <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-white/56">
                   {estadoCabecera.descripcion}
                 </p>
               )}
               {estadoCabecera.meta && (
-                <p className="mt-1 text-[11px] leading-5 text-violet-100/56">
+                <p className="mt-0.5 line-clamp-1 text-[10px] leading-4 text-violet-100/50">
                   {estadoCabecera.meta}
                 </p>
               )}
