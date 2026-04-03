@@ -1,10 +1,17 @@
 import { useRef } from "react";
-import { Pressable, Animated, type PressableProps } from "react-native";
+import {
+  Pressable,
+  Animated,
+  type PressableProps,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 
-interface PresionableAnimadoProps extends PressableProps {
+interface PresionableAnimadoProps extends Omit<PressableProps, "style"> {
   children: React.ReactNode;
   escala?: number;
   duracion?: number;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function PresionableAnimado({

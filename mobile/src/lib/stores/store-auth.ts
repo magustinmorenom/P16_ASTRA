@@ -30,10 +30,8 @@ export const useStoreAuth = create<EstadoAuth>((set) => ({
         return;
       }
 
-      const { data } = await clienteApi.get<{ datos: UsuarioConSuscripcion }>(
-        "/auth/me"
-      );
-      set({ usuario: data.datos, autenticado: true, cargando: false });
+      const usuario = await clienteApi.get<UsuarioConSuscripcion>("/auth/me");
+      set({ usuario, autenticado: true, cargando: false });
     } catch {
       set({ usuario: null, autenticado: false, cargando: false });
     }
@@ -42,7 +40,7 @@ export const useStoreAuth = create<EstadoAuth>((set) => ({
   cerrarSesion: async () => {
     await SecureStore.deleteItemAsync("access_token");
     await SecureStore.deleteItemAsync("refresh_token");
-    set({ usuario: null, autenticado: false });
+    set({ usuario: null, autenticado: false, cargando: false });
     // Limpiar reproductor al cerrar sesión
     const { useStoreUI } = require("@/lib/stores/store-ui");
     useStoreUI.setState({

@@ -17,6 +17,7 @@ interface SelectorCiudadProps {
   placeholder?: string;
   valorInicial?: string;
   onSeleccionar: (resultado: ResultadoGeo) => void;
+  onCambioTexto?: (texto: string) => void;
   error?: string;
 }
 
@@ -25,6 +26,7 @@ export function SelectorCiudad({
   placeholder = "Buscar ciudad...",
   valorInicial = "",
   onSeleccionar,
+  onCambioTexto,
   error,
 }: SelectorCiudadProps) {
   const { colores } = usarTema();
@@ -39,12 +41,13 @@ export function SelectorCiudad({
   const manejarCambio = useCallback((valor: string) => {
     setTexto(valor);
     setAbierto(true);
+    onCambioTexto?.(valor);
 
     if (temporizador.current) clearTimeout(temporizador.current);
     temporizador.current = setTimeout(() => {
       setConsulta(valor);
     }, 450);
-  }, []);
+  }, [onCambioTexto]);
 
   useEffect(() => {
     return () => {

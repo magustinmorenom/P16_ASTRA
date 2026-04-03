@@ -5,12 +5,7 @@ import type { PodcastEpisodio, TipoPodcast } from "@/lib/tipos";
 export function usarPodcastHoy(refetchRapido = false) {
   return useQuery({
     queryKey: ["podcast", "hoy"],
-    queryFn: async () => {
-      const { data } = await clienteApi.get<{ datos: PodcastEpisodio[] }>(
-        "/podcast/hoy"
-      );
-      return data.datos;
-    },
+    queryFn: () => clienteApi.get<PodcastEpisodio[]>("/podcast/hoy"),
     refetchInterval: refetchRapido ? 5_000 : 60_000,
   });
 }
@@ -18,12 +13,7 @@ export function usarPodcastHoy(refetchRapido = false) {
 export function usarPodcastEpisodio(id: string | null) {
   return useQuery({
     queryKey: ["podcast", "episodio", id],
-    queryFn: async () => {
-      const { data } = await clienteApi.get<{ datos: PodcastEpisodio }>(
-        `/podcast/episodio/${id}`
-      );
-      return data.datos;
-    },
+    queryFn: () => clienteApi.get<PodcastEpisodio>(`/podcast/episodio/${id}`),
     enabled: !!id,
   });
 }
@@ -31,24 +21,15 @@ export function usarPodcastEpisodio(id: string | null) {
 export function usarPodcastHistorial() {
   return useQuery({
     queryKey: ["podcast", "historial"],
-    queryFn: async () => {
-      const { data } = await clienteApi.get<{ datos: PodcastEpisodio[] }>(
-        "/podcast/historial"
-      );
-      return data.datos;
-    },
+    queryFn: () => clienteApi.get<PodcastEpisodio[]>("/podcast/historial"),
   });
 }
 
 export function usarGenerarPodcast() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (tipo: TipoPodcast) => {
-      const { data } = await clienteApi.post<{ datos: PodcastEpisodio }>(
-        `/podcast/generar?tipo=${tipo}`
-      );
-      return data.datos;
-    },
+    mutationFn: (tipo: TipoPodcast) =>
+      clienteApi.post<PodcastEpisodio>(`/podcast/generar?tipo=${tipo}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["podcast"] });
     },

@@ -9,13 +9,9 @@ interface OpcionesNumerologia {
 
 export function usarNumerologia() {
   return useMutation({
-    mutationFn: async ({ datos, perfilId }: OpcionesNumerologia) => {
+    mutationFn: ({ datos, perfilId }: OpcionesNumerologia) => {
       const query = perfilId ? `?perfil_id=${perfilId}` : "";
-      const { data } = await clienteApi.post<{ datos: Numerologia }>(
-        `/numerology${query}`,
-        datos
-      );
-      return data.datos;
+      return clienteApi.post<Numerologia>(`/numerology${query}`, datos);
     },
   });
 }

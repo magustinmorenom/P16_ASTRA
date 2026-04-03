@@ -32,7 +32,9 @@ export function Avatar({ nombre, tamaño = "md", className }: AvatarProps) {
         width: size,
         height: size,
         borderRadius: size / 2,
-        backgroundColor: colores.acento + "4D",
+        backgroundColor: `${colores.acento}24`,
+        borderWidth: 1,
+        borderColor: `${colores.acento}30`,
         alignItems: "center",
         justifyContent: "center",
       }}

@@ -7,6 +7,7 @@ import { usarTema } from "@/lib/hooks/usar-tema";
 
 interface HeaderMobileProps {
   titulo?: string;
+  subtitulo?: string;
   mostrarAtras?: boolean;
   accionDerecha?: React.ReactNode;
   children?: React.ReactNode;
@@ -14,6 +15,7 @@ interface HeaderMobileProps {
 
 export function HeaderMobile({
   titulo,
+  subtitulo,
   mostrarAtras = true,
   accionDerecha,
   children,
@@ -28,12 +30,12 @@ export function HeaderMobile({
         style={{
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between",
           paddingHorizontal: 16,
-          height: 56,
+          minHeight: 60,
+          paddingBottom: 10,
         }}
       >
-        <View style={{ width: 40 }}>
+        <View style={{ width: 68, justifyContent: "center" }}>
           {mostrarAtras && (
             <Pressable onPress={() => router.back()} style={{ padding: 4 }}>
               <ArrowLeft size={24} color={colores.primario} />
@@ -41,21 +43,37 @@ export function HeaderMobile({
           )}
         </View>
 
-        {titulo && (
-          <Text
-            style={{
-              color: colores.primario,
-              fontFamily: "Inter_600SemiBold",
-              fontSize: 18,
-              flex: 1,
-              textAlign: "center",
-            }}
-          >
-            {titulo}
-          </Text>
-        )}
+        <View style={{ flex: 1, alignItems: "center", paddingHorizontal: 8 }}>
+          {titulo ? (
+            <Text
+              numberOfLines={1}
+              style={{
+                color: colores.primario,
+                fontFamily: "Inter_600SemiBold",
+                fontSize: 18,
+                textAlign: "center",
+              }}
+            >
+              {titulo}
+            </Text>
+          ) : null}
+          {subtitulo ? (
+            <Text
+              numberOfLines={1}
+              style={{
+                color: colores.textoSecundario,
+                fontFamily: "Inter_400Regular",
+                fontSize: 12,
+                marginTop: 2,
+                textAlign: "center",
+              }}
+            >
+              {subtitulo}
+            </Text>
+          ) : null}
+        </View>
 
-        <View style={{ width: 40, alignItems: "flex-end" }}>{accionDerecha}</View>
+        <View style={{ width: 68, alignItems: "flex-end" }}>{accionDerecha}</View>
       </View>
       {children}
     </>
@@ -85,9 +103,9 @@ export function HeaderMobile({
     <View
       style={{
         paddingTop: insets.top,
-        backgroundColor: colores.fondo + "E6",
+        backgroundColor: `${colores.fondo}F2`,
         borderBottomWidth: 1,
-        borderBottomColor: colores.borde,
+        borderBottomColor: colores.vidrioBorde,
       }}
     >
       {contenido}
