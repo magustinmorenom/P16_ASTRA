@@ -44,9 +44,9 @@ export function MomentosDia({ momentos }: MomentosDiaProps) {
     .filter(Boolean) as MomentoClaveDTO[];
 
   return (
-    <div className="flex flex-col overflow-hidden divide-y divide-white/[0.06] rounded-[18px] bg-white/[0.04]">
+    <div className="flex flex-1 flex-col justify-between overflow-hidden divide-y divide-white/[0.06] rounded-[18px] bg-white/[0.04]">
       {momentosOrdenados.map((momento) => (
-        <div key={momento.bloque} className="flex items-center gap-3 px-4 py-3.5">
+        <div key={momento.bloque} className="flex flex-1 items-center gap-3 px-4 py-3.5">
           <div className="shrink-0 opacity-90">
             {ICONO_BLOQUE[momento.bloque] ?? ICONO_BLOQUE.manana}
           </div>

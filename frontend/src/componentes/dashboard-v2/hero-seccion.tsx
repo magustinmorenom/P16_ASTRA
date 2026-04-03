@@ -56,7 +56,7 @@ export function HeroSeccion({
 
   return (
     <div className="rounded-[20px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.16),transparent_28%),linear-gradient(180deg,#2a1742_0%,#180923_100%)] shadow-[0_24px_64px_rgba(8,2,22,0.34)]">
-      <div className="flex flex-col gap-0 lg:grid lg:min-h-[404px] lg:grid-cols-[minmax(240px,1.2fr)_minmax(250px,1fr)_minmax(290px,1.08fr)]">
+      <div className="flex flex-col gap-0 lg:grid lg:grid-cols-[minmax(240px,1.2fr)_minmax(250px,1fr)_minmax(290px,1.08fr)]">
         <div className="border-b border-white/[0.06] p-4 lg:border-b-0 lg:border-r lg:p-5">
           <div className="flex flex-col gap-6 pb-2">
             <div className="flex items-start gap-4">
@@ -92,7 +92,7 @@ export function HeroSeccion({
                     />
                   )}
                 </span>
-                <span>{podcastGenerando ? "Generando audio" : podcastListo ? "Escuchar ahora" : "Generar audio"}</span>
+                <span>{podcastGenerando ? "Generando audio" : podcastListo ? "Escuchar ahora" : "Generar audio de hoy"}</span>
               </button>
 
               <button
@@ -107,7 +107,7 @@ export function HeroSeccion({
           </div>
         </div>
 
-        <div className="border-b border-white/[0.06] p-3 lg:border-b-0 lg:border-r lg:p-4 lg:pb-5">
+        <div className="flex border-b border-white/[0.06] p-3 lg:border-b-0 lg:border-r lg:p-4 lg:pb-5">
           <MomentosDia momentos={momentos} />
         </div>
 
