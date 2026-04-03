@@ -218,7 +218,7 @@ class TestConsultar:
         config.anthropic_api_key = ""
         mock_config.return_value = config
 
-        respuesta, tokens = await ServicioOraculo.consultar("Hola")
+        respuesta, tokens, *_ = await ServicioOraculo.consultar("Hola")
         assert "no está configurado" in respuesta
         assert tokens == 0
 
@@ -245,7 +245,7 @@ class TestConsultar:
         mock_cliente.messages.create = AsyncMock(return_value=mock_response)
         mock_anthropic.AsyncAnthropic.return_value = mock_cliente
 
-        respuesta, tokens = await ServicioOraculo.consultar(
+        respuesta, tokens, tokens_in, tokens_out = await ServicioOraculo.consultar(
             mensaje_usuario="¿Cómo está mi energía hoy?",
             perfil_cosmico={"datos_personales": {"nombre": "Ana"}},
             transitos={"planetas": []},
@@ -253,6 +253,8 @@ class TestConsultar:
 
         assert respuesta == "Las estrellas indican un buen momento para vos."
         assert tokens == 150
+        assert tokens_in == 100
+        assert tokens_out == 50
         mock_cliente.messages.create.assert_called_once()
 
     @pytest.mark.asyncio
@@ -282,7 +284,7 @@ class TestConsultar:
             {"rol": "assistant", "contenido": "Bienvenida"},
         ]
 
-        respuesta, tokens = await ServicioOraculo.consultar(
+        respuesta, tokens, *_ = await ServicioOraculo.consultar(
             mensaje_usuario="¿Qué más me decís?",
             historial=historial,
         )
@@ -323,6 +325,6 @@ class TestConsultar:
         )
         mock_anthropic.AsyncAnthropic.return_value = mock_cliente
 
-        respuesta, tokens = await ServicioOraculo.consultar("Hola")
+        respuesta, tokens, *_ = await ServicioOraculo.consultar("Hola")
         assert "error" in respuesta.lower() or "disculpá" in respuesta.lower()
         assert tokens == 0

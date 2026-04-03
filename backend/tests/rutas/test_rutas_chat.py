@@ -144,7 +144,7 @@ class TestEnviarMensajeChat:
         MockRepoConversacion.return_value.obtener_historial = AsyncMock(return_value=[])
         MockRepoConversacion.return_value.agregar_mensaje = AsyncMock()
         MockServicioTransitos.obtener_transitos_actuales = MagicMock(return_value={"planetas": []})
-        MockServicioOraculo.consultar = AsyncMock(return_value=("Respuesta astral", 321))
+        MockServicioOraculo.consultar = AsyncMock(return_value=("Respuesta astral", 321, 200, 121))
 
         token = ServicioAuth.crear_token_acceso(usuario_id, "test@test.com")
 

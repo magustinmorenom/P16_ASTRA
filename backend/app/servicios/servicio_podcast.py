@@ -272,7 +272,21 @@ class ServicioPodcast:
             )
 
             guion = respuesta.content[0].text if respuesta.content else ""
-            tokens = (respuesta.usage.input_tokens or 0) + (respuesta.usage.output_tokens or 0)
+            tokens_in = respuesta.usage.input_tokens or 0
+            tokens_out = respuesta.usage.output_tokens or 0
+            tokens = tokens_in + tokens_out
+
+            # Registrar consumo Claude (guión)
+            from app.servicios.servicio_consumo_api import registrar_consumo
+            await registrar_consumo(
+                sesion,
+                usuario_id=usuario_id,
+                servicio="anthropic",
+                operacion=f"podcast_guion_{tipo}",
+                tokens_entrada=tokens_in,
+                tokens_salida=tokens_out,
+                modelo=config.anthropic_modelo,
+            )
 
             await repo.actualizar_estado(
                 episodio.id, "generando_audio", guion_md=guion, tokens_usados=tokens
@@ -280,6 +294,19 @@ class ServicioPodcast:
 
             # 5. Generar audio con TTS
             mp3_bytes, duracion = await ServicioTTS.generar_audio(guion)
+
+            # Registrar consumo Gemini TTS
+            chars_guion = len(guion)
+            await registrar_consumo(
+                sesion,
+                usuario_id=usuario_id,
+                servicio="gemini",
+                operacion=f"podcast_tts_{tipo}",
+                tokens_entrada=chars_guion,
+                tokens_salida=0,
+                modelo="gemini-2.5-flash-preview-tts",
+                metadata_extra={"caracteres": chars_guion, "duracion_segundos": duracion},
+            )
 
             # 6. Subir a MinIO
             objeto_key = f"podcasts/{usuario_id}/{fecha_clave.isoformat()}/{tipo}.mp3"
