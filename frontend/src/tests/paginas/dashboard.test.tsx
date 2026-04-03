@@ -199,7 +199,7 @@ describe("PaginaDashboard", () => {
 
     renderConProveedores(<PaginaDashboard />);
 
-    // v2: pronóstico renders via HeroSeccion + MensajeClave
-    expect(screen.getByText(/Pronóstico Cósmico|Día Soleado|Test User/)).toBeInTheDocument();
+    expect(screen.getByText(/seguí con lo importante/i)).toBeInTheDocument();
+    expect(screen.getByText(/Tu audio del día todavía no fue generado/i)).toBeInTheDocument();
   });
 });

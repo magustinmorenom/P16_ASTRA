@@ -25,7 +25,6 @@ interface EnlaceProximo {
   etiqueta: string;
   ruta: string;
   icono: NombreIcono;
-  descripcion: string;
 }
 
 const enlacesActivos: EnlaceNav[] = [
@@ -41,22 +40,16 @@ const enlacesProximamente: EnlaceProximo[] = [
     etiqueta: "Calendario Cósmico",
     ruta: "/calendario-cosmico",
     icono: "planeta",
-    descripcion:
-      "Tu calendario personal con tránsitos planetarios, numerología diaria y los mejores momentos para cada decisión. Sincronizado con Google Calendar para que muevas siempre en tu mejor timing.",
   },
   {
     etiqueta: "Revolución Solar",
     ruta: "/retorno-solar",
     icono: "retornoSolar",
-    descripcion:
-      "Tu carta astral recalculada para cada cumpleaños. Descubrí las energías, desafíos y oportunidades que te esperan en tu próximo año solar.",
   },
   {
     etiqueta: "Match de Pareja",
     ruta: "/match-pareja",
     icono: "corazon",
-    descripcion:
-      "Compará tu carta natal con la de otra persona. Sinastría completa: compatibilidad emocional, sexual, intelectual y kármica entre dos almas.",
   },
 ];
 
@@ -69,9 +62,6 @@ export default function SidebarNavegacion() {
 
   const { data: perfil } = usarMiPerfil();
   const { data: calculos, isLoading: cargandoCalculos } = usarMisCalculos();
-
-  // --- Estado del acordeón próximamente ---
-  const [proximoAbierto, setProximoAbierto] = useState<string | null>(null);
 
   // --- Estado del modal de descarga ---
   const [modalDescarga, setModalDescarga] = useState(false);
@@ -200,79 +190,37 @@ export default function SidebarNavegacion() {
           >
             {!colapsado && (
               <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-300/50">
-                Próximamente — Spoiler Alert
+                Próximamente
               </p>
             )}
             <ul className="flex flex-col gap-0.5">
-              {enlacesProximamente.map((enlace) => {
-                const abierto = proximoAbierto === enlace.ruta;
-                return (
-                  <li key={enlace.ruta} className="group">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setProximoAbierto(abierto ? null : enlace.ruta)
-                      }
-                      title={
-                        colapsado
-                          ? `${enlace.etiqueta} · Próximamente`
-                          : undefined
-                      }
-                      className={cn(
-                        "flex w-full cursor-pointer items-center rounded-lg text-[13px] font-medium transition-all duration-200",
-                        colapsado
-                          ? "justify-center px-0 py-2.5"
-                          : "gap-3 px-2 py-2.5",
-                        abierto
-                          ? "text-[#D9C2FF] bg-white/[0.04]"
-                          : "text-white/45 hover:text-white/70 hover:bg-white/[0.03]"
-                      )}
-                    >
-                      <Icono
-                        nombre={enlace.icono}
-                        tamaño={18}
-                        peso="regular"
-                        className={cn(
-                          "shrink-0 transition-colors duration-200",
-                          abierto
-                            ? "text-[#B388FF]"
-                            : "text-white/30 group-hover:text-white/50"
-                        )}
-                      />
-                      {!colapsado && (
-                        <>
-                          <span className="min-w-0 flex-1 text-left leading-none">
-                            {enlace.etiqueta}
-                          </span>
-                          <Icono
-                            nombre="caretAbajo"
-                            tamaño={14}
-                            className={cn(
-                              "shrink-0 transition-transform duration-200",
-                              abierto ? "rotate-180" : ""
-                            )}
-                          />
-                        </>
-                      )}
-                    </button>
-                    {/* Descripción expandible */}
-                    {!colapsado && (
-                      <div
-                        className={cn(
-                          "grid transition-all duration-200 ease-out",
-                          abierto ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                        )}
-                      >
-                        <div className="overflow-hidden">
-                          <p className="px-2 pb-2 pt-1.5 text-[11px] leading-relaxed text-white/35">
-                            {enlace.descripcion}
-                          </p>
-                        </div>
-                      </div>
+              {enlacesProximamente.map((enlace) => (
+                <li key={enlace.ruta} className="group">
+                  <Link
+                    href={enlace.ruta}
+                    title={colapsado ? `${enlace.etiqueta} · Próximamente` : undefined}
+                    className={cn(
+                      "flex items-center rounded-lg text-[13px] font-medium transition-all duration-200",
+                      colapsado
+                        ? "justify-center px-0 py-2.5"
+                        : "gap-3 px-2 py-2.5",
+                      "text-white/45 hover:bg-white/[0.03] hover:text-white/70"
                     )}
-                  </li>
-                );
-              })}
+                  >
+                    <Icono
+                      nombre={enlace.icono}
+                      tamaño={18}
+                      peso="regular"
+                      className="shrink-0 text-white/30 transition-colors duration-200 group-hover:text-white/50"
+                    />
+                    {!colapsado && (
+                      <span className="min-w-0 flex-1 text-left leading-none">
+                        {enlace.etiqueta}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </nav>
@@ -370,7 +318,7 @@ export default function SidebarNavegacion() {
                             estaActivo ? "text-[#B388FF]" : "text-white/35"
                           )}
                         />
-                        <span className="truncate">{enlace.etiqueta}</span>
+                        <span>{enlace.etiqueta}</span>
                       </Link>
                     </li>
                   );
@@ -380,61 +328,28 @@ export default function SidebarNavegacion() {
               {/* Sección Próximamente mobile */}
               <div className="mt-3 rounded-xl border border-[#B388FF]/10 bg-[#B388FF]/[0.04] px-2 py-3">
                 <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-300/50">
-                  Próximamente — Spoiler Alert
+                  Próximamente
                 </p>
                 <ul className="flex flex-col gap-0.5">
-                  {enlacesProximamente.map((enlace) => {
-                    const abierto = proximoAbierto === enlace.ruta;
-                    return (
-                      <li key={enlace.ruta} className="group">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setProximoAbierto(abierto ? null : enlace.ruta)
-                          }
-                          className={cn(
-                            "flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-2.5 text-[13px] font-medium transition-all duration-200",
-                            abierto
-                              ? "text-[#D9C2FF] bg-white/[0.04]"
-                              : "text-white/45 hover:text-white/70 hover:bg-white/[0.03]"
-                          )}
-                        >
-                          <Icono
-                            nombre={enlace.icono}
-                            tamaño={18}
-                            peso="regular"
-                            className={cn(
-                              "shrink-0 transition-colors duration-200",
-                              abierto ? "text-[#B388FF]" : "text-white/30"
-                            )}
-                          />
-                          <span className="flex-1 truncate text-left">
-                            {enlace.etiqueta}
-                          </span>
-                          <Icono
-                            nombre="caretAbajo"
-                            tamaño={14}
-                            className={cn(
-                              "shrink-0 transition-transform duration-200",
-                              abierto ? "rotate-180" : ""
-                            )}
-                          />
-                        </button>
-                        <div
-                          className={cn(
-                            "grid transition-all duration-200 ease-out",
-                            abierto ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                          )}
-                        >
-                          <div className="overflow-hidden">
-                            <p className="px-2 pb-2 pt-1.5 text-[11px] leading-relaxed text-white/35">
-                              {enlace.descripcion}
-                            </p>
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
+                  {enlacesProximamente.map((enlace) => (
+                    <li key={enlace.ruta} className="group">
+                      <Link
+                        href={enlace.ruta}
+                        onClick={cerrarSidebar}
+                        className="flex items-center gap-3 rounded-lg px-2 py-2.5 text-[13px] font-medium text-white/45 transition-all duration-200 hover:bg-white/[0.03] hover:text-white/70"
+                      >
+                        <Icono
+                          nombre={enlace.icono}
+                          tamaño={18}
+                          peso="regular"
+                          className="shrink-0 text-white/30 transition-colors duration-200 group-hover:text-white/50"
+                        />
+                        <span className="flex-1 text-left">
+                          {enlace.etiqueta}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </nav>
@@ -475,45 +390,48 @@ export default function SidebarNavegacion() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40">
           <div
             ref={modalRef}
-            className="bg-white rounded-2xl shadow-xl w-[340px] p-6 relative"
+            className="relative w-[340px] overflow-hidden rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(31,16,48,0.98),rgba(21,7,31,0.98))] p-6 shadow-[0_26px_70px_rgba(8,2,20,0.45)] backdrop-blur-2xl"
           >
             <button
               onClick={() => setModalDescarga(false)}
-              className="absolute top-3 right-3 text-[#8A8580] hover:text-[#2C2926] transition-colors"
+              className="absolute right-3 top-3 text-white/46 transition-colors hover:text-white"
             >
               <Icono nombre="x" tamaño={20} />
             </button>
 
-            <h3 className="text-lg font-semibold text-[#2C2926] mb-1">Descargar Perfil</h3>
-            <p className="text-sm text-[#8A8580] mb-5">Elige el formato de descarga</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-200/58">
+              Descarga
+            </p>
+            <h3 className="mb-1 mt-3 text-[18px] font-semibold text-white">Descargar perfil</h3>
+            <p className="mb-5 text-sm text-white/56">Elegí el formato más útil para vos.</p>
 
             <div className="flex gap-3">
               <button
                 onClick={descargarPDF}
                 disabled={descargando !== null}
-                className="flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border border-[#E8E4E0] hover:border-[#7C4DFF] hover:bg-[#F5F0FF]/50 transition-colors disabled:opacity-50"
+                className="flex flex-1 flex-col items-center gap-2 rounded-[18px] border border-white/[0.08] bg-white/[0.04] p-4 transition-colors hover:border-[#B388FF]/24 hover:bg-white/[0.08] disabled:opacity-50"
               >
                 {descargando === "pdf" ? (
-                  <Icono nombre="descarga" tamaño={24} className="text-[#7C4DFF] animate-bounce" />
+                  <Icono nombre="descarga" tamaño={24} className="animate-bounce text-[#D8C0FF]" />
                 ) : (
-                  <Icono nombre="descarga" tamaño={24} className="text-[#7C4DFF]" />
+                  <Icono nombre="descarga" tamaño={24} className="text-[#D8C0FF]" />
                 )}
-                <span className="text-sm font-semibold text-[#2C2926]">PDF</span>
-                <span className="text-[11px] text-[#8A8580]">Con estilo ASTRA</span>
+                <span className="text-sm font-semibold text-white">PDF</span>
+                <span className="text-[11px] text-white/48">Formato visual ASTRA</span>
               </button>
 
               <button
                 onClick={descargarMarkdown}
                 disabled={descargando !== null}
-                className="flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border border-[#E8E4E0] hover:border-[#7C4DFF] hover:bg-[#F5F0FF]/50 transition-colors disabled:opacity-50"
+                className="flex flex-1 flex-col items-center gap-2 rounded-[18px] border border-white/[0.08] bg-white/[0.04] p-4 transition-colors hover:border-[#B388FF]/24 hover:bg-white/[0.08] disabled:opacity-50"
               >
                 {descargando === "md" ? (
-                  <Icono nombre="descarga" tamaño={24} className="text-[#7C4DFF] animate-bounce" />
+                  <Icono nombre="descarga" tamaño={24} className="animate-bounce text-[#D8C0FF]" />
                 ) : (
-                  <Icono nombre="descarga" tamaño={24} className="text-[#7C4DFF]" />
+                  <Icono nombre="descarga" tamaño={24} className="text-[#D8C0FF]" />
                 )}
-                <span className="text-sm font-semibold text-[#2C2926]">Markdown</span>
-                <span className="text-[11px] text-[#8A8580]">Texto editable</span>
+                <span className="text-sm font-semibold text-white">Markdown</span>
+                <span className="text-[11px] text-white/48">Texto editable</span>
               </button>
             </div>
           </div>

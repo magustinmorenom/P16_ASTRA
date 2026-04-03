@@ -25,12 +25,12 @@ export function HeroCarta({ datos, onAbrirRueda }: HeroCartaProps) {
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0 flex-1">
               <div className="flex items-start gap-3">
-                <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#B388FF] shadow-[0_14px_32px_rgba(34,12,72,0.36)] sm:flex">
+                <div className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#B388FF] shadow-[0_14px_32px_rgba(34,12,72,0.36)] sm:flex">
                   <IconoAstral nombre="astrologia" tamaño={22} className="text-white" />
                 </div>
 
                 <div className="min-w-0">
-                  <h1 className="text-[20px] font-semibold tracking-[-0.04em] text-white sm:text-[24px]">
+                  <h1 className="text-[18px] font-semibold tracking-[-0.04em] text-white sm:text-[22px]">
                     {primerNombre}, tu tríada base.
                   </h1>
                   <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px]">
@@ -69,8 +69,8 @@ export function HeroCarta({ datos, onAbrirRueda }: HeroCartaProps) {
             </button>
           </div>
 
-          <p className="mt-4 max-w-3xl text-[12px] leading-6 text-white/54">
-            Leé la tríada y abrí sólo el punto técnico que necesites.
+          <p className="mt-3 max-w-3xl text-[12px] leading-5 text-white/54">
+            Leé la tríada y abrí solo el punto técnico que necesites.
           </p>
         </div>
       </div>

@@ -165,6 +165,7 @@ Principios obligatorios para nuevas iteraciones visuales:
   - Solo debe existir un foco tipográfico dominante por viewport.
   - Labels pequeños y claros; títulos medianos; números grandes solo cuando de verdad mandan la lectura.
   - En paneles laterales, tarjetas contextuales y módulos secundarios no usar títulos heroicos: preferir escalas contenidas, normalmente entre `text-[16px]` y `text-[20px]`.
+  - En navegación, menús, listas técnicas, sidebars y reproductores evitar `text-3xl`, `text-4xl` o equivalentes; esos tamaños quedan reservados al hero principal.
 
 - **El centro muestra estructura; el panel derecho explica.**
   - La vista principal debe quedarse con síntesis, selección y navegación.
@@ -175,10 +176,19 @@ Principios obligatorios para nuevas iteraciones visuales:
   - Si un texto no cambia comprensión ni acción, sobra.
   - Si dos bloques explican lo mismo con distinto wording, sobra uno.
   - Si un artefacto visual no ayuda a decidir ni a leer mejor, debe bajar de nivel o pasar a modal.
+  - Evitar copy interno de scaffolding: `Capítulo`, `Sección`, `Bloque`, `Spoiler`, `Qué vas a encontrar`, etc.
 
 - **Aprovechar el viewport.**
   - Evitar stacks verticales de tarjetas altas cuando el contenido puede resolverse en una banda, una matriz o una grilla compacta.
   - Desktop debe sentirse como mesa de lectura o cabina interactiva, no como landing larga.
+
+- **Nada de truncados visibles en información principal.**
+  - En identidad de usuario, títulos de episodios, títulos de pantalla y nombres técnicos importantes preferir wrap controlado, reflujo o ajuste de layout.
+  - `truncate` solo se admite en metadata secundaria no crítica y cuando exista una vía clara para ver el contenido completo.
+
+- **Una sola superficie por unidad semántica.**
+  - No usar panel dentro de panel si ambos pertenecen al mismo bloque de lectura.
+  - Si un contenedor necesita otro contenedor solo para “verse premium”, el problema es de estructura, no de estilo.
 
 - **Los componentes deben ser clickeables por semántica, no por decoración.**
   - Todo dato técnico o estructural importante debe poder abrir contexto.

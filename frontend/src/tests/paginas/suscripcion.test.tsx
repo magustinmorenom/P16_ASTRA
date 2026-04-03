@@ -210,7 +210,7 @@ describe("PaginaSuscripcion", () => {
 
     renderConProveedores(<PaginaSuscripcion />);
 
-    expect(screen.getByText("Mi suscripción")).toBeInTheDocument();
+    expect(screen.getByText("Tu plan y tus cobros")).toBeInTheDocument();
     expect(screen.getAllByText(/Activa/).length).toBeGreaterThan(0);
   });
 });

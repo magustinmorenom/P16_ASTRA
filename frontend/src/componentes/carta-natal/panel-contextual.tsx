@@ -728,7 +728,7 @@ function VistaDefault({
 
   return (
     <div className="p-5">
-      <div className="rounded-[28px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-5 shadow-[0_18px_40px_rgba(8,2,22,0.24)]">
+      <div className="rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-5 shadow-[0_18px_40px_rgba(8,2,22,0.24)]">
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/48">
           Lectura inicial
         </p>
@@ -738,32 +738,22 @@ function VistaDefault({
             : "Tu carta empieza por la tríada."}
         </h3>
         <p className={modo === "escritorio"
-          ? "mt-3 text-[13px] leading-7 text-white/62"
-          : "mt-3 text-[13px] leading-7 text-white/72"}>
-          Empezá por Sol, Luna y Ascendente. Después abrí el punto técnico que necesites para ampliar lectura, dinámica y escenario.
+          ? "mt-3 text-[13px] leading-6 text-white/62"
+          : "mt-3 text-[13px] leading-6 text-white/72"}>
+          Empezá por la tríada y abrí solo el punto que necesites ampliar.
         </p>
       </div>
 
       <div className="mt-5 space-y-3">
         <ResumenLinea
-          etiqueta="Sol"
-          valor={sol?.signo ?? "—"}
-          descripcion="Identidad, dirección y tono vital."
-        />
-        <ResumenLinea
-          etiqueta="Luna"
-          valor={luna?.signo ?? "—"}
-          descripcion="Clima emocional y forma de procesar."
-        />
-        <ResumenLinea
-          etiqueta="Ascendente"
-          valor={datos.ascendente.signo}
-          descripcion="Presencia, arranque y primera lectura."
+          etiqueta="Tríada"
+          valor={`${sol?.signo ?? "—"} · ${luna?.signo ?? "—"} · ${datos.ascendente.signo}`}
+          descripcion="Identidad, emoción y presencia."
         />
         <ResumenLinea
           etiqueta="Pulso"
           valor={`${elementoDominante[0]} + ${modalidadDominante[0]}`}
-          descripcion="Combinación base entre elemento y modo de activación."
+          descripcion="Elemento y modalidad que más ordenan la carta."
         />
       </div>
     </div>

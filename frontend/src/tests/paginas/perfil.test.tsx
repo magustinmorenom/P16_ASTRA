@@ -153,7 +153,7 @@ describe("PaginaPerfil — Datos de Nacimiento", () => {
   it("muestra la seccion de datos de nacimiento en modo lectura", () => {
     renderConProveedores(<PaginaPerfil />);
 
-    expect(screen.getByText("Datos de Nacimiento")).toBeInTheDocument();
+    expect(screen.getByText("Datos de nacimiento")).toBeInTheDocument();
     // "Lucía García" aparece múltiples veces (header + info usuario + datos nacimiento)
     expect(screen.getAllByText("Lucía García").length).toBeGreaterThanOrEqual(2);
     // Estos valores solo aparecen en la sección de datos de nacimiento
@@ -171,7 +171,7 @@ describe("PaginaPerfil — Datos de Nacimiento", () => {
     mockPerfilData = null;
     renderConProveedores(<PaginaPerfil />);
 
-    expect(screen.getByText(/no tienes datos de nacimiento/i)).toBeInTheDocument();
+    expect(screen.getByText(/no tenés datos de nacimiento/i)).toBeInTheDocument();
   });
 
   it("muestra mensaje de carga mientras carga perfil", () => {
@@ -317,14 +317,14 @@ describe("PaginaPerfil — Datos de Nacimiento", () => {
     renderConProveedores(<PaginaPerfil />);
 
     expect(screen.getByText("Accesos y seguridad")).toBeInTheDocument();
-    expect(screen.getByText("Cambiar contrasena")).toBeInTheDocument();
-    expect(screen.getByText("Cerrar sesion")).toBeInTheDocument();
+    expect(screen.getByText("Cambiar contraseña")).toBeInTheDocument();
+    expect(screen.getByText("Cerrar sesión")).toBeInTheDocument();
   });
 
   it("llama a cerrarSesion al hacer click en Cerrar sesion", async () => {
     renderConProveedores(<PaginaPerfil />);
 
-    await user.click(screen.getByText("Cerrar sesion"));
+    await user.click(screen.getByText("Cerrar sesión"));
 
     expect(mockCerrarSesion).toHaveBeenCalled();
   });

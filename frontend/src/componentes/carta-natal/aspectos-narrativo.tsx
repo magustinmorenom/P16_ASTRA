@@ -40,11 +40,11 @@ export function AspectosNarrativo({ aspectos, onSeleccionar }: AspectosNarrativo
                 : "border-l-transparent hover:bg-white/[0.04] hover:border-l-[#B388FF]"
             }`}
           >
-            <div className="flex min-w-0 flex-1 items-center gap-1.5">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
               <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color1 }} />
-              <span className="truncate text-[12px] font-medium text-white">{aspecto.planeta1}</span>
+              <span className="text-[12px] font-medium text-white">{aspecto.planeta1}</span>
               <span className="text-[14px] text-white/36">{simbolo}</span>
-              <span className="truncate text-[12px] font-medium text-white">{aspecto.planeta2}</span>
+              <span className="text-[12px] font-medium text-white">{aspecto.planeta2}</span>
               <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color2 }} />
             </div>
 

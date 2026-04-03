@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { renderConProveedores } from "../utilidades";
 
 vi.mock("next/navigation", () => ({
@@ -56,8 +55,6 @@ const NUMEROLOGIA_MOCK = {
 };
 
 describe("PaginaNumerologia", () => {
-  const user = userEvent.setup();
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -71,12 +68,12 @@ describe("PaginaNumerologia", () => {
     renderConProveedores(<PaginaNumerologia />);
 
     expect(
-      screen.getByText(/Test, tu carta abre un sendero 7 y una misión 22\./),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Tu carta se lee por capas")).toBeInTheDocument();
+      screen.getAllByText(/Test, tu carta abre un sendero 7 y una misión 22\./).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText("Seleccioná un número").length).toBeGreaterThan(0);
     expect(screen.getAllByText("7").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("22").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Núcleo y misión").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Núcleo").length).toBeGreaterThanOrEqual(1);
   });
 
   it("muestra banner de números maestros cuando corresponde", () => {
@@ -87,7 +84,7 @@ describe("PaginaNumerologia", () => {
 
     renderConProveedores(<PaginaNumerologia />);
 
-    expect(screen.getByText("Maestros: 22")).toBeInTheDocument();
+    expect(screen.getAllByText(/Maestros 22/).length).toBeGreaterThan(0);
   });
 
   it("tolera cartas guardadas sin etapas ni arrays auxiliares", () => {
@@ -106,10 +103,10 @@ describe("PaginaNumerologia", () => {
     renderConProveedores(<PaginaNumerologia />);
 
     expect(
-      screen.getByText(/Test, tu carta abre un sendero 7 y una misión 22\./),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Etapas no disponibles")).toBeInTheDocument();
-    expect(screen.queryByText("Maestros: 22")).not.toBeInTheDocument();
+      screen.getAllByText(/Test, tu carta abre un sendero 7 y una misión 22\./).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Etapas no disponibles/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Maestros 22/)).not.toBeInTheDocument();
   });
 
   it("muestra formulario cuando no hay datos", () => {
@@ -121,7 +118,7 @@ describe("PaginaNumerologia", () => {
     renderConProveedores(<PaginaNumerologia />);
 
     expect(
-      screen.getByText(/Numerología por capítulos, no por bloques sueltos/),
+      screen.getByText(/Una lectura compacta de tu estructura y tu ritmo/),
     ).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Nombre completo")).toBeInTheDocument();
   });
@@ -138,7 +135,7 @@ describe("PaginaNumerologia", () => {
     expect(screen.queryByPlaceholderText("Nombre completo")).not.toBeInTheDocument();
   });
 
-  it("botón 'Nuevo cálculo' muestra formulario", async () => {
+  it("mantiene la consola compacta cuando ya hay datos", () => {
     mockUsarMisCalculos.mockReturnValue({
       data: { natal: null, diseno_humano: null, numerologia: NUMEROLOGIA_MOCK, retorno_solar: null },
       isLoading: false,
@@ -146,8 +143,7 @@ describe("PaginaNumerologia", () => {
 
     renderConProveedores(<PaginaNumerologia />);
 
-    await user.click(screen.getByText("Nuevo cálculo"));
-
-    expect(screen.getByPlaceholderText("Nombre completo")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Nombre completo")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Seleccioná un número").length).toBeGreaterThan(0);
   });
 });

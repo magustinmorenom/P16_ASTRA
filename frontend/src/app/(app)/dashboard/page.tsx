@@ -155,7 +155,7 @@ export default function PaginaDashboard() {
   const horaActual = new Date().getHours();
   const saludo =
     horaActual < 12
-      ? "Buenos dias"
+      ? "Buenos días"
       : horaActual < 19
         ? "Buenas tardes"
         : "Buenas noches";
@@ -224,7 +224,7 @@ export default function PaginaDashboard() {
       )}
 
       {/* Contenido principal — dark theme unificado */}
-      <section className="flex-1 scroll-sutil-dark p-4 lg:p-6 flex flex-col gap-4 lg:gap-6">
+      <section className="flex-1 scroll-sutil-dark px-4 pb-4 pt-5 lg:px-6 lg:pb-6 lg:pt-8 flex flex-col gap-4 lg:gap-6">
         {/* ---- PRONÓSTICO ---- */}
         {cargandoPronostico ? (
           <div className="flex flex-col gap-3 lg:gap-4">

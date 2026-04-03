@@ -48,7 +48,7 @@ const TIPO_CONFIG: Record<
   dia: {
     etiqueta: "Tu Día",
     icono: "sol",
-    gradiente: "from-[#7C4DFF] to-[#D4A234]",
+    gradiente: "from-[#7C4DFF] to-[#B388FF]",
     desc: "Momento Clave de tu Día",
   },
   semana: {
@@ -248,7 +248,7 @@ export default function PaginaPodcast() {
         <div className="pointer-events-none absolute left-20 top-[420px] h-56 w-56 rounded-full bg-[#7C4DFF]/10 blur-3xl" />
 
         <div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-4 py-8 sm:px-6">
-          <section className="relative overflow-hidden rounded-[32px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.2),transparent_32%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] px-6 py-7 shadow-[0_24px_70px_rgba(8,2,22,0.38)] sm:px-8 sm:py-8">
+          <section className="relative overflow-hidden rounded-[24px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.2),transparent_32%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] px-6 py-6 shadow-[0_24px_70px_rgba(8,2,22,0.38)] sm:px-7 sm:py-7">
             <div className="pointer-events-none absolute -right-12 top-[-72px] h-44 w-44 rounded-full bg-[#B388FF]/18 blur-3xl" />
             <div className="pointer-events-none absolute bottom-[-64px] left-10 h-36 w-36 rounded-full bg-[#7C4DFF]/16 blur-3xl" />
 
@@ -258,7 +258,7 @@ export default function PaginaPodcast() {
                 Cabina cósmica
               </span>
               <div className="flex items-start gap-4">
-                <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#D4A234] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
+                <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[22px] bg-gradient-to-br from-[#7C4DFF] to-[#B388FF] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
                   <Icono
                     nombre="microfono"
                     tamaño={30}
@@ -267,11 +267,11 @@ export default function PaginaPodcast() {
                   />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl">
+                  <h1 className="text-[26px] font-semibold tracking-[-0.03em] text-white sm:text-[30px]">
                     Tus Podcasts Cósmicos
                   </h1>
-                  <p className="mt-3 max-w-xl text-base leading-7 text-white/68 sm:text-lg">
-                    Una cabina clara y enfocada para escuchar tu día, tu semana y tu mes sin ruido visual ni pasos de más.
+                  <p className="mt-3 max-w-xl text-[14px] leading-6 text-white/68">
+                    Una cabina clara para activar tu día, tu semana y tu mes sin ruido visual ni pasos de más.
                   </p>
                 </div>
               </div>
@@ -279,18 +279,15 @@ export default function PaginaPodcast() {
           </section>
 
           <section className="space-y-4">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/46">
                   Escuchas disponibles
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-white">
+                <h2 className="mt-2 text-[20px] font-semibold tracking-[-0.02em] text-white">
                   Elegí el período que querés activar
                 </h2>
               </div>
-              <p className="max-w-md text-sm leading-6 text-white/52">
-                Las tres tarjetas siguen el mismo sistema visual para que la acción principal siempre sea evidente.
-              </p>
             </div>
 
             <BloqueoPremium mensaje="Los podcasts cósmicos son exclusivos del plan Premium">
@@ -322,19 +319,16 @@ export default function PaginaPodcast() {
             </BloqueoPremium>
           </section>
 
-          <section className="rounded-[30px] border border-white/[0.08] bg-white/[0.04] px-5 py-5 shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl sm:px-6 sm:py-6">
-            <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <section className="rounded-[24px] border border-white/[0.08] bg-white/[0.04] px-5 py-5 shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl sm:px-6 sm:py-6">
+            <div className="mb-5">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/46">
                   Biblioteca reciente
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-white">
+                <h2 className="mt-2 text-[20px] font-semibold tracking-[-0.02em] text-white">
                   Historial
                 </h2>
               </div>
-              <p className="max-w-md text-sm leading-6 text-white/52">
-                Tu archivo de escuchas queda más visible y con mejor contraste para volver a cualquier episodio sin buscar de más.
-              </p>
             </div>
 
             {cargandoHistorial ? (
@@ -420,12 +414,9 @@ export default function PaginaPodcast() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="truncate text-base font-medium text-white">
+                          <p className="text-base font-medium leading-6 text-white">
                             {ep.titulo}
                           </p>
-                          <span className="rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/54">
-                            {config.etiqueta}
-                          </span>
                         </div>
                         <p className="mt-1 text-sm text-white/56">
                           {ep.fecha} · {formatearDuracionMinutos(ep.duracion_segundos)}

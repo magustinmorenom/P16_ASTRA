@@ -6,7 +6,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Icono, type NombreIcono } from "@/componentes/ui/icono";
-import { IconoSigno } from "@/componentes/ui/icono-astral";
 import {
   usarMiPerfil,
   usarGenerarPodcast,
@@ -28,20 +27,13 @@ interface ContextoRuta {
   icono: NombreIcono;
 }
 
-interface ChipEstado {
-  icono: NombreIcono;
-  texto: string;
-  tono?: "violeta" | "oro" | "rojo" | "verde";
-}
-
 interface EstadoCabecera {
   etiqueta?: string;
   titulo: string;
-  descripcion: string;
+  descripcion?: string;
+  meta?: string;
   icono: NombreIcono;
-  tonoIcono: "violeta" | "oro" | "rojo";
-  chips: ChipEstado[];
-  signoLuna?: string;
+  tonoIcono: "violeta" | "rojo";
 }
 
 const CONFIG_TIPO_PODCAST: Record<
@@ -218,35 +210,6 @@ function formatearDuracion(segundos: number): string {
   return `${minutos}:${resto.toString().padStart(2, "0")}`;
 }
 
-function truncarTexto(texto: string, maximo: number): string {
-  if (texto.length <= maximo) return texto;
-  return `${texto.slice(0, maximo - 1)}…`;
-}
-
-function obtenerClasesChip(tono: ChipEstado["tono"] = "violeta"): string {
-  switch (tono) {
-    case "oro":
-      return "border-[#D4A234]/25 bg-[#D4A234]/10 text-[#F3DFA6]";
-    case "rojo":
-      return "border-[#E57373]/20 bg-[#E57373]/10 text-[#FFC7C7]";
-    case "verde":
-      return "border-emerald-400/20 bg-emerald-400/10 text-emerald-100";
-    default:
-      return "border-white/[0.08] bg-white/[0.05] text-white/72";
-  }
-}
-
-function obtenerClasesIcono(tono: EstadoCabecera["tonoIcono"]): string {
-  switch (tono) {
-    case "oro":
-      return "border-[#D4A234]/25 bg-[#D4A234]/12 text-[#F3DFA6]";
-    case "rojo":
-      return "border-[#E57373]/20 bg-[#E57373]/12 text-[#FFC7C7]";
-    default:
-      return "border-[#B388FF]/20 bg-[#7C4DFF]/16 text-[#E8DAFF]";
-  }
-}
-
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -337,26 +300,13 @@ export default function Navbar() {
     if (pistaActual) {
       return {
         etiqueta: reproduciendo ? "Ahora suena" : "Listo para continuar",
-        titulo: truncarTexto(pistaActual.titulo, 56),
+        titulo: pistaActual.titulo,
         descripcion: pistaActual.subtitulo,
+        meta: `${formatearDuracion(progresoSegundos)} / ${formatearDuracion(
+          pistaActual.duracionSegundos
+        )} · Audio activo`,
         icono: pistaActual.tipo === "podcast" ? "microfono" : "chat",
         tonoIcono: "violeta",
-        signoLuna: pronosticoDiario?.luna.signo,
-        chips: [
-          {
-            icono: "reloj",
-            texto: `${formatearDuracion(progresoSegundos)} / ${formatearDuracion(
-              pistaActual.duracionSegundos
-            )}`,
-          },
-          {
-            icono: pistaActual.tipo === "podcast" ? "microfono" : "destello",
-            texto:
-              pistaActual.tipo === "podcast"
-                ? "Audio activo"
-                : "Lectura abierta",
-          },
-        ],
       };
     }
 
@@ -364,82 +314,43 @@ export default function Navbar() {
       return {
         etiqueta: "Atención cósmica",
         titulo: alertaDestacada.titulo,
-        descripcion: truncarTexto(alertaDestacada.descripcion, 74),
+        descripcion: alertaDestacada.descripcion,
+        meta: `Urgencia ${alertaDestacada.urgencia} · Energía ${pronosticoDiario?.clima.energia ?? 0}/10`,
         icono: "rayo",
         tonoIcono: "rojo",
-        signoLuna: pronosticoDiario?.luna.signo,
-        chips: [
-          {
-            icono: "info",
-            texto: `Urgencia ${alertaDestacada.urgencia}`,
-            tono: "rojo",
-          },
-          {
-            icono: "wifi",
-            texto: `Energía ${pronosticoDiario?.clima.energia ?? 0}/10`,
-          },
-          {
-            icono: "microfono",
-            texto: estadoPodcast,
-          },
-        ],
       };
     }
 
     if (pronosticoDiario) {
       return {
         titulo: pronosticoDiario.clima.titulo,
-        descripcion: truncarTexto(pronosticoDiario.clima.frase_sintesis, 120),
+        descripcion: pronosticoDiario.clima.frase_sintesis,
+        meta: `Luna en ${pronosticoDiario.luna.signo} · Energía ${pronosticoDiario.clima.energia}/10 · ${estadoPodcast}`,
         icono: "destello",
         tonoIcono: "violeta",
-        signoLuna: pronosticoDiario.luna.signo,
-        chips: [
-          {
-            icono: "wifi",
-            texto: `Energía ${pronosticoDiario.clima.energia}/10`,
-          },
-          {
-            icono: "ojo",
-            texto: `Claridad ${pronosticoDiario.clima.claridad}/10`,
-          },
-          {
-            icono: "microfono",
-            texto: estadoPodcast,
-            tono: episodioDelDia?.estado === "listo" ? "verde" : "violeta",
-          },
-        ],
       };
     }
 
     return {
-      etiqueta: "Bienvenido a ASTRA",
-      titulo: `${nombreUsuario}, retomá tu recorrido`,
+      etiqueta: contextoRuta.etiqueta,
+      titulo: contextoRuta.titulo,
       descripcion: contextoRuta.descripcion,
       icono: contextoRuta.icono,
-      tonoIcono: "oro",
-      chips: [
-        {
-          icono: "corona",
-          texto: esPremium ? `${etiquetaPlan} activo` : "Plan Free",
-          tono: esPremium ? "oro" : "violeta",
-        },
-        {
-          icono: "microfono",
-          texto: estadoPodcast,
-        },
-      ],
+      tonoIcono: "violeta",
+      meta: `${nombreUsuario} · ${esPremium ? etiquetaPlan : "Plan Free"} · ${estadoPodcast}`,
     };
   }, [
     alertaDestacada,
     contextoRuta.descripcion,
     contextoRuta.icono,
-    episodioDelDia?.estado,
     estadoPodcast,
     nombreUsuario,
     pistaActual,
     progresoSegundos,
     pronosticoDiario,
     reproduciendo,
+    contextoRuta.etiqueta,
+    contextoRuta.titulo,
     etiquetaPlan,
     esPremium,
   ]);
@@ -527,7 +438,7 @@ export default function Navbar() {
     <nav className="relative z-40 shrink-0 overflow-visible border-b border-white/[0.08] bg-[linear-gradient(180deg,#2A1247_0%,#17041F_100%)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(179,136,255,0.24),transparent_28%),radial-gradient(circle_at_78%_20%,rgba(212,162,52,0.08),transparent_22%)]" />
 
-      <div className="relative mx-auto flex h-[78px] items-center justify-between gap-4 px-4 lg:px-6">
+      <div className="relative mx-auto flex h-[70px] items-center justify-between gap-4 px-4 lg:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <Link href="/dashboard" className="flex shrink-0 items-center">
             <Image
@@ -552,60 +463,34 @@ export default function Navbar() {
             <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-violet-200/55">
               {contextoRuta.etiqueta}
             </span>
-            <p className="truncate text-[15px] font-semibold text-white/96">
+            <p className="text-[14px] font-semibold leading-tight text-white/94">
               {contextoRuta.titulo}
             </p>
           </div>
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="mx-auto flex max-w-[860px] items-center gap-4 rounded-[28px] border border-white/[0.08] bg-[linear-gradient(135deg,rgba(255,255,255,0.1),rgba(255,255,255,0.04))] px-4 py-3 shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl">
-            <div
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] border ${obtenerClasesIcono(
-                estadoCabecera.tonoIcono
-              )}`}
-            >
-              <Icono nombre={estadoCabecera.icono} tamaño={20} peso="fill" />
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="mb-0.5 flex items-center gap-2">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-violet-200/58">
+          <div className="mx-auto flex max-w-[860px] items-center px-3 py-1.5">
+            <div className="min-w-0 flex-1 rounded-[10px] bg-[linear-gradient(135deg,rgba(124,77,255,0.16),rgba(36,14,54,0.04))] px-4 py-2.5">
+              {estadoCabecera.etiqueta && (
+                <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-200/56">
                   {estadoCabecera.etiqueta}
-                </span>
-              </div>
-
-              <p className="truncate text-[15px] font-semibold text-white/96">
-                {estadoCabecera.titulo}
-              </p>
-              <p className="truncate text-[12px] text-white/56">
-                {estadoCabecera.descripcion}
-              </p>
-            </div>
-
-            <div className="hidden items-center gap-2 2xl:flex">
-              {estadoCabecera.signoLuna && (
-                <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.05] px-3 py-1.5 text-[11px] text-white/76">
-                  <IconoSigno
-                    signo={estadoCabecera.signoLuna}
-                    tamaño={14}
-                    className="text-white/84"
-                  />
-                  <span>Luna en {estadoCabecera.signoLuna}</span>
-                </div>
+                </p>
               )}
 
-              {estadoCabecera.chips.map((chip) => (
-                <div
-                  key={chip.texto}
-                  className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] ${obtenerClasesChip(
-                    chip.tono
-                  )}`}
-                >
-                  <Icono nombre={chip.icono} tamaño={13} />
-                  <span>{chip.texto}</span>
-                </div>
-              ))}
+              <p className="line-clamp-1 text-[14px] font-semibold leading-tight text-white/96">
+                {estadoCabecera.titulo}
+              </p>
+              {estadoCabecera.descripcion && (
+                <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-white/56">
+                  {estadoCabecera.descripcion}
+                </p>
+              )}
+              {estadoCabecera.meta && (
+                <p className="mt-0.5 line-clamp-1 text-[10px] leading-4 text-violet-100/50">
+                  {estadoCabecera.meta}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -738,7 +623,7 @@ export default function Navbar() {
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="truncate text-[12px] font-semibold text-white/94">
+                            <p className="text-[12px] font-semibold leading-5 text-white/94">
                               {config.titulo}
                             </p>
                             {estaListo && (
@@ -747,7 +632,7 @@ export default function Navbar() {
                               </span>
                             )}
                           </div>
-                          <p className="mt-1 text-[11px] text-white/68">
+                          <p className="mt-1 text-[11px] leading-5 text-white/68">
                             {detalle}
                           </p>
                         </div>
@@ -810,10 +695,10 @@ export default function Navbar() {
                   <div className="rounded-[18px] border border-white/[0.08] bg-white/[0.04] px-4 py-3">
                     <div className="mb-2 flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-white">
+                        <p className="text-sm font-semibold leading-tight text-white">
                           {nombreUsuario}
                         </p>
-                        <p className="truncate text-xs text-white/54">
+                        <p className="mt-1 break-all text-xs leading-5 text-white/54">
                           {usuario.email}
                         </p>
                       </div>
@@ -828,9 +713,11 @@ export default function Navbar() {
                       </span>
                     </div>
 
-                    <p className="text-[11px] leading-relaxed text-white/58">
-                      {estadoCabecera.descripcion}
-                    </p>
+                    {estadoCabecera.descripcion && (
+                      <p className="text-[11px] leading-relaxed text-white/58">
+                        {estadoCabecera.descripcion}
+                      </p>
+                    )}
                   </div>
                 )}
 
