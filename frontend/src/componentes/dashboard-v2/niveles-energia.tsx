@@ -12,8 +12,8 @@ function BarraSegmentos({ etiqueta, valor, icono }: { etiqueta: string; valor: n
   const activos = Math.min(Math.max(Math.round(valor), 0), segmentos);
 
   return (
-    <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl backdrop-blur-[21px] bg-white/[0.07] border border-white/[0.12]">
-      <span className="flex items-center gap-1.5 text-white/90 text-[13px] font-medium w-[90px] shrink-0">
+    <div className="flex items-center gap-2 px-2.5 py-1 rounded-[10px] backdrop-blur-[21px] bg-white/[0.07] border border-white/[0.12]">
+      <span className="flex items-center gap-1.5 text-white/90 text-[12px] font-medium w-[84px] shrink-0">
         <Icono nombre={icono} tamaño={14} peso="fill" className="text-white" />
         {etiqueta}
       </span>
@@ -21,7 +21,7 @@ function BarraSegmentos({ etiqueta, valor, icono }: { etiqueta: string; valor: n
         {Array.from({ length: segmentos }, (_, i) => (
           <div
             key={i}
-            className={`h-2.5 flex-1 rounded-sm ${
+            className={`h-2 flex-1 rounded-sm ${
               i < activos
                 ? "bg-white shadow-[0_0_3.5px_#cc54ff40]"
                 : "bg-[#3a2d5c]/[0.46]"

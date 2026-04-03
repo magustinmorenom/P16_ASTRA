@@ -37,7 +37,7 @@ export default function ReproductorCosmico() {
   const mostrandoCarga = cargandoAudio && !tieneAudio;
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-50 h-[80px] bg-[#1A1128] flex items-center px-4 lg:px-6 gap-4">
+    <footer className="fixed bottom-0 left-0 right-0 z-50 flex h-[84px] items-center gap-4 bg-[#1A1128] px-4 lg:px-6">
       {/* Audio element oculto — usa URL presigned de MinIO */}
       {tieneAudio && (
         <audio
@@ -70,10 +70,10 @@ export default function ReproductorCosmico() {
           />
         </div>
         <div className="min-w-0 hidden sm:block">
-          <p className="text-sm font-medium text-[#F5F0FF] truncate">
+          <p className="text-sm font-medium leading-tight text-[#F5F0FF]">
             {pistaActual.titulo}
           </p>
-          <p className="text-xs text-[#B388FF] truncate">
+          <p className="mt-1 text-xs leading-5 text-[#B388FF]">
             {pistaActual.subtitulo}
           </p>
         </div>

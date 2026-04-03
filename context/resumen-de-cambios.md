@@ -2235,3 +2235,228 @@ Se corrigió el explorador técnico de Diseño Humano para que no aparezca como 
 1. El bloque de exploración ya no tiene una segunda caja oscura dentro del panel principal.
 2. `Centros`, `Canales` y `Activaciones` se leen ahora como una sola consola continua, más cerca del patrón de `Núcleo` en Numerología.
 3. La jerarquía mejora porque el usuario percibe una sola superficie de trabajo, no un mosaico de contenedores superpuestos.
+
+---
+
+## Sesion: Refactor UI integral — sistema premium ciruela y compactación transversal
+**Fecha:** 2026-04-02 ~20:07 (ARG)
+
+### Que se hizo
+Se ejecutó una pasada integral de refactor visual para unificar ASTRA bajo un mismo sistema premium ciruela: menos chips, menos copy de relleno, menos paneles anidados y más instrumentos compactos. Además se migraron las pantallas legacy más visibles para que `Descubrir`, `Tránsitos`, `Suscripción`, `Perfil` y los flujos de checkout dejen de verse como productos aparte.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `claude.md` | Formaliza reglas visuales nuevas: sin títulos heroicos fuera del hero, sin truncados visibles críticos, sin panel dentro de panel y sin copy de scaffolding interno |
+| `frontend/src/componentes/layouts/header-mobile.tsx` | Reduce radios, elimina tonos dorados y permite títulos largos sin truncado |
+| `frontend/src/componentes/layouts/navbar.tsx` | Simplifica el header compartido, reemplaza chips por metadata lineal, elimina truncados en identidad/menú y compacta el estado contextual |
+| `frontend/src/componentes/layouts/sidebar-navegacion.tsx` | Limpia el bloque `Próximamente`, elimina copy teaser redundante y pasa el modal de descarga al sistema oscuro ciruela |
+| `frontend/src/componentes/layouts/mini-reproductor.tsx` | Quita truncados del mini reproductor, mejora respiración vertical y compacta el chrome |
+| `frontend/src/componentes/layouts/reproductor-cosmico.tsx` | Permite wrap en título y subtítulo del reproductor desktop y evita cortes de texto |
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Rehace el hero del dashboard como una sola narrativa compacta sin collage de cajas |
+| `frontend/src/componentes/dashboard-v2/tarjeta-fecha.tsx` | Reduce gigantismo tipográfico y convierte la fecha en una superficie más contenida |
+| `frontend/src/componentes/dashboard-v2/momentos-dia.tsx` | Elimina tarjetas internas y pasa a una sola superficie con divisores |
+| `frontend/src/componentes/dashboard-v2/areas-vida-v2.tsx` | Corrige el hook condicional y mantiene el bloque de tabs sin romper lint |
+| `frontend/src/app/(app)/podcast/page.tsx` | Compacta hero e historial, saca badges redundantes y elimina restos dorados |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Reduce escala del hero y afina la entrada editorial de Carta Astral |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Simplifica el panel derecho de Carta Astral y reduce repeticiones en la lectura inicial |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Elimina truncados en nombres de planetas dentro de la lista de aspectos |
+| `frontend/src/app/(app)/numerologia/page.tsx` | Elimina lenguaje de capítulos, compacta hero y consola, baja escala y corrige hooks/auto-recálculo sin romper tipado |
+| `frontend/src/componentes/numerologia/panel-contextual-numerologia.tsx` | Reduce capas del rail derecho y simplifica el estado default |
+| `frontend/src/app/(app)/diseno-humano/page.tsx` | Consolida el rail de atributos, oscurece el explorador técnico, compacta centros/canales/activaciones y mejora el modal de Body Graph |
+| `frontend/src/app/(app)/perfil/page.tsx` | Reduce pills del hero, elimina duplicación con panel lateral, compacta datos base y limpia copy visible |
+| `frontend/src/app/(app)/suscripcion/page.tsx` | Unifica hero y estado actual, simplifica cards de planes, compacta facturación y renombra copy interno a lenguaje de usuario |
+| `frontend/src/app/(app)/descubrir/page.tsx` | Migra la pantalla completa a surfaces ciruela con iconografía astral y estructura compacta |
+| `frontend/src/app/(app)/transitos/page.tsx` | Reescribe la pantalla legacy a formato premium oscuro, con lista compacta de tránsitos y metadatos lineales |
+| `frontend/src/componentes/proximamente/feature-proximamente.tsx` | Migra la base visual de pantallas próximas al sistema ciruela sin dorado ni hero sobredimensionado |
+| `frontend/src/app/(app)/match-pareja/page.tsx` | Compacta la pantalla teaser de compatibilidad y reduce el enfoque promocional |
+| `frontend/src/app/(app)/suscripcion/exito/page.tsx` | Migra la pantalla de éxito de suscripción al sistema ciruela y ajusta el efecto para evitar setState síncrono |
+| `frontend/src/app/(app)/suscripcion/fallo/page.tsx` | Migra la pantalla de fallo de suscripción al sistema ciruela |
+| `frontend/src/app/(app)/suscripcion/pendiente/page.tsx` | Migra la pantalla de pendiente de suscripción al sistema ciruela |
+| `frontend/src/app/(checkout)/checkout/exito/page.tsx` | Migra la pantalla de éxito del checkout al sistema ciruela y reemplaza `<img>` por `next/image` |
+| `frontend/src/app/(checkout)/checkout/fallo/page.tsx` | Migra la pantalla de fallo del checkout al sistema ciruela y reemplaza `<img>` por `next/image` |
+| `frontend/src/app/(checkout)/checkout/pendiente/page.tsx` | Migra la pantalla de pendiente del checkout al sistema ciruela y reemplaza `<img>` por `next/image` |
+| `frontend/src/tests/paginas/dashboard.test.tsx` | Actualiza assertions al nuevo hero compacto del dashboard |
+| `frontend/src/tests/paginas/numerologia.test.tsx` | Adapta la suite a la consola nueva, al rail contextual y a la duplicación mobile/desktop prevista |
+| `frontend/src/tests/paginas/perfil.test.tsx` | Actualiza copy y headings a la versión compacta de Perfil |
+| `frontend/src/tests/paginas/suscripcion.test.tsx` | Adapta la expectativa principal al hero unificado de Suscripción |
+| `context/resumen-de-cambios.md` | Documenta esta sesión integral de refactor UI |
+
+### Tests
+- `npm run lint` pasó sin errores en `frontend`; siguen quedando warnings preexistentes del repo en `dashboard`, `callback`, `onboarding`, `chat-widget`, `avatar`, `rueda-zodiacal` y algunos tests legacy.
+- `npx tsc --noEmit` pasó limpio en `frontend`.
+- `npx -y node@20 ./node_modules/vitest/vitest.mjs run src/tests/paginas/dashboard.test.tsx src/tests/paginas/podcast.test.tsx src/tests/paginas/numerologia.test.tsx src/tests/paginas/carta-natal.test.tsx src/tests/paginas/diseno-humano.test.tsx src/tests/paginas/perfil.test.tsx src/tests/paginas/suscripcion.test.tsx src/tests/componentes/navbar.test.tsx src/tests/componentes/body-graph.test.tsx` pasó `47/47`.
+
+### Como funciona
+1. El sistema compartido ahora prioriza superficies oscuras compactas, metadata lineal y títulos contenidos; el detalle profundo queda relegado al panel derecho o a modales contextuales.
+2. El chrome global ya no corta títulos críticos ni depende de chips para explicar el estado de la app, del usuario o del audio activo.
+3. Las secciones core (`Dashboard`, `Podcast`, `Carta Astral`, `Diseño Humano`, `Numerología`) hablan un idioma más homogéneo: hero breve, instrumentos compactos y menos texto intermedio.
+4. `Perfil` y `Suscripción` dejaron de duplicar información entre hero y paneles laterales; ahora muestran el estado útil y las acciones principales sin relleno visual.
+5. Las pantallas legacy (`Descubrir`, `Tránsitos`, `Próximamente`, `Match de Pareja` y checkout) fueron migradas al mismo sistema ciruela, de modo que el usuario ya no “salta” entre productos visualmente distintos dentro del mismo flujo.
+
+---
+
+## Sesion: Dashboard — respiración mobile, áreas compactas y semana ciruela
+**Fecha:** 2026-04-02 ~22:05 (ARG)
+
+### Que se hizo
+Se ajustó el dashboard para corregir cortes y falta de aire en mobile, especialmente en el header y en el primer bloque de inicio. Además se rediseñó `Áreas` como instrumento compacto y se llevó `Tu semana` a un fondo ciruela oscuro unificado.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/layouts/header-mobile.tsx` | Agrega más separación respecto del safe area superior y más respiración interna para evitar que el texto quede visualmente pegado o cortado |
+| `frontend/src/app/(app)/dashboard/page.tsx` | Corrige la tilde de `Buenos días` y aumenta el espacio entre el header mobile y la primera tarjeta del dashboard |
+| `frontend/src/componentes/dashboard-v2/areas-vida-v2.tsx` | Reemplaza el bloque anterior por una sola superficie oscura, con tabs compactos y lectura principal sin caja anidada |
+| `frontend/src/componentes/dashboard-v2/semana-v2.tsx` | Cambia el contenedor principal de `Tu semana` a un fondo ciruela oscuro unificado, sin gradiente violeta brillante |
+
+### Tests
+`npm run lint -- 'src/componentes/layouts/header-mobile.tsx' 'src/app/(app)/dashboard/page.tsx' 'src/componentes/dashboard-v2/areas-vida-v2.tsx' 'src/componentes/dashboard-v2/semana-v2.tsx'` pasó sin errores; se mantienen warnings preexistentes en `dashboard/page.tsx`. `npx -y node@20 ./node_modules/vitest/vitest.mjs run src/tests/paginas/dashboard.test.tsx` pasó `5/5`.
+
+### Como funciona
+1. El header mobile conserva el formato de tarjeta, pero ahora respira mejor arriba y no deja el texto demasiado cerca del borde superior.
+2. La pantalla de inicio gana separación entre el header y el primer módulo, así que la primera tarjeta ya no se percibe pegada ni recortada.
+3. `Áreas` pasó de ser un bloque con gradiente y panel interno a una sola consola oscura con selector compacto y lectura central directa.
+4. `Tu semana` mantiene la estructura actual, pero ahora se apoya en un fondo ciruela oscuro y consistente con el resto del dashboard.
+
+---
+
+## Sesion: Dashboard — segunda ronda de recortes y overlap del header
+**Fecha:** 2026-04-03 ~07:50 (ARG)
+
+### Que se hizo
+Se hizo una segunda pasada sobre el dashboard desktop para corregir tarjetas que quedaban visualmente cortadas y bajar el peso del overlap entre la tarjeta contextual del header y el contenido principal. También se compactó la columna derecha del hero para que no se muerda con el borde inferior.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/layouts/navbar.tsx` | Reduce la altura del navbar, baja el radio de la tarjeta central a `10px`, ajusta padding y limita visualmente la altura del bloque contextual para que el overlap con el contenido sea más controlado |
+| `frontend/src/app/(app)/dashboard/page.tsx` | Aumenta el margen superior desktop del dashboard para que el hero respire más respecto del header |
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Incrementa la altura útil del hero, ajusta paddings y da más aire a la columna derecha para evitar cortes en botones y subcomponentes |
+| `frontend/src/componentes/dashboard-v2/tarjeta-fecha.tsx` | Compacta la tarjeta de fecha para que no empuje el hero al límite |
+| `frontend/src/componentes/dashboard-v2/momentos-dia.tsx` | Reduce el alto interno de cada fila de momentos y acompaña la nueva altura del hero |
+| `frontend/src/componentes/dashboard-v2/numero-del-dia.tsx` | Baja la escala del bloque y el contenedor del número personal |
+| `frontend/src/componentes/dashboard-v2/luna-posicion.tsx` | Reduce el ícono y reemplaza el tono dorado por violeta para mantenerse en la paleta ciruela |
+| `frontend/src/componentes/dashboard-v2/niveles-energia.tsx` | Compacta las barras de energía para que la tercera columna del hero no vuelva a quedar apretada |
+
+### Tests
+`npm run lint -- 'src/componentes/layouts/navbar.tsx' 'src/app/(app)/dashboard/page.tsx' 'src/componentes/dashboard-v2/hero-seccion.tsx' 'src/componentes/dashboard-v2/tarjeta-fecha.tsx' 'src/componentes/dashboard-v2/momentos-dia.tsx' 'src/componentes/dashboard-v2/numero-del-dia.tsx' 'src/componentes/dashboard-v2/luna-posicion.tsx' 'src/componentes/dashboard-v2/niveles-energia.tsx'` pasó sin errores; permanecen warnings preexistentes en `dashboard/page.tsx`. `npx -y node@20 ./node_modules/vitest/vitest.mjs run src/tests/paginas/dashboard.test.tsx src/tests/componentes/navbar.test.tsx` pasó `7/7`.
+
+### Como funciona
+1. La tarjeta central del header sigue siendo protagonista, pero ahora tiene radio más contenido, menos padding y menos altura visual, así que no invade tanto el dashboard.
+2. El contenido principal del dashboard arranca un poco más abajo en desktop, manteniendo el efecto de cercanía con el header sin que se perciba encimado.
+3. El hero principal ganó altura útil y aire interno, así que ya no recorta la fila de acciones ni la columna de instrumentos de la derecha.
+4. La columna derecha del hero quedó más compacta y coherente con la paleta ciruela, evitando que sus piezas parezcan apretadas o quebradas.
+
+---
+
+## Sesion: Dashboard — mensaje principal del header simplificado y hero sin corte
+**Fecha:** 2026-04-03 ~07:56 (ARG)
+
+### Que se hizo
+Se simplificó el mensaje principal del header para que deje de sentirse como una card anidada con ícono, y se corrigió de forma más directa el corte visible del hero del dashboard reforzando su estructura interna.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/layouts/navbar.tsx` | Elimina el icono del mensaje principal, saca la sensación de card anidada y deja un bloque de texto sobre degradado ciruela con menor altura |
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Reorganiza la primera columna como estructura flex vertical con acciones al pie, aumenta la altura útil del hero y evita que la fila inferior vuelva a quedar cortada |
+| `context/resumen-de-cambios.md` | Documenta esta tercera ronda puntual sobre dashboard |
+
+### Tests
+`npm run lint -- 'src/componentes/layouts/navbar.tsx' 'src/componentes/dashboard-v2/hero-seccion.tsx' 'src/app/(app)/dashboard/page.tsx'` pasó sin errores; siguen warnings preexistentes en `dashboard/page.tsx`. `npx -y node@20 ./node_modules/vitest/vitest.mjs run src/tests/paginas/dashboard.test.tsx src/tests/componentes/navbar.test.tsx` pasó `7/7`.
+
+### Como funciona
+1. El bloque central del header ya no compite como una tarjeta dentro de otra: quedó solo el texto principal, sobre soporte ciruela y con menos masa visual.
+2. El hero del dashboard ganó una columna izquierda más estable, con el contenido principal arriba y las acciones ancladas abajo, de modo que ya no se cortan contra el borde inferior.
+3. La lectura del primer viewport se vuelve más limpia porque el header pesa menos y el hero deja de verse “mordido” por su propia altura.
+
+---
+
+## Sesion: Dashboard — corrección estructural del hero cortado
+**Fecha:** 2026-04-03 ~10:22 (ARG)
+
+### Que se hizo
+Se corrigió el corte persistente del hero del dashboard atacando la causa estructural: la columna izquierda estaba usando un layout que empujaba las acciones fuera del alto visible. También se ajustó el instrumento de luna para que mantenga un copy compacto sin duplicaciones.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Elimina la lógica `h-full + mt-auto` en la columna izquierda, aumenta la altura útil del hero y deja que la sección crezca naturalmente para no cortar la fila inferior |
+| `frontend/src/componentes/dashboard-v2/luna-posicion.tsx` | Normaliza el texto para mostrar una sola lectura compacta de la luna, sin repetir el prefijo cuando ya viene en la descripción |
+| `context/resumen-de-cambios.md` | Documenta esta corrección estructural del hero |
+
+### Tests
+`npm run lint -- 'src/componentes/dashboard-v2/hero-seccion.tsx' 'src/componentes/dashboard-v2/luna-posicion.tsx' 'src/app/(app)/dashboard/page.tsx' 'src/componentes/layouts/navbar.tsx'` pasó sin errores; continúan warnings preexistentes en `dashboard/page.tsx`. `npx -y node@20 ./node_modules/vitest/vitest.mjs run src/tests/paginas/dashboard.test.tsx src/tests/componentes/navbar.test.tsx` pasó `7/7`.
+
+### Como funciona
+1. La columna izquierda del hero ya no depende de un auto-empuje vertical que terminaba sacando la fila de acciones fuera del área visible.
+2. El hero ahora gana alto real según su contenido y mantiene la base completa dentro del panel, evitando el corte que seguía apareciendo en desktop.
+3. El mensaje contextual del header conserva el degradado ciruela y queda más liviano, mientras el instrumento de luna se mantiene compacto y consistente con el resto del bloque.
+
+---
+
+## Sesion: Dashboard — aumento de altura útil y fin del clipping
+**Fecha:** 2026-04-03 ~10:28 (ARG)
+
+### Que se hizo
+Se reforzó la corrección del dashboard aumentando el alto útil real de las dos primeras secciones y removiendo el clipping innecesario que todavía estaba ocultando contenido en el hero y en `Áreas`.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Quita el `overflow-hidden` del contenedor principal, aumenta el `min-height` desktop, suma padding inferior real a las tres columnas y deja más aire bajo la fila de acciones |
+| `frontend/src/componentes/dashboard-v2/areas-vida-v2.tsx` | Quita el clipping del contenedor y aumenta la altura mínima del contenido para que el detalle visible no vuelva a quedar cortado |
+| `context/resumen-de-cambios.md` | Documenta esta corrección específica de altura y clipping |
+
+### Tests
+`npm run lint -- 'src/componentes/dashboard-v2/hero-seccion.tsx' 'src/componentes/dashboard-v2/areas-vida-v2.tsx' 'src/app/(app)/dashboard/page.tsx'` pasó sin errores; siguen warnings preexistentes en `dashboard/page.tsx`. `npx -y node@20 ./node_modules/vitest/vitest.mjs run src/tests/paginas/dashboard.test.tsx` pasó `5/5`.
+
+### Como funciona
+1. El hero del dashboard ya no recorta su borde inferior porque el panel principal puede crecer más y ya no esconde visualmente el contenido que se pasa por unos píxeles.
+2. `Áreas` deja de mostrarse “mordida” porque el contenedor ya no corta el bloque y el panel interno tiene más altura mínima para sus textos.
+3. El resultado es más simple: si el contenido necesita unos píxeles extra, el módulo ahora los concede en vez de esconderlos.
+
+---
+
+## Sesion: Dashboard — ajuste puntual de altura en Momentos del día
+**Fecha:** 2026-04-03 ~11:30 (ARG)
+
+### Que se hizo
+Se redujo la altura efectiva de la tarjeta `Momentos del día` para que deje de estirarse a todo el alto del hero. El bloque ahora toma sólo la altura de sus tres filas y ya no se percibe como una columna inflada respecto del resto del dashboard.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/momentos-dia.tsx` | Elimina `h-full` y `justify-center` del contenedor para que la tarjeta ajuste su altura al contenido real |
+| `context/resumen-de-cambios.md` | Documenta este ajuste puntual sobre `Momentos del día` |
+
+### Tests
+`npm run lint -- 'src/componentes/dashboard-v2/momentos-dia.tsx' 'src/app/(app)/dashboard/page.tsx'` pasó sin errores; persisten warnings preexistentes en `dashboard/page.tsx`. `npx -y node@20 ./node_modules/vitest/vitest.mjs run src/tests/paginas/dashboard.test.tsx` pasó `5/5`.
+
+### Como funciona
+1. La tarjeta de `Momentos del día` ya no se estira artificialmente para llenar toda la columna.
+2. El contenedor toma la altura natural de sus tres filas, por eso se ve más contenido y consistente con el resto del hero.
+3. El hero mantiene su estructura general, pero la columna central deja de sentirse sobredimensionada.
+
+---
+
+## Sesion: Dashboard — tarjeta de fecha compacta y CTA unificado para mañana
+**Fecha:** 2026-04-03 ~11:32 (ARG)
+
+### Que se hizo
+Se ajustó la altura de la primera tarjeta interna del hero para que responda mejor al contenido real y se unificó la acción de mañana en un solo botón con copy completo, en lugar de verse como botón más chip.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/tarjeta-fecha.tsx` | Reduce la escala interna y reajusta paddings para que la tarjeta de fecha quede más proporcionada al contenido |
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Cambia el texto del segundo CTA a `Generar audio para mañana · ...` para unificar la acción en un único botón claro |
+| `context/resumen-de-cambios.md` | Documenta este ajuste puntual del hero |
+
+### Tests
+`npm run lint -- 'src/componentes/dashboard-v2/tarjeta-fecha.tsx' 'src/componentes/dashboard-v2/hero-seccion.tsx' 'src/app/(app)/dashboard/page.tsx'` pasó sin errores; se mantienen warnings preexistentes en `dashboard/page.tsx`. `npx -y node@20 ./node_modules/vitest/vitest.mjs run src/tests/paginas/dashboard.test.tsx` pasó `5/5`.
+
+### Como funciona
+1. La tarjeta de fecha deja de verse sobredimensionada dentro de la primera columna del hero y acompaña mejor la masa visual del bloque.
+2. La acción secundaria de mañana ya no se percibe como un chip suelto; ahora se lee como un botón completo con intención clara: generar el audio del día siguiente.

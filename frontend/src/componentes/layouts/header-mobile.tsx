@@ -25,7 +25,7 @@ interface HeaderMobileProps {
 function obtenerClasesMeta(tono: MetaHeaderMobile["tono"] = "violeta"): string {
   switch (tono) {
     case "oro":
-      return "border-[#D4A234]/25 bg-[#D4A234]/10 text-[#D4A234]";
+      return "border-[#B388FF]/24 bg-[#7C4DFF]/12 text-[#E7DAFF]";
     case "verde":
       return "border-emerald-400/25 bg-emerald-400/10 text-emerald-300";
     case "rojo":
@@ -50,18 +50,18 @@ export default function HeaderMobile({
   return (
     <header
       className={cn("sticky top-0 z-30 lg:hidden")}
-      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+      style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 6px)" }}
     >
-      <div className="px-4 pb-3 pt-3">
+      <div className="px-4 pb-4 pt-2">
         <div
           className={cn(
-            "overflow-hidden rounded-[28px] border shadow-[0_12px_32px_rgba(10,4,25,0.4)] backdrop-blur-xl",
+            "overflow-hidden rounded-[24px] border shadow-[0_12px_32px_rgba(10,4,25,0.4)] backdrop-blur-xl",
             transparente
               ? "border-white/10 bg-white/[0.06]"
               : "border-white/[0.10] bg-[#1A1128]/80"
           )}
         >
-          <div className="relative px-3.5 py-3.5">
+          <div className="relative px-3.5 py-4">
             <div className="flex items-start gap-3">
               {mostrarAtras && (
                 <button
@@ -81,11 +81,11 @@ export default function HeaderMobile({
                         {etiqueta}
                       </p>
                     )}
-                    <h1 className="truncate text-[18px] font-semibold text-white">
+                    <h1 className="text-[17px] font-semibold leading-tight text-white">
                       {titulo}
                     </h1>
                     {subtitulo && (
-                      <p className="mt-1 text-[12px] leading-relaxed text-white/45">
+                      <p className="mt-1 text-[12px] leading-5 text-white/52">
                         {subtitulo}
                       </p>
                     )}
@@ -102,7 +102,7 @@ export default function HeaderMobile({
                   <div
                     key={`${meta.icono}-${meta.texto}`}
                     className={cn(
-                      "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-medium",
+                      "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-medium whitespace-nowrap",
                       obtenerClasesMeta(meta.tono)
                     )}
                   >

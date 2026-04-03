@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, type FormEvent } from "react";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
 import { RailLateral } from "@/componentes/layouts/rail-lateral";
 import { Boton } from "@/componentes/ui/boton";
-import { Badge } from "@/componentes/ui/badge";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
 import { Icono } from "@/componentes/ui/icono";
 import {
@@ -50,7 +49,7 @@ const META_NUMERO: Record<ClaveNumero, MetaNumero> = {
   camino_de_vida: {
     titulo: "Sendero Natal",
     subtitulo: "La ruta central que abrís con tu fecha de nacimiento.",
-    categoria: "Capítulo 1 · Núcleo",
+    categoria: "Núcleo",
     icono: "carrera",
     queEs:
       "Es la línea base de tu carta. Se obtiene desde tu fecha de nacimiento y muestra la dirección que más orden te da, las lecciones que se repiten y la forma en la que creces con más sentido.",
@@ -60,7 +59,7 @@ const META_NUMERO: Record<ClaveNumero, MetaNumero> = {
   expresion: {
     titulo: "Destino / Misión",
     subtitulo: "Cómo tu identidad se organiza para hacer algo concreto en el mundo.",
-    categoria: "Capítulo 1 · Misión",
+    categoria: "Misión",
     icono: "libro",
     queEs:
       "Surge de tu nombre completo y describe la forma en que tus talentos se combinan para construir una obra, una contribución o un estilo de impacto.",
@@ -70,7 +69,7 @@ const META_NUMERO: Record<ClaveNumero, MetaNumero> = {
   impulso_del_alma: {
     titulo: "Esencia",
     subtitulo: "Lo que te mueve por dentro cuando nadie te está mirando.",
-    categoria: "Capítulo 1 · Interior",
+    categoria: "Interior",
     icono: "emocion",
     queEs:
       "Se relaciona con tu deseo profundo. Muestra qué necesitás sentir para estar alineado y desde qué motivación íntima tomás decisiones más honestas.",
@@ -80,7 +79,7 @@ const META_NUMERO: Record<ClaveNumero, MetaNumero> = {
   personalidad: {
     titulo: "Imagen",
     subtitulo: "La impresión inicial y el modo en que tu energía entra en relación.",
-    categoria: "Capítulo 1 · Vínculo",
+    categoria: "Vínculo",
     icono: "personal",
     queEs:
       "Describe la envoltura visible de tu energía: la primera lectura que los demás hacen de vos, tu estilo de presencia y la forma en que abrís vínculo.",
@@ -90,7 +89,7 @@ const META_NUMERO: Record<ClaveNumero, MetaNumero> = {
   numero_nacimiento: {
     titulo: "Día de Nacimiento",
     subtitulo: "Tu talento inmediato, el tono que traés de fábrica.",
-    categoria: "Capítulo 1 · Don",
+    categoria: "Don",
     icono: "suerte",
     queEs:
       "Se lee desde el día del mes en que naciste. Funciona como un talento visible y recurrente, algo que suele aparecer rápido cuando entrás en acción.",
@@ -100,7 +99,7 @@ const META_NUMERO: Record<ClaveNumero, MetaNumero> = {
   anio_personal: {
     titulo: "Año Personal",
     subtitulo: "La atmósfera grande que ordena este ciclo anual.",
-    categoria: "Capítulo 2 · Ritmo actual",
+    categoria: "Ritmo actual",
     icono: "horoscopo",
     queEs:
       "Marca el tono general del período anual vigente. No te dice cada detalle, pero sí en qué tipo de experiencia estás parado y qué conviene priorizar.",
@@ -110,7 +109,7 @@ const META_NUMERO: Record<ClaveNumero, MetaNumero> = {
   mes_personal: {
     titulo: "Mes Personal",
     subtitulo: "El clima del tramo actual dentro de tu año personal.",
-    categoria: "Capítulo 2 · Ritmo actual",
+    categoria: "Ritmo actual",
     icono: "horoscopo",
     queEs:
       "Refina el año personal y muestra qué tema toma protagonismo durante este mes. Sirve para afinar decisiones, prioridades y expectativas.",
@@ -120,7 +119,7 @@ const META_NUMERO: Record<ClaveNumero, MetaNumero> = {
   dia_personal: {
     titulo: "Día Personal",
     subtitulo: "La vibración puntual con la que amanecés hoy.",
-    categoria: "Capítulo 2 · Ritmo actual",
+    categoria: "Ritmo actual",
     icono: "bola-cristal",
     queEs:
       "Es la lectura más concreta del momento. Te ayuda a entender qué energía está más activa hoy y qué decisiones pueden fluir mejor.",
@@ -219,7 +218,7 @@ function crearDetalleMes(
   datos: Numerologia,
 ): DetalleNumerologia {
   return {
-    categoria: "Capítulo 2 · Ritmo actual",
+    categoria: "Ritmo actual",
     clave: `mes:${item.mes}`,
     titulo: `Mes Personal — ${item.nombre_mes}`,
     subtitulo: `Lectura mensual dentro de tu año personal ${(datos.anio_personal ?? NUMERO_VACIO_DEFAULT).numero}.`,
@@ -251,7 +250,7 @@ function crearDetalleEtapa(
   const pasada = etapa.edad_fin !== null && edadActual >= etapa.edad_fin;
 
   return {
-    categoria: "Capítulo 3 · Etapas de vida",
+    categoria: "Etapas de vida",
     clave: `etapa:${indice}`,
     titulo: etapa.nombre || `Pináculo ${indice + 1}`,
     subtitulo: `De ${etapa.edad_inicio} a ${etapa.edad_fin ?? "∞"} años.`,
@@ -265,7 +264,7 @@ function crearDetalleEtapa(
         ? `Hoy estás viviendo la vibración ${etapa.numero}. ${etapa.descripcion}. Este es el número que más ordena tu momento vital actual.`
         : pasada
           ? `Esta etapa estuvo regida por el número ${etapa.numero}. ${etapa.descripcion}. Conviene leerla como un aprendizaje ya transitado que todavía deja marca.`
-          : `Más adelante vas a entrar en una etapa ${etapa.numero}. ${etapa.descripcion}. Es un capítulo que todavía se está preparando en tu recorrido.`,
+          : `Más adelante vas a entrar en una etapa ${etapa.numero}. ${etapa.descripcion}. Es un tramo que todavía se está preparando en tu recorrido.`,
     formula:
       "Las etapas se calculan combinando mes, día y año de nacimiento en cuatro pináculos sucesivos, cada uno con su rango de edad.",
     esMaestro: NUMEROS_MAESTROS.includes(etapa.numero),
@@ -309,17 +308,6 @@ function construirTituloHero(datos: Numerologia) {
   return `${obtenerPrimerNombre(datos.nombre)}, tu carta abre un sendero ${datos.camino_de_vida.numero} y una misión ${datos.expresion.numero}.`;
 }
 
-function obtenerEtapaActiva(
-  etapas: EtapaVida[] | undefined,
-  edadActual: number,
-) {
-  const etapasSeguras = Array.isArray(etapas) ? etapas : [];
-  return etapasSeguras.find((etapa) =>
-    edadActual >= etapa.edad_inicio &&
-    (etapa.edad_fin === null || edadActual < etapa.edad_fin),
-  );
-}
-
 function normalizarNumerologia(datos: Numerologia): Numerologia {
   return {
     ...datos,
@@ -350,7 +338,7 @@ export default function PaginaNumerologia() {
   const esMobile = usarEsMobile();
 
   const [datosManual, setDatosManual] = useState<Numerologia | null>(null);
-  const [modoManual, setModoManual] = useState(false);
+  const [modoManual] = useState(false);
   const [detalle, setDetalle] = useState<DetalleNumerologia | null>(null);
   const [detalleMovilAbierto, setDetalleMovilAbierto] = useState(false);
   const [mesesExpandido, setMesesExpandido] = useState(false);
@@ -385,6 +373,36 @@ export default function PaginaNumerologia() {
     );
   }
 
+  const datosActuales = datos ? normalizarNumerologia(datos) : null;
+
+  // Auto-recalcular si los datos persistidos no tienen etapas (versión vieja)
+  const yaRecalculo = useRef(false);
+  const datosIncompletos = Boolean(
+    datosActuales && !datosActuales.etapas_de_la_vida?.length && !datosManual,
+  );
+
+  useEffect(() => {
+    if (!datosActuales || !datosIncompletos || yaRecalculo.current || mutacion.isPending) {
+      return;
+    }
+
+    yaRecalculo.current = true;
+    mutacion.mutate(
+      {
+        datos: {
+          nombre: datosActuales.nombre,
+          fecha_nacimiento: datosActuales.fecha_nacimiento,
+          sistema: (datosActuales.sistema as "pitagorico" | "caldeo") || "pitagorico",
+        },
+      },
+      {
+        onSuccess: (resultado) => {
+          setDatosManual(resultado);
+        },
+      },
+    );
+  }, [datosActuales, datosIncompletos, mutacion]);
+
   if (cargandoCalculos && !modoManual) {
     return (
       <>
@@ -407,7 +425,7 @@ export default function PaginaNumerologia() {
     );
   }
 
-  if (!datos || modoManual) {
+  if (!datosActuales || modoManual) {
     return (
       <>
         <HeaderMobile titulo="Numerología" mostrarAtras />
@@ -417,73 +435,37 @@ export default function PaginaNumerologia() {
 
           <div className="relative mx-auto max-w-6xl px-5 py-8 lg:px-7">
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_420px]">
-              <section className="rounded-[32px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.2),transparent_32%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] px-6 py-7 shadow-[0_24px_70px_rgba(8,2,22,0.38)] sm:px-8 sm:py-8">
+              <section className="rounded-[24px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.18),transparent_30%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] px-6 py-6 shadow-[0_24px_70px_rgba(8,2,22,0.38)] sm:px-7 sm:py-7">
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.08] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/72">
                   <IconoAstral nombre="numerologia" tamaño={14} className="text-current" />
                   Lectura numerológica
                 </span>
 
                 <div className="mt-5 flex items-start gap-4">
-                  <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#D4A234] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
+                  <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-gradient-to-br from-[#7C4DFF] to-[#B388FF] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
                     <IconoAstral nombre="numerologia" tamaño={30} className="text-white" />
                   </div>
                   <div>
-                    <h1 className="text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl">
-                      Numerología por capítulos, no por bloques sueltos
+                    <h1 className="text-[24px] font-semibold tracking-[-0.03em] text-white sm:text-[28px]">
+                      Una lectura compacta de tu estructura y tu ritmo.
                     </h1>
-                    <p className="mt-3 max-w-xl text-base leading-7 text-white/68 sm:text-lg">
-                      La experiencia se organiza como una mesa de lectura: núcleo y misión, ritmo actual y etapas de vida, con interpretación breve y específica en un panel contextual.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
-                      Capítulo 1
-                    </p>
-                    <p className="mt-2 text-lg font-semibold text-white">
-                      Núcleo y misión
-                    </p>
-                    <p className="mt-1 text-sm leading-6 text-white/58">
-                      Sendero natal, esencia, imagen, destino y don de nacimiento.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
-                      Capítulo 2
-                    </p>
-                    <p className="mt-2 text-lg font-semibold text-white">
-                      Ritmo actual
-                    </p>
-                    <p className="mt-1 text-sm leading-6 text-white/58">
-                      Día, mes y año personal como consola de timing.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
-                      Capítulo 3
-                    </p>
-                    <p className="mt-2 text-lg font-semibold text-white">
-                      Etapas
-                    </p>
-                    <p className="mt-1 text-sm leading-6 text-white/58">
-                      Tus grandes pináculos y la lectura del tramo actual.
+                    <p className="mt-3 max-w-xl text-[14px] leading-6 text-white/68">
+                      Calculá núcleo, ritmo y etapas en una sola lectura y abrí detalle solo donde realmente lo necesites.
                     </p>
                   </div>
                 </div>
               </section>
 
-              <section className="rounded-[32px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-6 shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl">
+              <section className="rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-6 shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl">
                 <div className="mb-5">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
-                    Tu cálculo
+                    Carta base
                   </p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
-                    Abrí tu carta completa
+                  <h2 className="mt-2 text-[20px] font-semibold tracking-[-0.03em] text-white">
+                    Calculá tu lectura
                   </h2>
                   <p className="mt-2 text-[14px] leading-6 text-white/62">
-                    Calculá tu sendero natal, misión, esencia, imagen, ritmo actual y etapas de vida en una sola lectura.
+                    Nombre, fecha y sistema. El resto lo abre el panel contextual.
                   </p>
                 </div>
 
@@ -555,37 +537,11 @@ export default function PaginaNumerologia() {
     );
   }
 
-  const datosActuales = normalizarNumerologia(datos);
-
-  // Auto-recalcular si los datos persistidos no tienen etapas (versión vieja)
-  const yaRecalculo = useRef(false);
-  const datosIncompletos = !datosActuales.etapas_de_la_vida?.length && !datosManual;
-  useEffect(() => {
-    if (datosIncompletos && !yaRecalculo.current && !mutacion.isPending) {
-      yaRecalculo.current = true;
-      mutacion.mutate(
-        {
-          datos: {
-            nombre: datosActuales.nombre,
-            fecha_nacimiento: datosActuales.fecha_nacimiento,
-            sistema: (datosActuales.sistema as "pitagorico" | "caldeo") || "pitagorico",
-          },
-        },
-        {
-          onSuccess: (resultado) => {
-            setDatosManual(resultado);
-          },
-        },
-      );
-    }
-  }, [datosIncompletos]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const etapasDeVida: EtapaVida[] = Array.isArray(datosActuales.etapas_de_la_vida)
     ? datosActuales.etapas_de_la_vida
     : [];
   const edadActual = calcularEdad(datosActuales.fecha_nacimiento);
   const mesActual = new Date().getMonth() + 1;
-  const etapaActiva = obtenerEtapaActiva(etapasDeVida, edadActual);
   const mesesPersonales: MesPersonalItem[] = Array.isArray(datosActuales.meses_personales)
     ? datosActuales.meses_personales
     : [];
@@ -620,11 +576,11 @@ export default function PaginaNumerologia() {
   }
 
   function abrirNumero(clave: ClaveNumero, dato: NumeroRespuesta) {
-    seleccionarDetalle(crearDetalleNumero(clave, dato, datosActuales));
+    seleccionarDetalle(crearDetalleNumero(clave, dato, datosActuales!));
   }
 
   function abrirMes(item: MesPersonalItem) {
-    seleccionarDetalle(crearDetalleMes(item, datosActuales));
+    seleccionarDetalle(crearDetalleMes(item, datosActuales!));
   }
 
   function abrirEtapa(etapa: EtapaVida, indice: number) {
@@ -658,27 +614,22 @@ export default function PaginaNumerologia() {
 
       <div className="relative mx-auto flex max-w-5xl flex-col gap-5 px-5 py-6 pb-24 lg:px-7 lg:pb-6">
         {/* Hero compacto */}
-        <section className="rounded-[28px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.16),transparent_28%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] px-5 py-4 shadow-[0_18px_50px_rgba(8,2,22,0.32)] sm:px-6 sm:py-5">
+        <section className="rounded-[24px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.16),transparent_28%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] px-5 py-4 shadow-[0_18px_50px_rgba(8,2,22,0.32)] sm:px-6 sm:py-5">
           <div className="flex items-start gap-3">
-            <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#D4A234] shadow-[0_14px_32px_rgba(34,12,72,0.36)] sm:flex">
+            <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#7C4DFF] to-[#B388FF] shadow-[0_14px_32px_rgba(34,12,72,0.36)] sm:flex">
               <IconoAstral nombre="numerologia" tamaño={24} className="text-white" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
                 Carta numerológica
               </p>
-              <h1 className="mt-2 text-[24px] font-semibold tracking-[-0.04em] text-white sm:text-[28px]">
+              <h1 className="mt-2 text-[22px] font-semibold tracking-[-0.04em] text-white sm:text-[24px]">
                 {construirTituloHero(datosActuales)}
               </h1>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Badge variante="info">{datosActuales.sistema === "pitagorico" ? "Pitagórico" : "Caldeo"}</Badge>
-                {numerosMaestros.length > 0 && (
-                  <Badge variante="advertencia">
-                    Maestros: {numerosMaestros.join(", ")}
-                  </Badge>
-                )}
-              </div>
+              <p className="mt-3 text-[12px] leading-5 text-violet-100/60">
+                {datosActuales.sistema === "pitagorico" ? "Sistema pitagórico" : "Sistema caldeo"}
+                {numerosMaestros.length > 0 ? ` · Maestros ${numerosMaestros.join(", ")}` : ""}
+              </p>
             </div>
           </div>
 
@@ -725,7 +676,7 @@ export default function PaginaNumerologia() {
                     <span className="block text-[14px] font-semibold text-white">
                       {meta.titulo}
                     </span>
-                    <span className="block truncate text-[13px] leading-5 text-white/60">
+                    <span className="block text-[13px] leading-5 text-white/60">
                       {meta.subtitulo}
                     </span>
                   </span>
@@ -926,12 +877,11 @@ export default function PaginaNumerologia() {
                         {etapa.edad_inicio}–{etapa.edad_fin ?? "∞"} años
                       </span>
 
-                      {/* Short description */}
-                      {primerFrase && (
-                        <span className="mt-0.5 max-w-[130px] text-center text-[11px] leading-4 text-white/36 line-clamp-2">
+                      {primerFrase ? (
+                        <span className="mt-0.5 max-w-[130px] text-center text-[11px] leading-4 text-white/36">
                           {primerFrase}.
                         </span>
-                      )}
+                      ) : null}
                     </button>
                   );
                 })}

@@ -70,7 +70,7 @@ export default function MiniReproductor() {
         </div>
 
         {/* Contenido del mini player */}
-        <div className="flex items-center h-[54px] px-3 gap-3">
+        <div className="flex min-h-[62px] items-center gap-3 px-3 py-2">
           {/* Cover — tap para expandir */}
           <button
             onClick={toggleMiniReproductor}
@@ -87,10 +87,10 @@ export default function MiniReproductor() {
               />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium text-[#F5F0FF] truncate">
+              <p className="text-sm font-medium leading-tight text-[#F5F0FF]">
                 {pistaActual.titulo}
               </p>
-              <p className="text-[11px] text-[#B388FF] truncate">
+              <p className="mt-0.5 text-[11px] leading-4 text-[#B388FF]">
                 {pistaActual.subtitulo}
               </p>
             </div>
@@ -146,7 +146,7 @@ export default function MiniReproductor() {
           {/* Cover grande */}
           <div className="flex-1 flex items-center justify-center px-12">
             <div
-              className={`w-full max-w-[300px] aspect-square rounded-3xl bg-gradient-to-br ${pistaActual.gradiente} flex items-center justify-center shadow-[0_16px_64px_rgba(124,77,255,0.3)]`}
+              className={`flex aspect-square w-full max-w-[300px] items-center justify-center rounded-[24px] bg-gradient-to-br ${pistaActual.gradiente} shadow-[0_16px_64px_rgba(124,77,255,0.3)]`}
             >
               <Icono
                 nombre={pistaActual.icono}
@@ -159,10 +159,10 @@ export default function MiniReproductor() {
 
           {/* Info */}
           <div className="px-8 mb-4">
-            <p className="text-xl font-semibold text-white truncate">
+            <p className="text-[18px] font-semibold leading-tight text-white">
               {pistaActual.titulo}
             </p>
-            <p className="text-sm text-[#B388FF] truncate mt-1">
+            <p className="mt-1 text-sm leading-5 text-[#B388FF]">
               {pistaActual.subtitulo}
             </p>
           </div>

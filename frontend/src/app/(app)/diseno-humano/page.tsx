@@ -33,10 +33,10 @@ const FONDO_PAGINA_HD =
   "relative min-h-full bg-[#16011B] lg:h-full lg:min-h-0 lg:overflow-hidden";
 
 const PANEL_SECUNDARIO =
-  "rounded-[22px] border border-white/[0.08] bg-white/[0.05] shadow-[0_18px_50px_rgba(8,3,20,0.2)] backdrop-blur-xl";
+  "rounded-[20px] border border-white/[0.08] bg-white/[0.05] shadow-[0_18px_50px_rgba(8,3,20,0.2)] backdrop-blur-xl";
 
 const PANEL_EXPLORACION_HD =
-  "relative overflow-hidden rounded-[22px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(34,10,47,0.96),rgba(34,10,47,0.96))] shadow-[0_22px_60px_rgba(8,3,20,0.24)]";
+  "relative overflow-hidden rounded-[20px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(24,6,35,0.98),rgba(24,6,35,0.98))] shadow-[0_22px_60px_rgba(8,3,20,0.24)]";
 
 const BOTON_BODYGRAPH_VIOLETA =
   "inline-flex items-center gap-2 rounded-full border border-[#B388FF]/55 bg-gradient-to-r from-[#6C2BFF]/62 via-[#7C4DFF]/52 to-[#B388FF]/38 px-4 py-2 text-[12px] font-semibold text-white transition-all hover:border-[#D9C2FF]/70 hover:from-[#7C4DFF]/78 hover:via-[#8F63FF]/68 hover:to-[#B388FF]/48 hover:shadow-[0_10px_28px_rgba(124,77,255,0.32)]";
@@ -98,7 +98,7 @@ function TarjetaAtributo({
         {etiqueta}
       </p>
       <div className="mt-2 flex items-center justify-between gap-4">
-        <p className="min-w-0 text-[15px] font-semibold leading-tight text-white">
+        <p className="min-w-0 text-[14px] font-semibold leading-tight text-white">
           {valor}
         </p>
         <Icono
@@ -166,11 +166,6 @@ function ItemCentro({
     >
       <div className="min-w-0">
         <p className="text-[14px] font-semibold text-white">{nombre}</p>
-        {!meta.definido ? (
-          <p className="mt-1 text-[12px] text-violet-100/52">
-            Amplifica y aprende por experiencia.
-          </p>
-        ) : null}
       </div>
       <span className="shrink-0 text-[11px] font-medium uppercase tracking-[0.14em] text-violet-100/52">
         {meta.etiqueta}
@@ -200,7 +195,7 @@ function ItemCanal({
     >
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="truncate text-[14px] font-semibold text-white">{canal.nombre}</p>
+          <p className="text-[14px] font-semibold leading-5 text-white">{canal.nombre}</p>
           <p className="mt-1 text-[12px] text-violet-100/52">
             {capitalizarEtiqueta(canal.centros[0])} · {capitalizarEtiqueta(canal.centros[1])}
           </p>
@@ -235,7 +230,7 @@ function ItemActivacion({
       )}
     >
       <div className="flex items-center justify-between gap-3">
-        <p className="truncate text-[13px] font-semibold text-white">
+        <p className="text-[13px] font-semibold leading-5 text-white">
           {activacion.planeta}
         </p>
         <span className="shrink-0 text-right text-[11px] font-medium text-violet-100/54">
@@ -313,7 +308,7 @@ function HeroDisenoHumano({
           </div>
 
           <div className="min-w-0">
-            <h1 className="text-[26px] font-semibold tracking-tight text-white lg:text-[30px]">
+            <h1 className="text-[22px] font-semibold tracking-tight text-white lg:text-[24px]">
               Diseño Humano
             </h1>
             <p className="mt-3 max-w-3xl text-[12px] leading-relaxed text-violet-100/56">
@@ -440,11 +435,6 @@ function SeccionCruzHD({
 }) {
   return (
     <section className={cn(PANEL_SECUNDARIO, "mt-6 overflow-hidden p-0")}>
-      <div className="border-b border-white/8 px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-200/68">
-          Cruz
-        </p>
-      </div>
       <div className="grid gap-px bg-white/[0.08] sm:grid-cols-2 xl:grid-cols-4">
         {cruzItems.map((item) => (
           <TarjetaCruz
@@ -488,7 +478,7 @@ function ModalBodyGraph({
       />
 
       <div
-        className="relative z-10 w-full max-w-[1080px] overflow-hidden rounded-[26px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.16),transparent_28%),linear-gradient(135deg,#170d2c_0%,#241148_54%,#34205f_100%)] shadow-[0_30px_100px_rgba(10,4,25,0.48)]"
+        className="relative z-10 w-full max-w-[1180px] overflow-hidden rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.16),transparent_28%),linear-gradient(135deg,#170d2c_0%,#241148_54%,#34205f_100%)] shadow-[0_30px_100px_rgba(10,4,25,0.48)]"
         onClick={(evento) => evento.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4 lg:px-6">
@@ -511,8 +501,8 @@ function ModalBodyGraph({
         </div>
 
         <div className="max-h-[82vh] overflow-y-auto p-4 lg:p-6">
-          <div className="mx-auto flex max-w-[820px] items-center justify-center rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.08),transparent_30%),linear-gradient(180deg,rgba(13,7,27,0.96),rgba(22,10,37,0.92))] p-6 lg:p-10">
-            <BodyGraph datos={datos} className="min-h-[620px]" />
+          <div className="mx-auto flex max-w-[900px] items-center justify-center rounded-[20px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.08),transparent_30%),linear-gradient(180deg,rgba(13,7,27,0.96),rgba(22,10,37,0.92))] p-6 lg:p-10">
+            <BodyGraph datos={datos} className="min-h-[700px]" />
           </div>
         </div>
       </div>

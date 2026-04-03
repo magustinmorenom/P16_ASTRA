@@ -18,14 +18,14 @@ export function TarjetaFecha({ fecha }: TarjetaFechaProps) {
   const diaSemana = DIAS[fecha.getDay()];
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <span className="text-[#f8f6ff] font-[family-name:var(--font-inria)] text-[52px] leading-[1] font-light tracking-tight">
+    <div className="flex shrink-0 flex-col items-center justify-center rounded-[18px] border border-white/[0.08] bg-white/[0.04] px-5 py-4">
+      <span className="font-[family-name:var(--font-inria)] text-[34px] font-light leading-[0.95] tracking-tight text-[#f8f6ff]">
         {dia}
       </span>
-      <span className="text-[#f8f6ff] font-[family-name:var(--font-inria)] text-[26px] leading-[1.1] font-light tracking-wide">
+      <span className="mt-1 font-[family-name:var(--font-inria)] text-[18px] font-light leading-[1] tracking-wide text-[#f8f6ff]">
         {mes}
       </span>
-      <span className="mt-2 inline-block rounded-full bg-[#271d45]/60 px-3 py-0.5 text-[#f8f6ff] text-[9px] font-semibold tracking-[0.15em]">
+      <span className="mt-3 inline-block rounded-full border border-white/[0.08] bg-white/[0.06] px-3 py-1 text-[9px] font-semibold tracking-[0.15em] text-[#f8f6ff]">
         {diaSemana}
       </span>
     </div>
