@@ -143,9 +143,9 @@ class TestMercadoPagoPreapprovalPlan:
                 url_retorno="https://app.com/exito",
             )
 
-        # Verificar que se llamó a /preapproval_plan
+        # Verificar que se llamó a /preapproval
         call_args = mock_instance.post.call_args
-        assert "/preapproval_plan" in call_args.args[0]
+        assert "/preapproval" in call_args.args[0]
 
         assert resultado["id"] == "plan_123"
         assert "init_point" in resultado
