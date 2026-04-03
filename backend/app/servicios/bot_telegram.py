@@ -253,12 +253,25 @@ class BotTelegram:
             historial = await repo_conv.obtener_historial(conversacion.id, limite=20)
 
             # 6. Consultar al oráculo (con sesión para scoring temporal)
-            respuesta, tokens = await ServicioOraculo.consultar(
+            respuesta, tokens, tokens_in, tokens_out = await ServicioOraculo.consultar(
                 mensaje_usuario=mensaje,
                 perfil_cosmico=perfil_cosmico,
                 transitos=transitos,
                 historial=historial,
                 sesion=sesion,
+            )
+
+            # Registrar consumo API
+            from app.servicios.servicio_consumo_api import registrar_consumo
+            from app.configuracion import obtener_configuracion as _obt_cfg
+            await registrar_consumo(
+                sesion,
+                usuario_id=vinculo.usuario_id,
+                servicio="anthropic",
+                operacion="chat_telegram",
+                tokens_entrada=tokens_in,
+                tokens_salida=tokens_out,
+                modelo=_obt_cfg().anthropic_modelo,
             )
 
             # 7. Guardar mensajes en conversación

@@ -492,6 +492,7 @@ async def obtener_perfil_usuario(
             "activo": usuario.activo,
             "verificado": usuario.verificado,
             "proveedor_auth": usuario.proveedor_auth,
+            "rol": usuario.rol,
             "plan_slug": plan_slug,
             "plan_nombre": plan_nombre,
             "suscripcion_estado": suscripcion_estado,

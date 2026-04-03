@@ -345,7 +345,7 @@ class TestManejarMensaje:
 
         # Oráculo
         MockOraculo.consultar = AsyncMock(
-            return_value=("Las energías cósmicas te acompañan hoy.", 150)
+            return_value=("Las energías cósmicas te acompañan hoy.", 150, 100, 50)
         )
 
         update = _crear_update_mock(texto="¿Cómo está mi energía hoy?")

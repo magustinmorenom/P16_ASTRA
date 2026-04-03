@@ -72,6 +72,28 @@ class ServicioEmail:
                 if respuesta.status_code == 200:
                     data = respuesta.json()
                     logger.info("Email enviado a %s (id=%s)", destinatario, data.get("id"))
+
+                    # Registrar consumo Resend (fire-and-forget)
+                    try:
+                        from app.servicios.servicio_consumo_api import registrar_consumo
+                        from app.datos.sesion import crear_sesion_factory, crear_motor_async
+                        from app.configuracion import obtener_configuracion as _obt_cfg
+                        _c = _obt_cfg()
+                        motor = crear_motor_async(_c.database_url)
+                        factory = crear_sesion_factory(motor)
+                        async with factory() as s:
+                            await registrar_consumo(
+                                s,
+                                usuario_id=None,
+                                servicio="resend",
+                                operacion="email",
+                                modelo="resend",
+                                metadata_extra={"asunto": asunto, "destinatario": destinatario},
+                            )
+                        await motor.dispose()
+                    except Exception as e_track:
+                        logger.debug("Error tracking email: %s", e_track)
+
                     return data.get("id")
 
                 logger.error(

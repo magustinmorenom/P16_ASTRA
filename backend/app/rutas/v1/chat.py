@@ -149,12 +149,26 @@ async def enviar_mensaje(
     )
 
     # Consultar al oráculo (con sesión para scoring temporal)
-    respuesta, tokens = await ServicioOraculo.consultar(
+    respuesta, tokens, tokens_in, tokens_out = await ServicioOraculo.consultar(
         mensaje_usuario=datos.mensaje,
         perfil_cosmico=perfil_cosmico,
         transitos=transitos,
         historial=historial,
         sesion=db,
+    )
+
+    # Registrar consumo API
+    from app.servicios.servicio_consumo_api import registrar_consumo
+    from app.configuracion import obtener_configuracion as _obtener_config
+    _cfg = _obtener_config()
+    await registrar_consumo(
+        db,
+        usuario_id=usuario.id,
+        servicio="anthropic",
+        operacion="chat_oraculo",
+        tokens_entrada=tokens_in,
+        tokens_salida=tokens_out,
+        modelo=_cfg.anthropic_modelo,
     )
 
     # Guardar mensaje del usuario

@@ -493,10 +493,11 @@ class ServicioOraculo:
 
             texto = respuesta.content[0].text if respuesta.content else ""
             texto = cls._formatear_respuesta_chat(texto)
-            tokens = (respuesta.usage.input_tokens or 0) + (respuesta.usage.output_tokens or 0)
+            tokens_in = respuesta.usage.input_tokens or 0
+            tokens_out = respuesta.usage.output_tokens or 0
 
-            return texto, tokens
+            return texto, tokens_in + tokens_out, tokens_in, tokens_out
 
         except anthropic.APIError as e:
             logger.error("Error en API de Anthropic: %s", e)
-            return "Disculpá, hubo un error al consultar al oráculo. Intentá de nuevo.", 0
+            return "Disculpá, hubo un error al consultar al oráculo. Intentá de nuevo.", 0, 0, 0

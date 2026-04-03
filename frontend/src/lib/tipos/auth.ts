@@ -49,6 +49,7 @@ export interface Usuario {
   activo: boolean;
   verificado: boolean;
   proveedor_auth: string;
+  rol?: string;
   ultimo_acceso?: string | null;
   creado_en: string;
 }

@@ -382,8 +382,22 @@ class ServicioPronostico:
             )
 
             texto = respuesta.content[0].text if respuesta.content else ""
-            tokens = (respuesta.usage.input_tokens or 0) + (respuesta.usage.output_tokens or 0)
+            tokens_in = respuesta.usage.input_tokens or 0
+            tokens_out = respuesta.usage.output_tokens or 0
+            tokens = tokens_in + tokens_out
             logger.info("Pronóstico diario generado — %d tokens", tokens)
+
+            # Registrar consumo API
+            from app.servicios.servicio_consumo_api import registrar_consumo
+            await registrar_consumo(
+                sesion,
+                usuario_id=usuario_id,
+                servicio="anthropic",
+                operacion="pronostico_diario",
+                tokens_entrada=tokens_in,
+                tokens_salida=tokens_out,
+                modelo=config.pronostico_modelo,
+            )
 
             # 8. Parsear JSON
             # Limpiar posibles backticks de markdown
@@ -525,6 +539,21 @@ class ServicioPronostico:
             )
 
             texto = respuesta.content[0].text.strip() if respuesta.content else ""
+
+            # Registrar consumo API
+            from app.servicios.servicio_consumo_api import registrar_consumo
+            t_in = respuesta.usage.input_tokens or 0
+            t_out = respuesta.usage.output_tokens or 0
+            await registrar_consumo(
+                sesion,
+                usuario_id=usuario_id,
+                servicio="anthropic",
+                operacion="pronostico_semanal",
+                tokens_entrada=t_in,
+                tokens_salida=t_out,
+                modelo=config.pronostico_modelo,
+            )
+
             if texto.startswith("```"):
                 lineas = texto.split("\n")
                 lineas = [l for l in lineas if not l.strip().startswith("```")]
