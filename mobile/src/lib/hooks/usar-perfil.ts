@@ -4,20 +4,14 @@ import type { DatosNacimiento, Perfil } from "@/lib/tipos";
 
 export function usarCrearPerfil() {
   return useMutation({
-    mutationFn: async (datos: DatosNacimiento) => {
-      const { data } = await clienteApi.post<{ datos: Perfil }>("/profile", datos);
-      return data.datos;
-    },
+    mutationFn: (datos: DatosNacimiento) => clienteApi.post<Perfil>("/profile", datos),
   });
 }
 
 export function usarMiPerfil() {
   return useQuery({
     queryKey: ["perfil", "me"],
-    queryFn: async () => {
-      const { data } = await clienteApi.get<{ datos: Perfil | null }>("/profile/me");
-      return data.datos;
-    },
+    queryFn: () => clienteApi.get<Perfil | null>("/profile/me"),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -37,15 +31,18 @@ interface RespuestaActualizarPerfil extends Perfil {
 export function usarActualizarPerfil() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (datos: DatosActualizarPerfil) => {
-      const { data } = await clienteApi.put<{ datos: RespuestaActualizarPerfil }>(
-        "/profile/me",
-        datos
-      );
-      return data.datos;
-    },
+    mutationFn: (datos: DatosActualizarPerfil) =>
+      clienteApi.put<RespuestaActualizarPerfil>("/profile/me", datos),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["perfil", "me"] });
     },
+  });
+}
+
+export function usarObtenerPerfil(id: string | undefined) {
+  return useQuery({
+    queryKey: ["perfil", id],
+    queryFn: () => clienteApi.get<Perfil>(`/profile/${id}`),
+    enabled: !!id,
   });
 }

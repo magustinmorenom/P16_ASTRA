@@ -1,7 +1,7 @@
 import { View, Platform } from "react-native";
 import { Tabs } from "expo-router";
 import { BlurView } from "expo-blur";
-import { House, Star, Compass, Microphone, UserCircle } from "phosphor-react-native";
+import { House, MoonStars, Compass, Waveform, UserCircle } from "phosphor-react-native";
 import { MiniReproductor } from "@/componentes/layouts/mini-reproductor";
 import { useStoreUI } from "@/lib/stores/store-ui";
 import { usarTema } from "@/lib/hooks/usar-tema";
@@ -45,7 +45,7 @@ export default function LayoutTabs() {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  backgroundColor: colores.tabBarFondo,
+                  backgroundColor: `${colores.tabBarFondo}`,
                 }}
               />
             ),
@@ -54,14 +54,22 @@ export default function LayoutTabs() {
             backgroundColor: "transparent",
             borderTopColor: colores.tabBarBorde,
             borderTopWidth: 1,
-            height: 85,
-            paddingBottom: 20,
+            left: 14,
+            right: 14,
+            bottom: 12,
+            height: 78,
+            paddingBottom: 12,
             paddingTop: 8,
+            borderRadius: 28,
+            overflow: "hidden",
             elevation: 0,
           },
           tabBarLabelStyle: {
             fontSize: 11,
             fontFamily: "Inter_600SemiBold",
+          },
+          tabBarItemStyle: {
+            paddingTop: 2,
           },
         }}
       >
@@ -79,7 +87,7 @@ export default function LayoutTabs() {
           options={{
             title: "Astral",
             tabBarIcon: ({ color, size }) => (
-              <Star size={size} color={color} weight="fill" />
+              <MoonStars size={size} color={color} weight="fill" />
             ),
           }}
         />
@@ -97,7 +105,7 @@ export default function LayoutTabs() {
           options={{
             title: "Podcasts",
             tabBarIcon: ({ color, size }) => (
-              <Microphone size={size} color={color} weight="fill" />
+              <Waveform size={size} color={color} weight="fill" />
             ),
           }}
         />

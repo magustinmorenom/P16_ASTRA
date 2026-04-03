@@ -2460,3 +2460,162 @@ Se ajustó la altura de la primera tarjeta interna del hero para que responda me
 ### Como funciona
 1. La tarjeta de fecha deja de verse sobredimensionada dentro de la primera columna del hero y acompaña mejor la masa visual del bloque.
 2. La acción secundaria de mañana ya no se percibe como un chip suelto; ahora se lee como un botón completo con intención clara: generar el audio del día siguiente.
+
+---
+
+## Sesion: Mobile — rescate de plataforma y flujos críticos de cuenta/suscripción
+**Fecha:** 2026-04-03 ~12:29 (ARG)
+
+### Que se hizo
+Se ejecutó la primera ola del plan de rescate de `mobile/`: se estabilizó la base Expo, se alineó el cliente API mobile con el contrato real del backend y se incorporaron los flujos críticos que faltaban para recuperación de cuenta, verificación de checkout, facturas y acciones de perfil.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `.github/workflows/ci.yml` | Agrega la lane mobile con `npm ci`, `typecheck`, `expo-doctor` y smoke export de Android/iOS sobre Node 22 |
+| `.nvmrc` | Fija Node 22 como referencia de entorno para el rescate mobile |
+| `mobile/.gitignore` | Ignora `dist-export/` para no ensuciar el repo con artefactos de export |
+| `mobile/app.json` | Limpia configuración Expo, elimina `projectId` vacío y registra `expo-asset` como plugin |
+| `mobile/eas.json` | Agrega perfiles `development`, `preview` y `production` para EAS |
+| `mobile/metro.config.js` | Agrega compatibilidad para `toReversed` y deja estable el arranque de Metro/export |
+| `mobile/package.json` | Alinea scripts operativos (`typecheck`, `doctor`, exports), corrige dependencias Expo y suma `react-dom`/`react-native-web` para resolver peers |
+| `mobile/package-lock.json` | Regenera el lockfile acorde a la nueva base Expo y dependencias mobile |
+| `mobile/src/app/(auth)/login.tsx` | Mejora manejo de errores y agrega acceso al flujo de recuperación de contraseña |
+| `mobile/src/app/(auth)/registro.tsx` | Normaliza el manejo de errores del registro |
+| `mobile/src/app/(auth)/olvide-contrasena.tsx` | Nueva pantalla mobile para solicitar reset, verificar OTP y definir nueva contraseña |
+| `mobile/src/app/(features)/suscripcion.tsx` | Rehace la vista de suscripción con facturas, apertura de checkout y verificación manual del estado del pago |
+| `mobile/src/app/(features)/suscripcion-verificacion.tsx` | Nueva pantalla de polling post-checkout para confirmar activación Premium |
+| `mobile/src/app/(tabs)/descubrir.tsx` | Sustituye iconografía astral por `IconoAstral` y elimina gradientes fuera de la paleta ASTRA |
+| `mobile/src/app/(tabs)/index.tsx` | Ajusta hero/dashboard inicial para usar iconografía astral correcta y gradientes válidos |
+| `mobile/src/app/(tabs)/perfil.tsx` | Amplía perfil con descarga de PDF, cambio de contraseña y eliminación de cuenta |
+| `mobile/src/componentes/ui/esqueleto.tsx` | Corrige tipado de `style`, `width` y `height` |
+| `mobile/src/componentes/ui/presionable-animado.tsx` | Corrige tipado del `style` animado para evitar errores de compilación |
+| `mobile/src/componentes/visualizaciones/body-graph.tsx` | Limpia imports y corrige dependencia visual del token de color de tarjeta |
+| `mobile/src/constants/colores.ts` | Reestructura tokens de color, corrige typings y elimina advertencias naranja/amber |
+| `mobile/src/lib/api/cliente.ts` | Reemplaza Axios por un cliente fetch alineado con web: unwrap `{ exito, datos }`, refresh con mutex y limpieza de sesión consistente |
+| `mobile/src/lib/hooks/index.ts` | Exporta los nuevos hooks de auth/perfil/suscripción |
+| `mobile/src/lib/hooks/usar-auth.ts` | Alinea login/registro/logout con el nuevo cliente y agrega reset OTP + eliminar cuenta |
+| `mobile/src/lib/hooks/usar-calendario-cosmico.ts` | Ajusta consumo del cliente API desenvuelto |
+| `mobile/src/lib/hooks/usar-carta-natal.ts` | Ajusta consumo del cliente API desenvuelto |
+| `mobile/src/lib/hooks/usar-diseno-humano.ts` | Ajusta consumo del cliente API desenvuelto |
+| `mobile/src/lib/hooks/usar-geocodificacion.ts` | Ajusta consumo del cliente API desenvuelto |
+| `mobile/src/lib/hooks/usar-mis-calculos.ts` | Ajusta consumo del cliente API desenvuelto |
+| `mobile/src/lib/hooks/usar-numerologia.ts` | Ajusta consumo del cliente API desenvuelto |
+| `mobile/src/lib/hooks/usar-perfil.ts` | Ajusta consumo del cliente API, agrega `usarObtenerPerfil` y mantiene coherencia con el backend |
+| `mobile/src/lib/hooks/usar-podcast.ts` | Ajusta consumo del cliente API desenvuelto |
+| `mobile/src/lib/hooks/usar-retorno-solar.ts` | Ajusta consumo del cliente API desenvuelto |
+| `mobile/src/lib/hooks/usar-suscripcion.ts` | Ajusta consumo del cliente API y agrega hooks para facturas/sincronización de pagos |
+| `mobile/src/lib/hooks/usar-transitos.ts` | Ajusta consumo del cliente API desenvuelto |
+| `mobile/src/lib/stores/store-auth.ts` | Readecua la carga/cierre de sesión al nuevo cliente API |
+| `mobile/src/lib/tipos/auth.ts` | Agrega tipos para reset OTP, eliminación de cuenta y token de reset |
+| `mobile/src/lib/tipos/index.ts` | Exporta los nuevos tipos de auth |
+| `mobile/src/lib/utilidades/descargar-documento.ts` | Nueva utilidad para descargar y abrir PDFs protegidos con token bearer |
+| `mobile/src/lib/utilidades/interpretaciones-natal.ts` | Elimina referencias visuales prohibidas a naranja/amber y deja el contenido dentro de la paleta ASTRA |
+| `context/resumen-de-cambios.md` | Documenta esta sesión de rescate mobile |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `npm ci`, `npm run typecheck`, `npm run doctor`, `npm run export:android` y `npm run export:ios` dentro de `mobile/`.
+
+### Como funciona
+1. La app mobile ahora tiene una base Expo verificable: el lockfile es reproducible, `expo-doctor` pasa y el bundling/export funciona en Android e iOS sin romper Metro.
+2. Todas las llamadas mobile usan un cliente API consistente con web/backend: devuelve `datos` desenvuelto, renueva sesión con `token_refresco`, reintenta una vez y limpia la sesión si el refresh falla.
+3. Desde auth ya existe recuperación de contraseña end-to-end por OTP: el usuario solicita código, verifica OTP y define una nueva contraseña sin salir de mobile.
+4. Desde perfil el usuario puede descargar su PDF, cambiar contraseña y eliminar la cuenta; desde suscripción puede iniciar checkout, verificar su estado después del pago y abrir facturas PDF autenticadas.
+5. La UI tocada quedó alineada con las reglas ASTRA del repo: sin naranja/amber, sin símbolos zodiacales Unicode y con `IconoAstral` para contenido esotérico.
+
+---
+
+## Sesion: Mobile — dashboard con pronóstico y oráculo en app
+**Fecha:** 2026-04-03 ~12:42 (ARG)
+
+### Que se hizo
+Se ejecutó el siguiente round funcional de mobile: `Inicio` ahora consume el pronóstico cósmico diario/semanal real y se agregó una pantalla mobile del `Oráculo ASTRA` con historial, envío de mensajes y nueva conversación. Además, el cliente API mobile quedó más robusto para manejar respuestas `exito=false` aunque el backend responda `200`.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `mobile/src/app/(features)/oraculo.tsx` | Nueva pantalla mobile del oráculo con historial, sugerencias rápidas, input multiline y nueva conversación |
+| `mobile/src/app/(tabs)/descubrir.tsx` | Agrega acceso directo al Oráculo ASTRA dentro de descubrir |
+| `mobile/src/app/(tabs)/index.tsx` | Rehace el dashboard mobile para mostrar pronóstico diario, momentos, áreas, consejo HD, semana, podcasts y CTA al oráculo |
+| `mobile/src/lib/api/cliente.ts` | Hace que el cliente lance errores cuando el backend responde `exito=false` en cuerpos JSON exitosos a nivel HTTP |
+| `mobile/src/lib/hooks/index.ts` | Exporta hooks de pronóstico y chat para mobile |
+| `mobile/src/lib/hooks/usar-chat.ts` | Agrega hooks mobile para historial, envío de mensajes y nueva conversación del oráculo |
+| `mobile/src/lib/hooks/usar-pronostico.ts` | Agrega hooks mobile para pronóstico diario y semanal |
+| `mobile/src/lib/tipos/chat.ts` | Incorpora tipos mobile del historial y respuesta del chat |
+| `mobile/src/lib/tipos/index.ts` | Exporta los nuevos tipos de chat y pronóstico |
+| `mobile/src/lib/tipos/pronostico.ts` | Incorpora tipos mobile del pronóstico diario y semanal |
+| `context/resumen-de-cambios.md` | Documenta esta sesión de dashboard + oráculo mobile |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `npm run typecheck`, `npm run doctor`, `npm run export:android` y `npm run export:ios` dentro de `mobile/`.
+
+### Como funciona
+1. La tab `Inicio` ya no depende sólo de tránsitos sueltos: ahora carga `pronóstico/diario` y `pronóstico/semanal`, mostrando clima cósmico, momentos del día, áreas activas, consejo HD y panorama semanal.
+2. El dashboard sigue integrando podcasts, pero ahora los ubica dentro de una lectura más completa del día y suma un acceso directo al Oráculo ASTRA desde la home.
+3. El Oráculo tiene pantalla propia en mobile: puede cargar la conversación previa, sugerir preguntas iniciales, enviar mensajes al backend, mostrar respuestas, iniciar una nueva conversación y reflejar el límite diario del plan gratis.
+4. `Descubrir` suma el acceso al oráculo para que la feature quede navegable desde la estructura principal de producto.
+5. El cliente API mobile ahora trata `exito=false` como error real aunque la respuesta venga con `200`, evitando estados falsamente exitosos en pronóstico/chat y cualquier otro endpoint con ese patrón.
+
+---
+
+## Sesion: Mobile — edición natal completa y recálculo desde perfil
+**Fecha:** 2026-04-03 ~12:53 (ARG)
+
+### Que se hizo
+Se cerró la brecha de perfil en mobile para que la app pueda editar los datos natales completos, recalcular cartas desde la misma pantalla y mostrar mejor el estado real de la cuenta. También se corrigió el formulario reusable de nacimiento para evitar reusar coordenadas viejas cuando cambia la ciudad.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `mobile/src/app/(tabs)/perfil.tsx` | Rehace la pantalla de perfil para mostrar metadatos de cuenta, editar datos natales completos, disparar recálculo de cartas y mantener acciones de sesión/privacidad |
+| `mobile/src/componentes/compuestos/formulario-nacimiento.tsx` | Soporta valores iniciales completos incluyendo geodatos y permite reutilizar el formulario para edición real de perfil |
+| `mobile/src/componentes/compuestos/selector-ciudad.tsx` | Notifica cambios de texto para invalidar la selección geográfica previa cuando el usuario modifica la ciudad manualmente |
+| `context/resumen-de-cambios.md` | Documenta esta sesión de perfil y recálculo mobile |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `npm run typecheck`, `npm run doctor`, `npm run export:android` y `npm run export:ios` dentro de `mobile/`.
+
+### Como funciona
+1. La pantalla `Mi Perfil` ahora muestra no sólo email y plan, sino también proveedor de autenticación, estado de suscripción, fecha de alta y último acceso.
+2. Desde `Datos de nacimiento` el usuario puede editar nombre, fecha, hora y lugar usando el mismo formulario estructurado del onboarding, pero inicializado con sus datos actuales.
+3. Cuando cambian datos natales, mobile actualiza el perfil y luego relanza carta natal, diseño humano, numerología y retorno solar; además invalida queries de cálculos, pronóstico, podcast y chat para no dejar contenido derivado desactualizado.
+4. Si el usuario cambia el texto de la ciudad, la selección geográfica previa queda invalidada y tiene que volver a elegir un resultado válido, evitando recalcular con coordenadas inconsistentes.
+5. El feedback del perfil ahora diferencia entre actualización simple, recálculo en progreso y casos donde los datos se guardaron pero alguna carta no pudo regenerarse.
+
+---
+
+## Sesion: Mobile — shell premium ciruela y reordenamiento de inicio/acceso
+**Fecha:** 2026-04-03 ~13:29 (ARG)
+
+### Que se hizo
+Se inició el round de mejoras prioritarias de UI mobile con un cambio de sistema: nueva base visual premium ciruela, shell de acceso reutilizable y reordenamiento fuerte de `Inicio` y `Descubrir` para recuperar foco, jerarquía y coherencia entre iOS/Android.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `mobile/src/componentes/layouts/fondo-cosmico.tsx` | Nuevo fondo reusable con gradientes y halos ciruela para auth, onboarding y pantallas editoriales |
+| `mobile/src/componentes/layouts/shell-acceso.tsx` | Nuevo shell de acceso con hero editorial, pistas contextuales y panel central reutilizable |
+| `mobile/src/componentes/layouts/header-mobile.tsx` | Amplía el header para acciones laterales más cómodas y un look más premium/coherente |
+| `mobile/src/componentes/ui/avatar.tsx` | Refina el avatar con borde y superficie integrada al sistema nuevo |
+| `mobile/src/componentes/ui/badge.tsx` | Ajusta badges con borde y ritmo visual más consistente |
+| `mobile/src/componentes/ui/boton.tsx` | Refina botones secundarios/fantasma y estados de carga para el nuevo lenguaje visual |
+| `mobile/src/componentes/ui/input.tsx` | Rehace inputs con superficies más integradas y mejor tratamiento de error |
+| `mobile/src/componentes/ui/tarjeta.tsx` | Unifica tarjetas entre iOS y Android con fallback premium en vez de sólido genérico |
+| `mobile/src/constants/colores.ts` | Lleva el modo claro a una base más ciruela y mejora gradientes/tab bar del sistema |
+| `mobile/src/app/(tabs)/_layout.tsx` | Reconfigura la tab bar flotante para sentirse menos genérica y más ASTRA |
+| `mobile/src/app/(auth)/login.tsx` | Rediseña login con shell premium, mejor jerarquía y panel de acceso más claro |
+| `mobile/src/app/(auth)/registro.tsx` | Rediseña registro con la misma gramática editorial y mejor framing del flujo |
+| `mobile/src/app/(onboarding)/index.tsx` | Replantea onboarding y estado de cálculo inicial con shell coherente y mensaje más guiado |
+| `mobile/src/app/(tabs)/index.tsx` | Reordena `Inicio` con hero dominante, momentos horizontales, áreas priorizadas y podcasts menos comprimidos |
+| `mobile/src/app/(tabs)/descubrir.tsx` | Rehace `Descubrir` como biblioteca curada por intención en vez de grilla plana |
+| `context/resumen-de-cambios.md` | Documenta esta sesión de mejoras prioritarias de UI mobile |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `npm run typecheck`, `npm run doctor`, `npm run export:android` y `npm run export:ios` dentro de `mobile/`.
+
+### Como funciona
+1. La app ahora tiene una base visual más coherente: fondos ciruela reutilizables, tarjetas premium consistentes en ambas plataformas y una tab bar menos genérica.
+2. `Login`, `Registro` y `Onboarding` dejaron de ser formularios planos y pasan a compartir un shell editorial con contexto, foco y panel central de acción.
+3. `Inicio` recupera jerarquía: hero principal, alertas resumidas, momentos del día en carrusel, áreas priorizadas y podcasts mejor distribuidos.
+4. `Descubrir` deja de comportarse como catálogo uniforme y pasa a agrupar módulos por intención (`arquitectura personal`, `tiempo cósmico`, `premium`) para mejorar comprensión de producto.
+5. Este round no cerró todavía el resto de módulos utilitarios (`Perfil`, `Calendario`, `Tránsitos`, `Suscripción`) pero dejó lista la base visual para que el siguiente batch suba esas pantallas sin rehacer componentes otra vez.

@@ -14,6 +14,25 @@ export interface EsquemaCambioContrasena {
   contrasena_nueva: string;
 }
 
+export interface EsquemaSolicitarReset {
+  email: string;
+}
+
+export interface EsquemaVerificarOtp {
+  email: string;
+  codigo: string;
+}
+
+export interface EsquemaConfirmarReset {
+  token: string;
+  contrasena_nueva: string;
+}
+
+export interface EsquemaEliminarCuenta {
+  contrasena?: string;
+  token_refresco: string;
+}
+
 export interface RespuestaTokens {
   token_acceso: string;
   token_refresco: string;
@@ -43,4 +62,8 @@ export interface RespuestaRegistroLogin {
   token_acceso: string;
   token_refresco: string;
   tipo: string;
+}
+
+export interface RespuestaTokenReset {
+  token: string;
 }

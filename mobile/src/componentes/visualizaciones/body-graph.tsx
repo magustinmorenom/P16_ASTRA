@@ -1,5 +1,5 @@
 import { View } from "react-native";
-import Svg, { Rect, Circle, Line, Text as SvgText, G, Polygon } from "react-native-svg";
+import Svg, { Rect, Line, Text as SvgText, G, Polygon } from "react-native-svg";
 import type { DisenoHumano, MapaCentros } from "@/lib/tipos";
 import { usarTema } from "@/lib/hooks/usar-tema";
 

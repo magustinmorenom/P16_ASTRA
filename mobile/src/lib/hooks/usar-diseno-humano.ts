@@ -9,13 +9,9 @@ interface OpcionesDisenoHumano {
 
 export function usarDisenoHumano() {
   return useMutation({
-    mutationFn: async ({ datos, perfilId }: OpcionesDisenoHumano) => {
+    mutationFn: ({ datos, perfilId }: OpcionesDisenoHumano) => {
       const query = perfilId ? `?perfil_id=${perfilId}` : "";
-      const { data } = await clienteApi.post<{ datos: DisenoHumano }>(
-        `/human-design${query}`,
-        datos
-      );
-      return data.datos;
+      return clienteApi.post<DisenoHumano>(`/human-design${query}`, datos);
     },
   });
 }

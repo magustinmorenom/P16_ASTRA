@@ -2,13 +2,12 @@ import { useState } from "react";
 import {
   View,
   Text,
-  ScrollView,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
+import { FondoCosmico } from "@/componentes/layouts/fondo-cosmico";
+import { ShellAcceso } from "@/componentes/layouts/shell-acceso";
+import { Tarjeta } from "@/componentes/ui/tarjeta";
 import { FormularioNacimiento } from "@/componentes/compuestos/formulario-nacimiento";
 import { usarCrearPerfil } from "@/lib/hooks/usar-perfil";
 import { usarCartaNatal } from "@/lib/hooks/usar-carta-natal";
@@ -20,7 +19,6 @@ import { usarTema } from "@/lib/hooks/usar-tema";
 import type { DatosNacimiento } from "@/lib/tipos";
 
 export default function OnboardingScreen() {
-  const insets = useSafeAreaInsets();
   const { colores } = usarTema();
   const queryClient = useQueryClient();
   const [calculando, setCalculando] = useState(false);
@@ -67,78 +65,95 @@ export default function OnboardingScreen() {
 
   if (calculando) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colores.fondo,
-          alignItems: "center",
-          justifyContent: "center",
-          paddingHorizontal: 32,
-          paddingTop: insets.top,
-        }}
-      >
-        <ActivityIndicator size="large" color={colores.acento} />
-        <Text
+      <FondoCosmico intensidad="hero">
+        <View
           style={{
-            color: colores.primario,
-            fontSize: 20,
-            fontFamily: "Inter_700Bold",
-            marginTop: 24,
-            textAlign: "center",
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: 24,
           }}
         >
-          Calculando tu perfil cósmico
-        </Text>
-        <Text
-          style={{
-            color: colores.textoSecundario,
-            fontSize: 14,
-            marginTop: 8,
-            textAlign: "center",
-          }}
-        >
-          Carta natal, Diseño Humano, Numerología y Revolución Solar...
-        </Text>
-      </View>
+          <Tarjeta variante="violeta" style={{ width: "100%", maxWidth: 460 }}>
+            <View style={{ alignItems: "center", paddingVertical: 12 }}>
+              <ActivityIndicator size="large" color={colores.acento} />
+              <Text
+                style={{
+                  color: colores.primario,
+                  fontSize: 20,
+                  fontFamily: "Inter_700Bold",
+                  marginTop: 24,
+                  textAlign: "center",
+                }}
+              >
+                Calculando tu perfil cósmico
+              </Text>
+              <Text
+                style={{
+                  color: colores.textoSecundario,
+                  fontSize: 14,
+                  marginTop: 10,
+                  textAlign: "center",
+                  lineHeight: 20,
+                }}
+              >
+                Estamos generando tu carta natal, tu Diseño Humano, tu numerología y
+                tu retorno solar inicial.
+              </Text>
+            </View>
+          </Tarjeta>
+        </View>
+      </FondoCosmico>
     );
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, backgroundColor: colores.fondo }}
+    <ShellAcceso
+      insignia="Tu perfil base"
+      titulo="Ahora necesitamos tu momento de nacimiento"
+      descripcion="Con estos datos vamos a activar todos tus calculos y dejar lista la app para darte respuestas realmente personales."
+      pistas={[
+        {
+          icono: "astrologia",
+          texto: "La fecha, la hora y el lugar impactan tu carta y la interpretacion diaria.",
+        },
+        {
+          icono: "personal",
+          texto: "Si despues corregis algo, ASTRA puede recalcular tus cartas desde perfil.",
+        },
+      ]}
+      intensidad="hero"
     >
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          paddingTop: insets.top + 20,
-          paddingBottom: insets.bottom + 20,
-          paddingHorizontal: 24,
-        }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={{ marginBottom: 32 }}>
-          <Text style={{ fontSize: 24, fontFamily: "Inter_700Bold", color: colores.primario }}>
-            Datos de nacimiento
-          </Text>
-          <Text style={{ color: colores.textoSecundario, fontSize: 14, marginTop: 4 }}>
-            Necesitamos esta información para calcular tu carta astral, diseño
-            humano y numerología.
-          </Text>
-        </View>
-
-        {error ? (
-          <Text style={{ color: colores.error, fontSize: 14, marginBottom: 16, textAlign: "center" }}>
+      {error ? (
+        <View
+          style={{
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: `${colores.error}4D`,
+            backgroundColor: `${colores.error}14`,
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+            marginBottom: 16,
+          }}
+        >
+          <Text
+            style={{
+              color: colores.error,
+              fontSize: 13,
+              lineHeight: 19,
+              textAlign: "center",
+            }}
+          >
             {error}
           </Text>
-        ) : null}
+        </View>
+      ) : null}
 
-        <FormularioNacimiento
-          onEnviar={manejarDatosNacimiento}
-          cargando={crearPerfil.isPending}
-          textoBoton="Calcular mi perfil cósmico"
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <FormularioNacimiento
+        onEnviar={manejarDatosNacimiento}
+        cargando={crearPerfil.isPending}
+        textoBoton="Calcular mi perfil cosmico"
+      />
+    </ShellAcceso>
   );
 }

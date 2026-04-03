@@ -9,10 +9,15 @@ export type {
   EsquemaRegistro,
   EsquemaLogin,
   EsquemaCambioContrasena,
+  EsquemaSolicitarReset,
+  EsquemaVerificarOtp,
+  EsquemaConfirmarReset,
+  EsquemaEliminarCuenta,
   RespuestaTokens,
   Usuario,
   UsuarioConSuscripcion,
   RespuestaRegistroLogin,
+  RespuestaTokenReset,
 } from "./auth";
 
 export type {
@@ -82,3 +87,24 @@ export type {
   SegmentoLetra,
   PodcastEpisodio,
 } from "./podcast";
+
+export type {
+  ClimaCosmicoDTO,
+  AreaVidaDTO,
+  MomentoClaveDTO,
+  AlertaCosmicaDTO,
+  ConsejoHDDTO,
+  LunaInfoDTO,
+  NumeroPersonalDTO,
+  AccesoPronosticoDTO,
+  PronosticoDiarioDTO,
+  DiaSemanalDTO,
+  PronosticoSemanalDTO,
+} from "./pronostico";
+
+export type {
+  MensajeChat,
+  RespuestaChat,
+  HistorialChat,
+  NuevaConversacion,
+} from "./chat";

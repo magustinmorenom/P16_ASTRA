@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View, Text, Platform } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Input } from "@/componentes/ui/input";
@@ -21,6 +21,41 @@ export function FormularioNacimiento({
   textoBoton = "Calcular",
 }: FormularioNacimientoProps) {
   const { esOscuro, colores } = usarTema();
+  const geoInicial = useMemo<ResultadoGeo | null>(() => {
+    if (
+      !valoresIniciales?.ciudad_nacimiento ||
+      !valoresIniciales?.pais_nacimiento ||
+      typeof valoresIniciales.latitud !== "number" ||
+      typeof valoresIniciales.longitud !== "number" ||
+      !valoresIniciales.zona_horaria
+    ) {
+      return null;
+    }
+
+    const nombreMostrar = [
+      valoresIniciales.ciudad_nacimiento,
+      valoresIniciales.pais_nacimiento,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    return {
+      nombre_mostrar: nombreMostrar,
+      ciudad: valoresIniciales.ciudad_nacimiento,
+      estado: "",
+      pais: valoresIniciales.pais_nacimiento,
+      latitud: valoresIniciales.latitud,
+      longitud: valoresIniciales.longitud,
+      zona_horaria: valoresIniciales.zona_horaria,
+    };
+  }, [
+    valoresIniciales?.ciudad_nacimiento,
+    valoresIniciales?.pais_nacimiento,
+    valoresIniciales?.latitud,
+    valoresIniciales?.longitud,
+    valoresIniciales?.zona_horaria,
+  ]);
+
   const [nombre, setNombre] = useState(valoresIniciales?.nombre ?? "");
   const [fecha, setFecha] = useState<Date>(
     valoresIniciales?.fecha_nacimiento
@@ -36,11 +71,30 @@ export function FormularioNacimiento({
     }
     return new Date(2000, 0, 1, 12, 0);
   });
-  const [geoSeleccionado, setGeoSeleccionado] = useState<ResultadoGeo | null>(
-    null
-  );
+  const [geoSeleccionado, setGeoSeleccionado] = useState<ResultadoGeo | null>(geoInicial);
   const [mostrarFecha, setMostrarFecha] = useState(false);
   const [mostrarHora, setMostrarHora] = useState(false);
+
+  useEffect(() => {
+    if (typeof valoresIniciales?.nombre === "string") {
+      setNombre(valoresIniciales.nombre);
+    }
+    if (valoresIniciales?.fecha_nacimiento) {
+      setFecha(new Date(valoresIniciales.fecha_nacimiento + "T12:00:00"));
+    }
+    if (valoresIniciales?.hora_nacimiento) {
+      const [h, m] = valoresIniciales.hora_nacimiento.split(":");
+      const d = new Date(2000, 0, 1, 12, 0);
+      d.setHours(parseInt(h, 10), parseInt(m, 10), 0, 0);
+      setHora(d);
+    }
+    setGeoSeleccionado(geoInicial);
+  }, [
+    geoInicial,
+    valoresIniciales?.fecha_nacimiento,
+    valoresIniciales?.hora_nacimiento,
+    valoresIniciales?.nombre,
+  ]);
 
   const formatearFechaLocal = (d: Date) => {
     const dia = String(d.getDate()).padStart(2, "0");
@@ -159,6 +213,7 @@ export function FormularioNacimiento({
         <SelectorCiudad
           valorInicial={ciudadInicial}
           onSeleccionar={setGeoSeleccionado}
+          onCambioTexto={() => setGeoSeleccionado(null)}
         />
       </View>
 

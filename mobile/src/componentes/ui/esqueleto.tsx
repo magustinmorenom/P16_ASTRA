@@ -1,12 +1,17 @@
 import { useEffect, useRef } from "react";
-import { Animated, type ViewStyle } from "react-native";
+import {
+  Animated,
+  type DimensionValue,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 import { usarTema } from "@/lib/hooks/usar-tema";
 
 interface EsqueletoProps {
   className?: string;
-  style?: ViewStyle;
-  width?: number | string;
-  height?: number | string;
+  style?: StyleProp<ViewStyle>;
+  width?: DimensionValue;
+  height?: DimensionValue;
 }
 
 export function Esqueleto({ className, style, width, height }: EsqueletoProps) {

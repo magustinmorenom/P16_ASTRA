@@ -3,9 +3,14 @@ import * as SecureStore from "expo-secure-store";
 import { clienteApi } from "@/lib/api/cliente";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import type {
+  EsquemaConfirmarReset,
+  EsquemaEliminarCuenta,
   EsquemaRegistro,
   EsquemaLogin,
+  EsquemaSolicitarReset,
+  EsquemaVerificarOtp,
   RespuestaRegistroLogin,
+  RespuestaTokenReset,
 } from "@/lib/tipos";
 
 export function usarLogin() {
@@ -13,11 +18,10 @@ export function usarLogin() {
 
   return useMutation({
     mutationFn: async (datos: EsquemaLogin) => {
-      const { data } = await clienteApi.post<{ datos: RespuestaRegistroLogin }>(
+      const resp = await clienteApi.post<RespuestaRegistroLogin>(
         "/auth/login",
         datos
       );
-      const resp = data.datos;
       await SecureStore.setItemAsync("access_token", resp.token_acceso);
       await SecureStore.setItemAsync("refresh_token", resp.token_refresco);
       await cargarUsuario();
@@ -31,11 +35,10 @@ export function usarRegistro() {
 
   return useMutation({
     mutationFn: async (datos: EsquemaRegistro) => {
-      const { data } = await clienteApi.post<{ datos: RespuestaRegistroLogin }>(
+      const resp = await clienteApi.post<RespuestaRegistroLogin>(
         "/auth/registrar",
         datos
       );
-      const resp = data.datos;
       await SecureStore.setItemAsync("access_token", resp.token_acceso);
       await SecureStore.setItemAsync("refresh_token", resp.token_refresco);
       await cargarUsuario();
@@ -72,11 +75,34 @@ export function usarCambiarContrasena() {
 
 export function usarGoogleAuthUrl() {
   return useMutation({
-    mutationFn: async () => {
-      const { data } = await clienteApi.get<{ datos: { url: string } }>(
-        "/auth/google/url"
-      );
-      return data.datos;
-    },
+    mutationFn: () => clienteApi.get<{ url: string }>("/auth/google/url"),
+  });
+}
+
+export function usarSolicitarReset() {
+  return useMutation({
+    mutationFn: (datos: EsquemaSolicitarReset) =>
+      clienteApi.post("/auth/solicitar-reset", datos),
+  });
+}
+
+export function usarVerificarOtp() {
+  return useMutation({
+    mutationFn: (datos: EsquemaVerificarOtp) =>
+      clienteApi.post<RespuestaTokenReset>("/auth/verificar-otp", datos),
+  });
+}
+
+export function usarConfirmarReset() {
+  return useMutation({
+    mutationFn: (datos: EsquemaConfirmarReset) =>
+      clienteApi.post("/auth/confirmar-reset", datos),
+  });
+}
+
+export function usarEliminarCuenta() {
+  return useMutation({
+    mutationFn: (datos: EsquemaEliminarCuenta) =>
+      clienteApi.post("/auth/eliminar-cuenta", datos),
   });
 }

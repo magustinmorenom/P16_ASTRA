@@ -39,12 +39,8 @@
       "expo-secure-store",
       "expo-web-browser",
       "expo-splash-screen",
-      "expo-font"
-    ],
-    "extra": {
-      "eas": {
-        "projectId": ""
-      }
-    }
+      "expo-font",
+      "expo-asset"
+    ]
   }
 }
