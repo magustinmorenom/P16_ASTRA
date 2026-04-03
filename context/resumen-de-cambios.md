@@ -2235,3 +2235,86 @@ Se corrigió el explorador técnico de Diseño Humano para que no aparezca como 
 1. El bloque de exploración ya no tiene una segunda caja oscura dentro del panel principal.
 2. `Centros`, `Canales` y `Activaciones` se leen ahora como una sola consola continua, más cerca del patrón de `Núcleo` en Numerología.
 3. La jerarquía mejora porque el usuario percibe una sola superficie de trabajo, no un mosaico de contenedores superpuestos.
+
+---
+
+## Sesion: Refactor UI integral — sistema premium ciruela y compactación transversal
+**Fecha:** 2026-04-02 ~20:07 (ARG)
+
+### Que se hizo
+Se ejecutó una pasada integral de refactor visual para unificar ASTRA bajo un mismo sistema premium ciruela: menos chips, menos copy de relleno, menos paneles anidados y más instrumentos compactos. Además se migraron las pantallas legacy más visibles para que `Descubrir`, `Tránsitos`, `Suscripción`, `Perfil` y los flujos de checkout dejen de verse como productos aparte.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `claude.md` | Formaliza reglas visuales nuevas: sin títulos heroicos fuera del hero, sin truncados visibles críticos, sin panel dentro de panel y sin copy de scaffolding interno |
+| `frontend/src/componentes/layouts/header-mobile.tsx` | Reduce radios, elimina tonos dorados y permite títulos largos sin truncado |
+| `frontend/src/componentes/layouts/navbar.tsx` | Simplifica el header compartido, reemplaza chips por metadata lineal, elimina truncados en identidad/menú y compacta el estado contextual |
+| `frontend/src/componentes/layouts/sidebar-navegacion.tsx` | Limpia el bloque `Próximamente`, elimina copy teaser redundante y pasa el modal de descarga al sistema oscuro ciruela |
+| `frontend/src/componentes/layouts/mini-reproductor.tsx` | Quita truncados del mini reproductor, mejora respiración vertical y compacta el chrome |
+| `frontend/src/componentes/layouts/reproductor-cosmico.tsx` | Permite wrap en título y subtítulo del reproductor desktop y evita cortes de texto |
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Rehace el hero del dashboard como una sola narrativa compacta sin collage de cajas |
+| `frontend/src/componentes/dashboard-v2/tarjeta-fecha.tsx` | Reduce gigantismo tipográfico y convierte la fecha en una superficie más contenida |
+| `frontend/src/componentes/dashboard-v2/momentos-dia.tsx` | Elimina tarjetas internas y pasa a una sola superficie con divisores |
+| `frontend/src/componentes/dashboard-v2/areas-vida-v2.tsx` | Corrige el hook condicional y mantiene el bloque de tabs sin romper lint |
+| `frontend/src/app/(app)/podcast/page.tsx` | Compacta hero e historial, saca badges redundantes y elimina restos dorados |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Reduce escala del hero y afina la entrada editorial de Carta Astral |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Simplifica el panel derecho de Carta Astral y reduce repeticiones en la lectura inicial |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Elimina truncados en nombres de planetas dentro de la lista de aspectos |
+| `frontend/src/app/(app)/numerologia/page.tsx` | Elimina lenguaje de capítulos, compacta hero y consola, baja escala y corrige hooks/auto-recálculo sin romper tipado |
+| `frontend/src/componentes/numerologia/panel-contextual-numerologia.tsx` | Reduce capas del rail derecho y simplifica el estado default |
+| `frontend/src/app/(app)/diseno-humano/page.tsx` | Consolida el rail de atributos, oscurece el explorador técnico, compacta centros/canales/activaciones y mejora el modal de Body Graph |
+| `frontend/src/app/(app)/perfil/page.tsx` | Reduce pills del hero, elimina duplicación con panel lateral, compacta datos base y limpia copy visible |
+| `frontend/src/app/(app)/suscripcion/page.tsx` | Unifica hero y estado actual, simplifica cards de planes, compacta facturación y renombra copy interno a lenguaje de usuario |
+| `frontend/src/app/(app)/descubrir/page.tsx` | Migra la pantalla completa a surfaces ciruela con iconografía astral y estructura compacta |
+| `frontend/src/app/(app)/transitos/page.tsx` | Reescribe la pantalla legacy a formato premium oscuro, con lista compacta de tránsitos y metadatos lineales |
+| `frontend/src/componentes/proximamente/feature-proximamente.tsx` | Migra la base visual de pantallas próximas al sistema ciruela sin dorado ni hero sobredimensionado |
+| `frontend/src/app/(app)/match-pareja/page.tsx` | Compacta la pantalla teaser de compatibilidad y reduce el enfoque promocional |
+| `frontend/src/app/(app)/suscripcion/exito/page.tsx` | Migra la pantalla de éxito de suscripción al sistema ciruela y ajusta el efecto para evitar setState síncrono |
+| `frontend/src/app/(app)/suscripcion/fallo/page.tsx` | Migra la pantalla de fallo de suscripción al sistema ciruela |
+| `frontend/src/app/(app)/suscripcion/pendiente/page.tsx` | Migra la pantalla de pendiente de suscripción al sistema ciruela |
+| `frontend/src/app/(checkout)/checkout/exito/page.tsx` | Migra la pantalla de éxito del checkout al sistema ciruela y reemplaza `<img>` por `next/image` |
+| `frontend/src/app/(checkout)/checkout/fallo/page.tsx` | Migra la pantalla de fallo del checkout al sistema ciruela y reemplaza `<img>` por `next/image` |
+| `frontend/src/app/(checkout)/checkout/pendiente/page.tsx` | Migra la pantalla de pendiente del checkout al sistema ciruela y reemplaza `<img>` por `next/image` |
+| `frontend/src/tests/paginas/dashboard.test.tsx` | Actualiza assertions al nuevo hero compacto del dashboard |
+| `frontend/src/tests/paginas/numerologia.test.tsx` | Adapta la suite a la consola nueva, al rail contextual y a la duplicación mobile/desktop prevista |
+| `frontend/src/tests/paginas/perfil.test.tsx` | Actualiza copy y headings a la versión compacta de Perfil |
+| `frontend/src/tests/paginas/suscripcion.test.tsx` | Adapta la expectativa principal al hero unificado de Suscripción |
+| `context/resumen-de-cambios.md` | Documenta esta sesión integral de refactor UI |
+
+### Tests
+- `npm run lint` pasó sin errores en `frontend`; siguen quedando warnings preexistentes del repo en `dashboard`, `callback`, `onboarding`, `chat-widget`, `avatar`, `rueda-zodiacal` y algunos tests legacy.
+- `npx tsc --noEmit` pasó limpio en `frontend`.
+- `npx -y node@20 ./node_modules/vitest/vitest.mjs run src/tests/paginas/dashboard.test.tsx src/tests/paginas/podcast.test.tsx src/tests/paginas/numerologia.test.tsx src/tests/paginas/carta-natal.test.tsx src/tests/paginas/diseno-humano.test.tsx src/tests/paginas/perfil.test.tsx src/tests/paginas/suscripcion.test.tsx src/tests/componentes/navbar.test.tsx src/tests/componentes/body-graph.test.tsx` pasó `47/47`.
+
+### Como funciona
+1. El sistema compartido ahora prioriza superficies oscuras compactas, metadata lineal y títulos contenidos; el detalle profundo queda relegado al panel derecho o a modales contextuales.
+2. El chrome global ya no corta títulos críticos ni depende de chips para explicar el estado de la app, del usuario o del audio activo.
+3. Las secciones core (`Dashboard`, `Podcast`, `Carta Astral`, `Diseño Humano`, `Numerología`) hablan un idioma más homogéneo: hero breve, instrumentos compactos y menos texto intermedio.
+4. `Perfil` y `Suscripción` dejaron de duplicar información entre hero y paneles laterales; ahora muestran el estado útil y las acciones principales sin relleno visual.
+5. Las pantallas legacy (`Descubrir`, `Tránsitos`, `Próximamente`, `Match de Pareja` y checkout) fueron migradas al mismo sistema ciruela, de modo que el usuario ya no “salta” entre productos visualmente distintos dentro del mismo flujo.
+
+---
+
+## Sesion: Dashboard — respiración mobile, áreas compactas y semana ciruela
+**Fecha:** 2026-04-02 ~22:05 (ARG)
+
+### Que se hizo
+Se ajustó el dashboard para corregir cortes y falta de aire en mobile, especialmente en el header y en el primer bloque de inicio. Además se rediseñó `Áreas` como instrumento compacto y se llevó `Tu semana` a un fondo ciruela oscuro unificado.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/layouts/header-mobile.tsx` | Agrega más separación respecto del safe area superior y más respiración interna para evitar que el texto quede visualmente pegado o cortado |
+| `frontend/src/app/(app)/dashboard/page.tsx` | Corrige la tilde de `Buenos días` y aumenta el espacio entre el header mobile y la primera tarjeta del dashboard |
+| `frontend/src/componentes/dashboard-v2/areas-vida-v2.tsx` | Reemplaza el bloque anterior por una sola superficie oscura, con tabs compactos y lectura principal sin caja anidada |
+| `frontend/src/componentes/dashboard-v2/semana-v2.tsx` | Cambia el contenedor principal de `Tu semana` a un fondo ciruela oscuro unificado, sin gradiente violeta brillante |
+
+### Tests
+`npm run lint -- 'src/componentes/layouts/header-mobile.tsx' 'src/app/(app)/dashboard/page.tsx' 'src/componentes/dashboard-v2/areas-vida-v2.tsx' 'src/componentes/dashboard-v2/semana-v2.tsx'` pasó sin errores; se mantienen warnings preexistentes en `dashboard/page.tsx`. `npx -y node@20 ./node_modules/vitest/vitest.mjs run src/tests/paginas/dashboard.test.tsx` pasó `5/5`.
+
+### Como funciona
+1. El header mobile conserva el formato de tarjeta, pero ahora respira mejor arriba y no deja el texto demasiado cerca del borde superior.
+2. La pantalla de inicio gana separación entre el header y el primer módulo, así que la primera tarjeta ya no se percibe pegada ni recortada.
+3. `Áreas` pasó de ser un bloque con gradiente y panel interno a una sola consola oscura con selector compacto y lectura central directa.
+4. `Tu semana` mantiene la estructura actual, pero ahora se apoya en un fondo ciruela oscuro y consistente con el resto del dashboard.

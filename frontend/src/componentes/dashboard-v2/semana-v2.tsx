@@ -203,7 +203,7 @@ export function SemanaV2({
         {verSiguiente ? "Tu siguiente semana..." : "Tu semana..."}
       </h2>
 
-      <div className="rounded-[10px] overflow-hidden bg-gradient-to-b from-[#361b34] to-[#7b45dc] p-2.5 flex flex-col gap-2.5">
+      <div className="rounded-[18px] overflow-hidden border border-white/[0.08] bg-[#160d23] p-2.5 flex flex-col gap-2.5 shadow-[0_18px_48px_rgba(8,2,22,0.28)]">
         {/* Day cards row — con animación de transición */}
         {mostrarEsqueleto ? (
           <EsqueletoSemana />

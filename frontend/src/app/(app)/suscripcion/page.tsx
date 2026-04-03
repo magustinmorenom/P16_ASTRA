@@ -32,11 +32,11 @@ import {
 
 const FONDO_SUSCRIPCION = "relative min-h-full overflow-hidden bg-[#16011B]";
 const SUPERFICIE_HERO =
-  "relative overflow-hidden rounded-[32px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.2),transparent_32%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] shadow-[0_24px_70px_rgba(8,2,22,0.38)]";
+  "relative overflow-hidden rounded-[24px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.2),transparent_32%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] shadow-[0_24px_70px_rgba(8,2,22,0.38)]";
 const SUPERFICIE_PANEL =
-  "rounded-[28px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl";
+  "rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl";
 const SUPERFICIE_ITEM =
-  "rounded-[24px] border border-white/[0.08] bg-white/[0.04] transition-colors";
+  "rounded-[20px] border border-white/[0.08] bg-white/[0.04] transition-colors";
 
 function FondoSuscripcion() {
   return (
@@ -227,6 +227,10 @@ function obtenerTextoEstadoPlan(
   return `${etiquetaPlanActual} está activo en tu cuenta.`;
 }
 
+function resumirFeatures(features: string[]): string[] {
+  return features.slice(0, 3);
+}
+
 /* ------------------------------------------------------------------ */
 /* Componente principal                                               */
 /* ------------------------------------------------------------------ */
@@ -337,7 +341,7 @@ export default function PaginaSuscripcion() {
 
   return (
     <>
-      <HeaderMobile titulo="Suscripcion" mostrarAtras />
+      <HeaderMobile titulo="Suscripción" mostrarAtras />
       <div className={FONDO_SUSCRIPCION}>
         <FondoSuscripcion />
 
@@ -348,63 +352,25 @@ export default function PaginaSuscripcion() {
 
             <div className="relative z-10">
               <EtiquetaPanel>Cuenta y facturación</EtiquetaPanel>
-
-              <div className="mt-4 grid gap-5 xl:grid-cols-[1.15fr_0.85fr] xl:items-start">
-                <div>
+              <div className="mt-4 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <div className="min-w-0">
                   <div className="flex items-start gap-4">
-                    <div className="rounded-[26px] border border-white/10 bg-[linear-gradient(135deg,rgba(124,77,255,0.92),rgba(179,136,255,0.7))] p-4 text-white shadow-[0_16px_34px_rgba(34,10,76,0.34)]">
-                      <Icono nombre="corona" tamaño={26} />
+                    <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(135deg,rgba(124,77,255,0.92),rgba(179,136,255,0.7))] p-4 text-white shadow-[0_16px_34px_rgba(34,10,76,0.34)]">
+                      <Icono nombre="corona" tamaño={24} />
                     </div>
 
                     <div className="min-w-0">
-                      <h1 className="text-xl font-semibold tracking-[-0.02em] text-white sm:text-2xl">
-                        Planes y facturación
+                      <h1 className="text-lg font-semibold tracking-tight text-white sm:text-xl">
+                        Tu plan y tus cobros
                       </h1>
-                      <p className="mt-2 max-w-2xl text-sm leading-6 text-white/64">
-                        Gestioná tu plan, revisá el estado de la cuenta y descargá
-                        comprobantes sin salir de ASTRA.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-2.5">
-                    <div className="rounded-full border border-white/10 bg-white/[0.08] px-3.5 py-1.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-                        Plan
-                      </span>
-                      <span className="ml-2 text-[13px] font-medium text-white">
-                        {etiquetaPlanActual}
-                      </span>
-                    </div>
-                    <div className="rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-                        País
-                      </span>
-                      <span className="ml-2 text-[13px] font-medium text-white">
+                      <p className="mt-2 text-sm leading-6 text-white/62">
+                        {etiquetaPlanActual} ·{" "}
                         {cargandoPais
-                          ? "Detectando"
-                          : `${paisDetectado?.pais_nombre ?? "Argentina"} (${paisDetectado?.moneda ?? "ARS"})`}
-                      </span>
-                    </div>
-                    <div className="rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-                        Estado
-                      </span>
-                      <span className="ml-2 text-[13px] font-medium text-white">
-                        {miSuscripcion?.estado ?? "Free"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-[26px] border border-white/[0.08] bg-white/[0.05] p-5 backdrop-blur-xl">
-                  <EtiquetaPanel>Mi suscripción</EtiquetaPanel>
-                  <div className="mt-3 flex items-start justify-between gap-4">
-                  <div>
-                      <p className="text-2xl font-semibold tracking-[-0.02em] text-white">
-                        {etiquetaPlanActual}
+                          ? "Detectando país"
+                          : `${paisDetectado?.pais_nombre ?? "Argentina"} (${paisDetectado?.moneda ?? "ARS"})`}{" "}
+                        · {miSuscripcion?.estado ?? "Free"}
                       </p>
-                      <p className="mt-2 text-sm leading-6 text-white/60">
+                      <p className="mt-2 text-sm leading-6 text-white/58">
                         {obtenerTextoEstadoPlan(
                           etiquetaPlanActual,
                           tienePlanPago,
@@ -412,55 +378,48 @@ export default function PaginaSuscripcion() {
                         )}
                       </p>
                     </div>
-                    {miSuscripcion
-                      ? badgeEstado(miSuscripcion.estado)
-                      : <PillEstado tono="neutral">Free</PillEstado>}
                   </div>
+                </div>
 
-                  {miSuscripcion?.fecha_fin && (
-                    <p className="mt-4 text-sm leading-6 text-white/64">
-                      {miSuscripcion.cancelacion_programada ? "Activo hasta " : "Corte actual "}
-                      <span className="font-medium text-white">
-                        {formatearFechaCorta(miSuscripcion.fecha_fin)}
-                      </span>
-                      .
-                    </p>
-                  )}
+                <div className="shrink-0">
+                  {miSuscripcion
+                    ? badgeEstado(miSuscripcion.estado)
+                    : <PillEstado tono="neutral">Free</PillEstado>}
                 </div>
               </div>
 
+              {miSuscripcion?.fecha_fin && (
+                <p className="mt-4 text-sm leading-6 text-white/64">
+                  {miSuscripcion.cancelacion_programada ? "Activo hasta " : "Corte actual "}
+                  <span className="font-medium text-white">
+                    {formatearFechaCorta(miSuscripcion.fecha_fin)}
+                  </span>
+                  .
+                </p>
+              )}
+
               {(premiumConfirmado || (checkoutEnCurso && !premiumConfirmado)) && (
-                <div className="mt-5 grid gap-3 md:grid-cols-2">
+                <div className="mt-5 space-y-3">
                   {premiumConfirmado && (
-                    <div className="rounded-[24px] border border-emerald-400/18 bg-emerald-500/[0.08] p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-2xl border border-emerald-400/18 bg-emerald-500/[0.14] p-2.5 text-emerald-200">
-                          <Icono nombre="check" tamaño={16} />
+                    <div className="rounded-[20px] border border-emerald-400/18 bg-emerald-500/[0.08] px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-xl border border-emerald-400/18 bg-emerald-500/[0.14] p-2 text-emerald-200">
+                          <Icono nombre="check" tamaño={14} />
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-white">
-                            Tu plan pago está activo
-                          </p>
-                          <p className="mt-1 text-xs leading-5 text-white/56">
-                            La cuenta ya tiene acceso a la capa avanzada.
-                          </p>
-                        </div>
+                        <p className="text-sm text-white/78">
+                          Pago confirmado. La cuenta ya tiene acceso completo.
+                        </p>
                       </div>
                     </div>
                   )}
 
                   {checkoutEnCurso && !premiumConfirmado && (
-                    <div className="rounded-[24px] border border-[#B388FF]/18 bg-[#7C4DFF]/[0.08] p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5 h-9 w-9 animate-spin rounded-full border-2 border-[#D8C0FF] border-t-transparent" />
-                        <div>
-                          <p className="text-sm font-medium text-white">
-                            Verificando tu pago
-                          </p>
-                          <p className="mt-1 text-xs leading-5 text-white/56">
-                            MercadoPago puede tardar unos segundos en reflejar la activación.
-                          </p>
-                        </div>
+                    <div className="rounded-[20px] border border-[#B388FF]/18 bg-[#7C4DFF]/[0.08] px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#D8C0FF] border-t-transparent" />
+                        <p className="text-sm text-white/76">
+                          Verificando el pago. MercadoPago puede tardar unos segundos.
+                        </p>
                       </div>
                     </div>
                   )}
@@ -472,13 +431,9 @@ export default function PaginaSuscripcion() {
           <div className="mt-6">
             <section className={`${SUPERFICIE_PANEL} p-5 lg:p-6`}>
               <EtiquetaPanel>Planes disponibles</EtiquetaPanel>
-              <h2 className="mt-2 text-lg font-semibold tracking-tight text-white">
-                Elegí tu capa
+              <h2 className="mt-2 text-base font-semibold tracking-tight text-white">
+                Elegí tu plan
               </h2>
-              <p className="mt-2 text-sm leading-6 text-white/56">
-                Free para base, Premium para la experiencia completa actual y Max
-                como siguiente capa en definición.
-              </p>
 
               {cargandoPlanes ? (
                 <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -496,13 +451,14 @@ export default function PaginaSuscripcion() {
                     const features = plan.features.length > 0
                       ? plan.features
                       : obtenerFeaturesFallback(plan);
+                    const featuresCompactas = resumirFeatures(features);
                     const puedeSuscribirse = esPremium;
                     const iconoPlan = esMax ? "corona" : esPremium ? "cohete" : "destello";
 
                     return (
                       <div
                         key={plan.slug}
-                        className={`flex h-full flex-col rounded-[28px] border p-5 shadow-[0_18px_40px_rgba(8,3,20,0.2)] ${
+                        className={`flex h-full flex-col rounded-[22px] border p-5 shadow-[0_18px_40px_rgba(8,3,20,0.2)] ${
                           esPlanActual
                             ? "border-[#B388FF]/28 bg-[linear-gradient(180deg,rgba(124,77,255,0.18),rgba(255,255,255,0.05))]"
                             : "border-white/[0.08] bg-white/[0.04]"
@@ -527,10 +483,10 @@ export default function PaginaSuscripcion() {
                         </div>
 
                         <div className="mt-4">
-                          <h3 className="text-lg font-semibold text-white">
+                          <h3 className="text-base font-semibold text-white">
                             {obtenerEtiquetaPlan(plan.slug, plan.nombre)}
                           </h3>
-                          <p className="mt-3 text-xl font-semibold tracking-[-0.02em] text-white">
+                          <p className="mt-3 text-lg font-semibold tracking-tight text-white">
                             {precio.principal}
                           </p>
                           <p className="mt-1 text-xs leading-5 text-white/48">
@@ -543,17 +499,13 @@ export default function PaginaSuscripcion() {
                           )}
                         </div>
 
-                        <div className="mt-4 flex flex-wrap gap-2 text-[12px] text-white/58">
-                          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">
-                            Perfiles: {formatearLimite(plan.limite_perfiles)}
-                          </span>
-                          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">
-                            Cálculos/día: {formatearLimite(plan.limite_calculos_dia)}
-                          </span>
-                        </div>
+                        <p className="mt-4 text-xs leading-5 text-white/48">
+                          Perfiles {formatearLimite(plan.limite_perfiles)} · Cálculos/día{" "}
+                          {formatearLimite(plan.limite_calculos_dia)}
+                        </p>
 
                         <ul className="mt-5 flex flex-1 flex-col gap-2">
-                          {features.map((feature) => (
+                          {featuresCompactas.map((feature) => (
                             <li
                               key={`${plan.slug}-${feature}`}
                               className="flex items-start gap-2 text-sm leading-6 text-white/68"
@@ -566,6 +518,11 @@ export default function PaginaSuscripcion() {
                               <span>{feature}</span>
                             </li>
                           ))}
+                          {features.length > featuresCompactas.length ? (
+                            <li className="text-sm leading-6 text-white/44">
+                              y {features.length - featuresCompactas.length} puntos más
+                            </li>
+                          ) : null}
                         </ul>
 
                         {puedeSuscribirse && !esPlanActual ? (
@@ -590,7 +547,7 @@ export default function PaginaSuscripcion() {
           {miSuscripcion?.cancelacion_programada && (
             <section className={`${SUPERFICIE_PANEL} mt-6 p-5 lg:p-6`}>
               <EtiquetaPanel>Gestión del plan</EtiquetaPanel>
-              <h2 className="mt-2 text-lg font-semibold tracking-tight text-white">
+              <h2 className="mt-2 text-base font-semibold tracking-tight text-white">
                 Cancelación programada
               </h2>
               <div className="mt-5 rounded-[24px] border border-rose-400/18 bg-rose-500/[0.06] p-4">
@@ -610,7 +567,7 @@ export default function PaginaSuscripcion() {
             !miSuscripcion.cancelacion_programada && (
               <section className={`${SUPERFICIE_PANEL} mt-6 p-5 lg:p-6`}>
                 <EtiquetaPanel>Gestión del plan</EtiquetaPanel>
-                <h2 className="mt-2 text-lg font-semibold tracking-tight text-white">
+                <h2 className="mt-2 text-base font-semibold tracking-tight text-white">
                   Cancelar suscripción
                 </h2>
                 <div className={`${SUPERFICIE_ITEM} mt-5 p-4`}>
@@ -664,12 +621,11 @@ export default function PaginaSuscripcion() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <EtiquetaPanel>Facturación</EtiquetaPanel>
-                <h2 className="mt-2 text-lg font-semibold tracking-tight text-white">
+                <h2 className="mt-2 text-base font-semibold tracking-tight text-white">
                   Pagos y comprobantes
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-white/56">
-                  Historial corto, estado de cada cobro y acceso directo al PDF
-                  cuando existe factura.
+                  Estado de cada cobro y acceso directo al PDF cuando existe factura.
                 </p>
               </div>
 
@@ -698,7 +654,7 @@ export default function PaginaSuscripcion() {
                 className="rounded-full border border-white/10 bg-transparent px-4 text-white/72 hover:bg-white/[0.06] hover:text-white"
                 icono={<Icono nombre="descarga" tamaño={16} />}
               >
-                Sincronizar con MP
+                Sincronizar pagos
               </Boton>
             </div>
 

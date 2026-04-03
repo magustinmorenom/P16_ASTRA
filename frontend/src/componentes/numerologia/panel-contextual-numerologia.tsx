@@ -2,9 +2,8 @@
 
 import { useMemo, useState } from "react";
 
-import { Badge } from "@/componentes/ui/badge";
 import { Icono } from "@/componentes/ui/icono";
-import { IconoAstral, type NombreIconoAstral } from "@/componentes/ui/icono-astral";
+import { type NombreIconoAstral } from "@/componentes/ui/icono-astral";
 import { cn } from "@/lib/utilidades/cn";
 import type { Numerologia } from "@/lib/tipos";
 
@@ -120,22 +119,18 @@ function VistaDefault({
 
   return (
     <div className="p-5">
-      <div className="rounded-[28px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-5 shadow-[0_18px_40px_rgba(8,2,22,0.24)]">
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#7C4DFF]/16 text-[#D9C2FF]">
-          <IconoAstral nombre="numerologia" tamaño={28} className="text-current" />
-        </div>
+      <div className="rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-5 shadow-[0_18px_40px_rgba(8,2,22,0.24)]">
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/48">
           Lectura contextual
         </p>
-        <h3 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-white">
-          Tu carta se lee por capas
+        <h3 className="mt-3 text-[18px] font-semibold tracking-[-0.03em] text-white">
+          Seleccioná un número
         </h3>
         <p className={cn(
-          "mt-3 text-[14px] leading-7",
+          "mt-3 text-[13px] leading-6",
           modo === "desktop" ? "text-white/62" : "text-white/72",
         )}>
-          Tocá cualquier número, mes o etapa para ver una definición breve y después
-          qué significa específicamente en tu carta.
+          Abrí sendero, esencia, ritmo o etapa y el panel te devuelve definición breve y lectura puntual.
         </p>
       </div>
 
@@ -155,20 +150,18 @@ function VistaDefault({
           valor={diaPersonal?.numero ?? "—"}
           descripcion={diaPersonal?.descripcion ?? "Sin lectura disponible todavía."}
         />
-      </div>
-
-      <div className="mt-5 rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/48">
-          Ahora mismo
-        </p>
-        <p className="mt-2 text-[15px] font-medium text-white">
-          {etapaActiva?.nombre ?? "Etapa activa"}
-        </p>
-        <p className="mt-1 text-[13px] leading-6 text-white/60">
+        <div className="rounded-[20px] border border-white/[0.08] bg-white/[0.04] px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/44">
+            Etapa activa
+          </p>
+          <p className="mt-1 text-[13px] leading-6 text-white/60">
+            <span className="font-medium text-white">{etapaActiva?.nombre ?? "Tramo actual"}</span>
+            {" · "}
           {etapaActiva
             ? `Estás transitando el número ${etapaActiva.numero} entre los ${etapaActiva.edad_inicio} y ${etapaActiva.edad_fin ?? "∞"} años.`
             : "Seleccioná una etapa para ver cómo ordena este tramo de tu vida."}
-        </p>
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -188,7 +181,7 @@ function VistaDetalle({
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/48">
             {detalle.categoria}
           </p>
-          <h3 className="mt-2 text-[22px] font-semibold tracking-[-0.03em] text-white">
+          <h3 className="mt-2 text-[18px] font-semibold tracking-[-0.03em] text-white">
             {detalle.titulo}
           </h3>
           {detalle.subtitulo && (
@@ -207,11 +200,11 @@ function VistaDetalle({
         )}
       </div>
 
-      <div className="rounded-[28px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-5 shadow-[0_18px_40px_rgba(8,2,22,0.22)]">
+      <div className="rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-5 shadow-[0_18px_40px_rgba(8,2,22,0.22)]">
         <div className="flex items-center gap-4">
           <div>
             <p className={cn(
-              "text-5xl font-semibold leading-none",
+              "text-[36px] font-semibold leading-none",
               detalle.esMaestro ? "text-[#F0D68A]" : "text-[#D9C2FF]",
             )}>
               {detalle.numero}
@@ -221,11 +214,11 @@ function VistaDetalle({
             </p>
           </div>
         </div>
-        {detalle.esMaestro && (
-          <Badge variante="advertencia" className="mt-4">
-            Número Maestro
-          </Badge>
-        )}
+        {detalle.esMaestro ? (
+          <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#F0D68A]">
+            Número maestro
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-5 rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-4">
@@ -276,7 +269,7 @@ function ResumenLinea({
 }) {
   return (
     <div className="rounded-[20px] border border-white/[0.08] bg-white/[0.04] px-4 py-3">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/44">
             {etiqueta}

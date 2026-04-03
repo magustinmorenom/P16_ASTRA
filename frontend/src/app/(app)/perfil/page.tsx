@@ -34,9 +34,9 @@ import HeaderMobile from "@/componentes/layouts/header-mobile";
 const FONDO_PERFIL =
   "relative min-h-full overflow-hidden bg-[#16011B]";
 const SUPERFICIE_HERO =
-  "relative overflow-hidden rounded-[32px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.2),transparent_32%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] shadow-[0_24px_70px_rgba(8,2,22,0.38)]";
+  "relative overflow-hidden rounded-[24px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.2),transparent_32%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] shadow-[0_24px_70px_rgba(8,2,22,0.38)]";
 const SUPERFICIE_PANEL =
-  "rounded-[28px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl";
+  "rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl";
 
 function FondoPerfil() {
   return (
@@ -421,11 +421,11 @@ export default function PaginaPerfil() {
       return;
     }
     if (contrasenaNueva.length < 8) {
-      setMensaje({ tipo: "error", texto: "La nueva contrasena debe tener al menos 8 caracteres." });
+      setMensaje({ tipo: "error", texto: "La nueva contraseña debe tener al menos 8 caracteres." });
       return;
     }
     if (contrasenaNueva !== contrasenaConfirmar) {
-      setMensaje({ tipo: "error", texto: "Las contrasenas nuevas no coinciden." });
+      setMensaje({ tipo: "error", texto: "Las contraseñas nuevas no coinciden." });
       return;
     }
 
@@ -442,7 +442,7 @@ export default function PaginaPerfil() {
         onError: () => {
           setMensaje({
             tipo: "error",
-            texto: "No se pudo cambiar la contrasena. Verifica que la contrasena actual sea correcta.",
+            texto: "No se pudo cambiar la contraseña. Verificá que la contraseña actual sea correcta.",
           });
         },
       }
@@ -465,7 +465,7 @@ export default function PaginaPerfil() {
   function obtenerEtiquetaProveedor(proveedor: string | undefined): string {
     switch (proveedor) {
       case "local":
-        return "Local (email y contrasena)";
+        return "Local (email y contraseña)";
       case "google":
         return "Google";
       default:
@@ -519,71 +519,35 @@ export default function PaginaPerfil() {
                     <h1 className="text-lg font-semibold tracking-[-0.02em] text-white sm:text-xl">
                       {usuario?.nombre ?? "Tu cuenta"}
                     </h1>
-                    <p className="mt-2 text-sm text-white/58">
+                    <p className="mt-2 text-sm text-white/58 break-all">
                       {usuario?.email ?? "—"}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-5 flex flex-wrap gap-2.5">
-                  <div className="rounded-full border border-white/10 bg-white/[0.08] px-3.5 py-1.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-                      Plan
-                    </span>
-                    <span className="ml-2 text-[13px] font-medium text-white">
-                      {planLabel}
-                    </span>
-                  </div>
-                  <div className="rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-                      Acceso
-                    </span>
-                    <span className="ml-2 text-[13px] font-medium text-white">
-                      {obtenerEtiquetaProveedor(usuario?.proveedor_auth)}
-                    </span>
-                  </div>
-                  <div className="rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-                      Alta
-                    </span>
-                    <span className="ml-2 text-[13px] font-medium text-white">
-                      {formatearFechaRegistro(usuario?.creado_en)}
-                    </span>
-                  </div>
-                  {perfil && (
-                    <div className="rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
-                        Base
-                      </span>
-                      <span className="ml-2 text-[13px] font-medium text-white">
-                        Cargada
-                      </span>
-                    </div>
-                  )}
-                </div>
+                <p className="mt-5 text-sm leading-6 text-white/62">
+                  {planLabel} · {obtenerEtiquetaProveedor(usuario?.proveedor_auth)} · Alta{" "}
+                  {formatearFechaRegistro(usuario?.creado_en)}
+                  {perfil ? " · Base cargada" : ""}
+                </p>
               </div>
 
-              <div className="rounded-[26px] border border-white/[0.08] bg-white/[0.05] p-5 backdrop-blur-xl">
-                <EtiquetaPanel>Plan activo</EtiquetaPanel>
+              <div className="rounded-[22px] border border-white/[0.08] bg-white/[0.05] p-5 backdrop-blur-xl">
+                <EtiquetaPanel>Estado</EtiquetaPanel>
 
                 <div className="mt-3 flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-2xl font-semibold tracking-[-0.02em] text-white">
-                      {planLabel}
+                    <p className="text-lg font-semibold tracking-tight text-white">
+                      Cuenta lista para usar
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-white/60">
+                      {usuario?.activo ? "Sesión activa" : "Cuenta inactiva"} ·{" "}
+                      {usuario?.verificado ? "Correo verificado" : "Correo pendiente"}
                     </p>
                   </div>
 
                   <BadgeEstado tono={badgeSuscripcion.tono}>
                     {badgeSuscripcion.texto}
-                  </BadgeEstado>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <BadgeEstado tono={usuario?.activo ? "exito" : "error"}>
-                    {usuario?.activo ? "Activo" : "Inactivo"}
-                  </BadgeEstado>
-                  <BadgeEstado tono={usuario?.verificado ? "exito" : "violeta"}>
-                    {usuario?.verificado ? "Verificado" : "Sin verificar"}
                   </BadgeEstado>
                 </div>
 
@@ -612,15 +576,12 @@ export default function PaginaPerfil() {
 
           <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.85fr]">
             <section className={`${SUPERFICIE_PANEL} p-5 lg:p-6`}>
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <EtiquetaPanel>Datos base</EtiquetaPanel>
-                  <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">
-                    Datos de Nacimiento
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <EtiquetaPanel>Datos base</EtiquetaPanel>
+                  <h2 className="mt-2 text-lg font-semibold tracking-tight text-white">
+                    Datos de nacimiento
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-white/58">
-                    Lo mínimo que conviene revisar y mantener correcto.
-                  </p>
                 </div>
 
                 {!editando && perfil && (
@@ -641,7 +602,7 @@ export default function PaginaPerfil() {
                 ) : !perfil ? (
                   <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-5">
                     <p className="text-sm leading-7 text-white/62">
-                      No tienes datos de nacimiento registrados. Completá el
+                      No tenés datos de nacimiento registrados. Completá el
                       onboarding para generar tus cartas base.
                     </p>
                   </div>
@@ -745,11 +706,6 @@ export default function PaginaPerfil() {
                       <DatoCompacto etiqueta="Zona horaria" valor={perfil.zona_horaria ?? "—"} icono="planeta" />
                     </div>
 
-                    <p className="mt-5 text-sm leading-6 text-white/56">
-                      Si cambiás estos datos, recalculamos automáticamente tus
-                      cartas para mantener todo alineado.
-                    </p>
-
                     {mensajeNacimiento && (
                       <div
                         className={`mt-4 rounded-[22px] border px-4 py-3 text-sm ${
@@ -770,7 +726,7 @@ export default function PaginaPerfil() {
             <div className="space-y-6">
               <section className={`${SUPERFICIE_PANEL} p-5`}>
                 <EtiquetaPanel>Configuración</EtiquetaPanel>
-                <h2 className="mt-2 text-lg font-semibold tracking-tight text-white">
+                <h2 className="mt-2 text-base font-semibold tracking-tight text-white">
                   Accesos y seguridad
                 </h2>
 
@@ -788,7 +744,7 @@ export default function PaginaPerfil() {
                           </div>
                           <div>
                             <p className="text-sm font-medium text-white">
-                              Cambiar contrasena
+                              Cambiar contraseña
                             </p>
                             <p className="mt-1 text-xs leading-5 text-white/48">
                               Actualizá tu acceso local cuando lo necesites.
@@ -805,28 +761,28 @@ export default function PaginaPerfil() {
                       {seccionAbierta === "contrasena" && (
                         <div className="space-y-4 px-1 pb-4">
                           <CampoPerfil
-                            etiqueta="Contrasena actual"
+                            etiqueta="Contraseña actual"
                             type="password"
                             name="contrasena_actual"
-                            placeholder="Ingresa tu contrasena actual"
+                            placeholder="Ingresá tu contraseña actual"
                             value={contrasenaActual}
                             onChange={(e) => setContrasenaActual(e.target.value)}
                             icono="candado"
                           />
                           <CampoPerfil
-                            etiqueta="Nueva contrasena"
+                            etiqueta="Nueva contraseña"
                             type="password"
                             name="contrasena_nueva"
-                            placeholder="Minimo 8 caracteres"
+                            placeholder="Mínimo 8 caracteres"
                             value={contrasenaNueva}
                             onChange={(e) => setContrasenaNueva(e.target.value)}
                             icono="candado"
                           />
                           <CampoPerfil
-                            etiqueta="Confirmar nueva contrasena"
+                            etiqueta="Confirmar nueva contraseña"
                             type="password"
                             name="contrasena_confirmar"
-                            placeholder="Repite la nueva contrasena"
+                            placeholder="Repetí la nueva contraseña"
                             value={contrasenaConfirmar}
                             onChange={(e) => setContrasenaConfirmar(e.target.value)}
                             icono="candado"
@@ -851,7 +807,7 @@ export default function PaginaPerfil() {
                             icono={<Icono nombre="check" tamaño={16} />}
                             className="rounded-full bg-[#7C4DFF] px-5 text-white hover:bg-[#8F66FF]"
                           >
-                            Cambiar contrasena
+                            Cambiar contraseña
                           </Boton>
                         </div>
                       )}
@@ -867,7 +823,7 @@ export default function PaginaPerfil() {
                             Cuenta vinculada con Google
                           </p>
                           <p className="mt-1 text-xs leading-5 text-white/48">
-                            La contrasena se gestiona desde tu cuenta de Google.
+                            La contraseña se gestiona desde tu cuenta de Google.
                           </p>
                         </div>
                       </div>
@@ -1006,7 +962,7 @@ export default function PaginaPerfil() {
 
               <section className={`${SUPERFICIE_PANEL} p-5`}>
                 <EtiquetaPanel>Cuenta</EtiquetaPanel>
-                <h2 className="mt-2 text-lg font-semibold tracking-tight text-white">
+                <h2 className="mt-2 text-base font-semibold tracking-tight text-white">
                   Sesión y privacidad
                 </h2>
 
@@ -1025,7 +981,7 @@ export default function PaginaPerfil() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-white">
-                          Cerrar sesion
+                          Cerrar sesión
                         </p>
                         <p className="mt-1 text-xs text-white/46">
                           Salís de este dispositivo.
