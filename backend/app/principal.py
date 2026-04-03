@@ -158,6 +158,7 @@ def _obtener_redis_placeholder():
 def _registrar_rutas(app: FastAPI) -> None:
     """Registra todos los routers de la API."""
     from app.rutas.v1 import (
+        admin,
         auth,
         calendario_cosmico,
         chat,
@@ -175,6 +176,7 @@ def _registrar_rutas(app: FastAPI) -> None:
     )
 
     prefijo = "/api/v1"
+    app.include_router(admin.router, prefix=prefijo)
     app.include_router(auth.router, prefix=prefijo)
     app.include_router(natal.router, prefix=prefijo, tags=["Carta Natal"])
     app.include_router(diseno_humano.router, prefix=prefijo, tags=["Diseño Humano"])
