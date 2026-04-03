@@ -88,7 +88,7 @@ describe("Navbar", () => {
         {
           id: "pod-dia",
           tipo: "dia",
-          titulo: "Momento Clave de tu Día",
+          titulo: "Cómo influyen hoy los tránsitos en vos",
           duracion_segundos: 180,
           url_audio: "/audio-dia.mp3",
           segmentos: [],
@@ -108,11 +108,11 @@ describe("Navbar", () => {
 
     fireEvent.click(screen.getByLabelText("Abrir menú de podcasts"));
 
-    expect(screen.getByText("Día de hoy")).toBeInTheDocument();
-    expect(screen.getByText("Tu semana cósmica")).toBeInTheDocument();
-    expect(screen.getByText("Tu mes cósmico")).toBeInTheDocument();
+    expect(screen.getByText("Podcast del día")).toBeInTheDocument();
+    expect(screen.getByText("Podcast de la semana")).toBeInTheDocument();
+    expect(screen.getByText("Podcast del mes")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Tu semana cósmica"));
+    fireEvent.click(screen.getByText("Podcast de la semana"));
 
     expect(mockMutatePodcast).toHaveBeenCalledWith("semana");
   });
@@ -123,7 +123,7 @@ describe("Navbar", () => {
         {
           id: "pod-semana",
           tipo: "semana",
-          titulo: "Tu Semana Cósmica",
+          titulo: "Revisemos cómo viene tu semana",
           duracion_segundos: 0,
           url_audio: "",
           segmentos: [],

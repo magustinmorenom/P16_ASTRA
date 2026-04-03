@@ -1,6 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import {
+  IconoAstral,
+  type NombreIconoAstral,
+} from "@/componentes/ui/icono-astral";
 
 interface PropsLayoutOnboarding {
   children: React.ReactNode;
@@ -10,78 +14,181 @@ interface PropsLayoutOnboarding {
   modoOscuro?: boolean;
 }
 
+const modulos: Array<{
+  icono: NombreIconoAstral;
+  titulo: string;
+  descripcion: string;
+}> = [
+  {
+    icono: "astrologia",
+    titulo: "Carta natal",
+    descripcion: "Planetas, casas y aspectos iniciales.",
+  },
+  {
+    icono: "personal",
+    titulo: "Diseño Humano",
+    descripcion: "Tipo, autoridad y perfil base.",
+  },
+  {
+    icono: "numerologia",
+    titulo: "Numerología",
+    descripcion: "Núcleo, ritmo y vibración personal.",
+  },
+];
+
 export default function LayoutOnboarding({
   children,
   textoPanel = "Configuremos tu perfil cósmico",
   modoOscuro = false,
 }: PropsLayoutOnboarding) {
-  // Modo oscuro: layout full-screen con gradiente (paso 3 - calculando)
   if (modoOscuro) {
     return (
-      <div className="min-h-screen bg-gradient-to-t from-[#0F0A1A] via-[#2D1B69] via-60% to-[#7C4DFF] flex items-center justify-center p-8">
-        <div className="w-full max-w-xl">{children}</div>
+      <div
+        className="relative min-h-screen overflow-hidden"
+        style={{ background: "var(--shell-fondo)" }}
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle_at_top_left, var(--shell-glow-1), transparent 28%), radial-gradient(circle_at_bottom_right, var(--shell-glow-2), transparent 24%)",
+          }}
+        />
+        <div
+          className="absolute left-[-60px] top-10 h-72 w-72 rounded-full blur-3xl"
+          style={{ background: "var(--shell-glow-1)" }}
+        />
+        <div
+          className="absolute bottom-[-80px] right-[-40px] h-80 w-80 rounded-full blur-3xl"
+          style={{ background: "var(--shell-glow-2)" }}
+        />
+
+        <div className="relative mx-auto flex min-h-screen max-w-4xl items-center justify-center px-4 py-8 sm:px-6">
+          <div className="tema-superficie-hero w-full rounded-[36px] p-6 sm:p-8 lg:p-10">
+            {children}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-t from-[#0F0A1A] via-[#2D1B69] via-60% to-[#7C4DFF]">
-      {/* Panel izquierdo - branding */}
-      <div className="hidden lg:flex lg:flex-1 flex-col items-center justify-center p-12 text-white relative overflow-hidden">
-        {/* Estrellas decorativas */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[8%] left-[20%] w-1 h-1 rounded-full bg-white/60 animate-pulse" />
-          <div className="absolute top-[12%] left-[28%] w-0.5 h-0.5 rounded-full bg-white/40 animate-pulse delay-200" />
-          <div className="absolute top-[18%] right-[30%] w-1.5 h-1.5 rounded-full bg-white/50 animate-pulse delay-500" />
-          <div className="absolute top-[35%] left-[12%] w-1 h-1 rounded-full bg-white/70 animate-pulse delay-300" />
-          <div className="absolute top-[45%] right-[18%] w-0.5 h-0.5 rounded-full bg-white/50 animate-pulse delay-700" />
-          <div className="absolute top-[55%] left-[35%] w-1 h-1 rounded-full bg-white/30 animate-pulse delay-1000" />
-          <div className="absolute top-[70%] right-[25%] w-1 h-1 rounded-full bg-white/60 animate-pulse delay-400" />
-          <div className="absolute bottom-[20%] left-[18%] w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse delay-600" />
-          <div className="absolute bottom-[10%] right-[35%] w-0.5 h-0.5 rounded-full bg-white/50 animate-pulse delay-800" />
+    <div
+      className="relative min-h-screen overflow-hidden"
+      style={{ background: "var(--shell-fondo)" }}
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle_at_top_left, var(--shell-glow-1), transparent 26%), radial-gradient(circle_at_top_right, var(--shell-glow-2), transparent 24%), radial-gradient(circle_at_bottom_left, var(--shell-glow-1), transparent 32%)",
+        }}
+      />
+      <div
+        className="absolute left-[-72px] top-12 h-72 w-72 rounded-full blur-3xl"
+        style={{ background: "var(--shell-glow-2)" }}
+      />
+      <div
+        className="absolute bottom-0 right-[-40px] h-72 w-72 rounded-full blur-3xl"
+        style={{ background: "var(--shell-glow-1)" }}
+      />
 
-          {/* Lineas de constelación */}
-          <svg
-            className="absolute inset-0 w-full h-full opacity-10"
-            viewBox="0 0 400 600"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <line x1="80" y1="60" x2="160" y2="120" stroke="white" strokeWidth="0.5" />
-            <line x1="160" y1="120" x2="140" y2="200" stroke="white" strokeWidth="0.5" />
-            <line x1="140" y1="200" x2="220" y2="250" stroke="white" strokeWidth="0.5" />
-            <line x1="220" y1="250" x2="280" y2="180" stroke="white" strokeWidth="0.5" />
-            <line x1="280" y1="180" x2="320" y2="300" stroke="white" strokeWidth="0.5" />
-            <line x1="120" y1="350" x2="200" y2="400" stroke="white" strokeWidth="0.5" />
-            <line x1="200" y1="400" x2="260" y2="380" stroke="white" strokeWidth="0.5" />
-            <line x1="260" y1="380" x2="300" y2="450" stroke="white" strokeWidth="0.5" />
-          </svg>
-        </div>
+      <div className="relative mx-auto grid min-h-screen max-w-[1480px] gap-6 px-4 py-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(470px,620px)] lg:px-6 lg:py-6">
+        <section className="tema-superficie-hero relative hidden overflow-hidden rounded-[36px] p-10 lg:flex lg:flex-col lg:justify-between">
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute left-[-10%] top-[-16%] h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+            <div className="absolute bottom-[-16%] right-[-10%] h-64 w-64 rounded-full bg-[#B388FF]/20 blur-3xl" />
+            <div className="absolute right-14 top-[72px] h-2 w-2 rounded-full bg-white/60" />
+            <div className="absolute left-20 top-28 h-1 w-1 rounded-full bg-white/40" />
+            <div className="absolute bottom-24 left-16 h-1.5 w-1.5 rounded-full bg-white/40" />
+            <div className="absolute bottom-16 right-20 h-1 w-1 rounded-full bg-white/50" />
+          </div>
 
-        <div className="relative z-10 text-center max-w-sm">
-          {/* Logo ASTRA con sparkle dorado */}
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L14.09 8.26L20 9.27L15.45 13.14L16.82 20L12 16.77L7.18 20L8.55 13.14L4 9.27L9.91 8.26L12 2Z" fill="#F0D68A" />
-            </svg>
+          <div className="relative z-10 flex items-center justify-between gap-4">
             <Image
               src="/img/logo-astra-blanco.png"
               alt="ASTRA"
-              width={160}
-              height={44}
+              width={176}
+              height={48}
               className="h-11 w-auto"
               priority
             />
+            <span className="rounded-full border border-white/12 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-hero-texto-secundario)]">
+              Perfil base
+            </span>
           </div>
-          <p className="text-[#B388FF] text-base leading-relaxed">
-            {textoPanel}
-          </p>
-        </div>
-      </div>
 
-      {/* Panel derecho - formulario */}
-      <div className="w-full lg:w-[620px] flex-shrink-0 flex items-center justify-center bg-white lg:rounded-l-[32px] relative z-10 p-8 lg:p-12">
-        <div className="w-full max-w-md">{children}</div>
+          <div className="relative z-10 max-w-xl">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--shell-hero-texto-tenue)]">
+              Configuración inicial
+            </p>
+            <h1 className="mt-5 text-4xl font-semibold tracking-[-0.05em] text-[color:var(--shell-hero-texto)] xl:text-[52px]">
+              Tu lectura empieza con datos precisos, no con formularios genéricos.
+            </h1>
+            <p className="mt-5 max-w-lg text-base leading-7 text-[color:var(--shell-hero-texto-secundario)]">
+              {textoPanel}
+            </p>
+          </div>
+
+          <div className="relative z-10 grid gap-3 xl:grid-cols-3">
+            {modulos.map((item) => (
+              <article
+                key={item.titulo}
+                className="rounded-[26px] border border-white/10 bg-white/[0.08] p-5 backdrop-blur-xl"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,rgba(124,77,255,0.96),rgba(179,136,255,0.78))] text-white shadow-[0_16px_30px_rgba(18,1,23,0.28)]">
+                  <IconoAstral nombre={item.icono} tamaño={22} className="text-white" />
+                </div>
+                <h2 className="mt-5 text-base font-semibold text-[color:var(--shell-hero-texto)]">
+                  {item.titulo}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[color:var(--shell-hero-texto-secundario)]">
+                  {item.descripcion}
+                </p>
+              </article>
+            ))}
+          </div>
+
+          <div className="relative z-10 rounded-[28px] border border-white/10 bg-black/10 p-5 backdrop-blur-xl">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-hero-texto-tenue)]">
+              Precisión primero
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[color:var(--shell-hero-texto-secundario)]">
+              ASTRA usa la zona horaria histórica del nacimiento y las efemérides
+              exactas para evitar interpretaciones infladas o imprecisas.
+            </p>
+          </div>
+        </section>
+
+        <main className="flex items-center justify-center py-2 lg:py-0">
+          <div className="w-full max-w-[620px]">
+            <section className="tema-superficie-hero relative mb-5 overflow-hidden rounded-[30px] p-5 text-[color:var(--shell-hero-texto)] lg:hidden">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_34%)]" />
+              <div className="relative z-10">
+                <Image
+                  src="/img/logo-astra-blanco.png"
+                  alt="ASTRA"
+                  width={152}
+                  height={40}
+                  className="h-10 w-auto"
+                  priority
+                />
+                <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-hero-texto-tenue)]">
+                  Perfil base
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[color:var(--shell-hero-texto-secundario)]">
+                  {textoPanel}
+                </p>
+              </div>
+            </section>
+
+            <section className="tema-superficie-panel-suave relative overflow-hidden rounded-[32px] p-6 sm:p-8 lg:p-10">
+              <div className="absolute right-[-44px] top-[-36px] h-32 w-32 rounded-full blur-3xl" style={{ background: "var(--shell-glow-2)" }} />
+              <div className="absolute bottom-[-44px] left-[-28px] h-32 w-32 rounded-full blur-3xl" style={{ background: "var(--shell-glow-1)" }} />
+              <div className="relative z-10">{children}</div>
+            </section>
+          </div>
+        </main>
       </div>
     </div>
   );

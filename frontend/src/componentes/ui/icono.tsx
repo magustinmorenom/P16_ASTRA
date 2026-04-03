@@ -6,6 +6,7 @@ import {
   User,
   House,
   Planet,
+  GlobeHemisphereWest,
   MagnifyingGlass,
   Bell,
   Gear,
@@ -59,6 +60,9 @@ import {
   CurrencyDollar,
   FlowerLotus,
   WifiHigh,
+  ShieldCheck,
+  Trash,
+  CircleHalf,
   type IconProps as PhosphorIconProps,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utilidades/cn";
@@ -70,6 +74,7 @@ const mapaIconos: Record<string, ComponentType<PhosphorIconProps>> = {
   usuario: User,
   casa: House,
   planeta: Planet,
+  globo: GlobeHemisphereWest,
   buscar: MagnifyingGlass,
   campana: Bell,
   configuracion: Gear,
@@ -124,6 +129,9 @@ const mapaIconos: Record<string, ComponentType<PhosphorIconProps>> = {
   estrellaFugaz: ShootingStar,
   retornoSolar: SunHorizon,
   microfono: Microphone,
+  escudo: ShieldCheck,
+  papelera: Trash,
+  circuloMitad: CircleHalf,
 };
 
 export type NombreIcono = keyof typeof mapaIconos;

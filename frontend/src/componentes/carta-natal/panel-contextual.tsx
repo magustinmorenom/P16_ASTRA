@@ -53,13 +53,35 @@ interface PanelContextualProps {
 }
 
 const TARJETA_PANEL =
-  "rounded-[18px] border border-white/10 bg-white/[0.08] p-4 backdrop-blur-xl";
+  "rounded-[18px] border p-4 backdrop-blur-xl";
 
 const TARJETA_PANEL_SUAVE =
-  "rounded-[18px] border border-white/10 bg-white/[0.05] p-3.5";
+  "rounded-[18px] border p-3.5";
 
 const GRILLA_PANEL_METRICAS =
   "grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(112px,1fr))]";
+
+const ESTILO_PANEL = {
+  borderColor: "var(--shell-borde)",
+  background: "var(--shell-superficie)",
+  boxShadow: "var(--shell-sombra-suave)",
+} as const;
+
+const ESTILO_PANEL_SUAVE = {
+  borderColor: "var(--shell-borde)",
+  background: "var(--shell-superficie-suave)",
+} as const;
+
+const ESTILO_PANEL_DESTACADO = {
+  borderColor: "var(--shell-borde-fuerte)",
+  background: "var(--shell-panel)",
+  boxShadow: "var(--shell-sombra-suave)",
+} as const;
+
+const ESTILO_CHIP = {
+  borderColor: "var(--shell-chip-borde)",
+  background: "var(--shell-chip)",
+} as const;
 
 const ORDEN_ELEMENTOS: ElementoEnergetico[] = ["Fuego", "Tierra", "Aire", "Agua"];
 const ORDEN_MODALIDADES: ModalidadEnergetica[] = ["Cardinal", "Fijo", "Mutable"];
@@ -193,11 +215,11 @@ function SeccionPanel({
   contenido: string;
 }) {
   return (
-    <div className={TARJETA_PANEL}>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/72">
+    <div className={TARJETA_PANEL} style={ESTILO_PANEL}>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-acento)]">
         {titulo}
       </p>
-      <p className="mt-2 text-[13px] leading-relaxed text-violet-50/88">
+      <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--shell-texto-secundario)]">
         {contenido}
       </p>
     </div>
@@ -214,17 +236,17 @@ function ResumenLinea({
   descripcion: string;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/[0.08] bg-white/[0.04] px-4 py-3">
+    <div className="rounded-[22px] border px-4 py-3" style={ESTILO_PANEL_SUAVE}>
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
             {etiqueta}
           </p>
-          <p className="mt-1 text-[13px] leading-6 text-white/62">
+          <p className="mt-1 text-[13px] leading-6 text-[color:var(--shell-texto-secundario)]">
             {descripcion}
           </p>
         </div>
-        <span className="shrink-0 text-[20px] font-semibold tracking-[-0.03em] text-[#D9C2FF]">
+        <span className="shrink-0 text-[20px] font-semibold tracking-[-0.03em] text-[color:var(--color-acento)]">
           {valor}
         </span>
       </div>
@@ -248,11 +270,11 @@ function CabeceraPanel({
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
-        <p className={`${ETIQUETA_CARTA} text-violet-200/72`}>{etiqueta}</p>
-        <h3 className="mt-2 text-[18px] font-semibold tracking-tight text-white">
+        <p className={`${ETIQUETA_CARTA} text-[color:var(--color-acento)]`}>{etiqueta}</p>
+        <h3 className="mt-2 text-[18px] font-semibold tracking-tight text-[color:var(--shell-texto)]">
           {titulo}
         </h3>
-        <p className="mt-2 text-[12px] leading-relaxed text-violet-100/66">
+        <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--shell-texto-secundario)]">
           {subtitulo}
         </p>
       </div>
@@ -261,7 +283,8 @@ function CabeceraPanel({
         <button
           type="button"
           onClick={onCerrar}
-          className="rounded-full border border-white/10 bg-white/[0.08] p-2 text-violet-100/75 transition-colors hover:bg-white/[0.14] hover:text-white"
+          className="rounded-full border p-2 text-[color:var(--shell-texto-secundario)] transition-colors hover:text-[color:var(--shell-texto)]"
+          style={ESTILO_PANEL_SUAVE}
         >
           <Icono nombre="x" tamaño={18} />
         </button>
@@ -625,7 +648,7 @@ export function PanelContextual({
     claveSeleccionTecnica !== null && seleccionTecnicaActiva === claveSeleccionTecnica;
 
   return (
-    <div className="flex h-full min-h-0 flex-col text-white">
+    <div className="flex h-full min-h-0 flex-col text-[color:var(--shell-texto)]">
       <div className="flex-1 overflow-y-auto scroll-sutil">
         {seleccion.tipo === "default" && <VistaDefault datos={datos} modo={modo} />}
         {seleccion.tipo === "planeta" && (
@@ -666,7 +689,13 @@ export function PanelContextual({
       </div>
 
       {mostrarDatosTecnicos && (
-        <div className="border-t border-white/10 bg-[#140c27]/72 backdrop-blur-xl">
+        <div
+          className="border-t backdrop-blur-xl"
+          style={{
+            borderColor: "var(--shell-borde)",
+            background: "var(--shell-panel)",
+          }}
+        >
           <button
             type="button"
             onClick={() =>
@@ -674,14 +703,14 @@ export function PanelContextual({
                 actual === claveSeleccionTecnica ? null : claveSeleccionTecnica,
               )
             }
-            className="flex w-full items-center justify-between px-5 py-3 text-[10px] font-medium uppercase tracking-[0.16em] text-violet-100/66 transition-colors hover:bg-white/[0.04]"
+            className="flex w-full items-center justify-between px-5 py-3 text-[10px] font-medium uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)] transition-colors hover:bg-[var(--shell-superficie-suave)]"
           >
             <span>Datos técnicos</span>
             <Icono nombre={mostrarTecnico ? "caretUp" : "caretDown"} tamaño={14} />
           </button>
 
           {mostrarTecnico && (
-            <div className="space-y-1 px-5 pb-4 text-[11px] text-violet-100/70">
+            <div className="space-y-1 px-5 pb-4 text-[11px] text-[color:var(--shell-texto-secundario)]">
               {seleccion.tipo === "planeta" && (
                 <>
                   <p>Longitud eclíptica: {seleccion.planeta.longitud.toFixed(4)}°</p>
@@ -728,18 +757,18 @@ function VistaDefault({
 
   return (
     <div className="p-5">
-      <div className="rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-5 shadow-[0_18px_40px_rgba(8,2,22,0.24)]">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/48">
+      <div className="rounded-[24px] border p-5" style={ESTILO_PANEL_DESTACADO}>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
           Lectura inicial
         </p>
-        <h3 className="mt-3 text-[16px] font-semibold tracking-[-0.02em] text-white sm:text-[18px]">
+        <h3 className="mt-3 text-[16px] font-semibold tracking-[-0.02em] text-[color:var(--shell-texto)] sm:text-[18px]">
           {sol && luna
             ? `Sol ${sol.signo} · Luna ${luna.signo} · Asc ${datos.ascendente.signo}`
             : "Tu carta empieza por la tríada."}
         </h3>
         <p className={modo === "escritorio"
-          ? "mt-3 text-[13px] leading-6 text-white/62"
-          : "mt-3 text-[13px] leading-6 text-white/72"}>
+          ? "mt-3 text-[13px] leading-6 text-[color:var(--shell-texto-secundario)]"
+          : "mt-3 text-[13px] leading-6 text-[color:var(--shell-texto-secundario)]"}>
           Empezá por la tríada y abrí solo el punto que necesites ampliar.
         </p>
       </div>
@@ -797,8 +826,8 @@ function VistaEnergia({
 
       <div className={`${modo === "movil" ? "mt-4 " : ""}${GRILLA_PANEL_METRICAS}`}>
         {lectura.metricas.map((item) => (
-          <div key={item.etiqueta} className={TARJETA_PANEL_SUAVE}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
+          <div key={item.etiqueta} className={TARJETA_PANEL_SUAVE} style={ESTILO_PANEL_SUAVE}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
               {item.etiqueta}
             </p>
             <div className="mt-2 flex items-center gap-2">
@@ -806,9 +835,9 @@ function VistaEnergia({
                 className="h-2.5 w-2.5 rounded-full"
                 style={{ backgroundColor: item.color }}
               />
-              <p className="text-[13px] font-semibold text-white">{item.valor}</p>
+              <p className="text-[13px] font-semibold text-[color:var(--shell-texto)]">{item.valor}</p>
             </div>
-            <p className="mt-2 text-[12px] leading-relaxed text-violet-100/64">
+            <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--shell-texto-secundario)]">
               {item.detalle}
             </p>
           </div>
@@ -868,7 +897,7 @@ function VistaPlaneta({
         />
       ) : null}
 
-      <div className={`${modo === "movil" ? "mt-4 " : ""}flex items-center gap-3 rounded-[24px] border border-white/10 bg-white/[0.08] p-4`}>
+      <div className={`${modo === "movil" ? "mt-4 " : ""}flex items-center gap-3 rounded-[24px] border p-4`} style={ESTILO_PANEL}>
         <div
           className="flex h-14 w-14 items-center justify-center rounded-2xl border"
           style={{
@@ -881,8 +910,8 @@ function VistaPlaneta({
         </div>
 
         <div>
-          <p className="text-sm font-semibold text-white">{planeta.signo}</p>
-          <p className="mt-1 text-[12px] text-violet-100/62">
+          <p className="text-sm font-semibold text-[color:var(--shell-texto)]">{planeta.signo}</p>
+          <p className="mt-1 text-[12px] text-[color:var(--shell-texto-secundario)]">
             {planeta.retrogrado ? "Movimiento retrógrado" : "Movimiento directo"}
           </p>
         </div>
@@ -894,19 +923,19 @@ function VistaPlaneta({
           { etiqueta: "Modalidad", valor: modalidad },
           { etiqueta: "Regente", valor: regente },
         ].map((item) => (
-          <div key={item.etiqueta} className={TARJETA_PANEL_SUAVE}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
+          <div key={item.etiqueta} className={TARJETA_PANEL_SUAVE} style={ESTILO_PANEL_SUAVE}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
               {item.etiqueta}
             </p>
-            <p className="mt-2 text-[13px] font-semibold text-white">{item.valor}</p>
+            <p className="mt-2 text-[13px] font-semibold text-[color:var(--shell-texto)]">{item.valor}</p>
           </div>
         ))}
       </div>
 
       {planeta.dignidad && (
         <div className="mt-4">
-          <div className={TARJETA_PANEL}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
+          <div className={TARJETA_PANEL} style={ESTILO_PANEL}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-acento)]">
               Dignidad
             </p>
             <div className="mt-2">
@@ -917,7 +946,7 @@ function VistaPlaneta({
                   {planeta.dignidad}
                 </span>
               ) : (
-                <span className="text-sm text-white">{planeta.dignidad}</span>
+                <span className="text-sm text-[color:var(--shell-texto)]">{planeta.dignidad}</span>
               )}
             </div>
           </div>
@@ -935,8 +964,8 @@ function VistaPlaneta({
 
       {aspectosRelacionados.length > 0 && (
         <div className="mt-4">
-          <div className={TARJETA_PANEL}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
+          <div className={TARJETA_PANEL} style={ESTILO_PANEL}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-acento)]">
               Aspectos vinculados
             </p>
             <div className="mt-3 grid gap-2">
@@ -953,13 +982,14 @@ function VistaPlaneta({
                   <div
                     key={`${aspecto.planeta1}-${aspecto.planeta2}-${idx}`}
                     className={TARJETA_PANEL_SUAVE}
+                    style={ESTILO_PANEL_SUAVE}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-[12px] font-medium text-white">
+                      <p className="text-[12px] font-medium text-[color:var(--shell-texto)]">
                         {simbolo} {otroPlaneta}
                       </p>
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-violet-100/62">
+                        <span className="text-[11px] text-[color:var(--shell-texto-tenue)]">
                           {aspecto.orbe.toFixed(1)}°
                         </span>
                         {badge && (
@@ -1012,15 +1042,15 @@ function VistaAspecto({
         />
       ) : null}
 
-      <div className={`${modo === "movil" ? "mt-4 " : ""}rounded-[22px] border border-white/[0.08] bg-white/[0.05] p-4`}>
-        <div className="flex items-center gap-2 text-[13px] font-semibold text-white">
+      <div className={`${modo === "movil" ? "mt-4 " : ""}rounded-[22px] border p-4`} style={ESTILO_PANEL_SUAVE}>
+        <div className="flex items-center gap-2 text-[13px] font-semibold text-[color:var(--shell-texto)]">
           <span>{aspecto.planeta1}</span>
-          <span className="text-white/28">·</span>
+          <span className="text-[color:var(--shell-texto-tenue)]">·</span>
           <span className="text-violet-200">{badge?.label || aspecto.tipo}</span>
-          <span className="text-white/28">·</span>
+          <span className="text-[color:var(--shell-texto-tenue)]">·</span>
           <span>{aspecto.planeta2}</span>
         </div>
-        <p className="mt-2 text-[11px] text-violet-100/58">
+        <p className="mt-2 text-[11px] text-[color:var(--shell-texto-tenue)]">
           {aspecto.aplicativo ? "Aplicativo" : "Separativo"} · Orbe {aspecto.orbe.toFixed(1)}°
         </p>
       </div>
@@ -1035,11 +1065,11 @@ function VistaAspecto({
       </div>
 
       <div className="mt-4">
-        <div className={TARJETA_PANEL}>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
+        <div className={TARJETA_PANEL} style={ESTILO_PANEL}>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-acento)]">
             Clave del vínculo
           </p>
-          <p className="mt-2 text-[13px] leading-relaxed text-violet-50/88">
+          <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--shell-texto-secundario)]">
             {NARRATIVA_ASPECTO[clave] ||
               "Estas dos energías forman una dinámica relevante dentro de tu carta."}
           </p>
@@ -1080,13 +1110,13 @@ function VistaCasa({
         />
       ) : null}
 
-      <div className={`${modo === "movil" ? "mt-4 " : ""}flex items-center gap-3 rounded-[24px] border border-white/10 bg-white/[0.08] p-4`}>
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.08] text-[#B388FF]">
+      <div className={`${modo === "movil" ? "mt-4 " : ""}flex items-center gap-3 rounded-[24px] border p-4`} style={ESTILO_PANEL}>
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border text-[#B388FF]" style={ESTILO_CHIP}>
           <IconoSigno signo={casa.signo} tamaño={28} />
         </div>
         <div>
-          <p className="text-sm font-semibold text-white">{casa.signo}</p>
-          <p className="mt-1 text-[12px] text-violet-100/62">
+          <p className="text-sm font-semibold text-[color:var(--shell-texto)]">{casa.signo}</p>
+          <p className="mt-1 text-[12px] text-[color:var(--shell-texto-secundario)]">
             Cúspide de la Casa {ROMANO[casa.numero]}
           </p>
         </div>
@@ -1098,11 +1128,11 @@ function VistaCasa({
           { etiqueta: "Planetas", valor: String(planetasEnCasa.length) },
           { etiqueta: "Grado", valor: `${casa.grado_en_signo.toFixed(1)}°` },
         ].map((item) => (
-          <div key={item.etiqueta} className={TARJETA_PANEL_SUAVE}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
+          <div key={item.etiqueta} className={TARJETA_PANEL_SUAVE} style={ESTILO_PANEL_SUAVE}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
               {item.etiqueta}
             </p>
-            <p className="mt-2 text-[13px] font-semibold text-white">{item.valor}</p>
+            <p className="mt-2 text-[13px] font-semibold text-[color:var(--shell-texto)]">{item.valor}</p>
           </div>
         ))}
       </div>
@@ -1118,15 +1148,20 @@ function VistaCasa({
 
       {planetasEnCasa.length > 0 && (
         <div className="mt-4">
-          <div className={TARJETA_PANEL}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
+          <div className={TARJETA_PANEL} style={ESTILO_PANEL}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-acento)]">
               Planetas presentes
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {planetasEnCasa.map((nombre) => (
                 <span
                   key={nombre}
-                  className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-1.5 text-[11px] font-medium text-white"
+                  className="rounded-full border px-3 py-1.5 text-[11px] font-medium"
+                  style={{
+                    borderColor: "var(--shell-badge-neutral-borde)",
+                    background: "var(--shell-badge-neutral-fondo)",
+                    color: "var(--shell-badge-neutral-texto)",
+                  }}
                 >
                   {nombre}
                 </span>
@@ -1200,11 +1235,11 @@ function VistaTriada({
           { etiqueta: "Luna", valor: luna.signo },
           { etiqueta: "Ascendente", valor: datos.ascendente.signo },
         ].map((item) => (
-          <div key={item.etiqueta} className={TARJETA_PANEL_SUAVE}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/70">
+          <div key={item.etiqueta} className={TARJETA_PANEL_SUAVE} style={ESTILO_PANEL_SUAVE}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
               {item.etiqueta}
             </p>
-            <p className="mt-2 text-[13px] font-semibold text-white">{item.valor}</p>
+            <p className="mt-2 text-[13px] font-semibold text-[color:var(--shell-texto)]">{item.valor}</p>
           </div>
         ))}
       </div>

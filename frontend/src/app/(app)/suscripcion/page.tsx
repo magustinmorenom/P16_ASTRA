@@ -30,27 +30,69 @@ import {
 /* Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
-const FONDO_SUSCRIPCION = "relative min-h-full overflow-hidden bg-[#16011B]";
+const FONDO_SUSCRIPCION = "relative min-h-full overflow-hidden";
 const SUPERFICIE_HERO =
-  "relative overflow-hidden rounded-[24px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.2),transparent_32%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] shadow-[0_24px_70px_rgba(8,2,22,0.38)]";
+  "tema-superficie-hero relative overflow-hidden rounded-[24px]";
 const SUPERFICIE_PANEL =
-  "rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl";
+  "tema-superficie-panel rounded-[24px]";
 const SUPERFICIE_ITEM =
-  "rounded-[20px] border border-white/[0.08] bg-white/[0.04] transition-colors";
+  "rounded-[20px] border transition-colors";
+const ESTILO_ITEM_SHELL = {
+  borderColor: "var(--shell-borde)",
+  background: "var(--shell-superficie)",
+} as const;
+const ESTILO_BOTON_LINEA = {
+  borderColor: "var(--shell-borde)",
+  color: "var(--shell-texto-secundario)",
+} as const;
+const ESTILO_BOTON_PELIGRO = {
+  background: "var(--color-error)",
+  color: "#ffffff",
+} as const;
+const ESTILO_BADGE_VIOLETA = {
+  borderColor: "var(--shell-chip-borde)",
+  background: "var(--shell-chip)",
+  color: "var(--color-acento)",
+} as const;
+const ESTILO_ALERTA_EXITO = {
+  borderColor: "var(--shell-badge-exito-borde)",
+  background: "var(--shell-badge-exito-fondo)",
+} as const;
+const ESTILO_ALERTA_EXITO_ICONO = {
+  borderColor: "var(--shell-badge-exito-borde)",
+  background: "var(--shell-badge-exito-fondo)",
+  color: "var(--shell-badge-exito-texto)",
+} as const;
+const ESTILO_ALERTA_ERROR = {
+  borderColor: "var(--shell-badge-error-borde)",
+  background: "var(--shell-badge-error-fondo)",
+} as const;
 
 function FondoSuscripcion() {
   return (
     <>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,77,255,0.22),transparent_26%),radial-gradient(circle_at_top_right,rgba(179,136,255,0.14),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(76,35,140,0.16),transparent_32%)]" />
-      <div className="absolute right-[-80px] top-0 h-72 w-72 rounded-full bg-[#B388FF]/14 blur-3xl" />
-      <div className="absolute left-[-40px] top-1/3 h-64 w-64 rounded-full bg-[#7C4DFF]/12 blur-3xl" />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle_at_top_left, var(--shell-glow-1), transparent 26%), radial-gradient(circle_at_top_right, var(--shell-glow-2), transparent 24%), radial-gradient(circle_at_bottom_left, var(--shell-glow-1), transparent 32%)",
+        }}
+      />
+      <div
+        className="absolute right-[-80px] top-0 h-72 w-72 rounded-full blur-3xl"
+        style={{ background: "var(--shell-glow-2)" }}
+      />
+      <div
+        className="absolute left-[-40px] top-1/3 h-64 w-64 rounded-full blur-3xl"
+        style={{ background: "var(--shell-glow-1)" }}
+      />
     </>
   );
 }
 
 function EtiquetaPanel({ children }: { children: string }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-200/70">
+    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-acento)]">
       {children}
     </p>
   );
@@ -63,15 +105,34 @@ function PillEstado({
   children: string;
   tono?: "neutral" | "exito" | "error" | "violeta";
 }) {
-  const clases = {
-    neutral: "border-white/10 bg-white/[0.06] text-white/72",
-    exito: "border-emerald-400/20 bg-emerald-500/14 text-emerald-200",
-    error: "border-rose-400/20 bg-rose-500/14 text-rose-200",
-    violeta: "border-[#B388FF]/20 bg-[#7C4DFF]/12 text-[#E7DAFF]",
+  const estilos = {
+    neutral: {
+      borderColor: "var(--shell-badge-neutral-borde)",
+      background: "var(--shell-badge-neutral-fondo)",
+      color: "var(--shell-badge-neutral-texto)",
+    },
+    exito: {
+      borderColor: "var(--shell-badge-exito-borde)",
+      background: "var(--shell-badge-exito-fondo)",
+      color: "var(--shell-badge-exito-texto)",
+    },
+    error: {
+      borderColor: "var(--shell-badge-error-borde)",
+      background: "var(--shell-badge-error-fondo)",
+      color: "var(--shell-badge-error-texto)",
+    },
+    violeta: {
+      borderColor: "var(--shell-badge-violeta-borde)",
+      background: "var(--shell-badge-violeta-fondo)",
+      color: "var(--shell-badge-violeta-texto)",
+    },
   };
 
   return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold ${clases[tono]}`}>
+    <span
+      className="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold"
+      style={estilos[tono]}
+    >
       {children}
     </span>
   );
@@ -342,35 +403,41 @@ export default function PaginaSuscripcion() {
   return (
     <>
       <HeaderMobile titulo="Suscripción" mostrarAtras />
-      <div className={FONDO_SUSCRIPCION}>
+      <div className={FONDO_SUSCRIPCION} style={{ background: "var(--shell-fondo)" }}>
         <FondoSuscripcion />
 
         <div className="relative z-10 mx-auto max-w-6xl px-4 py-5 lg:px-6 lg:py-6">
           <section className={`${SUPERFICIE_HERO} p-5 sm:p-6 lg:p-7`}>
-            <div className="absolute -right-14 top-[-64px] h-44 w-44 rounded-full bg-[#B388FF]/18 blur-3xl" />
-            <div className="absolute bottom-[-76px] left-8 h-36 w-36 rounded-full bg-[#7C4DFF]/14 blur-3xl" />
+            <div
+              className="absolute -right-14 top-[-64px] h-44 w-44 rounded-full blur-3xl"
+              style={{ background: "var(--shell-glow-2)" }}
+            />
+            <div
+              className="absolute bottom-[-76px] left-8 h-36 w-36 rounded-full blur-3xl"
+              style={{ background: "var(--shell-glow-1)" }}
+            />
 
             <div className="relative z-10">
               <EtiquetaPanel>Cuenta y facturación</EtiquetaPanel>
               <div className="mt-4 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div className="min-w-0">
                   <div className="flex items-start gap-4">
-                    <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(135deg,rgba(124,77,255,0.92),rgba(179,136,255,0.7))] p-4 text-white shadow-[0_16px_34px_rgba(34,10,76,0.34)]">
+                    <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(135deg,rgba(124,77,255,0.92),rgba(179,136,255,0.7))] p-4 text-[color:var(--shell-hero-texto)] shadow-[0_16px_34px_rgba(34,10,76,0.34)]">
                       <Icono nombre="corona" tamaño={24} />
                     </div>
 
                     <div className="min-w-0">
-                      <h1 className="text-lg font-semibold tracking-tight text-white sm:text-xl">
+                      <h1 className="tema-hero-titulo text-lg font-semibold tracking-tight sm:text-xl">
                         Tu plan y tus cobros
                       </h1>
-                      <p className="mt-2 text-sm leading-6 text-white/62">
+                      <p className="tema-hero-secundario mt-2 text-sm leading-6">
                         {etiquetaPlanActual} ·{" "}
                         {cargandoPais
                           ? "Detectando país"
                           : `${paisDetectado?.pais_nombre ?? "Argentina"} (${paisDetectado?.moneda ?? "ARS"})`}{" "}
                         · {miSuscripcion?.estado ?? "Free"}
                       </p>
-                      <p className="mt-2 text-sm leading-6 text-white/58">
+                      <p className="tema-hero-tenue mt-2 text-sm leading-6">
                         {obtenerTextoEstadoPlan(
                           etiquetaPlanActual,
                           tienePlanPago,
@@ -389,9 +456,9 @@ export default function PaginaSuscripcion() {
               </div>
 
               {miSuscripcion?.fecha_fin && (
-                <p className="mt-4 text-sm leading-6 text-white/64">
+                <p className="tema-hero-secundario mt-4 text-sm leading-6">
                   {miSuscripcion.cancelacion_programada ? "Activo hasta " : "Corte actual "}
-                  <span className="font-medium text-white">
+                  <span className="font-medium text-[color:var(--shell-hero-texto)]">
                     {formatearFechaCorta(miSuscripcion.fecha_fin)}
                   </span>
                   .
@@ -401,12 +468,12 @@ export default function PaginaSuscripcion() {
               {(premiumConfirmado || (checkoutEnCurso && !premiumConfirmado)) && (
                 <div className="mt-5 space-y-3">
                   {premiumConfirmado && (
-                    <div className="rounded-[20px] border border-emerald-400/18 bg-emerald-500/[0.08] px-4 py-3">
+                    <div className="rounded-[20px] border px-4 py-3" style={ESTILO_ALERTA_EXITO}>
                       <div className="flex items-center gap-3">
-                        <div className="rounded-xl border border-emerald-400/18 bg-emerald-500/[0.14] p-2 text-emerald-200">
+                        <div className="rounded-xl border p-2" style={ESTILO_ALERTA_EXITO_ICONO}>
                           <Icono nombre="check" tamaño={14} />
                         </div>
-                        <p className="text-sm text-white/78">
+                        <p className="text-sm" style={{ color: "var(--shell-badge-exito-texto)" }}>
                           Pago confirmado. La cuenta ya tiene acceso completo.
                         </p>
                       </div>
@@ -414,10 +481,10 @@ export default function PaginaSuscripcion() {
                   )}
 
                   {checkoutEnCurso && !premiumConfirmado && (
-                    <div className="rounded-[20px] border border-[#B388FF]/18 bg-[#7C4DFF]/[0.08] px-4 py-3">
+                    <div className="rounded-[20px] border px-4 py-3" style={ESTILO_BADGE_VIOLETA}>
                       <div className="flex items-center gap-3">
-                        <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#D8C0FF] border-t-transparent" />
-                        <p className="text-sm text-white/76">
+                        <div className="h-7 w-7 animate-spin rounded-full border-2 border-[color:var(--color-acento)] border-t-transparent" />
+                        <p className="text-sm text-[color:var(--shell-hero-texto-secundario)]">
                           Verificando el pago. MercadoPago puede tardar unos segundos.
                         </p>
                       </div>
@@ -431,7 +498,7 @@ export default function PaginaSuscripcion() {
           <div className="mt-6">
             <section className={`${SUPERFICIE_PANEL} p-5 lg:p-6`}>
               <EtiquetaPanel>Planes disponibles</EtiquetaPanel>
-              <h2 className="mt-2 text-base font-semibold tracking-tight text-white">
+              <h2 className="mt-2 text-base font-semibold tracking-tight text-[color:var(--shell-texto)]">
                 Elegí tu plan
               </h2>
 
@@ -458,20 +525,47 @@ export default function PaginaSuscripcion() {
                     return (
                       <div
                         key={plan.slug}
-                        className={`flex h-full flex-col rounded-[22px] border p-5 shadow-[0_18px_40px_rgba(8,3,20,0.2)] ${
+                        className="flex h-full flex-col rounded-[22px] border p-5"
+                        style={
                           esPlanActual
-                            ? "border-[#B388FF]/28 bg-[linear-gradient(180deg,rgba(124,77,255,0.18),rgba(255,255,255,0.05))]"
-                            : "border-white/[0.08] bg-white/[0.04]"
-                        }`}
+                            ? {
+                                borderColor: "var(--shell-borde-fuerte)",
+                                background:
+                                  "linear-gradient(180deg, var(--shell-chip), var(--shell-superficie))",
+                                boxShadow: "var(--shell-sombra-suave)",
+                              }
+                            : {
+                                borderColor: "var(--shell-borde)",
+                                background: "var(--shell-superficie)",
+                                boxShadow: "var(--shell-sombra-suave)",
+                              }
+                        }
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className={`rounded-[22px] border border-white/10 p-3.5 ${
-                            esMax
-                              ? "bg-[linear-gradient(135deg,rgba(124,77,255,0.9),rgba(179,136,255,0.7))] text-white"
-                              : esPremium
-                                ? "bg-[linear-gradient(135deg,rgba(124,77,255,0.78),rgba(179,136,255,0.52))] text-white"
-                                : "bg-white/[0.08] text-[#E7DAFF]"
-                          }`}>
+                          <div
+                            className="rounded-[22px] border p-3.5"
+                            style={
+                              esMax
+                                ? {
+                                    borderColor: "rgba(255, 255, 255, 0.1)",
+                                    background:
+                                      "linear-gradient(135deg, rgba(124,77,255,0.9), rgba(179,136,255,0.7))",
+                                    color: "#ffffff",
+                                  }
+                                : esPremium
+                                  ? {
+                                      borderColor: "rgba(255, 255, 255, 0.1)",
+                                      background:
+                                        "linear-gradient(135deg, rgba(124,77,255,0.78), rgba(179,136,255,0.52))",
+                                      color: "#ffffff",
+                                    }
+                                  : {
+                                      borderColor: "var(--shell-chip-borde)",
+                                      background: "var(--shell-superficie-suave)",
+                                      color: "var(--color-acento)",
+                                    }
+                            }
+                          >
                             <Icono nombre={iconoPlan} tamaño={18} />
                           </div>
 
@@ -483,23 +577,23 @@ export default function PaginaSuscripcion() {
                         </div>
 
                         <div className="mt-4">
-                          <h3 className="text-base font-semibold text-white">
+                          <h3 className="text-base font-semibold text-[color:var(--shell-texto)]">
                             {obtenerEtiquetaPlan(plan.slug, plan.nombre)}
                           </h3>
-                          <p className="mt-3 text-lg font-semibold tracking-tight text-white">
+                          <p className="mt-3 text-lg font-semibold tracking-tight text-[color:var(--shell-texto)]">
                             {precio.principal}
                           </p>
-                          <p className="mt-1 text-xs leading-5 text-white/48">
+                          <p className="mt-1 text-xs leading-5 text-[color:var(--shell-texto-tenue)]">
                             {precio.detalle}
                           </p>
                           {plan.descripcion && (
-                            <p className="mt-3 text-sm leading-6 text-white/58">
+                            <p className="mt-3 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
                               {plan.descripcion}
                             </p>
                           )}
                         </div>
 
-                        <p className="mt-4 text-xs leading-5 text-white/48">
+                        <p className="mt-4 text-xs leading-5 text-[color:var(--shell-texto-tenue)]">
                           Perfiles {formatearLimite(plan.limite_perfiles)} · Cálculos/día{" "}
                           {formatearLimite(plan.limite_calculos_dia)}
                         </p>
@@ -508,18 +602,18 @@ export default function PaginaSuscripcion() {
                           {featuresCompactas.map((feature) => (
                             <li
                               key={`${plan.slug}-${feature}`}
-                              className="flex items-start gap-2 text-sm leading-6 text-white/68"
+                              className="flex items-start gap-2 text-sm leading-6 text-[color:var(--shell-texto-secundario)]"
                             >
                               <Icono
                                 nombre="check"
                                 tamaño={15}
-                                className={esMax ? "mt-1 text-[#D8C0FF]" : esPremium ? "mt-1 text-[#B388FF]" : "mt-1 text-emerald-300"}
+                                className={esMax ? "mt-1 text-[#D8C0FF]" : esPremium ? "mt-1 text-[#B388FF]" : "mt-1 text-[color:var(--shell-texto-tenue)]"}
                               />
                               <span>{feature}</span>
                             </li>
                           ))}
                           {features.length > featuresCompactas.length ? (
-                            <li className="text-sm leading-6 text-white/44">
+                            <li className="text-sm leading-6 text-[color:var(--shell-texto-tenue)]">
                               y {features.length - featuresCompactas.length} puntos más
                             </li>
                           ) : null}
@@ -530,7 +624,7 @@ export default function PaginaSuscripcion() {
                             variante="primario"
                             onClick={() => manejarSuscribirse(plan)}
                             cargando={suscribirse.isPending}
-                            className="mt-5 w-full rounded-full bg-[#7C4DFF] text-white hover:bg-[#8F66FF]"
+                            className="mt-5 w-full rounded-full"
                             icono={<Icono nombre="cohete" tamaño={16} />}
                           >
                             Actualizar a {obtenerEtiquetaPlan(plan.slug, plan.nombre)}
@@ -547,13 +641,13 @@ export default function PaginaSuscripcion() {
           {miSuscripcion?.cancelacion_programada && (
             <section className={`${SUPERFICIE_PANEL} mt-6 p-5 lg:p-6`}>
               <EtiquetaPanel>Gestión del plan</EtiquetaPanel>
-              <h2 className="mt-2 text-base font-semibold tracking-tight text-white">
+              <h2 className="mt-2 text-base font-semibold tracking-tight text-[color:var(--shell-texto)]">
                 Cancelación programada
               </h2>
-              <div className="mt-5 rounded-[24px] border border-rose-400/18 bg-rose-500/[0.06] p-4">
-                <p className="text-sm leading-6 text-rose-100/78">
+              <div className="mt-5 rounded-[24px] border p-4" style={ESTILO_ALERTA_ERROR}>
+                <p className="text-sm leading-6 text-[color:var(--shell-badge-error-texto)]">
                   Tu suscripción {etiquetaPlanActual} sigue activa hasta el{" "}
-                  <span className="font-medium text-white">
+                  <span className="font-medium text-[color:var(--shell-texto)]">
                     {miSuscripcion.fecha_fin ? formatearFecha(miSuscripcion.fecha_fin) : "—"}
                   </span>
                   . Después de esa fecha, la cuenta vuelve a Free.
@@ -567,30 +661,31 @@ export default function PaginaSuscripcion() {
             !miSuscripcion.cancelacion_programada && (
               <section className={`${SUPERFICIE_PANEL} mt-6 p-5 lg:p-6`}>
                 <EtiquetaPanel>Gestión del plan</EtiquetaPanel>
-                <h2 className="mt-2 text-base font-semibold tracking-tight text-white">
+                <h2 className="mt-2 text-base font-semibold tracking-tight text-[color:var(--shell-texto)]">
                   Cancelar suscripción
                 </h2>
-                <div className={`${SUPERFICIE_ITEM} mt-5 p-4`}>
+                <div className={`${SUPERFICIE_ITEM} mt-5 p-4`} style={ESTILO_ITEM_SHELL}>
                   {!mostrarConfirmacionCancelar ? (
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-sm leading-6 text-white/58">
+                      <p className="text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
                         Si necesitás frenar renovaciones, podés cancelar el débito
                         recurrente antes de facturación.
                       </p>
                       <Boton
                         variante="fantasma"
                         onClick={() => setMostrarConfirmacionCancelar(true)}
-                        className="rounded-full border border-white/10 bg-transparent px-4 text-white/72 hover:bg-white/[0.06] hover:text-white"
+                        className="rounded-full border px-4"
+                        style={ESTILO_BOTON_LINEA}
                       >
                         Cancelar suscripción
                       </Boton>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <p className="text-sm font-medium text-white">
+                      <p className="text-sm font-medium text-[color:var(--shell-texto)]">
                         ¿Querés cancelar tu plan {etiquetaPlanActual}?
                       </p>
-                      <p className="text-xs leading-5 text-white/52">
+                      <p className="text-xs leading-5 text-[color:var(--shell-texto-tenue)]">
                         Se frena el cobro recurrente y mantenés acceso hasta cerrar
                         el período ya abonado.
                       </p>
@@ -599,14 +694,16 @@ export default function PaginaSuscripcion() {
                           variante="primario"
                           onClick={manejarCancelar}
                           cargando={cancelar.isPending}
-                          className="rounded-full bg-[#E57373] px-4 text-white hover:bg-[#ef8484]"
+                          className="rounded-full px-4"
+                          style={ESTILO_BOTON_PELIGRO}
                         >
                           Sí, cancelar
                         </Boton>
                         <Boton
                           variante="fantasma"
                           onClick={() => setMostrarConfirmacionCancelar(false)}
-                          className="rounded-full border border-white/10 bg-transparent px-4 text-white/72 hover:bg-white/[0.06] hover:text-white"
+                          className="rounded-full border px-4"
+                          style={ESTILO_BOTON_LINEA}
                         >
                           No, mantener
                         </Boton>
@@ -621,10 +718,10 @@ export default function PaginaSuscripcion() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <EtiquetaPanel>Facturación</EtiquetaPanel>
-                <h2 className="mt-2 text-base font-semibold tracking-tight text-white">
+                <h2 className="mt-2 text-base font-semibold tracking-tight text-[color:var(--shell-texto)]">
                   Pagos y comprobantes
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-white/56">
+                <p className="mt-2 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
                   Estado de cada cobro y acceso directo al PDF cuando existe factura.
                 </p>
               </div>
@@ -651,7 +748,8 @@ export default function PaginaSuscripcion() {
                   });
                 }}
                 cargando={sincronizarPagos.isPending}
-                className="rounded-full border border-white/10 bg-transparent px-4 text-white/72 hover:bg-white/[0.06] hover:text-white"
+                className="rounded-full border px-4"
+                style={ESTILO_BOTON_LINEA}
                 icono={<Icono nombre="descarga" tamaño={16} />}
               >
                 Sincronizar pagos
@@ -670,22 +768,23 @@ export default function PaginaSuscripcion() {
                   <div
                     key={pago.id}
                     className={`${SUPERFICIE_ITEM} flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between`}
+                    style={ESTILO_ITEM_SHELL}
                   >
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-medium text-white">
+                        <p className="text-sm font-medium text-[color:var(--shell-texto)]">
                           {formatearMonto(pago.monto_centavos, pago.moneda)}
                         </p>
                         {badgeEstadoPago(pago.estado)}
                       </div>
-                      <p className="mt-2 text-sm text-white/58">
+                      <p className="mt-2 text-sm text-[color:var(--shell-texto-secundario)]">
                         {pago.fecha_pago
                           ? formatearFechaHora(pago.fecha_pago)
                           : pago.creado_en
                             ? formatearFechaHora(pago.creado_en)
                             : "—"}
                       </p>
-                      <p className="mt-1 text-xs text-white/44">
+                      <p className="mt-1 text-xs text-[color:var(--shell-texto-tenue)]">
                         Método: {pago.metodo_pago ?? "—"}
                       </p>
                     </div>
@@ -695,21 +794,22 @@ export default function PaginaSuscripcion() {
                         href={`/api/v1/suscripcion/facturas/${pago.factura_id}/pdf`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-medium text-white/78 transition-colors hover:bg-white/[0.1] hover:text-white"
+                        className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+                        style={ESTILO_ITEM_SHELL}
                         title={`Descargar ${pago.numero_factura}`}
                       >
                         <Icono nombre="descarga" tamaño={16} />
                         Descargar PDF
                       </a>
                     ) : (
-                      <span className="text-xs text-white/38">Sin factura</span>
+                      <span className="text-xs text-[color:var(--shell-texto-tenue)]">Sin factura</span>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className={`${SUPERFICIE_ITEM} mt-5 p-4`}>
-                <p className="text-sm leading-6 text-white/58">
+              <div className={`${SUPERFICIE_ITEM} mt-5 p-4`} style={ESTILO_ITEM_SHELL}>
+                <p className="text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
                   No hay pagos registrados todavía.
                 </p>
               </div>

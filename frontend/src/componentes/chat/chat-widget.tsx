@@ -8,6 +8,54 @@ import { usarEnviarMensaje, usarHistorialChat, usarNuevaConversacion } from "@/l
 import type { MensajeChat } from "@/lib/tipos";
 
 // ─────────────────────────────────────────────────────────────
+// Renderizado de markdown inline (negrita, cursiva, subrayado)
+// ─────────────────────────────────────────────────────────────
+function renderizarTexto(texto: string): React.ReactNode[] {
+  // Orden: **negrita**, *cursiva*, __subrayado__
+  const partes: React.ReactNode[] = [];
+  const regex = /(\*\*(.+?)\*\*)|(\*(.+?)\*)|(__(.+?)__)/g;
+  let ultimo = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+
+  while ((match = regex.exec(texto)) !== null) {
+    // Texto previo sin formato
+    if (match.index > ultimo) {
+      partes.push(texto.slice(ultimo, match.index));
+    }
+
+    if (match[1]) {
+      // **negrita**
+      partes.push(<strong key={key++} className="font-semibold">{match[2]}</strong>);
+    } else if (match[3]) {
+      // *cursiva*
+      partes.push(<em key={key++} className="italic">{match[4]}</em>);
+    } else if (match[5]) {
+      // __subrayado__
+      partes.push(<span key={key++} className="underline decoration-violet-400/60 underline-offset-2">{match[6]}</span>);
+    }
+    ultimo = match.index + match[0].length;
+  }
+
+  // Texto restante
+  if (ultimo < texto.length) {
+    partes.push(texto.slice(ultimo));
+  }
+
+  return partes.length > 0 ? partes : [texto];
+}
+
+function renderizarContenido(contenido: string): React.ReactNode {
+  // Separar por saltos de línea y renderizar markdown inline en cada línea
+  return contenido.split("\n").map((linea, i, arr) => (
+    <span key={i}>
+      {renderizarTexto(linea)}
+      {i < arr.length - 1 && <br />}
+    </span>
+  ));
+}
+
+// ─────────────────────────────────────────────────────────────
 // Sugerencias rápidas para el primer mensaje
 // ─────────────────────────────────────────────────────────────
 const SUGERENCIAS = [
@@ -80,7 +128,7 @@ function BurbujaMensaje({ msg }: { msg: MensajeChat }) {
               }
         }
       >
-        {msg.contenido}
+        {esUsuario ? msg.contenido : renderizarContenido(msg.contenido)}
       </div>
     </div>
   );
@@ -308,7 +356,7 @@ export default function ChatWidget() {
               </div>
               <div>
                 <div className="font-semibold text-[15px] text-texto tracking-tight">
-                  Oráculo
+                  Astra A.I.
                 </div>
                 <div className="text-[10.5px] text-primario font-medium flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-primario animate-chat-soft-pulse" />

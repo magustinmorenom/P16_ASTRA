@@ -3,10 +3,17 @@
 import uuid
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modelos.podcast import PodcastEpisodio
+
+RETENCION_EPISODIOS_PODCAST = {
+    "dia": 7,
+    "semana": 4,
+    "mes": 4,
+}
+LIMITE_HISTORIAL_PODCAST = sum(RETENCION_EPISODIOS_PODCAST.values())
 
 
 class RepositorioPodcast:
@@ -73,7 +80,7 @@ class RepositorioPodcast:
         return list(resultado.scalars().all())
 
     async def obtener_ultimos_episodios(
-        self, usuario_id: uuid.UUID, limite: int = 10
+        self, usuario_id: uuid.UUID, limite: int = LIMITE_HISTORIAL_PODCAST
     ) -> list[PodcastEpisodio]:
         """Obtiene los episodios más recientes de un usuario."""
         resultado = await self.sesion.execute(
@@ -86,6 +93,39 @@ class RepositorioPodcast:
             .limit(limite)
         )
         return list(resultado.scalars().all())
+
+    async def normalizar_retencion_usuario(self, usuario_id: uuid.UUID) -> int:
+        """Aplica la política de retención por tipo eliminando excedentes."""
+        total_eliminados = 0
+
+        for tipo, limite in RETENCION_EPISODIOS_PODCAST.items():
+            resultado = await self.sesion.execute(
+                select(PodcastEpisodio.id)
+                .where(
+                    PodcastEpisodio.usuario_id == usuario_id,
+                    PodcastEpisodio.momento == tipo,
+                )
+                .order_by(
+                    PodcastEpisodio.fecha.desc(),
+                    PodcastEpisodio.creado_en.desc(),
+                    PodcastEpisodio.id.desc(),
+                )
+                .offset(limite)
+            )
+            ids_a_eliminar = list(resultado.scalars().all())
+
+            if not ids_a_eliminar:
+                continue
+
+            await self.sesion.execute(
+                delete(PodcastEpisodio).where(PodcastEpisodio.id.in_(ids_a_eliminar))
+            )
+            total_eliminados += len(ids_a_eliminar)
+
+        if total_eliminados:
+            await self.sesion.commit()
+
+        return total_eliminados
 
     async def actualizar_estado(
         self, episodio_id: uuid.UUID, estado: str, **campos

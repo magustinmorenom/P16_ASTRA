@@ -9,14 +9,20 @@ import { usarTransitos } from "@/lib/hooks";
 import { formatearFechaHora } from "@/lib/utilidades/formatear-fecha";
 
 const SUPERFICIE_HERO =
-  "relative overflow-hidden rounded-[24px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.2),transparent_32%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] shadow-[0_24px_70px_rgba(8,2,22,0.38)]";
+  "tema-superficie-hero relative overflow-hidden rounded-[24px]";
 const SUPERFICIE_PANEL =
-  "rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl";
+  "tema-superficie-panel rounded-[24px]";
 
-function obtenerColorVelocidad(velocidad: number) {
-  if (velocidad < 0) return "text-rose-200";
-  if (velocidad > 1) return "text-[#D8C0FF]";
-  return "text-white/62";
+function obtenerEstiloVelocidad(velocidad: number) {
+  if (velocidad < 0) {
+    return { color: "var(--shell-badge-error-texto)" };
+  }
+
+  if (velocidad > 1) {
+    return { color: "var(--shell-badge-violeta-texto)" };
+  }
+
+  return { color: "var(--shell-texto-tenue)" };
 }
 
 export default function PaginaTransitos() {
@@ -26,10 +32,25 @@ export default function PaginaTransitos() {
     <>
       <HeaderMobile titulo="Tránsitos" mostrarAtras />
 
-      <section className="relative min-h-full overflow-hidden bg-[#16011B] text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,77,255,0.22),transparent_26%),radial-gradient(circle_at_top_right,rgba(179,136,255,0.14),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(76,35,140,0.16),transparent_32%)]" />
-        <div className="absolute right-[-80px] top-0 h-72 w-72 rounded-full bg-[#B388FF]/14 blur-3xl" />
-        <div className="absolute left-[-40px] top-1/3 h-64 w-64 rounded-full bg-[#7C4DFF]/12 blur-3xl" />
+      <section
+        className="relative min-h-full overflow-hidden"
+        style={{ background: "var(--shell-fondo)" }}
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle_at_top_left, var(--shell-glow-1), transparent 26%), radial-gradient(circle_at_top_right, var(--shell-glow-2), transparent 24%), radial-gradient(circle_at_bottom_left, var(--shell-glow-1), transparent 32%)",
+          }}
+        />
+        <div
+          className="absolute right-[-80px] top-0 h-72 w-72 rounded-full blur-3xl"
+          style={{ background: "var(--shell-glow-2)" }}
+        />
+        <div
+          className="absolute left-[-40px] top-1/3 h-64 w-64 rounded-full blur-3xl"
+          style={{ background: "var(--shell-glow-1)" }}
+        />
 
         <div className="relative z-10 mx-auto max-w-6xl px-4 py-5 lg:px-6 lg:py-6">
           <section className={`${SUPERFICIE_HERO} p-5 sm:p-6 lg:p-7`}>
@@ -39,17 +60,17 @@ export default function PaginaTransitos() {
               </div>
 
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-200/72">
+                <p className="tema-hero-tenue text-[11px] font-semibold uppercase tracking-[0.18em]">
                   Tránsitos en vivo
                 </p>
-                <h1 className="mt-2 text-lg font-semibold tracking-tight text-white sm:text-xl">
+                <h1 className="tema-hero-titulo mt-2 text-lg font-semibold tracking-tight sm:text-xl">
                   Posiciones actuales y velocidad de los astros
                 </h1>
-                <p className="mt-2 text-sm leading-6 text-white/62">
+                <p className="tema-hero-secundario mt-2 text-sm leading-6">
                   Lectura compacta del cielo del momento, sin badges ni ruido extra.
                 </p>
                 {datos ? (
-                  <p className="mt-3 text-sm leading-6 text-white/52">
+                  <p className="tema-hero-tenue mt-3 text-sm leading-6">
                     Actualizado {formatearFechaHora(datos.fecha_utc)}
                   </p>
                 ) : null}
@@ -69,10 +90,10 @@ export default function PaginaTransitos() {
             <section className={`${SUPERFICIE_PANEL} mt-6 p-5`}>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-base font-semibold text-white">
+                  <p className="text-base font-semibold text-[color:var(--shell-texto)]">
                     No pudimos cargar los tránsitos
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-white/58">
+                  <p className="mt-2 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
                     {error?.message || "Intentá nuevamente en unos segundos."}
                   </p>
                 </div>
@@ -81,7 +102,11 @@ export default function PaginaTransitos() {
                   variante="fantasma"
                   onClick={() => refetch()}
                   icono={<Icono nombre="flecha" tamaño={16} />}
-                  className="rounded-full border border-white/10 bg-transparent px-4 text-white/72 hover:bg-white/[0.06] hover:text-white"
+                  className="rounded-full border bg-transparent px-4"
+                  style={{
+                    borderColor: "var(--shell-borde)",
+                    color: "var(--shell-texto-secundario)",
+                  }}
                 >
                   Reintentar
                 </Boton>
@@ -99,14 +124,18 @@ export default function PaginaTransitos() {
                   return (
                     <article
                       key={planeta.nombre}
-                      className="rounded-[20px] border border-white/[0.08] bg-white/[0.04] p-4"
+                      className="rounded-[20px] border p-4"
+                      style={{
+                        borderColor: "var(--shell-borde)",
+                        background: "var(--shell-superficie)",
+                      }}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-base font-semibold text-white">
+                          <p className="text-base font-semibold text-[color:var(--shell-texto)]">
                             {planeta.nombre}
                           </p>
-                          <div className="mt-2 flex items-center gap-2 text-sm text-white/66">
+                          <div className="mt-2 flex items-center gap-2 text-sm text-[color:var(--shell-texto-secundario)]">
                             <IconoSigno
                               signo={planeta.signo}
                               tamaño={18}
@@ -117,17 +146,20 @@ export default function PaginaTransitos() {
                         </div>
 
                         <div className="text-right">
-                          <p className="text-sm font-medium text-white">
+                          <p className="text-sm font-medium text-[color:var(--shell-texto)]">
                             {gradoEntero}°{minutos.toString().padStart(2, "0")}&apos;
                           </p>
-                          <p className={`mt-2 text-xs ${obtenerColorVelocidad(planeta.velocidad)}`}>
+                          <p className="mt-2 text-xs" style={obtenerEstiloVelocidad(planeta.velocidad)}>
                             {planeta.velocidad >= 0 ? "+" : ""}
                             {planeta.velocidad.toFixed(4)}°/día
                           </p>
                         </div>
                       </div>
 
-                      <div className="mt-4 border-t border-white/[0.08] pt-3 text-xs uppercase tracking-[0.16em] text-white/44">
+                      <div
+                        className="mt-4 border-t pt-3 text-xs uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]"
+                        style={{ borderColor: "var(--shell-borde)" }}
+                      >
                         {planeta.retrogrado ? "Retrógrado" : "Movimiento directo"}
                       </div>
                     </article>

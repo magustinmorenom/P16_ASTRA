@@ -45,27 +45,27 @@ export function CtaNumerologia({
         {/* Icono grande con numero */}
         <div className="h-[52px] w-[52px] rounded-xl backdrop-blur-[21px] bg-white/[0.10] border border-white/[0.15] flex items-center justify-center shrink-0">
           {numeroPersonal ? (
-            <span className="text-white font-[family-name:var(--font-inria)] text-[26px] font-light leading-none">
+            <span className="font-[family-name:var(--font-inria)] text-[26px] font-light leading-none text-[color:var(--shell-hero-texto)]">
               {numeroPersonal}
             </span>
           ) : (
-            <Icono nombre="numeral" tamaño={24} peso="bold" className="text-white" />
+            <Icono nombre="numeral" tamaño={24} peso="bold" className="text-[color:var(--shell-hero-texto)]" />
           )}
         </div>
 
         {/* Texto */}
         <div className="flex-1 min-w-0">
-          <p className="text-white text-[16px] font-semibold leading-snug">
+          <p className="text-[16px] font-semibold leading-snug text-[color:var(--shell-hero-texto)]">
             {titulo}
           </p>
-          <p className="text-white/50 text-[13px] leading-snug mt-0.5">
+          <p className="mt-0.5 text-[13px] leading-snug text-[color:var(--shell-hero-texto-tenue)]">
             {descripcionFinal}
           </p>
         </div>
 
         {mostrarAccion && (
           <div className="h-9 w-9 rounded-full bg-white/[0.10] border border-white/[0.10] flex items-center justify-center shrink-0 group-hover:bg-white/[0.20] transition-colors">
-            <Icono nombre="flecha" tamaño={16} className="text-white" />
+            <Icono nombre="flecha" tamaño={16} className="text-[color:var(--shell-hero-texto)]" />
           </div>
         )}
       </div>

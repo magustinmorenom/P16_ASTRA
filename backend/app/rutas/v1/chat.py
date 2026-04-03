@@ -168,7 +168,7 @@ async def enviar_mensaje(
         operacion="chat_oraculo",
         tokens_entrada=tokens_in,
         tokens_salida=tokens_out,
-        modelo=_cfg.anthropic_modelo,
+        modelo=_cfg.oraculo_modelo,
     )
 
     # Guardar mensaje del usuario

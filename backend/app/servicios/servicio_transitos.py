@@ -14,6 +14,58 @@ from app.utilidades.convertidores import diferencia_angular
 class ServicioTransitos:
     """Calcula posiciones planetarias actuales y aspectos con carta natal."""
 
+    @staticmethod
+    def _eventos_vacios() -> dict:
+        return {
+            "cambios_signo": [],
+            "retrogrados_inicio": [],
+            "retrogrados_fin": [],
+            "aspectos_exactos": [],
+            "fases": None,
+        }
+
+    @staticmethod
+    async def _obtener_planetas_dia_anterior(repo, fecha_obj: date) -> list[dict] | None:
+        """Obtiene los planetas del día anterior desde DB o cálculo en vivo."""
+        from app.servicios.servicio_transitos_persistidos import calcular_transito_para_fecha
+
+        fecha_anterior = fecha_obj - timedelta(days=1)
+        transito_anterior = await repo.obtener_por_fecha(fecha_anterior)
+        if transito_anterior:
+            return transito_anterior.planetas
+        return calcular_transito_para_fecha(fecha_anterior)["planetas"]
+
+    @staticmethod
+    def _serializar_transito_diario(
+        *,
+        fecha_obj: date,
+        dia_juliano: float,
+        planetas: list[dict],
+        aspectos: list[dict],
+        fase_lunar: str,
+        eventos: dict | None,
+        estado: str,
+    ) -> dict:
+        mediodia_utc = datetime(
+            fecha_obj.year,
+            fecha_obj.month,
+            fecha_obj.day,
+            12,
+            0,
+            0,
+            tzinfo=pytz.UTC,
+        )
+        return {
+            "fecha": fecha_obj.isoformat(),
+            "fecha_utc": mediodia_utc.isoformat(),
+            "dia_juliano": dia_juliano,
+            "planetas": planetas,
+            "aspectos": aspectos,
+            "fase_lunar": fase_lunar,
+            "eventos": eventos or ServicioTransitos._eventos_vacios(),
+            "estado": estado,
+        }
+
     @classmethod
     def obtener_transitos_actuales(cls) -> dict:
         """Obtiene las posiciones actuales de todos los planetas."""
@@ -170,6 +222,7 @@ class ServicioTransitos:
         """
         from app.datos.repositorio_transito import RepositorioTransito
         from app.servicios.servicio_transitos_persistidos import (
+            calcular_eventos,
             calcular_transito_para_fecha,
             _determinar_estado,
         )
@@ -177,37 +230,44 @@ class ServicioTransitos:
         fecha_obj = date.fromisoformat(fecha)
         repo = RepositorioTransito(sesion)
         transito = await repo.obtener_por_fecha(fecha_obj)
+        planetas_ayer = await cls._obtener_planetas_dia_anterior(repo, fecha_obj)
 
         if transito:
-            return {
-                "fecha": transito.fecha.isoformat(),
-                "fecha_utc": datetime(
-                    transito.fecha.year, transito.fecha.month, transito.fecha.day,
-                    12, 0, 0, tzinfo=pytz.UTC,
-                ).isoformat(),
-                "dia_juliano": transito.dia_juliano,
-                "planetas": transito.planetas,
-                "aspectos": transito.aspectos,
-                "fase_lunar": transito.fase_lunar,
-            }
+            eventos = transito.eventos or calcular_eventos(
+                transito.planetas,
+                planetas_ayer,
+                transito.fase_lunar,
+            )
+            return cls._serializar_transito_diario(
+                fecha_obj=transito.fecha,
+                dia_juliano=transito.dia_juliano,
+                planetas=transito.planetas,
+                aspectos=transito.aspectos,
+                fase_lunar=transito.fase_lunar,
+                eventos=eventos,
+                estado=transito.estado,
+            )
 
         # Fallback: calcular en vivo y persistir
         datos = calcular_transito_para_fecha(fecha_obj)
         datos["estado"] = _determinar_estado(fecha_obj, date.today())
+        datos["eventos"] = calcular_eventos(
+            datos["planetas"],
+            planetas_ayer,
+            datos["fase_lunar"],
+        )
         await repo.crear_lote([datos])
         await sesion.commit()
 
-        return {
-            "fecha": datos["fecha"].isoformat(),
-            "fecha_utc": datetime(
-                fecha_obj.year, fecha_obj.month, fecha_obj.day,
-                12, 0, 0, tzinfo=pytz.UTC,
-            ).isoformat(),
-            "dia_juliano": datos["dia_juliano"],
-            "planetas": datos["planetas"],
-            "aspectos": datos["aspectos"],
-            "fase_lunar": datos["fase_lunar"],
-        }
+        return cls._serializar_transito_diario(
+            fecha_obj=datos["fecha"],
+            dia_juliano=datos["dia_juliano"],
+            planetas=datos["planetas"],
+            aspectos=datos["aspectos"],
+            fase_lunar=datos["fase_lunar"],
+            eventos=datos["eventos"],
+            estado=datos["estado"],
+        )
 
     @classmethod
     async def obtener_transitos_rango_persistido(
@@ -219,6 +279,7 @@ class ServicioTransitos:
         """
         from app.datos.repositorio_transito import RepositorioTransito
         from app.servicios.servicio_transitos_persistidos import (
+            calcular_eventos,
             calcular_transito_para_fecha,
             _determinar_estado,
         )
@@ -230,34 +291,59 @@ class ServicioTransitos:
 
         repo = RepositorioTransito(sesion)
         existentes = await repo.obtener_rango(inicio, fin)
-        fechas_existentes = {t.fecha for t in existentes}
-
-        # Calcular y persistir los faltantes
         hoy = date.today()
+        existentes_por_fecha = {t.fecha: t for t in existentes}
         faltantes = []
+        dias = []
+        planetas_ayer = await cls._obtener_planetas_dia_anterior(repo, inicio)
         fecha_actual = inicio
+
         while fecha_actual <= fin:
-            if fecha_actual not in fechas_existentes:
+            transito = existentes_por_fecha.get(fecha_actual)
+            if transito:
+                eventos = transito.eventos or calcular_eventos(
+                    transito.planetas,
+                    planetas_ayer,
+                    transito.fase_lunar,
+                )
+                dias.append(
+                    cls._serializar_transito_diario(
+                        fecha_obj=transito.fecha,
+                        dia_juliano=transito.dia_juliano,
+                        planetas=transito.planetas,
+                        aspectos=transito.aspectos,
+                        fase_lunar=transito.fase_lunar,
+                        eventos=eventos,
+                        estado=transito.estado,
+                    )
+                )
+                planetas_ayer = transito.planetas
+            else:
                 datos = calcular_transito_para_fecha(fecha_actual)
                 datos["estado"] = _determinar_estado(fecha_actual, hoy)
+                datos["eventos"] = calcular_eventos(
+                    datos["planetas"],
+                    planetas_ayer,
+                    datos["fase_lunar"],
+                )
                 faltantes.append(datos)
+                dias.append(
+                    cls._serializar_transito_diario(
+                        fecha_obj=datos["fecha"],
+                        dia_juliano=datos["dia_juliano"],
+                        planetas=datos["planetas"],
+                        aspectos=datos["aspectos"],
+                        fase_lunar=datos["fase_lunar"],
+                        eventos=datos["eventos"],
+                        estado=datos["estado"],
+                    )
+                )
+                planetas_ayer = datos["planetas"]
             fecha_actual += timedelta(days=1)
 
         if faltantes:
             await repo.crear_lote(faltantes)
             await sesion.commit()
-            # Re-obtener todos
-            existentes = await repo.obtener_rango(inicio, fin)
-
-        dias = []
-        for t in existentes:
-            dias.append({
-                "fecha": t.fecha.isoformat(),
-                "dia_juliano": t.dia_juliano,
-                "planetas": t.planetas,
-                "aspectos": t.aspectos,
-                "fase_lunar": t.fase_lunar,
-            })
 
         return {
             "fecha_inicio": fecha_inicio,

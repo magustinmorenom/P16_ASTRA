@@ -7,6 +7,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import LayoutOnboarding from "@/componentes/layouts/layout-onboarding";
 import { Icono } from "@/componentes/ui/icono";
 import {
+  IconoAstral,
+  type NombreIconoAstral,
+} from "@/componentes/ui/icono-astral";
+import {
   usarCrearPerfil,
   usarCartaNatal,
   usarDisenoHumano,
@@ -16,8 +20,6 @@ import {
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import type { DatosNacimiento, DatosNumerologia } from "@/lib/tipos";
 import { cn } from "@/lib/utilidades/cn";
-
-/* ---------- Tipos locales ---------- */
 
 interface DatosFormulario {
   nombre: string;
@@ -30,35 +32,148 @@ interface DatosFormulario {
   zona_horaria?: string;
 }
 
+interface ResultadoGeo {
+  nombre_mostrar: string;
+  ciudad: string;
+  estado: string;
+  pais: string;
+  latitud: number;
+  longitud: number;
+  zona_horaria: string;
+}
+
+type TonoBarra = "panel" | "hero";
+type EstadoItem = "pendiente" | "en_curso" | "completado" | "error";
+
+interface EstadoCalculo {
+  perfil: EstadoItem;
+  cartaNatal: EstadoItem;
+  disenoHumano: EstadoItem;
+  numerologia: EstadoItem;
+  retornoSolar: EstadoItem;
+}
+
 const TEXTOS_PANEL: Record<number, string> = {
-  0: "Tu información de nacimiento es la clave para descifrar tu mapa estelar",
+  0: "Con tu fecha, hora y lugar activamos una base precisa para astrología, Diseño Humano y numerología sin perder continuidad visual ni técnica.",
   1: "",
 };
 
-/* ---------- Barra de progreso (2 segmentos) ---------- */
+const MODULOS_GENERADOS: Array<{
+  icono: NombreIconoAstral;
+  titulo: string;
+  descripcion: string;
+}> = [
+  {
+    icono: "astrologia",
+    titulo: "Carta natal",
+    descripcion: "Posiciones, casas y aspectos base.",
+  },
+  {
+    icono: "personal",
+    titulo: "Diseño Humano",
+    descripcion: "Tipo, autoridad y perfil inicial.",
+  },
+  {
+    icono: "numerologia",
+    titulo: "Numerología",
+    descripcion: "Ritmo, núcleo y tono personal.",
+  },
+];
 
-function BarraProgreso({ paso }: { paso: number }) {
+const PISTAS_PRECISION = [
+  {
+    icono: "reloj" as const,
+    titulo: "Hora aproximada",
+    descripcion:
+      "Si no conocés tu hora exacta, usá 12:00. Algunas capas del perfil pueden variar después.",
+  },
+  {
+    icono: "ubicacion" as const,
+    titulo: "Zona horaria histórica",
+    descripcion:
+      "Usamos la ubicación seleccionada para resolver el huso horario real del nacimiento y evitar errores.",
+  },
+];
+
+const CLASE_CAMPO_BASE =
+  "h-12 w-full rounded-[20px] border px-4 text-sm outline-none transition-all duration-200 placeholder:text-[color:var(--shell-texto-tenue)] focus:border-[color:var(--shell-borde-fuerte)] focus:bg-[color:var(--shell-superficie-fuerte)] focus:ring-4 focus:ring-[color:var(--shell-overlay-suave)]";
+
+const CLASE_CAMPO_PANEL = cn(
+  CLASE_CAMPO_BASE,
+  "border-[color:var(--shell-borde)] bg-[color:var(--shell-superficie)] text-[color:var(--shell-texto)]",
+);
+
+function BarraProgreso({
+  paso,
+  tono = "panel",
+}: {
+  paso: number;
+  tono?: TonoBarra;
+}) {
+  const esHero = tono === "hero";
+
   return (
-    <div className="flex flex-col gap-2 mb-8">
-      <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-violet-500">
-        Paso {paso + 1} de 2
-      </p>
-      <div className="flex gap-2">
-        {[0, 1].map((i) => (
-          <div
-            key={i}
+    <div
+      className={cn(
+        "mb-8 rounded-[28px] border p-4 sm:p-5",
+        esHero ? "border-white/10 bg-white/[0.06]" : "tema-superficie-panel-suave",
+      )}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p
             className={cn(
-              "h-1 flex-1 rounded-sm transition-colors duration-300",
-              i <= paso ? "bg-violet-500" : "bg-gray-200",
+              "text-[11px] font-semibold uppercase tracking-[0.18em]",
+              esHero
+                ? "text-[color:var(--shell-hero-texto-tenue)]"
+                : "text-[color:var(--shell-texto-tenue)]",
             )}
-          />
-        ))}
+          >
+            Configuración inicial
+          </p>
+          <p
+            className={cn(
+              "mt-1 text-sm font-semibold",
+              esHero
+                ? "text-[color:var(--shell-hero-texto)]"
+                : "text-[color:var(--shell-texto)]",
+            )}
+          >
+            Paso {paso + 1} de 2
+          </p>
+        </div>
+
+        <span
+          className={cn(
+            "rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]",
+            esHero
+              ? "border-white/12 bg-white/10 text-[color:var(--shell-hero-texto-secundario)]"
+              : "border-[color:var(--shell-badge-violeta-borde)] bg-[color:var(--shell-badge-violeta-fondo)] text-[color:var(--shell-badge-violeta-texto)]",
+          )}
+        >
+          {paso === 0 ? "Datos natales" : "Activando motor"}
+        </span>
+      </div>
+
+      <div
+        className={cn(
+          "mt-4 h-2 overflow-hidden rounded-full",
+          esHero ? "bg-white/10" : "bg-[color:var(--shell-superficie)]",
+        )}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{
+            width: `${((paso + 1) / 2) * 100}%`,
+            background: esHero
+              ? "linear-gradient(135deg, rgba(240, 214, 138, 0.95), rgba(179, 136, 255, 0.92))"
+              : "linear-gradient(135deg, rgba(124, 77, 255, 1), rgba(179, 136, 255, 0.88))",
+          }}
+        />
       </div>
     </div>
   );
 }
-
-/* ---------- Componente principal ---------- */
 
 export default function PaginaOnboarding() {
   const router = useRouter();
@@ -73,11 +188,10 @@ export default function PaginaOnboarding() {
     pais_nacimiento: "",
   });
 
-  // Paso 1 usa layout oscuro full-screen
   if (paso === 1) {
     return (
       <LayoutOnboarding modoOscuro>
-        <BarraProgresoOscuro />
+        <BarraProgreso paso={1} tono="hero" />
         <PasoCalculando
           datos={datos}
           onFinalizar={async () => {
@@ -94,44 +208,13 @@ export default function PaginaOnboarding() {
     <LayoutOnboarding textoPanel={TEXTOS_PANEL[paso]}>
       <BarraProgreso paso={paso} />
 
-      {paso === 0 && (
-        <PasoDatosCompletos
-          datos={datos}
-          onChange={(parcial) => setDatos({ ...datos, ...parcial })}
-          onSiguiente={() => setPaso(1)}
-        />
-      )}
+      <PasoDatosCompletos
+        datos={datos}
+        onChange={(parcial) => setDatos({ ...datos, ...parcial })}
+        onSiguiente={() => setPaso(1)}
+      />
     </LayoutOnboarding>
   );
-}
-
-/* ---------- Barra de progreso modo oscuro ---------- */
-
-function BarraProgresoOscuro() {
-  return (
-    <div className="flex flex-col gap-2 mb-10">
-      <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-violet-300">
-        Paso 2 de 2
-      </p>
-      <div className="flex gap-2">
-        {[0, 1].map((i) => (
-          <div key={i} className="h-1 flex-1 rounded-sm bg-violet-500" />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ========== Paso único: Datos Personales + Lugar ========== */
-
-interface ResultadoGeo {
-  nombre_mostrar: string;
-  ciudad: string;
-  estado: string;
-  pais: string;
-  latitud: number;
-  longitud: number;
-  zona_horaria: string;
 }
 
 function PasoDatosCompletos({
@@ -146,7 +229,7 @@ function PasoDatosCompletos({
   const [consulta, setConsulta] = useState(
     datos.ciudad_nacimiento
       ? `${datos.ciudad_nacimiento}, ${datos.pais_nacimiento}`
-      : ""
+      : "",
   );
   const [resultados, setResultados] = useState<ResultadoGeo[]>([]);
   const [buscando, setBuscando] = useState(false);
@@ -162,22 +245,24 @@ function PasoDatosCompletos({
     lugarSeleccionado &&
     datos.ciudad_nacimiento.trim() !== "";
 
-  // Buscar ubicaciones con debounce
   const buscar = useCallback(async (texto: string) => {
     if (texto.length < 3) {
       setResultados([]);
       setAbierto(false);
       return;
     }
+
     setBuscando(true);
+
     try {
       const res = await fetch(
-        `/api/v1/geo/buscar?q=${encodeURIComponent(texto)}&limite=6`
+        `/api/v1/geo/buscar?q=${encodeURIComponent(texto)}&limite=6`,
       );
+
       if (res.ok) {
         const json = await res.json();
-        const d = json.datos ?? json;
-        setResultados(Array.isArray(d) ? d : []);
+        const datosRespuesta = json.datos ?? json;
+        setResultados(Array.isArray(datosRespuesta) ? datosRespuesta : []);
         setAbierto(true);
       }
     } catch {
@@ -197,7 +282,11 @@ function PasoDatosCompletos({
       longitud_geo: undefined,
       zona_horaria: undefined,
     });
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
     debounceRef.current = setTimeout(() => buscar(texto), 400);
   };
 
@@ -215,77 +304,137 @@ function PasoDatosCompletos({
     });
   };
 
-  // Cerrar dropdown al hacer click afuera
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+    const handler = (evento: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(evento.target as Node)
+      ) {
         setAbierto(false);
       }
     };
+
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   useEffect(() => {
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
   }, []);
 
-  const inputClase = "h-12 w-full px-4 rounded-xl bg-violet-50 border border-gray-200 text-gray-800 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-colors";
-
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-[26px] font-semibold text-gray-800 leading-tight">
-          Datos de nacimiento
+        <span
+          className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]"
+          style={{
+            borderColor: "var(--shell-badge-violeta-borde)",
+            background: "var(--shell-badge-violeta-fondo)",
+            color: "var(--shell-badge-violeta-texto)",
+          }}
+        >
+          <Icono nombre="destello" tamaño={14} />
+          Datos natales
+        </span>
+        <h2 className="mt-4 text-[30px] font-semibold leading-tight tracking-[-0.04em] text-[color:var(--shell-texto)]">
+          Cargá tu momento de nacimiento
         </h2>
-        <p className="mt-2 text-gray-500 text-sm">
-          Necesitamos esta información para calcular tu mapa cósmico
+        <p className="mt-3 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
+          Con esta base vamos a generar tu carta natal, tu Diseño Humano, tu
+          numerología y tu retorno solar inicial sin obligarte a navegar pantallas
+          desconectadas entre sí.
         </p>
       </div>
 
-      <div className="flex flex-col gap-3.5">
-        {/* Nombre */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-600">Nombre completo</label>
-          <input
-            type="text"
-            placeholder="Tu nombre"
-            value={datos.nombre}
-            onChange={(e) => onChange({ nombre: e.target.value })}
-            className={inputClase}
-          />
+      <div className="grid gap-3 sm:grid-cols-3">
+        {MODULOS_GENERADOS.map((modulo) => (
+          <article
+            key={modulo.titulo}
+            className="rounded-[24px] border p-4"
+            style={{
+              borderColor: "var(--shell-borde)",
+              background: "var(--shell-superficie)",
+            }}
+          >
+            <div
+              className="flex h-11 w-11 items-center justify-center rounded-[18px]"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(124, 77, 255, 0.18), rgba(179, 136, 255, 0.12))",
+                color: "var(--color-acento)",
+              }}
+            >
+              <IconoAstral nombre={modulo.icono} tamaño={20} />
+            </div>
+            <h3 className="mt-4 text-sm font-semibold text-[color:var(--shell-texto)]">
+              {modulo.titulo}
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
+              {modulo.descripcion}
+            </p>
+          </article>
+        ))}
+      </div>
+
+      <div className="grid gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <CampoFormulario etiqueta="Nombre completo">
+            <input
+              type="text"
+              placeholder="Tu nombre"
+              value={datos.nombre}
+              onChange={(e) => onChange({ nombre: e.target.value })}
+              className={CLASE_CAMPO_PANEL}
+            />
+          </CampoFormulario>
+
+          <div
+            className="rounded-[24px] border p-4"
+            style={{
+              borderColor: "var(--shell-borde)",
+              background: "var(--shell-superficie)",
+            }}
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
+              Qué vamos a usar
+            </p>
+            <p className="mt-3 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
+              Fecha, hora y lugar reales para fijar la zona horaria histórica y
+              calcular el perfil con precisión.
+            </p>
+          </div>
         </div>
 
-        {/* Fecha y hora en fila */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-600">Fecha de nacimiento</label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <CampoFormulario etiqueta="Fecha de nacimiento">
             <input
               type="date"
               value={datos.fecha_nacimiento}
               onChange={(e) => onChange({ fecha_nacimiento: e.target.value })}
-              className={inputClase}
+              className={CLASE_CAMPO_PANEL}
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-600">Hora de nacimiento</label>
+          </CampoFormulario>
+
+          <CampoFormulario etiqueta="Hora de nacimiento">
             <input
               type="time"
               value={datos.hora_nacimiento}
               onChange={(e) => onChange({ hora_nacimiento: e.target.value })}
-              className={inputClase}
+              className={CLASE_CAMPO_PANEL}
             />
-          </div>
+          </CampoFormulario>
         </div>
 
-        {/* Lugar de nacimiento — autocomplete */}
-        <div ref={dropdownRef} className="relative flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-600">Lugar de nacimiento</label>
-          <div className="relative">
+        <CampoFormulario etiqueta="Lugar de nacimiento">
+          <div ref={dropdownRef} className="relative">
             <Icono
               nombre="ubicacion"
               tamaño={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-violet-400 pointer-events-none"
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--shell-texto-tenue)]"
             />
             <input
               type="text"
@@ -294,82 +443,134 @@ function PasoDatosCompletos({
               onChange={(e) => handleLugarChange(e.target.value)}
               onFocus={() => resultados.length > 0 && setAbierto(true)}
               className={cn(
-                "h-12 w-full pl-11 pr-10 rounded-xl bg-violet-50 border text-gray-800 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition-colors",
+                CLASE_CAMPO_BASE,
+                "pl-11 pr-12",
                 lugarSeleccionado
-                  ? "border-emerald-400 bg-emerald-50/50"
-                  : "border-gray-200 focus:border-violet-400"
+                  ? "border-[color:var(--shell-badge-exito-borde)] bg-[color:var(--shell-badge-exito-fondo)] text-[color:var(--shell-texto)]"
+                  : "border-[color:var(--shell-borde)] bg-[color:var(--shell-superficie)] text-[color:var(--shell-texto)]",
               )}
             />
+
             {buscando && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-300 border-t-violet-600" />
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-[color:var(--shell-chip-borde)] border-t-[color:var(--color-acento)]" />
               </div>
             )}
+
             {lugarSeleccionado && !buscando && (
               <Icono
                 nombre="check"
                 tamaño={18}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[color:var(--shell-badge-exito-texto)]"
               />
             )}
+
+            {abierto && resultados.length > 0 && (
+              <div className="tema-superficie-panel absolute top-[calc(100%+8px)] z-50 w-full overflow-hidden rounded-[24px]">
+                {resultados.map((resultado, indice) => (
+                  <button
+                    key={`${resultado.latitud}-${resultado.longitud}-${indice}`}
+                    type="button"
+                    onClick={() => seleccionar(resultado)}
+                    className="flex w-full items-center gap-3 border-b px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-[color:var(--shell-superficie-suave)]"
+                    style={{ borderColor: "var(--shell-borde)" }}
+                  >
+                    <Icono
+                      nombre="ubicacion"
+                      tamaño={15}
+                      className="shrink-0 text-[color:var(--color-acento)]"
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-[color:var(--shell-texto)]">
+                        {resultado.nombre_mostrar}
+                      </p>
+                      <p className="text-xs text-[color:var(--shell-texto-tenue)]">
+                        {resultado.estado ? `${resultado.estado}, ` : ""}
+                        {resultado.pais}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {abierto && resultados.length === 0 && !buscando && consulta.length >= 3 && (
+              <div className="tema-superficie-panel absolute top-[calc(100%+8px)] z-50 w-full rounded-[24px] px-4 py-4">
+                <p className="text-sm text-[color:var(--shell-texto-secundario)]">
+                  No encontramos ubicaciones para esa búsqueda.
+                </p>
+              </div>
+            )}
           </div>
-
-          {/* Dropdown */}
-          {abierto && resultados.length > 0 && (
-            <div className="absolute top-[calc(100%+6px)] z-50 w-full rounded-xl border border-gray-200 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] overflow-hidden">
-              {resultados.map((r, i) => (
-                <button
-                  key={`${r.latitud}-${r.longitud}-${i}`}
-                  type="button"
-                  onClick={() => seleccionar(r)}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-violet-50 transition-colors border-b border-gray-100 last:border-b-0"
-                >
-                  <Icono nombre="ubicacion" tamaño={15} className="text-violet-400 shrink-0" />
-                  <p className="text-sm text-gray-800 truncate">{r.nombre_mostrar}</p>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {abierto && resultados.length === 0 && !buscando && consulta.length >= 3 && (
-            <div className="absolute top-[calc(100%+6px)] z-50 w-full rounded-xl border border-gray-200 bg-white shadow-lg px-4 py-3">
-              <p className="text-sm text-gray-400 text-center">No se encontraron ubicaciones</p>
-            </div>
-          )}
-        </div>
+        </CampoFormulario>
       </div>
 
-      {/* Nota hora */}
-      <div className="flex gap-3 bg-violet-50 rounded-xl p-3.5">
-        <Icono nombre="info" tamaño={16} className="text-violet-500 mt-0.5 shrink-0" />
-        <p className="text-xs text-violet-700 leading-relaxed">
-          Si no conocés tu hora exacta, usá 12:00. Algunos cálculos pueden variar.
-        </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {PISTAS_PRECISION.map((pista) => (
+          <article
+            key={pista.titulo}
+            className="rounded-[24px] border p-4"
+            style={{
+              borderColor: "var(--shell-borde)",
+              background: "var(--shell-superficie)",
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-[16px]"
+                style={{
+                  background: "var(--shell-superficie-suave)",
+                  color: "var(--color-acento)",
+                }}
+              >
+                <Icono nombre={pista.icono} tamaño={18} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-[color:var(--shell-texto)]">
+                  {pista.titulo}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
+                  {pista.descripcion}
+                </p>
+              </div>
+            </div>
+          </article>
+        ))}
       </div>
 
       <button
         type="button"
         onClick={onSiguiente}
         disabled={!puedeAvanzar}
-        className="w-full h-12 rounded-xl bg-violet-500 text-white font-semibold text-sm hover:bg-violet-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+        className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[22px] px-5 text-sm font-semibold text-white transition-all hover:brightness-[1.03] disabled:cursor-not-allowed disabled:opacity-45"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(124, 77, 255, 1), rgba(179, 136, 255, 0.9))",
+          boxShadow: "0 20px 36px rgba(72, 36, 136, 0.24)",
+        }}
       >
         <Icono nombre="destello" tamaño={18} />
-        Calcular mi perfil
+        Calcular mi perfil cósmico
       </button>
     </div>
   );
 }
 
-/* ========== Paso 3: Calculando (modo oscuro full-screen) ========== */
-
-type EstadoItem = "pendiente" | "en_curso" | "completado" | "error";
-
-interface EstadoCalculo {
-  perfil: EstadoItem;
-  cartaNatal: EstadoItem;
-  disenoHumano: EstadoItem;
-  numerologia: EstadoItem;
-  retornoSolar: EstadoItem;
+function CampoFormulario({
+  etiqueta,
+  children,
+}: {
+  etiqueta: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
+        {etiqueta}
+      </span>
+      {children}
+    </label>
+  );
 }
 
 function PasoCalculando({
@@ -412,7 +613,6 @@ function PasoCalculando({
       fecha_nacimiento: datos.fecha_nacimiento,
     };
 
-    // 1. Primero crear perfil para obtener perfil_id
     setEstado((prev) => ({ ...prev, perfil: "en_curso" }));
 
     let perfilIdObtenido: string | null = null;
@@ -425,7 +625,6 @@ function PasoCalculando({
       setEstado((prev) => ({ ...prev, perfil: "error" }));
     }
 
-    // 2. En paralelo: carta natal, diseño humano, numerología, retorno solar (con perfil_id)
     setEstado((prev) => ({
       ...prev,
       cartaNatal: "en_curso",
@@ -436,17 +635,28 @@ function PasoCalculando({
 
     const promesas = [
       cartaNatal
-        .mutateAsync({ datos: datosNacimiento, perfilId: perfilIdObtenido ?? undefined })
+        .mutateAsync({
+          datos: datosNacimiento,
+          perfilId: perfilIdObtenido ?? undefined,
+        })
         .then(() => setEstado((prev) => ({ ...prev, cartaNatal: "completado" })))
         .catch(() => setEstado((prev) => ({ ...prev, cartaNatal: "error" }))),
 
       disenoHumano
-        .mutateAsync({ datos: datosNacimiento, perfilId: perfilIdObtenido ?? undefined })
-        .then(() => setEstado((prev) => ({ ...prev, disenoHumano: "completado" })))
+        .mutateAsync({
+          datos: datosNacimiento,
+          perfilId: perfilIdObtenido ?? undefined,
+        })
+        .then(() =>
+          setEstado((prev) => ({ ...prev, disenoHumano: "completado" })),
+        )
         .catch(() => setEstado((prev) => ({ ...prev, disenoHumano: "error" }))),
 
       numerologia
-        .mutateAsync({ datos: datosNumerologia, perfilId: perfilIdObtenido ?? undefined })
+        .mutateAsync({
+          datos: datosNumerologia,
+          perfilId: perfilIdObtenido ?? undefined,
+        })
         .then(() => setEstado((prev) => ({ ...prev, numerologia: "completado" })))
         .catch(() => setEstado((prev) => ({ ...prev, numerologia: "error" }))),
 
@@ -467,11 +677,14 @@ function PasoCalculando({
   useEffect(() => {
     if (!ejecutadoRef.current) {
       ejecutadoRef.current = true;
-      ejecutarCalculos();
+      const timer = window.setTimeout(() => {
+        void ejecutarCalculos();
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }
   }, [ejecutarCalculos]);
 
-  // Auto-redirect cuando todo está listo
   useEffect(() => {
     if (todoListo) {
       const timer = setTimeout(onFinalizar, 1500);
@@ -480,94 +693,156 @@ function PasoCalculando({
   }, [todoListo, onFinalizar]);
 
   const pasos = [
-    { clave: "perfil" as const, textoEnCurso: "Creando tu perfil cósmico...", textoListo: "Perfil creado" },
-    { clave: "cartaNatal" as const, textoEnCurso: "Calculando carta natal...", textoListo: "Carta natal lista" },
-    { clave: "disenoHumano" as const, textoEnCurso: "Analizando diseño humano...", textoListo: "Diseño humano listo" },
-    { clave: "numerologia" as const, textoEnCurso: "Procesando numerología...", textoListo: "Numerología lista" },
-    { clave: "retornoSolar" as const, textoEnCurso: "Calculando revolución solar...", textoListo: "Revolución solar lista" },
+    {
+      clave: "perfil" as const,
+      textoEnCurso: "Creando tu perfil cósmico",
+      textoListo: "Perfil creado",
+    },
+    {
+      clave: "cartaNatal" as const,
+      textoEnCurso: "Calculando carta natal",
+      textoListo: "Carta natal lista",
+    },
+    {
+      clave: "disenoHumano" as const,
+      textoEnCurso: "Analizando Diseño Humano",
+      textoListo: "Diseño Humano listo",
+    },
+    {
+      clave: "numerologia" as const,
+      textoEnCurso: "Procesando numerología",
+      textoListo: "Numerología lista",
+    },
+    {
+      clave: "retornoSolar" as const,
+      textoEnCurso: "Calculando retorno solar",
+      textoListo: "Retorno solar listo",
+    },
   ];
 
-  return (
-    <div className="flex flex-col items-center gap-8">
-      {/* Animación orbital */}
-      <div className="relative w-28 h-28 my-4">
-        {/* Anillo exterior */}
-        <div className="absolute inset-0 rounded-full border border-violet-400/20 animate-[spin_12s_linear_infinite]">
-          <div className="absolute -top-1 left-1/2 -ml-1 w-2 h-2 rounded-full bg-violet-400/40" />
-        </div>
-        {/* Anillo medio */}
-        <div className="absolute inset-3 rounded-full border border-violet-400/30 animate-[spin_8s_linear_infinite_reverse]">
-          <div className="absolute -top-1 left-1/2 -ml-1 w-2 h-2 rounded-full bg-violet-300/50" />
-        </div>
-        {/* Anillo interior */}
-        <div className="absolute inset-6 rounded-full border border-violet-300/40 animate-[spin_5s_linear_infinite]">
-          <div className="absolute -top-0.5 left-1/2 -ml-0.5 w-1.5 h-1.5 rounded-full bg-violet-200/60" />
-        </div>
-        {/* Core sparkle dorado */}
-        <div className="absolute inset-9 rounded-full bg-gradient-to-br from-[#F0D68A] to-[#D4A234] flex items-center justify-center animate-pulse">
-          <Icono nombre="destello" tamaño={20} className="text-white" />
-        </div>
-      </div>
+  const tieneErrores = Object.values(estado).some((item) => item === "error");
 
-      <div className="text-center">
-        <h2 className="text-[26px] font-semibold text-white leading-tight">
-          {todoListo ? "¡Tu mapa cósmico está listo!" : "Calculando tu mapa cósmico"}
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="flex flex-col items-center text-center">
+        <div className="relative my-4 h-[120px] w-[120px]">
+          <div className="absolute inset-0 animate-[spin_12s_linear_infinite] rounded-full border border-white/18">
+            <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-white/55" />
+          </div>
+          <div className="absolute inset-3 animate-[spin_8s_linear_infinite_reverse] rounded-full border border-white/22">
+            <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-[#B388FF]" />
+          </div>
+          <div className="absolute inset-6 animate-[spin_5s_linear_infinite] rounded-full border border-white/18">
+            <div className="absolute -top-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[#F0D68A]" />
+          </div>
+          <div className="absolute inset-9 flex items-center justify-center rounded-full bg-[linear-gradient(135deg,rgba(240,214,138,0.96),rgba(212,162,52,0.88))] shadow-[0_18px_38px_rgba(18,1,23,0.34)]">
+            <Icono nombre="destello" tamaño={20} className="text-white" />
+          </div>
+        </div>
+
+        <span className="rounded-full border border-white/12 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-hero-texto-secundario)]">
+          Activando tu perfil
+        </span>
+        <h2 className="mt-5 text-[30px] font-semibold leading-tight tracking-[-0.04em] text-[color:var(--shell-hero-texto)]">
+          {todoListo && !tieneErrores
+            ? "Tu perfil cósmico ya está listo"
+            : todoListo
+              ? "Terminamos la calibración inicial"
+              : "Estamos construyendo tu primera lectura"}
         </h2>
-        <p className="mt-2 text-[#B388FF] text-sm">
-          {todoListo
-            ? "Redirigiendo al dashboard..."
-            : "Estamos procesando tus datos con las efemérides astronómicas"}
+        <p className="mt-3 max-w-xl text-sm leading-6 text-[color:var(--shell-hero-texto-secundario)]">
+          {todoListo && !tieneErrores
+            ? "Redirigiendo al dashboard para que veas tu mapa completo."
+            : todoListo
+              ? "Hubo módulos que van a necesitar revisión, pero ya te llevamos al dashboard para continuar."
+              : "Procesamos efemérides históricas, zona horaria exacta y los cálculos base de ASTRA en paralelo."}
         </p>
       </div>
 
-      {/* Lista de progreso */}
-      <div className="w-full max-w-sm flex flex-col gap-3">
-        {pasos.map((item) => {
-          const estadoActual = estado[item.clave];
-          return (
-            <div
-              key={item.clave}
-              className="flex items-center gap-3 px-4 py-3"
-            >
-              {/* Icono de estado */}
-              {estadoActual === "completado" && (
-                <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shrink-0">
-                  <Icono nombre="check" tamaño={14} className="text-white" />
-                </div>
-              )}
-              {estadoActual === "error" && (
-                <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shrink-0">
-                  <Icono nombre="x" tamaño={14} className="text-white" />
-                </div>
-              )}
-              {estadoActual === "en_curso" && (
-                <div className="w-6 h-6 shrink-0 flex items-center justify-center">
-                  <div className="w-5 h-5 rounded-full border-2 border-violet-400 border-t-transparent animate-spin" />
-                </div>
-              )}
-              {estadoActual === "pendiente" && (
-                <div className="w-6 h-6 shrink-0 flex items-center justify-center">
-                  <div className="w-2.5 h-2.5 rounded-full bg-white/20" />
-                </div>
-              )}
+      <div className="rounded-[30px] border border-white/10 bg-white/[0.06] p-4 backdrop-blur-xl sm:p-5">
+        <div className="border-b border-white/10 pb-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-hero-texto-tenue)]">
+            Estado del proceso
+          </p>
+          <p className="mt-2 text-sm leading-6 text-[color:var(--shell-hero-texto-secundario)]">
+            Cada módulo se activa en secuencia para dejar la app lista desde el primer ingreso.
+          </p>
+        </div>
 
-              <span
-                className={cn(
-                  "text-sm transition-colors",
-                  estadoActual === "completado" && "text-white font-medium",
-                  estadoActual === "error" && "text-red-400",
-                  estadoActual === "en_curso" && "text-[#B388FF]",
-                  estadoActual === "pendiente" && "text-white/30",
-                )}
+        <div className="mt-4 flex flex-col gap-2">
+          {pasos.map((item) => {
+            const estadoActual = estado[item.clave];
+
+            return (
+              <div
+                key={item.clave}
+                className="flex items-center gap-3 rounded-[22px] border border-white/8 bg-black/10 px-4 py-3"
               >
-                {estadoActual === "completado"
-                  ? item.textoListo
-                  : item.textoEnCurso}
-              </span>
-            </div>
-          );
-        })}
+                <IndicadorEstado estado={estadoActual} />
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={cn(
+                      "text-sm font-medium",
+                      estadoActual === "pendiente" &&
+                        "text-[color:var(--shell-hero-texto-tenue)]",
+                      estadoActual === "en_curso" &&
+                        "text-[color:var(--shell-hero-texto-secundario)]",
+                      estadoActual === "completado" &&
+                        "text-[color:var(--shell-hero-texto)]",
+                      estadoActual === "error" && "text-[#fecaca]",
+                    )}
+                  >
+                    {estadoActual === "completado"
+                      ? item.textoListo
+                      : item.textoEnCurso}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {tieneErrores ? (
+          <div className="mt-4 rounded-[22px] border border-[rgba(239,68,68,0.22)] bg-[rgba(239,68,68,0.14)] px-4 py-3">
+            <p className="text-sm leading-6 text-[#fecaca]">
+              Algunos cálculos no terminaron correctamente. Podrás recalcularlos
+              desde tu perfil o al volver a entrar a cada módulo.
+            </p>
+          </div>
+        ) : null}
       </div>
+    </div>
+  );
+}
+
+function IndicadorEstado({ estado }: { estado: EstadoItem }) {
+  if (estado === "completado") {
+    return (
+      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/90 text-white shadow-[0_12px_24px_rgba(16,185,129,0.24)]">
+        <Icono nombre="check" tamaño={15} />
+      </div>
+    );
+  }
+
+  if (estado === "error") {
+    return (
+      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500/90 text-white shadow-[0_12px_24px_rgba(239,68,68,0.22)]">
+        <Icono nombre="x" tamaño={15} />
+      </div>
+    );
+  }
+
+  if (estado === "en_curso") {
+    return (
+      <div className="flex h-7 w-7 items-center justify-center">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/45 border-t-[#F0D68A]" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-7 w-7 items-center justify-center">
+      <div className="h-2.5 w-2.5 rounded-full bg-white/28" />
     </div>
   );
 }

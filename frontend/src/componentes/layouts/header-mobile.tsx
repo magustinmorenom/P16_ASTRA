@@ -25,13 +25,13 @@ interface HeaderMobileProps {
 function obtenerClasesMeta(tono: MetaHeaderMobile["tono"] = "violeta"): string {
   switch (tono) {
     case "oro":
-      return "border-[#B388FF]/24 bg-[#7C4DFF]/12 text-[#E7DAFF]";
+      return "border-[var(--shell-chip-borde)] bg-[var(--shell-chip)] text-[color:var(--color-acento)]";
     case "verde":
       return "border-emerald-400/25 bg-emerald-400/10 text-emerald-300";
     case "rojo":
       return "border-rose-400/25 bg-rose-400/10 text-rose-300";
     default:
-      return "border-[#B388FF]/20 bg-[#B388FF]/10 text-[#C4ADFF]";
+      return "border-[var(--shell-chip-borde)] bg-[var(--shell-chip)] text-[color:var(--color-acento)]";
   }
 }
 
@@ -57,8 +57,8 @@ export default function HeaderMobile({
           className={cn(
             "overflow-hidden rounded-[24px] border shadow-[0_12px_32px_rgba(10,4,25,0.4)] backdrop-blur-xl",
             transparente
-              ? "border-white/10 bg-white/[0.06]"
-              : "border-white/[0.10] bg-[#1A1128]/80"
+              ? "border-[var(--shell-borde)] bg-[var(--shell-superficie)]"
+              : "border-[var(--shell-borde)] bg-[var(--shell-navbar)]"
           )}
         >
           <div className="relative px-3.5 py-4">
@@ -66,7 +66,12 @@ export default function HeaderMobile({
               {mostrarAtras && (
                 <button
                   onClick={() => router.back()}
-                  className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.08] text-white/70 transition-colors hover:bg-white/[0.14] hover:text-white"
+                  className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors"
+                  style={{
+                    borderColor: "var(--shell-borde)",
+                    background: "var(--shell-superficie)",
+                    color: "var(--shell-texto-secundario)",
+                  }}
                   aria-label="Volver"
                 >
                   <Icono nombre="flechaIzquierda" tamaño={20} />
@@ -77,15 +82,15 @@ export default function HeaderMobile({
                 {children ?? (
                   <>
                     {etiqueta && (
-                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#B388FF]/60">
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[color:var(--color-acento)]">
                         {etiqueta}
                       </p>
                     )}
-                    <h1 className="text-[17px] font-semibold leading-tight text-white">
+                    <h1 className="text-[17px] font-semibold leading-tight text-[color:var(--shell-texto)]">
                       {titulo}
                     </h1>
                     {subtitulo && (
-                      <p className="mt-1 text-[12px] leading-5 text-white/52">
+                      <p className="mt-1 text-[12px] leading-5 text-[color:var(--shell-texto-tenue)]">
                         {subtitulo}
                       </p>
                     )}

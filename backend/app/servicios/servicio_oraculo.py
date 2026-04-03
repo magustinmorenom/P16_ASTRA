@@ -480,11 +480,11 @@ class ServicioOraculo:
         mensajes.append({"role": "user", "content": mensaje_usuario})
 
         # Si hay análisis temporal, dar más espacio a la respuesta
-        max_tokens = 350 if analisis_temporal else 220
+        max_tokens = 700 if analisis_temporal else 500
 
         try:
             respuesta = await cliente.messages.create(
-                model=config.anthropic_modelo,
+                model=config.oraculo_modelo,
                 max_tokens=max_tokens,
                 temperature=0.7,
                 system=system_prompt,

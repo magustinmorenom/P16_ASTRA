@@ -34,10 +34,10 @@ export function AreasVidaV2({ areas }: AreasVidaV2Props) {
   const iconoVisible: NombreIcono = ICONO_MAP[areaVisible.icono] ?? "destello";
   const tonoArea =
     areaVisible.nivel === "favorable"
-      ? "text-emerald-300"
+      ? "var(--shell-badge-exito-texto)"
       : areaVisible.nivel === "precaucion"
-        ? "text-rose-300"
-        : "text-violet-200/70";
+        ? "var(--shell-badge-error-texto)"
+        : "var(--shell-badge-violeta-texto)";
   const etiquetaArea =
     areaVisible.nivel === "favorable"
       ? "Favorable"
@@ -58,8 +58,18 @@ export function AreasVidaV2({ areas }: AreasVidaV2Props) {
     }, 180);
   }
   return (
-    <div className="animate-[fade-in_300ms_ease-out_both] rounded-[18px] border border-white/[0.08] bg-[#160d23] shadow-[0_18px_48px_rgba(8,2,22,0.28)]">
-      <div className="flex items-center gap-2 overflow-x-auto border-b border-white/[0.08] px-2.5 py-2 scroll-sutil-dark">
+    <div
+      className="animate-[fade-in_300ms_ease-out_both] rounded-[18px] border"
+      style={{
+        borderColor: "var(--shell-borde)",
+        background: "var(--shell-panel)",
+        boxShadow: "var(--shell-sombra-suave)",
+      }}
+    >
+      <div
+        className="scroll-sutil-dark flex items-center gap-2 overflow-x-auto border-b px-2.5 py-2"
+        style={{ borderColor: "var(--shell-borde)" }}
+      >
         {areas.map((area, i) => {
           const icono: NombreIcono = ICONO_MAP[area.icono] ?? "destello";
           const activo = tabActivo === i;
@@ -68,11 +78,12 @@ export function AreasVidaV2({ areas }: AreasVidaV2Props) {
               key={area.id}
               onClick={() => cambiarTab(i)}
               className={cn(
-                "flex shrink-0 items-center gap-2 rounded-[12px] px-3 py-2 text-[13px] font-medium tracking-[0.01em] text-[#f8f6ff] transition-all duration-200",
+                "flex shrink-0 items-center gap-2 rounded-[12px] px-3 py-2 text-[13px] font-medium tracking-[0.01em] transition-all duration-200",
                 activo
-                  ? "bg-white/[0.08] text-white"
-                  : "text-white/60 hover:bg-white/[0.04] hover:text-white/84"
+                  ? "text-[color:var(--shell-texto)]"
+                  : "text-[color:var(--shell-texto-tenue)] hover:text-[color:var(--shell-texto)]"
               )}
+              style={{ background: activo ? "var(--shell-chip)" : "transparent" }}
             >
               <Icono nombre={icono} tamaño={15} peso={activo ? "fill" : "regular"} />
               {area.nombre}
@@ -91,19 +102,33 @@ export function AreasVidaV2({ areas }: AreasVidaV2Props) {
           }`}
         >
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] border border-white/[0.08] bg-white/[0.05] text-[#CDB7FF]">
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] border"
+              style={{
+                borderColor: "var(--shell-borde)",
+                background: "var(--shell-superficie-suave)",
+                color: "var(--color-acento)",
+              }}
+            >
               <Icono nombre={iconoVisible} tamaño={18} peso="fill" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[15px] font-semibold text-white">{areaVisible.nombre}</p>
-                <span className={cn("shrink-0 text-[11px] font-medium tracking-[0.12em] uppercase", tonoArea)}>
+                <p className="text-[15px] font-semibold text-[color:var(--shell-texto)]">
+                  {areaVisible.nombre}
+                </p>
+                <span
+                  className="shrink-0 text-[11px] font-medium tracking-[0.12em] uppercase"
+                  style={{ color: tonoArea }}
+                >
                   {etiquetaArea}
                 </span>
               </div>
-              <p className="mt-1 text-[14px] leading-5 text-white/84">{areaVisible.frase}</p>
+              <p className="mt-1 text-[14px] leading-5 text-[color:var(--shell-texto-secundario)]">
+                {areaVisible.frase}
+              </p>
               {areaVisible.detalle && areaVisible.detalle !== areaVisible.frase && (
-                <p className="mt-1.5 text-[12px] leading-5 text-white/52">
+                <p className="mt-1.5 text-[12px] leading-5 text-[color:var(--shell-texto-tenue)]">
                   {areaVisible.detalle}
                 </p>
               )}

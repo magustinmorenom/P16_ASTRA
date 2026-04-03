@@ -271,7 +271,7 @@ class BotTelegram:
                 operacion="chat_telegram",
                 tokens_entrada=tokens_in,
                 tokens_salida=tokens_out,
-                modelo=_obt_cfg().anthropic_modelo,
+                modelo=_obt_cfg().oraculo_modelo,
             )
 
             # 7. Guardar mensajes en conversación

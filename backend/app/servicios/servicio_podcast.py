@@ -24,7 +24,7 @@ _RUTA_PROMPT_PODCAST = Path(__file__).parent.parent / "oraculo" / "prompt_podcas
 
 TIPOS_PODCAST = {
     "dia": {
-        "titulo_template": "Momento Clave de tu Día — {fecha}",
+        "titulo_template": "Cómo influyen hoy los tránsitos en vos — {fecha}",
         "prompt_extra": (
             "Este episodio es sobre las energías cósmicas del DÍA de hoy. "
             "Enfocate en la energía del día, qué planetas están activos, "
@@ -32,7 +32,7 @@ TIPOS_PODCAST = {
         ),
     },
     "semana": {
-        "titulo_template": "Tu Semana Cósmica — {fecha_inicio} al {fecha_fin}",
+        "titulo_template": "Revisemos cómo viene tu semana — {fecha_inicio} al {fecha_fin}",
         "prompt_extra": (
             "Este episodio cubre las energías de la SEMANA completa (lunes a domingo). "
             "Enfocate en los tránsitos más relevantes de la semana, "
@@ -40,7 +40,7 @@ TIPOS_PODCAST = {
         ),
     },
     "mes": {
-        "titulo_template": "Tu Mes Cósmico — {mes} {anio}",
+        "titulo_template": "Ampliá tu horizonte para este mes — {mes} {anio}",
         "prompt_extra": (
             "Este episodio cubre las energías del MES completo. "
             "Enfocate en los tránsitos mayores del mes, lunas nuevas y llenas, "

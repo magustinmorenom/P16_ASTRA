@@ -12,9 +12,15 @@ function BarraSegmentos({ etiqueta, valor, icono }: { etiqueta: string; valor: n
   const activos = Math.min(Math.max(Math.round(valor), 0), segmentos);
 
   return (
-    <div className="flex items-center gap-2 px-2.5 py-1 rounded-[10px] backdrop-blur-[21px] bg-white/[0.07] border border-white/[0.12]">
-      <span className="flex items-center gap-1.5 text-white/90 text-[12px] font-medium w-[84px] shrink-0">
-        <Icono nombre={icono} tamaño={14} peso="fill" className="text-white" />
+    <div
+      className="flex items-center gap-2 rounded-[10px] border px-2.5 py-1 backdrop-blur-[21px]"
+      style={{
+        background: "rgba(255, 255, 255, 0.08)",
+        borderColor: "rgba(255, 255, 255, 0.12)",
+      }}
+    >
+      <span className="flex w-[84px] shrink-0 items-center gap-1.5 text-[12px] font-medium text-[color:var(--shell-hero-texto-secundario)]">
+        <Icono nombre={icono} tamaño={14} peso="fill" className="text-[color:var(--shell-hero-texto)]" />
         {etiqueta}
       </span>
       <div className="flex gap-[3px] flex-1">
@@ -23,8 +29,8 @@ function BarraSegmentos({ etiqueta, valor, icono }: { etiqueta: string; valor: n
             key={i}
             className={`h-2 flex-1 rounded-sm ${
               i < activos
-                ? "bg-white shadow-[0_0_3.5px_#cc54ff40]"
-                : "bg-[#3a2d5c]/[0.46]"
+                ? "bg-white shadow-[0_0_3.5px_rgba(204,84,255,0.25)]"
+                : "bg-white/16"
             }`}
           />
         ))}
@@ -35,7 +41,7 @@ function BarraSegmentos({ etiqueta, valor, icono }: { etiqueta: string; valor: n
 
 export function NivelesEnergia({ energia, claridad, fuerza }: NivelesEnergiaProps) {
   return (
-    <PanelGlass className="flex flex-col gap-1 p-2 justify-center">
+    <PanelGlass tono="hero" className="flex flex-col justify-center gap-1 p-2">
       <BarraSegmentos etiqueta="Intuición" valor={energia} icono="wifi" />
       <BarraSegmentos etiqueta="Claridad" valor={claridad} icono="ojo" />
       <BarraSegmentos etiqueta="Fuerza" valor={fuerza} icono="rayo" />

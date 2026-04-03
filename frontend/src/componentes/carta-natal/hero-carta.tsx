@@ -14,12 +14,23 @@ export function HeroCarta({ datos, onAbrirRueda }: HeroCartaProps) {
   const sol = datos.planetas.find((planeta) => planeta.nombre === "Sol");
   const luna = datos.planetas.find((planeta) => planeta.nombre === "Luna");
   const primerNombre = datos.nombre.trim().split(/\s+/)[0] || "Tu carta";
+  const estiloBotonRueda = {
+    borderColor: "var(--shell-chip-borde)",
+    background: "var(--shell-chip)",
+    color: "var(--shell-texto)",
+  } as const;
 
   return (
     <section>
       <div className={`${SUPERFICIE_OSCURA_CARTA} px-5 py-5 sm:px-6 sm:py-6`}>
-        <div className="absolute -right-10 top-[-48px] h-28 w-28 rounded-full bg-[#B388FF]/14 blur-3xl" />
-        <div className="absolute bottom-[-48px] left-8 h-24 w-24 rounded-full bg-[#7C4DFF]/12 blur-3xl" />
+        <div
+          className="absolute -right-10 top-[-48px] h-28 w-28 rounded-full blur-3xl"
+          style={{ background: "var(--shell-glow-2)" }}
+        />
+        <div
+          className="absolute bottom-[-48px] left-8 h-24 w-24 rounded-full blur-3xl"
+          style={{ background: "var(--shell-glow-1)" }}
+        />
 
         <div className="relative z-10">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
@@ -30,29 +41,29 @@ export function HeroCarta({ datos, onAbrirRueda }: HeroCartaProps) {
                 </div>
 
                 <div className="min-w-0">
-                  <h1 className="text-[18px] font-semibold tracking-[-0.04em] text-white sm:text-[22px]">
+                  <h1 className="text-[18px] font-semibold tracking-[-0.04em] text-[color:var(--shell-texto)] sm:text-[22px]">
                     {primerNombre}, tu tríada base.
                   </h1>
                   <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px]">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/56">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
                         Sol
                       </span>
-                      <span className="font-semibold text-white">{sol?.signo ?? "—"}</span>
+                      <span className="font-semibold text-[color:var(--shell-texto)]">{sol?.signo ?? "—"}</span>
                     </div>
-                    <div className="hidden h-4 w-px bg-white/10 sm:block" />
+                    <div className="hidden h-4 w-px sm:block" style={{ background: "var(--shell-hero-borde)" }} />
                     <div className="flex items-baseline gap-2">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/56">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
                         Luna
                       </span>
-                      <span className="font-semibold text-white">{luna?.signo ?? "—"}</span>
+                      <span className="font-semibold text-[color:var(--shell-texto)]">{luna?.signo ?? "—"}</span>
                     </div>
-                    <div className="hidden h-4 w-px bg-white/10 sm:block" />
+                    <div className="hidden h-4 w-px sm:block" style={{ background: "var(--shell-hero-borde)" }} />
                     <div className="flex items-baseline gap-2">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/56">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
                         Asc
                       </span>
-                      <span className="font-semibold text-white">{datos.ascendente.signo}</span>
+                      <span className="font-semibold text-[color:var(--shell-texto)]">{datos.ascendente.signo}</span>
                     </div>
                   </div>
                 </div>
@@ -62,14 +73,15 @@ export function HeroCarta({ datos, onAbrirRueda }: HeroCartaProps) {
             <button
               type="button"
               onClick={onAbrirRueda}
-              className="inline-flex items-center gap-2 self-start rounded-full border border-[#B388FF]/55 bg-gradient-to-r from-[#6C2BFF]/62 via-[#7C4DFF]/52 to-[#B388FF]/38 px-4 py-2 text-[12px] font-semibold text-white transition-all hover:border-[#D9C2FF]/70 hover:from-[#7C4DFF]/78 hover:via-[#8F63FF]/68 hover:to-[#B388FF]/48 hover:shadow-[0_10px_28px_rgba(124,77,255,0.32)]"
+              className="inline-flex items-center gap-2 self-start rounded-full border px-4 py-2 text-[12px] font-semibold transition-colors hover:text-[color:var(--shell-texto)]"
+              style={estiloBotonRueda}
             >
               <Icono nombre="planeta" tamaño={18} peso="fill" />
               Rueda natal
             </button>
           </div>
 
-          <p className="mt-3 max-w-3xl text-[12px] leading-5 text-white/54">
+          <p className="mt-3 max-w-3xl text-[12px] leading-5 text-[color:var(--shell-texto-secundario)]">
             Leé la tríada y abrí solo el punto técnico que necesites.
           </p>
         </div>

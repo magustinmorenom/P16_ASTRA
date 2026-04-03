@@ -37,8 +37,13 @@ export default function ReproductorCosmico() {
   const mostrandoCarga = cargandoAudio && !tieneAudio;
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-50 flex h-[84px] items-center gap-4 bg-[#1A1128] px-4 lg:px-6">
-      {/* Audio element oculto — usa URL presigned de MinIO */}
+    <footer
+      className="fixed bottom-0 left-0 right-0 z-50 flex h-[84px] items-center gap-4 px-4 lg:px-6"
+      style={{
+        background: "var(--shell-reproductor)",
+        borderTop: "1px solid var(--shell-borde)",
+      }}
+    >
       {tieneAudio && (
         <audio
           ref={audioRef}
@@ -50,17 +55,16 @@ export default function ReproductorCosmico() {
         />
       )}
 
-      {/* Izquierda: Cover + info + cerrar */}
-      <div className="flex items-center gap-3 w-[25%] min-w-0">
+      <div className="flex min-w-0 w-[25%] items-center gap-3">
         <button
           onClick={manejarCerrar}
-          className="text-[#B388FF]/60 hover:text-[#F5F0FF] transition-colors shrink-0"
+          className="shrink-0 transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]"
           title="Cerrar reproductor"
         >
           <Icono nombre="x" tamaño={16} />
         </button>
         <div
-          className={`h-14 w-14 shrink-0 rounded-lg bg-gradient-to-br ${pistaActual.gradiente} flex items-center justify-center`}
+          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${pistaActual.gradiente}`}
         >
           <Icono
             nombre={pistaActual.icono}
@@ -69,30 +73,28 @@ export default function ReproductorCosmico() {
             className="text-white/80"
           />
         </div>
-        <div className="min-w-0 hidden sm:block">
-          <p className="text-sm font-medium leading-tight text-[#F5F0FF]">
+        <div className="hidden min-w-0 sm:block">
+          <p className="text-sm font-medium leading-tight text-[color:var(--shell-texto)]">
             {pistaActual.titulo}
           </p>
-          <p className="mt-1 text-xs leading-5 text-[#B388FF]">
+          <p className="mt-1 text-xs leading-5 text-[color:var(--color-acento)]">
             {pistaActual.subtitulo}
           </p>
         </div>
       </div>
 
-      {/* Centro: Controles + barra progreso */}
-      <div className="flex-1 flex flex-col items-center gap-1 max-w-[50%]">
-        {/* Controles */}
+      <div className="flex max-w-[50%] flex-1 flex-col items-center gap-1">
         <div className="flex items-center gap-3 sm:gap-4">
-          <button className="hidden sm:block text-[#B388FF] hover:text-white transition-colors">
+          <button className="hidden transition-colors sm:block text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]">
             <Icono nombre="aleatorio" tamaño={16} />
           </button>
-          <button className="text-[#B388FF] hover:text-white transition-colors">
+          <button className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]">
             <Icono nombre="retroceder" tamaño={20} peso="fill" />
           </button>
           <button
             onClick={toggleReproduccion}
             disabled={mostrandoCarga}
-            className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-white flex items-center justify-center hover:scale-105 transition-transform"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white transition-transform hover:scale-105 sm:h-11 sm:w-11"
           >
             {mostrandoCarga ? (
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#1A1128] border-t-transparent" />
@@ -105,73 +107,84 @@ export default function ReproductorCosmico() {
               />
             )}
           </button>
-          <button className="text-[#B388FF] hover:text-white transition-colors">
+          <button className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]">
             <Icono nombre="avanzar" tamaño={20} peso="fill" />
           </button>
-          <button className="hidden sm:block text-[#B388FF] hover:text-white transition-colors">
+          <button className="hidden transition-colors sm:block text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]">
             <Icono nombre="repetir" tamaño={16} />
           </button>
         </div>
 
-        {/* Barra de progreso */}
-        <div className="flex items-center gap-2 w-full max-w-md">
-          <span className="text-[10px] text-[#B388FF] w-8 text-right tabular-nums">
+        <div className="flex w-full max-w-md items-center gap-2">
+          <span className="w-8 text-right text-[10px] tabular-nums text-[color:var(--color-acento)]">
             {formatearTiempo(progresoSegundos)}
           </span>
-          <div className="flex-1 relative h-1 group">
-            <div className="absolute inset-0 rounded-full bg-white/20" />
+          <div className="group relative h-1 flex-1">
             <div
-              className="absolute left-0 top-0 h-full rounded-full bg-[#7C4DFF] group-hover:bg-[#B388FF] transition-colors"
-              style={{ width: `${porcentaje}%` }}
+              className="absolute inset-0 rounded-full"
+              style={{ background: "var(--shell-borde)" }}
+            />
+            <div
+              className="absolute left-0 top-0 h-full rounded-full transition-colors"
+              style={{
+                width: `${porcentaje}%`,
+                background: "var(--color-primario)",
+              }}
             />
             <input
               type="range"
               min={0}
               max={pistaActual.duracionSegundos}
               value={progresoSegundos}
-              onChange={(e) => manejarSeek(Number(e.target.value))}
-              className="absolute inset-0 w-full opacity-0 cursor-pointer"
+              onChange={(evento) => manejarSeek(Number(evento.target.value))}
+              className="absolute inset-0 w-full cursor-pointer opacity-0"
             />
           </div>
-          <span className="text-[10px] text-[#B388FF] w-8 tabular-nums">
+          <span className="w-8 text-[10px] tabular-nums text-[color:var(--color-acento)]">
             {formatearTiempo(pistaActual.duracionSegundos)}
           </span>
         </div>
       </div>
 
-      {/* Derecha: cola, volumen, expandir */}
-      <div className="hidden sm:flex items-center gap-3 w-[25%] justify-end">
-        <button className="text-[#B388FF] hover:text-white transition-colors">
+      <div className="hidden w-[25%] items-center justify-end gap-3 sm:flex">
+        <button className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]">
           <Icono nombre="cola" tamaño={18} />
         </button>
         <button
           onClick={toggleSilencio}
-          className="text-[#B388FF] hover:text-white transition-colors"
+          className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]"
         >
           <Icono
             nombre={silenciado ? "volumenMudo" : "volumenAlto"}
             tamaño={18}
           />
         </button>
-        <div className="relative w-20 h-1 group">
-          <div className="absolute inset-0 rounded-full bg-white/20" />
+        <div className="group relative h-1 w-20">
           <div
-            className="absolute left-0 top-0 h-full rounded-full bg-[#B388FF] group-hover:bg-white transition-colors"
-            style={{ width: `${silenciado ? 0 : volumen}%` }}
+            className="absolute inset-0 rounded-full"
+            style={{ background: "var(--shell-borde)" }}
+          />
+          <div
+            className="absolute left-0 top-0 h-full rounded-full"
+            style={{
+              width: `${silenciado ? 0 : volumen}%`,
+              background: "var(--color-acento)",
+            }}
           />
           <input
             type="range"
             min={0}
             max={100}
             value={silenciado ? 0 : volumen}
-            onChange={(e) => setVolumen(Number(e.target.value))}
-            className="absolute inset-0 w-full opacity-0 cursor-pointer"
+            onChange={(evento) => setVolumen(Number(evento.target.value))}
+            className="absolute inset-0 w-full cursor-pointer opacity-0"
           />
         </div>
-        <button className="text-[#B388FF] hover:text-white transition-colors">
+        <button className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]">
           <Icono nombre="expandir" tamaño={18} />
         </button>
       </div>
     </footer>
   );
 }
+

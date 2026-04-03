@@ -18,6 +18,7 @@ import {
   type PistaReproduccion,
 } from "@/lib/stores/store-ui";
 import type { PodcastEpisodio, TipoPodcast } from "@/lib/tipos";
+import { COPY_PODCAST_WEB } from "@/lib/utilidades/podcast";
 import { esPlanPago, obtenerEtiquetaPlan } from "@/lib/utilidades/planes";
 
 interface ContextoRuta {
@@ -65,17 +66,17 @@ const CONFIG_MENU_PODCAST: Record<
   }
 > = {
   dia: {
-    titulo: "Día de hoy",
+    titulo: COPY_PODCAST_WEB.dia.etiquetaReproductor,
     icono: "sol",
     gradiente: "from-[#7C4DFF] to-[#B388FF]",
   },
   semana: {
-    titulo: "Tu semana cósmica",
+    titulo: COPY_PODCAST_WEB.semana.etiquetaReproductor,
     icono: "destello",
     gradiente: "from-[#4A2D8C] to-[#7C4DFF]",
   },
   mes: {
-    titulo: "Tu mes cósmico",
+    titulo: COPY_PODCAST_WEB.mes.etiquetaReproductor,
     icono: "luna",
     gradiente: "from-[#2D1B69] to-[#7C4DFF]",
   },
@@ -291,7 +292,7 @@ export default function Navbar() {
         ? "Reproduciendo ahora"
         : "Listo para continuar"
       : episodioDelDia?.estado === "listo"
-        ? "Podcast diario listo"
+        ? "Podcast del día listo"
         : hayPodcastEnProceso
           ? "Audio en preparación"
           : "Abrí tu audio del día";
@@ -367,12 +368,7 @@ export default function Navbar() {
     const pista: PistaReproduccion = {
       id: episodio.id,
       titulo: episodio.titulo,
-      subtitulo:
-        episodio.tipo === "dia"
-          ? "Podcast diario"
-          : episodio.tipo === "semana"
-            ? "Podcast semanal"
-            : "Podcast mensual",
+      subtitulo: COPY_PODCAST_WEB[episodio.tipo].etiquetaReproductor,
       tipo: "podcast",
       duracionSegundos: episodio.duracion_segundos ?? 0,
       icono: config.icono,
@@ -435,8 +431,21 @@ export default function Navbar() {
       : "microfono";
 
   return (
-    <nav className="relative z-40 shrink-0 overflow-visible border-b border-white/[0.08] bg-[linear-gradient(180deg,#2A1247_0%,#17041F_100%)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(179,136,255,0.24),transparent_28%),radial-gradient(circle_at_78%_20%,rgba(212,162,52,0.08),transparent_22%)]" />
+    <nav
+      className="relative z-40 shrink-0 overflow-visible border-b"
+      style={{
+        borderColor: "var(--shell-borde)",
+        background: "var(--shell-navbar)",
+        boxShadow: "var(--shell-sombra-suave)",
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle_at_18%_0%, var(--shell-glow-2), transparent 28%), radial-gradient(circle_at_78%_20%, var(--shell-glow-1), transparent 22%)",
+        }}
+      />
 
       <div className="relative mx-auto flex h-[70px] items-center justify-between gap-4 px-4 lg:px-6">
         <div className="flex min-w-0 items-center gap-3">
@@ -447,23 +456,29 @@ export default function Navbar() {
               width={84}
               height={24}
               className="h-6 w-auto"
+              style={{ filter: "var(--shell-logo-filter, none)" }}
               priority
             />
           </Link>
 
           <button
             onClick={toggleSidebarColapsado}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.06] text-white transition-colors hover:bg-white/[0.12]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors"
+            style={{
+              borderColor: "var(--shell-borde)",
+              background: "var(--shell-superficie)",
+              color: "var(--shell-texto)",
+            }}
             aria-label={sidebarColapsado ? "Expandir sidebar" : "Colapsar sidebar"}
           >
             <Icono nombre="menu" tamaño={18} />
           </button>
 
           <div className="hidden min-w-0 xl:flex xl:flex-col">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-violet-200/55">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[color:var(--color-acento)]">
               {contextoRuta.etiqueta}
             </span>
-            <p className="text-[14px] font-semibold leading-tight text-white/94">
+            <p className="text-[14px] font-semibold leading-tight text-[color:var(--shell-texto)]">
               {contextoRuta.titulo}
             </p>
           </div>
@@ -471,23 +486,26 @@ export default function Navbar() {
 
         <div className="min-w-0 flex-1">
           <div className="mx-auto flex max-w-[860px] items-center px-3 py-1.5">
-            <div className="min-w-0 flex-1 rounded-[10px] bg-[linear-gradient(135deg,rgba(124,77,255,0.16),rgba(36,14,54,0.04))] px-4 py-2.5">
+            <div
+              className="min-w-0 flex-1 rounded-[10px] px-4 py-2.5"
+              style={{ background: "var(--shell-superficie-suave)" }}
+            >
               {estadoCabecera.etiqueta && (
-                <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-200/56">
+                <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--color-acento)]">
                   {estadoCabecera.etiqueta}
                 </p>
               )}
 
-              <p className="line-clamp-1 text-[14px] font-semibold leading-tight text-white/96">
+              <p className="line-clamp-1 text-[14px] font-semibold leading-tight text-[color:var(--shell-texto)]">
                 {estadoCabecera.titulo}
               </p>
               {estadoCabecera.descripcion && (
-                <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-white/56">
+                <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-[color:var(--shell-texto-secundario)]">
                   {estadoCabecera.descripcion}
                 </p>
               )}
               {estadoCabecera.meta && (
-                <p className="mt-0.5 line-clamp-1 text-[10px] leading-4 text-violet-100/50">
+                <p className="mt-0.5 line-clamp-1 text-[10px] leading-4 text-[color:var(--shell-texto-tenue)]">
                   {estadoCabecera.meta}
                 </p>
               )}
@@ -508,9 +526,20 @@ export default function Navbar() {
               aria-expanded={menuPodcastsAbierto}
               aria-busy={hayPodcastEnProceso}
               data-podcast-generando={hayPodcastEnProceso ? "true" : "false"}
-              className="btn-podcast-menu relative z-10 flex items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.06] px-4 py-2 text-[12px] font-semibold text-white/88 transition-all duration-200 hover:border-[#B388FF]/28 hover:bg-[#7C4DFF]/14"
+              className="btn-podcast-menu relative z-10 flex items-center gap-2 rounded-full border px-4 py-2 text-[12px] font-semibold transition-all duration-200"
+              style={{
+                borderColor: "var(--shell-borde)",
+                background: "var(--shell-superficie)",
+                color: "var(--shell-texto)",
+              }}
             >
-              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.08]">
+              <span
+                className="flex h-7 w-7 items-center justify-center rounded-full border"
+                style={{
+                  borderColor: "var(--shell-borde)",
+                  background: "var(--shell-superficie-suave)",
+                }}
+              >
                 <Icono nombre={iconoAccionRapida} tamaño={14} peso="fill" />
               </span>
               <span className="sr-only">{etiquetaAccionRapida}</span>
@@ -530,7 +559,12 @@ export default function Navbar() {
               <div
                 role="menu"
                 aria-label="Opciones de podcasts"
-                className="absolute right-0 top-full z-[70] mt-3 w-[312px] rounded-[24px] border border-white/[0.08] bg-[#1B0B2C]/95 p-2.5 shadow-[0_26px_70px_rgba(8,2,20,0.45)] backdrop-blur-2xl"
+                className="absolute right-0 top-full z-[70] mt-3 w-[312px] rounded-[24px] border p-2.5 backdrop-blur-2xl"
+                style={{
+                  borderColor: "var(--shell-borde)",
+                  background: "var(--shell-panel)",
+                  boxShadow: "var(--shell-sombra-fuerte)",
+                }}
               >
                 <div className="flex flex-col gap-1.5">
                   {TIPOS_MENU_PODCAST.map((tipo) => {
@@ -580,7 +614,7 @@ export default function Navbar() {
                             : "destello";
 
                     const accionAria = estaGenerando
-                      ? `Podcast ${config.titulo} en preparación`
+                      ? `${config.titulo} en preparación`
                       : estaListo
                         ? estaActivo
                           ? reproduciendo
@@ -603,7 +637,7 @@ export default function Navbar() {
                         className={`group/item flex items-center gap-3 rounded-[20px] border px-3 py-2.5 text-left transition-all duration-200 ${
                           estaActivo
                             ? "border-[#B388FF]/22 bg-[linear-gradient(135deg,rgba(124,77,255,0.22),rgba(179,136,255,0.08))] shadow-[0_12px_28px_rgba(20,8,42,0.26)]"
-                            : "border-white/[0.08] bg-black/10 hover:border-white/15 hover:bg-white/[0.05]"
+                          : "border-[var(--shell-borde)] bg-transparent"
                         } disabled:cursor-not-allowed disabled:opacity-80`}
                       >
                         <div
@@ -623,7 +657,7 @@ export default function Navbar() {
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="text-[12px] font-semibold leading-5 text-white/94">
+                            <p className="text-[12px] font-semibold leading-5 text-[color:var(--shell-texto)]">
                               {config.titulo}
                             </p>
                             {estaListo && (
@@ -632,7 +666,7 @@ export default function Navbar() {
                               </span>
                             )}
                           </div>
-                          <p className="mt-1 text-[11px] leading-5 text-white/68">
+                          <p className="mt-1 text-[11px] leading-5 text-[color:var(--shell-texto-secundario)]">
                             {detalle}
                           </p>
                         </div>
@@ -643,7 +677,7 @@ export default function Navbar() {
                           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
                             estaActivo
                               ? "border-[#B388FF]/28 bg-[#7C4DFF]/18 text-white"
-                              : "border-white/[0.08] bg-white/[0.06] text-white/78 group-hover/item:border-[#B388FF]/18 group-hover/item:text-white"
+                            : "border-[var(--shell-borde)] bg-[var(--shell-superficie)] text-[color:var(--shell-texto-secundario)]"
                           }`}
                         >
                           <Icono
@@ -662,7 +696,12 @@ export default function Navbar() {
 
           <Link
             href="/suscripcion"
-            className="hidden items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-[11px] font-medium text-white/76 transition-colors hover:border-white/[0.14] hover:text-white 2xl:flex"
+            className="hidden items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-medium transition-colors 2xl:flex"
+            style={{
+              borderColor: "var(--shell-borde)",
+              background: "var(--shell-superficie)",
+              color: "var(--shell-texto-secundario)",
+            }}
           >
             <span
               className={`h-2 w-2 rounded-full ${
@@ -678,7 +717,8 @@ export default function Navbar() {
                 setMenuPodcastsAbierto(false);
                 setMenuUsuarioAbierto(!menuUsuarioAbierto);
               }}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-violet-500 to-violet-700 text-xs font-bold text-white shadow-[0_10px_24px_rgba(32,10,74,0.3)]"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border bg-gradient-to-br from-violet-500 to-violet-700 text-xs font-bold text-white shadow-[0_10px_24px_rgba(32,10,74,0.3)]"
+              style={{ borderColor: "var(--shell-borde-fuerte)" }}
               aria-label="Menu de usuario"
             >
               {inicialesUsuario}
@@ -690,15 +730,28 @@ export default function Navbar() {
             </button>
 
             {menuUsuarioAbierto && (
-              <div className="absolute right-0 top-full z-[70] mt-3 w-64 rounded-[24px] border border-white/[0.08] bg-[#1B0B2C]/95 p-2 shadow-[0_26px_70px_rgba(8,2,20,0.45)] backdrop-blur-2xl">
+              <div
+                className="absolute right-0 top-full z-[70] mt-3 w-64 rounded-[24px] border p-2 backdrop-blur-2xl"
+                style={{
+                  borderColor: "var(--shell-borde)",
+                  background: "var(--shell-panel)",
+                  boxShadow: "var(--shell-sombra-fuerte)",
+                }}
+              >
                 {usuario && (
-                  <div className="rounded-[18px] border border-white/[0.08] bg-white/[0.04] px-4 py-3">
+                  <div
+                    className="rounded-[18px] border px-4 py-3"
+                    style={{
+                      borderColor: "var(--shell-borde)",
+                      background: "var(--shell-superficie)",
+                    }}
+                  >
                     <div className="mb-2 flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold leading-tight text-white">
+                        <p className="text-sm font-semibold leading-tight text-[color:var(--shell-texto)]">
                           {nombreUsuario}
                         </p>
-                        <p className="mt-1 break-all text-xs leading-5 text-white/54">
+                        <p className="mt-1 break-all text-xs leading-5 text-[color:var(--shell-texto-secundario)]">
                           {usuario.email}
                         </p>
                       </div>
@@ -714,7 +767,7 @@ export default function Navbar() {
                     </div>
 
                     {estadoCabecera.descripcion && (
-                      <p className="text-[11px] leading-relaxed text-white/58">
+                      <p className="text-[11px] leading-relaxed text-[color:var(--shell-texto-secundario)]">
                         {estadoCabecera.descripcion}
                       </p>
                     )}
@@ -725,7 +778,8 @@ export default function Navbar() {
                   <Link
                     href="/perfil"
                     onClick={() => setMenuUsuarioAbierto(false)}
-                    className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-white/72 transition-colors hover:bg-white/[0.06] hover:text-white"
+                    className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition-colors hover:bg-[var(--shell-superficie)]"
+                    style={{ color: "var(--shell-texto-secundario)" }}
                   >
                     <Icono nombre="usuario" tamaño={16} />
                     Mi perfil
@@ -734,7 +788,8 @@ export default function Navbar() {
                   <Link
                     href="/suscripcion"
                     onClick={() => setMenuUsuarioAbierto(false)}
-                    className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-white/72 transition-colors hover:bg-white/[0.06] hover:text-white"
+                    className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition-colors hover:bg-[var(--shell-superficie)]"
+                    style={{ color: "var(--shell-texto-secundario)" }}
                   >
                     <Icono nombre="corona" tamaño={16} />
                     Suscripción
@@ -743,11 +798,23 @@ export default function Navbar() {
                   <Link
                     href="/podcast"
                     onClick={() => setMenuUsuarioAbierto(false)}
-                    className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-white/72 transition-colors hover:bg-white/[0.06] hover:text-white"
+                    className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition-colors hover:bg-[var(--shell-superficie)]"
+                    style={{ color: "var(--shell-texto-secundario)" }}
                   >
                     <Icono nombre="microfono" tamaño={16} />
                     Podcasts
                   </Link>
+
+                  {usuario?.rol === "admin" && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setMenuUsuarioAbierto(false)}
+                      className="flex items-center gap-3 rounded-2xl bg-red-500/10 px-3 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20 hover:text-red-300"
+                    >
+                      <Icono nombre="escudo" tamaño={16} />
+                      Backoffice
+                    </Link>
+                  )}
 
                   <button
                     onClick={manejarCerrarSesion}

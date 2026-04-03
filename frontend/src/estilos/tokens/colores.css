@@ -1,7 +1,6 @@
 /* ============================================
    ASTRA / CosmicEngine — Design Tokens: Colores
-   Fuente de verdad para toda la paleta.
-   Cambiar toda la UI = editar este archivo.
+   Fuente de verdad para light / dark del frontend web.
    ============================================ */
 
 :root {
@@ -11,22 +10,22 @@
   --color-violet-200: #d8b4fe;
   --color-violet-300: #c084fc;
   --color-violet-400: #a855f7;
-  --color-violet-500: #7C4DFF;
-  --color-violet-600: #6D28D9;
-  --color-violet-700: #5B21B6;
-  --color-violet-800: #4C1D95;
-  --color-violet-900: #2E1065;
+  --color-violet-500: #7c4dff;
+  --color-violet-600: #6d28d9;
+  --color-violet-700: #5b21b6;
+  --color-violet-800: #4c1d95;
+  --color-violet-900: #2e1065;
   --color-violet-950: #1a0a3e;
 
   /* --- Primitivos Dorado --- */
-  --color-dorado-300: #FCD34D;
-  --color-dorado-400: #FBBF24;
-  --color-dorado-500: #F59E0B;
+  --color-dorado-300: #fcd34d;
+  --color-dorado-400: #fbbf24;
+  --color-dorado-500: #f59e0b;
 
   /* --- Primitivos Cyan --- */
-  --color-cyan-300: #67E8F9;
-  --color-cyan-400: #22D3EE;
-  --color-cyan-500: #06B6D4;
+  --color-cyan-300: #67e8f9;
+  --color-cyan-400: #22d3ee;
+  --color-cyan-500: #06b6d4;
 
   /* --- Primitivos Neutros --- */
   --color-gris-50: #fafafa;
@@ -40,36 +39,244 @@
   --color-gris-800: #262626;
   --color-gris-900: #171717;
   --color-gris-950: #0a0a0a;
+}
 
-  /* --- Semánticos --- */
+html[data-tema="claro"],
+:root {
+  --tema-color-scheme: light;
+
   --color-primario: var(--color-violet-500);
   --color-primario-hover: var(--color-violet-600);
   --color-primario-suave: var(--color-violet-100);
 
-  --color-acento: var(--color-dorado-400);
-  --color-acento-suave: var(--color-dorado-300);
+  --color-acento: var(--color-violet-500);
+  --color-acento-suave: #ede4ff;
 
-  --color-secundario: var(--color-cyan-400);
-  --color-secundario-suave: var(--color-cyan-300);
+  --color-secundario: #8f6bff;
+  --color-secundario-suave: #ede4ff;
 
-  /* --- Fondos (tema claro) --- */
-  --color-fondo: #FAFAFA;
-  --color-fondo-tarjeta: #FFFFFF;
-  --color-fondo-elevado: #F5F0FF;
-  --color-fondo-input: #F5F0FF;
+  --color-fondo: #f7f3fc;
+  --color-fondo-tarjeta: #ffffff;
+  --color-fondo-elevado: #f1ebfa;
+  --color-fondo-input: #f1ebfa;
 
-  /* --- Textos (tema claro) --- */
-  --color-texto: #2C2926;
-  --color-texto-secundario: #8A8580;
-  --color-texto-terciario: #B3ADA7;
+  --color-texto: #2c2926;
+  --color-texto-secundario: #6b7280;
+  --color-texto-terciario: #9ca3af;
 
-  /* --- Bordes (tema claro) --- */
-  --color-borde: #E8E4E020;
-  --color-borde-hover: #E8E4E040;
+  --color-borde: #e7def3;
+  --color-borde-hover: #d6c8ee;
 
-  /* --- Estados --- */
   --color-exito: #22c55e;
-  --color-advertencia: #f59e0b;
+  --color-advertencia: #d96b83;
   --color-error: #ef4444;
-  --color-info: var(--color-cyan-400);
+  --color-info: #8f6bff;
+
+  --shell-fondo: #f3eef8;
+  --shell-fondo-profundo: #ede6f7;
+  --shell-navbar: rgba(255, 255, 255, 0.72);
+  --shell-sidebar: linear-gradient(180deg, #fcfaff 0%, #f3edf9 100%);
+  --shell-tabbar: rgba(248, 243, 252, 0.94);
+  --shell-reproductor: rgba(255, 255, 255, 0.92);
+  --shell-superficie: rgba(255, 255, 255, 0.82);
+  --shell-superficie-fuerte: rgba(255, 255, 255, 0.92);
+  --shell-superficie-suave: rgba(124, 77, 255, 0.06);
+  --shell-panel: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(246, 240, 252, 0.92));
+  --shell-panel-suave: linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(244, 237, 251, 0.82));
+  --shell-hero: radial-gradient(circle_at_top_left, rgba(179, 136, 255, 0.14), transparent 32%), linear-gradient(135deg, rgba(90, 58, 170, 0.98), rgba(62, 38, 132, 0.98));
+  --shell-hero-borde: rgba(124, 77, 255, 0.18);
+  --shell-borde: rgba(124, 77, 255, 0.12);
+  --shell-borde-fuerte: rgba(124, 77, 255, 0.2);
+  --shell-texto: #2c2926;
+  --shell-texto-secundario: rgba(44, 41, 38, 0.76);
+  --shell-texto-tenue: rgba(44, 41, 38, 0.52);
+  --shell-texto-inverso: #f8f6ff;
+  --shell-hero-texto: #f8f6ff;
+  --shell-hero-texto-secundario: rgba(248, 246, 255, 0.74);
+  --shell-hero-texto-tenue: rgba(248, 246, 255, 0.56);
+  --shell-chip: rgba(124, 77, 255, 0.08);
+  --shell-chip-hover: rgba(124, 77, 255, 0.14);
+  --shell-chip-borde: rgba(124, 77, 255, 0.14);
+  --shell-badge-neutral-fondo: rgba(255, 255, 255, 0.76);
+  --shell-badge-neutral-borde: rgba(124, 77, 255, 0.12);
+  --shell-badge-neutral-texto: rgba(44, 41, 38, 0.76);
+  --shell-badge-exito-fondo: rgba(16, 185, 129, 0.12);
+  --shell-badge-exito-borde: rgba(16, 185, 129, 0.22);
+  --shell-badge-exito-texto: #0f6b4b;
+  --shell-badge-error-fondo: rgba(239, 68, 68, 0.12);
+  --shell-badge-error-borde: rgba(239, 68, 68, 0.22);
+  --shell-badge-error-texto: #a33a3a;
+  --shell-badge-violeta-fondo: rgba(124, 77, 255, 0.12);
+  --shell-badge-violeta-borde: rgba(124, 77, 255, 0.2);
+  --shell-badge-violeta-texto: #6b43d6;
+  --shell-overlay: rgba(247, 243, 252, 0.84);
+  --shell-overlay-suave: rgba(61, 38, 132, 0.16);
+  --shell-sombra-suave: 0 18px 44px rgba(93, 53, 167, 0.12);
+  --shell-sombra-fuerte: 0 24px 64px rgba(72, 36, 136, 0.2);
+  --shell-glow-1: rgba(124, 77, 255, 0.16);
+  --shell-glow-2: rgba(179, 136, 255, 0.12);
+  --shell-logo-filter: brightness(0) saturate(100%);
+
+  --scroll-thumb: rgba(124, 77, 255, 0.2);
+  --scroll-thumb-hover: rgba(124, 77, 255, 0.36);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema]) {
+    --tema-color-scheme: dark;
+
+    --color-primario: var(--color-violet-400);
+    --color-primario-hover: var(--color-violet-300);
+    --color-primario-suave: rgba(124, 77, 255, 0.16);
+
+    --color-acento: #c084fc;
+    --color-acento-suave: rgba(192, 132, 252, 0.16);
+
+    --color-secundario: #a78bfa;
+    --color-secundario-suave: rgba(167, 139, 250, 0.16);
+
+    --color-fondo: #0f0a1a;
+    --color-fondo-tarjeta: #1a1128;
+    --color-fondo-elevado: #241434;
+    --color-fondo-input: #1d122c;
+
+    --color-texto: #f5f0ff;
+    --color-texto-secundario: rgba(245, 240, 255, 0.7);
+    --color-texto-terciario: rgba(245, 240, 255, 0.42);
+
+    --color-borde: rgba(255, 255, 255, 0.08);
+    --color-borde-hover: rgba(255, 255, 255, 0.16);
+
+    --color-exito: #34d399;
+    --color-advertencia: #f39aa9;
+    --color-error: #f87171;
+    --color-info: #a78bfa;
+
+    --shell-fondo: #16011b;
+    --shell-fondo-profundo: #120117;
+    --shell-navbar: rgba(23, 4, 29, 0.82);
+    --shell-sidebar: linear-gradient(180deg, #1c0627 0%, #16011b 100%);
+    --shell-tabbar: rgba(18, 9, 31, 0.95);
+    --shell-reproductor: #1a1128;
+    --shell-superficie: rgba(255, 255, 255, 0.06);
+    --shell-superficie-fuerte: rgba(255, 255, 255, 0.1);
+    --shell-superficie-suave: rgba(255, 255, 255, 0.04);
+    --shell-panel: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+    --shell-panel-suave: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+    --shell-hero: radial-gradient(circle_at_top_left, rgba(179, 136, 255, 0.2), transparent 32%), linear-gradient(135deg, rgba(45, 27, 105, 0.96), rgba(22, 1, 27, 0.98));
+    --shell-hero-borde: rgba(255, 255, 255, 0.08);
+    --shell-borde: rgba(255, 255, 255, 0.08);
+    --shell-borde-fuerte: rgba(179, 136, 255, 0.22);
+    --shell-texto: #f8f6ff;
+    --shell-texto-secundario: rgba(248, 246, 255, 0.76);
+    --shell-texto-tenue: rgba(248, 246, 255, 0.46);
+    --shell-texto-inverso: #f8f6ff;
+    --shell-hero-texto: #f8f6ff;
+    --shell-hero-texto-secundario: rgba(248, 246, 255, 0.74);
+    --shell-hero-texto-tenue: rgba(248, 246, 255, 0.56);
+    --shell-chip: rgba(255, 255, 255, 0.06);
+    --shell-chip-hover: rgba(255, 255, 255, 0.12);
+    --shell-chip-borde: rgba(255, 255, 255, 0.08);
+    --shell-badge-neutral-fondo: rgba(255, 255, 255, 0.08);
+    --shell-badge-neutral-borde: rgba(255, 255, 255, 0.1);
+    --shell-badge-neutral-texto: rgba(248, 246, 255, 0.76);
+    --shell-badge-exito-fondo: rgba(16, 185, 129, 0.14);
+    --shell-badge-exito-borde: rgba(16, 185, 129, 0.22);
+    --shell-badge-exito-texto: #d1fae5;
+    --shell-badge-error-fondo: rgba(239, 68, 68, 0.14);
+    --shell-badge-error-borde: rgba(239, 68, 68, 0.22);
+    --shell-badge-error-texto: #fecaca;
+    --shell-badge-violeta-fondo: rgba(124, 77, 255, 0.18);
+    --shell-badge-violeta-borde: rgba(179, 136, 255, 0.24);
+    --shell-badge-violeta-texto: #eadfff;
+    --shell-overlay: rgba(18, 1, 23, 0.82);
+    --shell-overlay-suave: rgba(18, 1, 23, 0.24);
+    --shell-sombra-suave: 0 18px 44px rgba(8, 2, 22, 0.28);
+    --shell-sombra-fuerte: 0 24px 64px rgba(8, 2, 22, 0.38);
+    --shell-glow-1: rgba(124, 77, 255, 0.18);
+    --shell-glow-2: rgba(179, 136, 255, 0.14);
+    --shell-logo-filter: none;
+
+    --scroll-thumb: rgba(124, 77, 255, 0.24);
+    --scroll-thumb-hover: rgba(179, 136, 255, 0.42);
+  }
+}
+
+html[data-tema="oscuro"] {
+  --tema-color-scheme: dark;
+
+  --color-primario: var(--color-violet-400);
+  --color-primario-hover: var(--color-violet-300);
+  --color-primario-suave: rgba(124, 77, 255, 0.16);
+
+  --color-acento: #c084fc;
+  --color-acento-suave: rgba(192, 132, 252, 0.16);
+
+  --color-secundario: #a78bfa;
+  --color-secundario-suave: rgba(167, 139, 250, 0.16);
+
+  --color-fondo: #0f0a1a;
+  --color-fondo-tarjeta: #1a1128;
+  --color-fondo-elevado: #241434;
+  --color-fondo-input: #1d122c;
+
+  --color-texto: #f5f0ff;
+  --color-texto-secundario: rgba(245, 240, 255, 0.7);
+  --color-texto-terciario: rgba(245, 240, 255, 0.42);
+
+  --color-borde: rgba(255, 255, 255, 0.08);
+  --color-borde-hover: rgba(255, 255, 255, 0.16);
+
+  --color-exito: #34d399;
+  --color-advertencia: #f39aa9;
+  --color-error: #f87171;
+  --color-info: #a78bfa;
+
+  --shell-fondo: #16011b;
+  --shell-fondo-profundo: #120117;
+  --shell-navbar: rgba(23, 4, 29, 0.82);
+  --shell-sidebar: linear-gradient(180deg, #1c0627 0%, #16011b 100%);
+  --shell-tabbar: rgba(18, 9, 31, 0.95);
+  --shell-reproductor: #1a1128;
+  --shell-superficie: rgba(255, 255, 255, 0.06);
+  --shell-superficie-fuerte: rgba(255, 255, 255, 0.1);
+  --shell-superficie-suave: rgba(255, 255, 255, 0.04);
+  --shell-panel: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  --shell-panel-suave: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+  --shell-hero: radial-gradient(circle_at_top_left, rgba(179, 136, 255, 0.2), transparent 32%), linear-gradient(135deg, rgba(45, 27, 105, 0.96), rgba(22, 1, 27, 0.98));
+  --shell-hero-borde: rgba(255, 255, 255, 0.08);
+  --shell-borde: rgba(255, 255, 255, 0.08);
+  --shell-borde-fuerte: rgba(179, 136, 255, 0.22);
+  --shell-texto: #f8f6ff;
+  --shell-texto-secundario: rgba(248, 246, 255, 0.76);
+  --shell-texto-tenue: rgba(248, 246, 255, 0.46);
+  --shell-texto-inverso: #f8f6ff;
+  --shell-hero-texto: #f8f6ff;
+  --shell-hero-texto-secundario: rgba(248, 246, 255, 0.74);
+  --shell-hero-texto-tenue: rgba(248, 246, 255, 0.56);
+  --shell-chip: rgba(255, 255, 255, 0.06);
+  --shell-chip-hover: rgba(255, 255, 255, 0.12);
+  --shell-chip-borde: rgba(255, 255, 255, 0.08);
+  --shell-badge-neutral-fondo: rgba(255, 255, 255, 0.08);
+  --shell-badge-neutral-borde: rgba(255, 255, 255, 0.1);
+  --shell-badge-neutral-texto: rgba(248, 246, 255, 0.76);
+  --shell-badge-exito-fondo: rgba(16, 185, 129, 0.14);
+  --shell-badge-exito-borde: rgba(16, 185, 129, 0.22);
+  --shell-badge-exito-texto: #d1fae5;
+  --shell-badge-error-fondo: rgba(239, 68, 68, 0.14);
+  --shell-badge-error-borde: rgba(239, 68, 68, 0.22);
+  --shell-badge-error-texto: #fecaca;
+  --shell-badge-violeta-fondo: rgba(124, 77, 255, 0.18);
+  --shell-badge-violeta-borde: rgba(179, 136, 255, 0.24);
+  --shell-badge-violeta-texto: #eadfff;
+  --shell-overlay: rgba(18, 1, 23, 0.82);
+  --shell-overlay-suave: rgba(18, 1, 23, 0.24);
+  --shell-sombra-suave: 0 18px 44px rgba(8, 2, 22, 0.28);
+  --shell-sombra-fuerte: 0 24px 64px rgba(8, 2, 22, 0.38);
+  --shell-glow-1: rgba(124, 77, 255, 0.18);
+  --shell-glow-2: rgba(179, 136, 255, 0.14);
+  --shell-logo-filter: none;
+
+  --scroll-thumb: rgba(124, 77, 255, 0.24);
+  --scroll-thumb-hover: rgba(179, 136, 255, 0.42);
 }

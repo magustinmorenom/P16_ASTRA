@@ -2619,3 +2619,468 @@ Se inició el round de mejoras prioritarias de UI mobile con un cambio de sistem
 3. `Inicio` recupera jerarquía: hero principal, alertas resumidas, momentos del día en carrusel, áreas priorizadas y podcasts mejor distribuidos.
 4. `Descubrir` deja de comportarse como catálogo uniforme y pasa a agrupar módulos por intención (`arquitectura personal`, `tiempo cósmico`, `premium`) para mejorar comprensión de producto.
 5. Este round no cerró todavía el resto de módulos utilitarios (`Perfil`, `Calendario`, `Tránsitos`, `Suscripción`) pero dejó lista la base visual para que el siguiente batch suba esas pantallas sin rehacer componentes otra vez.
+
+---
+
+## Sesion: Web — base de light theme alineada con mobile
+**Fecha:** 2026-04-03 ~18:33 (ARG)
+
+### Que se hizo
+Se implementó la primera fase real del modo claro para la app web, tomando como referencia la paleta y la lógica de tema de la app mobile. La web ahora tiene infraestructura de tema `claro/oscuro/automático`, selector persistente en perfil y migración del shell principal para que escritorio pueda navegar en light sin depender del dark hardcodeado.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/lib/stores/store-tema.ts` | Nuevo store Zustand para preferencia de tema web (`claro`, `oscuro`, `automático`) con persistencia en `localStorage` y sincronización con el sistema |
+| `frontend/src/lib/hooks/usar-tema.ts` | Nuevo hook para consumir tema activo y actualizar preferencia desde UI |
+| `frontend/src/proveedores/proveedor-tema.tsx` | Nuevo proveedor que inicializa el tema, escucha cambios del sistema y aplica `data-tema` al documento |
+| `frontend/src/app/layout.tsx` | Inyecta script inicial para evitar flash de tema, registra el proveedor de tema y ajusta metadatos base |
+| `frontend/src/estilos/tokens/colores.css` | Reescribe tokens globales con variantes light/dark y variables semánticas de shell alineadas con mobile |
+| `frontend/src/app/globals.css` | Ajusta `color-scheme`, fondos base, scrollbars y agrega utilidades globales de superficies temáticas |
+| `frontend/src/componentes/ui/icono.tsx` | Amplía el set de iconos para selector de tema y acciones de perfil |
+| `frontend/src/componentes/ui/avatar.tsx` | Ajusta avatar para usar bordes/superficies del nuevo sistema de tema |
+| `frontend/src/proveedores/proveedor-auth.tsx` | Hace theme-aware el loader global de autenticación |
+| `frontend/src/componentes/layouts/layout-auth.tsx` | Adapta el shell de auth al nuevo sistema de fondos y logo según tema |
+| `frontend/src/componentes/layouts/layout-app.tsx` | Migra el shell autenticado de escritorio a variables de tema en vez de fondos hardcodeados |
+| `frontend/src/componentes/layouts/layout-mobile.tsx` | Alinea el shell mobile web con el nuevo fondo semántico |
+| `frontend/src/componentes/layouts/header-mobile.tsx` | Migra header mobile a superficies y textos dependientes del tema |
+| `frontend/src/componentes/layouts/barra-navegacion-inferior.tsx` | Hace theme-aware la barra inferior mobile web |
+| `frontend/src/componentes/layouts/navbar.tsx` | Migra navbar principal y dropdowns a variables de tema, con soporte de logo en claro |
+| `frontend/src/componentes/layouts/sidebar-navegacion.tsx` | Migra sidebar desktop/mobile y modal de descargas a superficies light/dark compartidas |
+| `frontend/src/componentes/layouts/reproductor-cosmico.tsx` | Reescribe el reproductor desktop para responder al tema activo |
+| `frontend/src/componentes/layouts/mini-reproductor.tsx` | Reescribe el reproductor mobile web para responder al tema activo |
+| `frontend/src/componentes/dashboard-v2/panel-glass.tsx` | Hace theme-aware la primitiva glass del dashboard |
+| `frontend/src/componentes/dashboard-v2/areas-vida-v2.tsx` | Migra la tarjeta de áreas del dashboard a superficies y tipografía del light theme |
+| `frontend/src/componentes/dashboard-v2/semana-v2.tsx` | Migra la vista semanal del dashboard y tooltips a variables de tema |
+| `frontend/src/app/(app)/perfil/page.tsx` | Agrega selector de tema en web y comienza la migración visual de perfil al sistema light/dark |
+| `context/resumen-de-cambios.md` | Documenta esta sesión de implementación del light theme web |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `npm run build` y `npm run lint` dentro de `frontend/` usando Node `20.20.0` (`/opt/homebrew/opt/node@20/bin`). ESLint quedó sin errores y con warnings preexistentes del repo en archivos no vinculados directamente a esta sesión.
+
+### Como funciona
+1. La web ahora decide el tema con la misma lógica conceptual que mobile: el usuario puede elegir `Claro`, `Oscuro` o `Automático`, y la preferencia queda guardada localmente.
+2. Antes de hidratar React, un script en `layout.tsx` aplica el tema al `<html>` para evitar el parpadeo entre light/dark al cargar.
+3. Los tokens globales de color ya no están atados sólo a la versión clara histórica ni al dark hardcodeado del dashboard: ahora existen variables semánticas de shell, superficies, bordes, scrollbars y overlays para ambos esquemas.
+4. El shell principal de la app web (navbar, sidebar, barra inferior, auth, reproductores y parte del dashboard) ya responde al tema activo, permitiendo una experiencia light navegable y coherente con la referencia visual de mobile.
+5. La pantalla `Perfil` expone el selector de tema para escritorio y deja sembrada la infraestructura para continuar migrando el resto de las pantallas analíticas sin rehacer el sistema otra vez.
+
+---
+
+## Sesion: Numerología — deduplicación del panel contextual
+**Fecha:** 2026-04-03 ~18:34 (ARG)
+
+### Que se hizo
+Se corrigió la duplicación del encabezado en el panel contextual de numerología al abrir opciones del núcleo y del ritmo actual. En desktop, la categoría, el título y el subtítulo ya no se renderizan dos veces dentro del rail lateral.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/numerologia/panel-contextual-numerologia.tsx` | Oculta la cabecera interna del detalle en modo desktop y la conserva en mobile, evitando repetir categoría, título y subtítulo dentro del rail lateral |
+| `frontend/src/tests/paginas/numerologia.test.tsx` | Agrega cobertura para asegurar que al abrir `Sendero Natal` no se duplique la cabecera del detalle en la vista desktop |
+| `context/resumen-de-cambios.md` | Documenta esta corrección puntual de numerología |
+
+### Tests
+Se modificó 1 test de frontend y quedaron `7/7` pasando en `src/tests/paginas/numerologia.test.tsx`. También pasó `npm run lint -- src/componentes/numerologia/panel-contextual-numerologia.tsx src/tests/paginas/numerologia.test.tsx` dentro de `frontend/`.
+
+### Como funciona
+1. El usuario toca una opción como `Sendero Natal`, `Día Personal` o `Mes Personal` en la página de numerología.
+2. El `RailLateral` de desktop sigue mostrando la cabecera principal del detalle con categoría, título y subtítulo.
+3. El panel interno ahora arranca directamente con la lectura del número y los bloques de contenido, en lugar de repetir otra vez la misma cabecera antes de la explicación.
+4. En mobile no cambia el comportamiento esperado: el sheet conserva su propia cabecera porque allí no existe el encabezado externo del rail.
+
+---
+
+## Sesion: Podcasts web — copy editorial y retención acotada
+**Fecha:** 2026-04-03 ~18:43 (ARG)
+
+### Que se hizo
+Se refinó la experiencia web de Podcasts para que las cards usen un único mensaje editorial por tipo, sin repetir título y subtítulo, y se incorporó una retención real por tipo en backend. Además, el historial ahora arranca mostrando 5 registros y puede expandirse inline con `Ver más`.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `backend/app/datos/repositorio_podcast.py` | Agrega política de retención `7/4/4`, límite total de historial y rutina de purga por usuario/tipo ordenada por fecha y creación |
+| `backend/app/rutas/v1/podcast.py` | Normaliza retención antes de listar historial y después de generar, y eleva el default del historial al máximo retenido |
+| `backend/app/servicios/servicio_podcast.py` | Actualiza los títulos generados para día, semana y mes con el nuevo tono editorial |
+| `backend/tests/rutas/test_rutas_podcast.py` | Ajusta las rutas para verificar la normalización del historial y la purga post-generación |
+| `backend/tests/servicios/test_servicio_podcast.py` | Actualiza assertions de títulos al nuevo copy generado |
+| `backend/tests/servicios/test_repositorio_podcast.py` | Nuevo test unitario para la purga por tipo, offsets `7/4/4` y commit condicional |
+| `frontend/src/lib/utilidades/podcast.ts` | Nuevo mapa centralizado de copy web para cards, reproductor e historial visible |
+| `frontend/src/app/(app)/podcast/page.tsx` | Reemplaza el copy de cards por mensaje único, cambia el heading de selección y agrega `Ver más / Ver menos` sobre historial |
+| `frontend/src/app/(app)/dashboard/page.tsx` | Ajusta los subtítulos de reproducción para usar `Podcast del día/semana/mes` |
+| `frontend/src/componentes/layouts/navbar.tsx` | Unifica el naming del menú contextual y del reproductor activo con las nuevas etiquetas compactas |
+| `frontend/src/tests/paginas/podcast.test.tsx` | Agrega cobertura para el heading nuevo, el copy editorial por card y la expansión/contracción del historial |
+| `frontend/src/tests/componentes/navbar.test.tsx` | Actualiza el menú contextual para validar `Podcast del día`, `Podcast de la semana` y `Podcast del mes` |
+| `frontend/src/tests/componentes/reproductor-cosmico.test.tsx` | Alinea el fixture del reproductor con el nuevo subtítulo visible |
+| `context/resumen-de-cambios.md` | Documenta esta sesión de ajuste funcional y visual en Podcasts |
+
+### Tests
+Se agregaron 4 tests y se ajustaron 7 existentes. `./.venv/bin/pytest tests/rutas/test_rutas_podcast.py tests/servicios/test_servicio_podcast.py tests/servicios/test_repositorio_podcast.py -q` pasó `30 passed`. `npx -y node@20 ./node_modules/vitest/vitest.mjs run src/tests/paginas/podcast.test.tsx src/tests/componentes/navbar.test.tsx src/tests/componentes/reproductor-cosmico.test.tsx` pasó `12 passed`. `npx eslint` sobre los archivos tocados pasó sin errores; quedaron warnings preexistentes del dashboard en imports y variables no usadas que no forman parte de esta sesión.
+
+### Como funciona
+1. El usuario entra a `/podcast` y ve tres cards con badge corto (`Podcast diario`, `Podcast semanal`, `Podcast mensual`) y un solo mensaje editorial por tipo, sin subtítulo duplicado.
+2. Si un episodio está listo, al reproducirlo desde la card, el historial o el navbar, el reproductor web muestra etiquetas consistentes: `Podcast del día`, `Podcast de la semana` o `Podcast del mes`.
+3. El backend conserva como máximo 7 episodios diarios, 4 semanales y 4 mensuales por usuario; cualquier excedente se purga automáticamente al generar y también antes de listar el historial.
+4. El historial web pide la colección retenida, muestra solo 5 registros al inicio y permite expandir o contraer inline sin cambiar el contrato del endpoint.
+
+---
+
+## Sesion: Perfil PDF — rediseño editorial ASTRA
+**Fecha:** 2026-04-03 ~18:43 (ARG)
+
+### Que se hizo
+Se rediseñó por completo el PDF de `Descargar perfil` para que deje de verse como un reporte administrativo y pase a sentirse como un dossier editorial ASTRA. La nueva versión introduce portada premium, jerarquía visual fuerte, fondos y acentos ciruela, tarjetas-resumen y páginas internas mucho más limpias.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `backend/app/servicios/servicio_pdf_perfil.py` | Reescribe el generador PDF con composición editorial, portada visual ASTRA, headers/footers decorados, cards redondeadas, tablas refinadas y resúmenes por sección para Carta Astral, Diseño Humano y Numerología |
+| `context/resumen-de-cambios.md` | Documenta esta sesión de rediseño del PDF del perfil |
+
+### Tests
+No se agregaron tests nuevos ni se modificaron los existentes. Pasaron `11` tests de `backend/tests/servicios/test_servicio_pdf_perfil.py` y `22` tests de `backend/tests/rutas/test_rutas_perfil.py`. También pasó `ruff check backend/app/servicios/servicio_pdf_perfil.py`.
+
+### Como funciona
+1. El usuario hace click en `Descargar perfil` desde el panel izquierdo y el frontend sigue llamando al mismo endpoint `GET /api/v1/profile/me/pdf`, sin cambios de contrato.
+2. El backend arma ahora un PDF con una portada nocturna ASTRA, datos editoriales del perfil y un resumen visual inicial de astrología, diseño humano y numerología.
+3. Cada disciplina abre con una cabecera propia, un bloque de contexto y tarjetas-resumen que priorizan los datos más importantes antes de entrar en las tablas técnicas.
+4. Las tablas internas conservan toda la información funcional previa, pero con tipografía, contraste, bandas alternadas y espaciado más cuidados para lectura real en pantalla o impresión.
+5. Si una sección todavía no tiene cálculo, el PDF ya no cae en un bloque plano: muestra un estado vacío integrado al lenguaje visual del documento para mantener coherencia de principio a fin.
+
+---
+
+## Sesion: Web — light theme fase 2 en dashboard, podcast y perfil
+**Fecha:** 2026-04-03 ~18:57 (ARG)
+
+### Que se hizo
+Se completó la segunda fase visible del light theme web migrando las pantallas de producto que seguían más atadas al dark hardcodeado. `Dashboard`, `Podcast` y `Perfil` ahora usan superficies, bordes, overlays y acentos semánticos del sistema de tema en lugar de colores fijos nocturnos.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/dashboard/page.tsx` | Limpia imports viejos, migra skeletons y estado vacío del pronóstico a tokens del tema, y ajusta el CTA mobile del podcast diario |
+| `frontend/src/app/(app)/podcast/page.tsx` | Rehace la pantalla de podcasts para usar hero, cards, historial y botones theme-aware en light/dark |
+| `frontend/src/app/(app)/perfil/page.tsx` | Termina la migración visual de perfil en modales, acciones de seguridad, Telegram, sesión y eliminación de cuenta |
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Migra el hero principal del dashboard a `tema-superficie-hero` y bordes semánticos |
+| `frontend/src/componentes/dashboard-v2/panel-glass.tsx` | Agrega soporte de tono `hero` para paneles internos sobre fondos ciruela |
+| `frontend/src/componentes/dashboard-v2/tarjeta-fecha.tsx` | Ajusta la tarjeta de fecha del hero para respetar superficies y contraste del sistema |
+| `frontend/src/componentes/dashboard-v2/momentos-dia.tsx` | Migra la lista de momentos del día a fondo y divisores coherentes con el hero nuevo |
+| `frontend/src/componentes/dashboard-v2/numero-del-dia.tsx` | Migra el bloque del número personal a panel hero semántico |
+| `frontend/src/componentes/dashboard-v2/luna-posicion.tsx` | Migra el bloque lunar del hero y reemplaza fill fijo por token de acento |
+| `frontend/src/componentes/dashboard-v2/niveles-energia.tsx` | Migra las barras de intuición, claridad y fuerza a superficies hero theme-aware |
+| `context/resumen-de-cambios.md` | Documenta esta segunda fase del light theme web |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `npx eslint` sobre los 10 archivos tocados y `npm run build` dentro de `frontend/` usando Node `20.20.0` (`/opt/homebrew/opt/node@20/bin`).
+
+### Como funciona
+1. El usuario entra a `Dashboard` y ya no encuentra skeletons o estados de error clavados en un dark aislado: el hero, los paneles internos y los fallbacks responden al tema activo sin romper la jerarquía ciruela principal.
+2. En `Podcast`, la pantalla completa adopta la misma gramática visual que el resto de la app: hero ciruela consistente, cards con superficies semánticas, badges/accent chips del sistema y un historial que se lee bien tanto en claro como en oscuro.
+3. En `Perfil`, el selector de tema ya no convive con bloques heredados del dark: modales, cambio de contraseña, Telegram, cierre de sesión y eliminación de cuenta usan el mismo lenguaje visual del nuevo shell light/dark.
+4. Los componentes internos del hero del dashboard ahora distinguen entre panel común y panel sobre hero, evitando que el modo claro meta tarjetas blancas con texto claro encima del bloque ciruela.
+5. Esta fase deja la base preparada para seguir con las pantallas analíticas restantes (`descubrir`, módulos de cálculo y vistas largas) sin tener que volver a rehacer primitives ni tokens.
+
+---
+
+## Sesion: Web — light theme fase 3 en descubrir y suscripción
+**Fecha:** 2026-04-03 ~19:09 (ARG)
+
+### Que se hizo
+Se continuó la migración del modo claro sobre el flujo principal de producto llevando `Descubrir`, `Suscripción` y las vistas de `próximamente` al mismo sistema visual semántico del shell. Con esta fase, la navegación entre exploración, upgrades y módulos aún no lanzados deja de romperse con pantallas completamente dark fijas.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/descubrir/page.tsx` | Migra la pantalla a fondo light/dark semántico, hero ciruela compartido y cards theme-aware para las herramientas disponibles y próximas |
+| `frontend/src/app/(app)/suscripcion/page.tsx` | Migra el flujo de suscripción a superficies, badges, cards de planes, acciones de cancelación y pagos coherentes con el sistema de tema |
+| `frontend/src/componentes/proximamente/feature-proximamente.tsx` | Migra el componente reusable de módulos “próximamente” para que `Calendario Cósmico` y `Retorno Solar` no caigan en un dark aislado |
+| `context/resumen-de-cambios.md` | Documenta esta tercera fase del light theme web |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `npx vitest run src/tests/paginas/podcast.test.tsx src/tests/componentes/navbar.test.tsx src/tests/componentes/reproductor-cosmico.test.tsx src/tests/paginas/numerologia.test.tsx`, `npx eslint` sobre los 3 archivos tocados y `npm run build` dentro de `frontend/` usando Node `20.20.0` (`/opt/homebrew/opt/node@20/bin`).
+
+### Como funciona
+1. El usuario entra a `Descubrir` y ahora ve un fondo claro/lavanda, hero ciruela consistente con el dashboard y cards de acceso que responden al tema activo en lugar de una grilla nocturna fija.
+2. Desde esa misma pantalla, cuando abre módulos todavía no lanzados como `Calendario Cósmico` o `Retorno Solar`, la vista de placeholder conserva el mismo lenguaje visual del light theme y no rompe la continuidad del producto.
+3. En `Suscripción`, el bloque principal de cuenta y facturación mantiene el hero editorial oscuro como pieza de jerarquía, pero el resto de la página pasa a superficies claras/semánticas con mejor legibilidad en light.
+4. Las cards de planes, el historial de pagos, la sincronización con MercadoPago y los estados de cancelación usan ahora bordes, fondos y acentos del sistema de tema, sin depender de clases dark hardcodeadas.
+5. Esta fase deja el flujo principal de exploración y monetización cubierto por el light theme, reduciendo el trabajo pendiente a módulos analíticos y paneles contextuales más especializados.
+
+---
+
+## Sesion: Perfil Espiritual — fix de polling y contrato de generación
+**Fecha:** 2026-04-03 ~19:31 (ARG)
+
+### Que se hizo
+Se corrigió el flujo inicial de `perfil espiritual`, que estaba entrando en error cuando el backend devolvía `datos: null` durante la generación en background. Además, la pantalla ahora muestra el mensaje real del backend cuando faltan cálculos base en vez de caer siempre en un fallback genérico.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `backend/app/rutas/v1/perfil_espiritual.py` | Ajusta el contrato del endpoint para devolver `estado` dentro de `datos`, tanto en `generando` como en `listo`, y mantener compatibilidad con el cliente API que desenvuelve respuestas |
+| `frontend/src/lib/hooks/usar-perfil-espiritual.ts` | Corrige el hook para manejar el estado `generando` sin romper la query y seguir haciendo polling hasta que exista `resumen` + `foda` |
+| `frontend/src/app/(app)/perfil-espiritual/page.tsx` | Muestra el detalle real del error API y evita confundir un fallo de polling con “faltan cartas” |
+| `backend/tests/rutas/test_rutas_perfil_espiritual.py` | Agrega cobertura del endpoint para perfil listo, generación en background y rechazo cuando faltan cálculos base |
+| `frontend/src/tests/hooks/usar-perfil-espiritual.test.ts` | Agrega cobertura del hook para estados `generando`, `listo` y propagación de errores |
+| `context/resumen-de-cambios.md` | Documenta esta corrección del flujo de Perfil Espiritual |
+
+### Tests
+Se agregaron `6` tests nuevos. Pasaron `3/3` tests de `backend/tests/rutas/test_rutas_perfil_espiritual.py` con `backend/.venv/bin/python -m pytest tests/rutas/test_rutas_perfil_espiritual.py`, `3/3` tests de `frontend/src/tests/hooks/usar-perfil-espiritual.test.ts` con `npx -y node@20 ./node_modules/vitest/vitest.mjs run src/tests/hooks/usar-perfil-espiritual.test.ts` y `npx eslint` sobre los archivos frontend tocados.
+
+### Como funciona
+1. Cuando el usuario entra a `/perfil-espiritual`, el backend primero busca un cálculo persistido del tipo `perfil-espiritual`.
+2. Si ya existe, responde con `datos.estado = "listo"` junto al `resumen` y el `foda`, y el hook entrega ese objeto directamente a la pantalla.
+3. Si todavía no existe pero sí están `carta natal`, `diseño humano` y `numerología`, el endpoint responde con `datos.estado = "generando"` y dispara la generación en background.
+4. El hook detecta ese estado, retorna `null` sin romper la query y sigue consultando cada 3 segundos hasta que el backend persista el resultado.
+5. Si faltan cálculos base, el backend responde `422` con su detalle real y la página ahora muestra ese mensaje en lugar de un error genérico derivado del frontend.
+
+---
+
+## Sesion: Perfil Espiritual — corrección de truncamiento IA y loop infinito
+**Fecha:** 2026-04-03 ~20:01 (ARG)
+
+### Que se hizo
+Se diagnosticó el motivo por el que `Perfil Espiritual` seguía cargando indefinidamente aun después del fix anterior: la generación en background sí arrancaba, pero Claude devolvía el JSON truncado por falta de `max_tokens`, lo que producía un `JSONDecodeError` silencioso y dejaba a la UI en polling infinito. Se endureció el backend para reintentar, limitar el tiempo de espera y exponer el error real si la generación vuelve a fallar.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `backend/app/servicios/servicio_perfil_espiritual.py` | Aumenta el presupuesto de salida, agrega timeout explícito, reintento automático si la respuesta JSON sale truncada y parseo más robusto del bloque JSON |
+| `backend/app/rutas/v1/perfil_espiritual.py` | Guarda el último error de generación por usuario y deja de responder `generando` eternamente cuando el background task falla |
+| `backend/tests/servicios/test_servicio_perfil_espiritual.py` | Nueva cobertura para parseo de respuestas del modelo y reintento cuando la primera salida viene truncada |
+| `backend/tests/rutas/test_rutas_perfil_espiritual.py` | Agrega cobertura para el estado de error persistido de la ruta |
+| `context/resumen-de-cambios.md` | Documenta esta corrección de truncamiento y loop infinito |
+
+### Tests
+Se agregaron `4` tests nuevos y pasaron `7/7` tests combinados de `tests/rutas/test_rutas_perfil_espiritual.py` y `tests/servicios/test_servicio_perfil_espiritual.py` con `backend/.venv/bin/python -m pytest`. También pasó `npx eslint` sobre los archivos frontend vinculados al módulo.
+
+### Como funciona
+1. Cuando el backend dispara la generación del perfil espiritual, ahora llama a Claude con un margen de salida suficiente para el FODA completo y un timeout de seguridad para evitar requests colgados.
+2. Si el modelo responde con JSON recortado o envuelto en texto extra, el servicio intenta normalizarlo; si detecta truncamiento, reintenta automáticamente con más margen antes de fallar.
+3. Si la generación termina bien, el cálculo `perfil-espiritual` se persiste en `calculos` y el polling del frontend encuentra `estado = listo`.
+4. Si la generación falla incluso después de reintentar, el backend guarda el error temporal en memoria por usuario y la próxima consulta devuelve ese error en vez de seguir respondiendo `generando`.
+5. Se verificó el flujo real generando exitosamente un `perfil-espiritual` persistido sobre un perfil con `natal`, `human-design` y `numerology` ya almacenados.
+
+---
+
+## Sesion: Web — light theme fase 4 en módulos analíticos y contraste editorial
+**Fecha:** 2026-04-03 ~19:32 (ARG)
+
+### Que se hizo
+Se avanzó con la siguiente fase del light theme migrando los paneles analíticos y narrativos que todavía conservaban dark hardcodeado, sobre todo en `Carta Natal`, `Numerología` y `Diseño Humano`. Además, se corrigió el contraste de textos de hero y badges/chips en dashboard, suscripción y perfil para que el modo claro no dependa de blancos fijos ni verdes lavados.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/estilos/tokens/colores.css` | Agrega tokens semánticos para hero text, badges neutrales/exitosos/error/violeta y overlay suave |
+| `frontend/src/app/globals.css` | Agrega utilidades globales `tema-hero-*` para reutilizar contraste consistente en bloques editoriales |
+| `frontend/src/componentes/layouts/rail-lateral.tsx` | Migra el rail lateral a superficies, bordes, overlay y texto semánticos del shell |
+| `frontend/src/componentes/numerologia/panel-contextual-numerologia.tsx` | Lleva el panel contextual de numerología a superficies theme-aware y limpia la API interna del componente |
+| `frontend/src/componentes/diseno-humano/panel-contextual.tsx` | Migra el panel contextual HD a shell/hero semántico tanto en móvil como en escritorio |
+| `frontend/src/lib/utilidades/interpretaciones-natal.ts` | Reemplaza badges de aspectos y dignidades por tokens semánticos con mejor contraste en light/dark |
+| `frontend/src/componentes/carta-natal/estilos.ts` | Reengancha las superficies base de carta natal a las primitives del sistema de tema |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Corrige contraste del hero de carta natal usando tokens de hero en títulos, metadata y copy |
+| `frontend/src/componentes/carta-natal/planetas-narrativo.tsx` | Migra lista de planetas a tokens de shell y badges semánticos |
+| `frontend/src/componentes/carta-natal/aspectos-narrativo.tsx` | Migra lista de aspectos a tokens de shell y badges semánticos |
+| `frontend/src/componentes/carta-natal/seccion-triada.tsx` | Migra textos y estados hover de la tríada al sistema light/dark |
+| `frontend/src/componentes/carta-natal/casas-grid.tsx` | Migra la grilla de casas a superficies y chips semánticos |
+| `frontend/src/componentes/carta-natal/distribucion-energetica.tsx` | Migra el resumen energético a fondo y texto semánticos |
+| `frontend/src/componentes/carta-natal/panel-contextual.tsx` | Reescribe el panel contextual de carta natal con cards, chips y bloque técnico theme-aware |
+| `frontend/src/componentes/dashboard-v2/panel-glass.tsx` | Permite inyectar estilos semánticos en la primitive para estados destacados |
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Ajusta contraste de CTA y textos del hero principal del dashboard |
+| `frontend/src/componentes/dashboard-v2/momentos-dia.tsx` | Corrige contraste de texto e iconos dentro del hero diario |
+| `frontend/src/componentes/dashboard-v2/luna-posicion.tsx` | Corrige contraste del texto lunar en hero |
+| `frontend/src/componentes/dashboard-v2/numero-del-dia.tsx` | Corrige contraste del bloque de número personal en hero |
+| `frontend/src/componentes/dashboard-v2/niveles-energia.tsx` | Corrige contraste de etiquetas e iconos de intuición/claridad/fuerza |
+| `frontend/src/componentes/dashboard-v2/areas-vida-v2.tsx` | Reemplaza etiquetas verdes/rojas por semántica de badge del sistema |
+| `frontend/src/componentes/dashboard-v2/semana-v2.tsx` | Corrige chips, cards de días y badge `Hoy` para que no rompan en light |
+| `frontend/src/componentes/dashboard-v2/mensaje-clave.tsx` | Migra el bloque editorial a tokens de hero |
+| `frontend/src/componentes/dashboard-v2/cta-numerologia.tsx` | Migra textos del CTA numerológico a contraste semántico |
+| `frontend/src/componentes/dashboard-v2/tarjeta-podcast.tsx` | Migra copy editorial y acento de estado del podcast diario |
+| `frontend/src/app/(app)/descubrir/page.tsx` | Ajusta contraste del hero en descubrir con tokens de hero |
+| `frontend/src/componentes/proximamente/feature-proximamente.tsx` | Ajusta contraste del hero reusable de “próximamente” |
+| `frontend/src/app/(app)/podcast/page.tsx` | Ajusta contraste del hero de podcasts al mismo sistema |
+| `frontend/src/app/(app)/suscripcion/page.tsx` | Corrige alerts/chips y badges del flujo de suscripción para que el éxito/cancelación tengan contraste real |
+| `frontend/src/app/(app)/perfil/page.tsx` | Corrige alerts/chips y bloques de riesgo del perfil con tokens semánticos |
+| `context/resumen-de-cambios.md` | Documenta esta fase de migración de paneles analíticos y contraste editorial |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `npx eslint` sobre los archivos tocados, `npx vitest run src/tests/paginas/numerologia.test.tsx src/tests/paginas/podcast.test.tsx src/tests/componentes/navbar.test.tsx src/tests/componentes/reproductor-cosmico.test.tsx` con `19 passed`, y `npm run build` dentro de `frontend/` usando Node `20.20.0` (`/opt/homebrew/opt/node@20/bin`).
+
+### Como funciona
+1. Cuando el usuario entra en módulos analíticos como `Carta Natal`, `Numerología` o `Diseño Humano`, los paneles laterales y contextuales ya no dependen de fondos oscuros y texto blanco fijo: responden al tema activo con superficies y jerarquías semánticas.
+2. En `Carta Natal`, tanto las listas narrativas como los detalles de planeta, aspecto, casa, tríada y distribución energética mantienen la misma lectura en claro y oscuro, con badges de dignidad/aspecto y chips de estado consistentes.
+3. En `Dashboard`, los heroes y paneles editoriales siguen usando el bloque ciruela como pieza de marca, pero ahora títulos, subtítulos, CTAs y microcomponentes internos usan tokens de contraste compartidos en lugar de `white` hardcodeado.
+4. En `Suscripción` y `Perfil`, los mensajes de éxito, error, cancelación y riesgo dejaron de usar combinaciones verdes o rojas lavadas: ahora heredan los tokens semánticos del sistema para que el contraste sea suficiente en modo claro.
+5. Esta fase deja el light theme web mucho más homogéneo y reduce el trabajo pendiente a pantallas secundarias o flujos específicos que todavía conserven piezas heredadas del dark anterior.
+
+---
+
+## Sesion: Web — light theme fase 5 en checkout y estados terminales
+**Fecha:** 2026-04-03 ~19:49 (ARG)
+
+### Que se hizo
+Se continuó la migración del light theme sobre los flujos secundarios, cerrando checkout, estados terminales de suscripción y algunas pantallas editoriales complementarias que todavía se apoyaban en el dark anterior. La fase también consolidó una primitive reutilizable para estados de pago, evitando que el flujo de MercadoPago se siga renderizando como una isla visual aparte.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/ui/estado-terminal.tsx` | Nuevo componente reusable para estados de pago/checkout con hero ciruela, fondo semántico, iconografía de estado y acciones primarias/secundarias |
+| `frontend/src/app/(checkout)/checkout/exito/page.tsx` | Reemplaza el dark fijo por el nuevo estado terminal semántico de checkout exitoso |
+| `frontend/src/app/(checkout)/checkout/fallo/page.tsx` | Reemplaza el dark fijo por el nuevo estado terminal semántico de checkout con error |
+| `frontend/src/app/(checkout)/checkout/pendiente/page.tsx` | Reemplaza el dark fijo por el nuevo estado terminal semántico de checkout pendiente |
+| `frontend/src/app/(app)/suscripcion/exito/page.tsx` | Refactoriza los tres estados (`verificando`, `confirmado`, `timeout`) para usar la primitive nueva y mantener consistencia visual |
+| `frontend/src/app/(app)/suscripcion/fallo/page.tsx` | Migra la pantalla de error de suscripción al nuevo sistema light/dark |
+| `frontend/src/app/(app)/suscripcion/pendiente/page.tsx` | Migra la pantalla de pago pendiente de suscripción al nuevo sistema light/dark |
+| `frontend/src/app/(app)/match-pareja/page.tsx` | Ajusta la pantalla próxima de compatibilidad para que use fondos, surfaces y texto semánticos del shell |
+| `frontend/src/app/(app)/transitos/page.tsx` | Migra la pantalla de tránsitos a fondo light/dark semántico, hero compartido y cards de planetas con mejor contraste |
+| `context/resumen-de-cambios.md` | Documenta esta quinta fase del light theme web |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `npx eslint` sobre los archivos tocados, `npx vitest run src/tests/paginas/suscripcion.test.tsx` con `5 passed` y `npm run build` dentro de `frontend/` usando Node `20.20.0` (`/opt/homebrew/opt/node@20/bin`).
+
+### Como funciona
+1. Cuando el usuario vuelve desde MercadoPago a `/checkout/exito`, `/checkout/fallo` o `/checkout/pendiente`, ahora entra a una vista alineada con el sistema visual ASTRA, en vez de una página dark aislada.
+2. En `/suscripcion/exito`, el flujo de verificación sigue funcionando igual, pero cada estado visual usa la misma primitive semántica y mantiene coherencia con el shell light/dark.
+3. Las pantallas `/suscripcion/fallo` y `/suscripcion/pendiente` ya no repiten estilos sueltos: comparten estructura, acciones y contraste con el resto de los estados terminales del producto.
+4. La pantalla `Match de Pareja` conserva el hero ciruela como pieza editorial, pero sus paneles internos y textos ahora responden al sistema de tema activo.
+5. La vista `Tránsitos` deja de apoyarse en fondos dark hardcodeados y pasa a usar hero, paneles, estados de error y cards de planetas coherentes con el light theme general de la app.
+
+---
+
+## Sesion: Web — login y onboarding premium ciruela
+**Fecha:** 2026-04-03 ~19:41 (ARG)
+
+### Que se hizo
+Se rediseñaron `login`, `registro` y `onboarding` web para alinearlos con el sistema premium ciruela que ya usan el shell y las pantallas principales. El objetivo fue sacar el split blanco legacy, unificar hero/superficies/jerarquía y dejar el flujo de acceso mucho más atractivo y coherente con el resto de ASTRA.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/layouts/layout-auth.tsx` | Rehace el shell de auth como composición editorial theme-aware con hero ciruela, panel glass y versión compacta para mobile |
+| `frontend/src/componentes/layouts/layout-onboarding.tsx` | Reemplaza el layout viejo de onboarding por un shell alineado al acceso premium y un modo de cálculo coherente con el sistema visual |
+| `frontend/src/app/(auth)/login/page.tsx` | Rediseña login con mejor framing, CTA más claro, bloque contextual y estados visuales integrados al shell nuevo |
+| `frontend/src/app/(auth)/registro/page.tsx` | Rediseña registro con narrativa por etapas, mejores superficies y consistencia con el flujo de acceso |
+| `frontend/src/app/(onboarding)/onboarding/page.tsx` | Replantea el formulario de datos natales y la pantalla de cálculo para que usen la misma gramática visual del nuevo auth web |
+| `context/resumen-de-cambios.md` | Documenta esta sesión de rediseño del flujo de acceso web |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `npm run lint -- src/componentes/layouts/layout-auth.tsx src/componentes/layouts/layout-onboarding.tsx src/app/(auth)/login/page.tsx src/app/(auth)/registro/page.tsx src/app/(onboarding)/onboarding/page.tsx` y `npm run build` dentro de `frontend/` usando Node `20.20.0` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. `Login` y `Registro` ya no viven dentro de un split duro con panel blanco aislado: ambos se montan sobre un shell premium ciruela con hero editorial, glows, panel glass y versión mobile compacta.
+2. El contenido de cada pantalla ahora tiene mejor jerarquía de entrada: badge corto, título claro, bloque de contexto útil, CTA primario consistente y estados de error integrados al sistema de superficies del shell.
+3. `Onboarding` usa la misma base visual que el acceso, pero con framing específico de perfil base: cards de módulos que se van a generar, pistas de precisión y un formulario de datos natales mucho menos legacy.
+4. El paso de cálculo del onboarding conserva la lógica de generación existente, pero ahora se presenta como una calibración editorial del perfil con progreso más claro y feedback visual coherente con ASTRA.
+5. Con este cambio, el flujo completo `registro/login -> onboarding -> dashboard` deja de romper la continuidad visual respecto de `Descubrir`, `Perfil` y el resto del sistema premium ciruela.
+
+---
+
+## Sesion: Web — ajuste de viewport y limpieza de login
+**Fecha:** 2026-04-03 ~19:46 (ARG)
+
+### Que se hizo
+Se hizo una segunda pasada sobre el flujo de acceso web para fijar el shell al alto real del viewport y limpiar el formulario de `login`, que todavía tenía demasiado contexto compitiendo con la acción principal de entrar.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/layouts/layout-auth.tsx` | Ajusta el shell para usar `100dvh`, centrar mejor el panel y evitar que el acceso se sienta más largo que el viewport |
+| `frontend/src/app/(auth)/login/page.tsx` | Simplifica el contenido del login quitando bloques redundantes y dejando una jerarquía más limpia y directa |
+| `context/resumen-de-cambios.md` | Documenta esta segunda pasada de refinamiento visual sobre acceso web |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `npm run lint -- src/componentes/layouts/layout-auth.tsx src/app/(auth)/login/page.tsx` y `npm run build` dentro de `frontend/` usando Node `20.20.0` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. La pantalla de acceso ahora queda clavada al alto del viewport con `100dvh`, de modo que el shell no se percibe más largo o suelto de lo necesario.
+2. En desktop, el panel derecho queda mejor centrado y el contenido respira más sin perder el hero ciruela del lado editorial.
+3. El formulario de `Login` deja de mostrar bloques secundarios innecesarios y concentra la lectura en tres cosas: entrar con Google, entrar con email o ir a recuperación.
+4. La jerarquía del login ahora es más corta y clara: badge breve, título, una sola línea contextual, formulario y enlace a registro sin tarjetas extra.
+
+---
+
+## Sesion: Web — login más limpio y Google oficial color
+**Fecha:** 2026-04-03 ~19:52 (ARG)
+
+### Que se hizo
+Se refinó otra vez la pantalla de `login` para hacerla todavía más limpia: se eliminó información secundaria del encabezado y el CTA de Google pasó a usar un logo `G` multicolor en lugar del icono monocromo genérico.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(auth)/login/page.tsx` | Quita badge y bajada del encabezado, simplifica el hero del login y reemplaza el icono de Google por una versión oficial en color dentro del botón |
+| `context/resumen-de-cambios.md` | Documenta este refinamiento puntual del login web |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `npm run lint -- src/app/(auth)/login/page.tsx` y `npm run build` dentro de `frontend/` usando Node `20.20.0` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. El encabezado de `Login` queda reducido al título principal, eliminando piezas que competían con la acción de entrar.
+2. El botón `Continuar con Google` mantiene el flujo existente pero ahora muestra una `G` multicolor más reconocible y más alineada con la expectativa visual del usuario.
+3. El resto del formulario conserva la jerarquía limpia de la pasada anterior, pero con todavía menos ruido antes del CTA principal.
+
+---
+
+## Sesion: Calendario Cósmico mensual con ritmo personal y eventos persistidos
+**Fecha:** 2026-04-03 ~19:50 (ARG)
+
+### Que se hizo
+Se reemplazó el placeholder de `Calendario Cósmico` por una vista mensual real, compacta y orientada a baja carga cognitiva. La pantalla ahora usa una única superficie principal con grilla mensual, detalle contextual integrado, número de año/día personal calculado on the fly y momentos clave tomados de los `transitos_diarios` persistidos.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `backend/app/rutas/v1/calendario_cosmico.py` | Reconecta los endpoints del calendario contra tránsitos persistidos, versiona la clave de cache y amplía la ventana mensual a 42 días |
+| `backend/app/servicios/servicio_transitos.py` | Enriquece día/rango persistidos con `fase_lunar`, `estado` y `eventos`, calculando fallback cuando la fila no los trae persistidos |
+| `backend/app/esquemas/calendario_cosmico.py` | Actualiza los esquemas del calendario con eventos, aspectos y estado del día |
+| `backend/tests/servicios/test_transitos_persistidos.py` | Ajusta fixtures y agrega cobertura para validar que el rango persistido expone eventos y estado |
+| `frontend/src/app/(app)/calendario-cosmico/page.tsx` | Reemplaza la pantalla `Próximamente` por la experiencia mensual real con hero compacto y contenedor principal expandido |
+| `frontend/src/app/(app)/calendario-cosmico/_componentes/calendario-mes.tsx` | Nueva grilla mensual estilo agenda, con foco en hoy, scroll a la semana activa, tooltips y celdas densas sin cards anidadas |
+| `frontend/src/app/(app)/calendario-cosmico/_componentes/panel-detalle-dia.tsx` | Nuevo panel contextual integrado al calendario con año/día personal, fase lunar, eventos y planetas clave |
+| `frontend/src/lib/utilidades/calendario-cosmico.ts` | Nueva utilidad para calcular ritmo personal local y transformar eventos de tránsito en mensajes compactos para UI |
+| `frontend/src/lib/tipos/calendario-cosmico.ts` | Amplía los tipos web del calendario con eventos, fase lunar, aspectos y estado |
+| `mobile/src/lib/tipos/calendario-cosmico.ts` | Sincroniza los tipos mobile con el nuevo contrato del backend para no romper compilación compartida |
+| `frontend/src/app/(app)/descubrir/page.tsx` | Cambia `Calendario Cósmico` de `Próximamente` a disponible y actualiza el copy de acceso |
+| `frontend/src/componentes/layouts/sidebar-navegacion.tsx` | Mueve `Calendario Cósmico` a la navegación activa y lo retira del bloque de próximos módulos |
+| `frontend/src/tests/paginas/calendario-cosmico.test.tsx` | Agrega cobertura para la vista mensual, el cálculo de ritmo personal y la actualización del detalle al seleccionar otro día |
+| `context/resumen-de-cambios.md` | Documenta la implementación completa del módulo |
+
+### Tests
+Se agregó 1 archivo de tests frontend nuevo con 3 casos y se ajustó 1 suite backend existente. Pasaron `3/3` tests de `frontend/src/tests/paginas/calendario-cosmico.test.tsx`, `36` tests backend en `tests/servicios/test_transitos_persistidos.py` + `tests/servicios/test_servicio_calendario_cosmico.py`, `ruff check` sobre backend y `eslint` sobre los archivos frontend/backend tocados sin errores.
+
+### Como funciona
+1. Al entrar a `/calendario-cosmico`, la app abre una vista mensual real en vez del placeholder, fija hoy como punto de arranque y deja visible la semana activa dentro de la grilla.
+2. Cada celda del mes muestra el día, la fase lunar, los hitos más relevantes del tránsito y el número personal del usuario calculado en el momento a partir de la fecha de nacimiento y la fecha seleccionada.
+3. El backend toma los datos desde `transitos_diarios` y, si una fila todavía no trae `eventos`, los recompone en la respuesta comparando contra el día anterior para no dejar huecos visuales en la agenda.
+4. En desktop y mobile web, el usuario puede recorrer sólo el mes actual y una ventana mensual hacia adelante; al seleccionar un día se actualiza un panel contextual integrado con año personal, día personal, momentos clave, retrogradaciones activas y planetas de referencia.
+5. `Descubrir` y la navegación principal dejan de etiquetar a `Calendario Cósmico` como futuro y lo exponen como módulo disponible dentro del sistema.
+
+---
+
+## Sesion: Web — light theme fase 6 en carta astral, numerología y diseño humano
+**Fecha:** 2026-04-03 ~20:06 (ARG)
+
+### Que se hizo
+Se cerró la siguiente fase del light theme en los módulos analíticos que todavía arrastraban shells dark fijos. `carta-natal`, `numerologia` y `diseno-humano` pasaron a usar superficies semánticas del sistema web, con heroes en modo claro, textos de contraste oscuros y chips/badges corregidos para que no queden lavados en light.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/carta-natal/page.tsx` | Migra fondo, estados de carga, formulario inicial, tabs del explorador, modal de rueda y sheet móvil a tokens light/dark semánticos |
+| `frontend/src/componentes/carta-natal/hero-carta.tsx` | Reconvierte el hero principal a superficie clara con título y metadata en color de contraste del shell |
+| `frontend/src/componentes/carta-natal/estilos.ts` | Ajusta la primitive compartida de superficie heroica de carta natal para que deje de forzar el tratamiento dark |
+| `frontend/src/app/(app)/numerologia/page.tsx` | Migra hero, formularios, núcleo, ritmo, meses, etapas y drawer móvil a superficies/chips semánticos con contraste correcto en light |
+| `frontend/src/app/(app)/diseno-humano/page.tsx` | Migra hero, estados vacíos/carga, listas de centros/canales/activaciones, cruz, modal de Body Graph y overlay móvil al sistema light/dark de la web |
+| `frontend/src/componentes/diseno-humano/panel-contextual.tsx` | Corrige el header móvil del panel contextual para que no siga usando hero dark con títulos blancos en modo claro |
+| `context/resumen-de-cambios.md` | Documenta esta fase del light theme sobre módulos analíticos |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `eslint` sobre los 6 archivos frontend tocados, `15/15` tests de `frontend/src/tests/paginas/carta-natal.test.tsx`, `frontend/src/tests/paginas/numerologia.test.tsx` y `frontend/src/tests/paginas/diseno-humano.test.tsx`, y `npm run build` completo dentro de `frontend/` usando Node `20` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. En `Carta Natal`, el shell deja de usar fondo fijo `#16011B`: el hero, la carga, el alta manual, la rueda natal y el panel móvil ahora se montan sobre el sistema light/dark del shell web y los títulos ya no quedan en blanco en modo claro.
+2. En `Numerología`, la pantalla pasa de una estética nocturna fija a una lectura clara con superficies blancas/violeta suave; el hero usa texto de contraste oscuro, los meses y el chip `Ahora` recuperan legibilidad y el panel móvil mantiene la misma lógica visual.
+3. En `Diseño Humano`, el hero, las listas técnicas y el modal de `Body Graph` dejan de sentirse heredados del dark original; tipo, autoridad, perfil, centros, canales y activaciones ahora responden al mismo sistema visual que el resto de la web.
+4. Los chips y badges seleccionados o destacados de estas tres pantallas se normalizan con tokens semánticos de violeta/exito/error del shell, evitando verdes o transparencias con poco contraste en light.

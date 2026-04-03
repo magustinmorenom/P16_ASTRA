@@ -3,6 +3,8 @@
 /* Smooth scroll global */
 html {
   scroll-behavior: smooth;
+  color-scheme: var(--tema-color-scheme);
+  background: var(--color-fondo);
 }
 
 /* Cursor pointer global para elementos interactivos */
@@ -78,7 +80,7 @@ input[type="radio"] {
    Base Styles
    ============================================ */
 body {
-  background: var(--color-fondo);
+  background: linear-gradient(180deg, var(--shell-fondo-profundo) 0%, var(--color-fondo) 100%);
   color: var(--color-texto);
   font-family: var(--font-familia-base);
 }
@@ -94,11 +96,11 @@ body {
 .scroll-sutil {
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(124, 77, 255, 0.2) transparent;
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
 
 .scroll-sutil:hover {
-  scrollbar-color: rgba(124, 77, 255, 0.4) transparent;
+  scrollbar-color: var(--scroll-thumb-hover) transparent;
 }
 
 /* --- WebKit (Chrome / Safari / Edge) --- */
@@ -111,19 +113,19 @@ body {
 }
 
 .scroll-sutil::-webkit-scrollbar-thumb {
-  background: rgba(124, 77, 255, 0.2);
+  background: var(--scroll-thumb);
   border-radius: 9999px;
 }
 
 .scroll-sutil:hover::-webkit-scrollbar-thumb {
-  background: rgba(124, 77, 255, 0.4);
+  background: var(--scroll-thumb-hover);
 }
 
 /* --- Global: solo html/body para scroll de pagina --- */
 html,
 body {
   scrollbar-width: thin;
-  scrollbar-color: rgba(124, 77, 255, 0.2) transparent;
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
 
 html::-webkit-scrollbar,
@@ -138,7 +140,7 @@ body::-webkit-scrollbar-track {
 
 html::-webkit-scrollbar-thumb,
 body::-webkit-scrollbar-thumb {
-  background: rgba(124, 77, 255, 0.2);
+  background: var(--scroll-thumb);
   border-radius: 9999px;
 }
 
@@ -146,6 +148,50 @@ body::-webkit-scrollbar-thumb {
 *:focus-visible {
   outline: 2px solid var(--color-primario);
   outline-offset: 2px;
+}
+
+.tema-superficie-panel {
+  background: var(--shell-panel);
+  border: 1px solid var(--shell-borde);
+  box-shadow: var(--shell-sombra-suave);
+  backdrop-filter: blur(24px);
+}
+
+.tema-superficie-panel-suave {
+  background: var(--shell-panel-suave);
+  border: 1px solid var(--shell-borde);
+  box-shadow: var(--shell-sombra-suave);
+  backdrop-filter: blur(18px);
+}
+
+.tema-superficie-hero {
+  background: var(--shell-hero);
+  border: 1px solid var(--shell-hero-borde);
+  box-shadow: var(--shell-sombra-fuerte);
+}
+
+.tema-shell-texto {
+  color: var(--shell-texto);
+}
+
+.tema-shell-secundario {
+  color: var(--shell-texto-secundario);
+}
+
+.tema-shell-tenue {
+  color: var(--shell-texto-tenue);
+}
+
+.tema-hero-titulo {
+  color: var(--shell-hero-texto);
+}
+
+.tema-hero-secundario {
+  color: var(--shell-hero-texto-secundario);
+}
+
+.tema-hero-tenue {
+  color: var(--shell-hero-texto-tenue);
 }
 
 /* ============================================
@@ -471,11 +517,11 @@ body::-webkit-scrollbar-thumb {
 .scroll-sutil-dark {
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(204, 84, 255, 0.2) transparent;
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
 
 .scroll-sutil-dark:hover {
-  scrollbar-color: rgba(204, 84, 255, 0.4) transparent;
+  scrollbar-color: var(--scroll-thumb-hover) transparent;
 }
 
 /* --- WebKit (Chrome / Safari / Edge) --- */
@@ -488,10 +534,10 @@ body::-webkit-scrollbar-thumb {
 }
 
 .scroll-sutil-dark::-webkit-scrollbar-thumb {
-  background: rgba(204, 84, 255, 0.2);
+  background: var(--scroll-thumb);
   border-radius: 9999px;
 }
 
 .scroll-sutil-dark:hover::-webkit-scrollbar-thumb {
-  background: rgba(204, 84, 255, 0.4);
+  background: var(--scroll-thumb-hover);
 }
