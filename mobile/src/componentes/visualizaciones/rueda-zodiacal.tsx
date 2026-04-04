@@ -10,18 +10,20 @@ const SIGNOS = [
 
 const SIMBOLOS = ["Ar", "Ta", "Ge", "Cn", "Le", "Vi", "Li", "Sc", "Sg", "Cp", "Aq", "Pi"];
 
+// Colores por elemento — funcionan en ambos temas por ser saturados sobre fondos neutros
 const COLORES_ELEMENTO: Record<string, string> = {
-  Aries: "#ef4444", Tauro: "#22c55e", "Géminis": "#eab308", "Cáncer": "#3b82f6",
-  Leo: "#ef4444", Virgo: "#22c55e", Libra: "#eab308", Escorpio: "#3b82f6",
-  Sagitario: "#ef4444", Capricornio: "#22c55e", Acuario: "#eab308", Piscis: "#3b82f6",
+  Aries: "#f87171", Tauro: "#4ade80", "Géminis": "#facc15", "Cáncer": "#60a5fa",
+  Leo: "#f87171", Virgo: "#4ade80", Libra: "#facc15", Escorpio: "#60a5fa",
+  Sagitario: "#f87171", Capricornio: "#4ade80", Acuario: "#facc15", Piscis: "#60a5fa",
 };
 
+// Colores de aspectos — tonos medios que contrastan en ambos modos
 const COLORES_ASPECTO: Record<string, string> = {
   conjunción: "#c084fc",
-  trígono: "#34d399",
+  trígono: "#4ade80",
   sextil: "#60a5fa",
-  cuadratura: "#f87171",
-  oposición: "#ef4444",
+  cuadratura: "#fb923c",
+  oposición: "#f87171",
 };
 
 const ABREV_PLANETAS: Record<string, string> = {

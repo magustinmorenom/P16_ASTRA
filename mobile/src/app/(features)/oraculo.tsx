@@ -50,6 +50,8 @@ function BurbujaMensaje({ mensaje }: { mensaje: MensajeChat }) {
             color: esUsuario ? "#FFFFFF" : colores.primario,
             fontSize: 14,
             lineHeight: 20,
+            flexShrink: 1,
+            flexWrap: "wrap",
           }}
         >
           {mensaje.contenido}
