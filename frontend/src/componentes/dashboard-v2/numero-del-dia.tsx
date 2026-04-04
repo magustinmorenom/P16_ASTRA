@@ -3,25 +3,77 @@ import type { NumeroPersonalDTO } from "@/lib/tipos";
 
 interface NumeroDelDiaProps {
   numero: NumeroPersonalDTO;
+  compacto?: boolean;
 }
 
-export function NumeroDelDia({ numero }: NumeroDelDiaProps) {
-  return (
-    <PanelGlass tono="hero" className="flex items-center gap-3 px-3 py-2">
-      <div
-        className="flex h-[38px] w-[46px] shrink-0 items-center justify-center rounded-[10px] border backdrop-blur-[21px]"
-        style={{
-          background: "var(--shell-hero-superficie)",
-          borderColor: "var(--shell-hero-superficie-fuerte)",
-        }}
+const ESTILO_TARJETA_NUMERO = {
+  background: "var(--shell-panel-suave)",
+  borderColor: "var(--shell-borde-fuerte)",
+} as const;
+
+const ESTILO_PLACA_NUMERO = {
+  background: "var(--shell-superficie-fuerte)",
+  borderColor: "var(--shell-chip-borde)",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.42)",
+} as const;
+
+export function NumeroDelDia({ numero, compacto = false }: NumeroDelDiaProps) {
+  if (compacto) {
+    return (
+      <PanelGlass
+        tono="panel"
+        className="flex items-center gap-2.5 px-3 py-2.5"
+        style={ESTILO_TARJETA_NUMERO}
       >
-        <span className="font-[family-name:var(--font-inria)] text-[22px] font-normal text-[color:var(--shell-texto-inverso)]">
+        <div
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"
+          style={ESTILO_PLACA_NUMERO}
+        >
+          <span className="font-[family-name:var(--font-inria)] text-[20px] font-normal leading-none text-[color:var(--color-acento)]">
+            {numero.numero}
+          </span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold text-[color:var(--shell-texto)]">
+            Número personal
+          </p>
+          <p className="mt-0.5 text-[11px] leading-4 text-[color:var(--shell-texto-secundario)] line-clamp-2">
+            {numero.descripcion}
+          </p>
+        </div>
+      </PanelGlass>
+    );
+  }
+
+  return (
+    <PanelGlass
+      tono="panel"
+      className="flex items-center gap-3 px-3.5 py-3"
+      style={ESTILO_TARJETA_NUMERO}
+    >
+      <div
+        className="flex min-h-[66px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[14px] border px-3 py-2"
+        style={ESTILO_PLACA_NUMERO}
+      >
+        <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
+          Hoy
+        </span>
+        <span className="mt-1 font-[family-name:var(--font-inria)] text-[30px] font-normal leading-none text-[color:var(--color-acento)]">
           {numero.numero}
         </span>
       </div>
-      <p className="flex-1 text-[14px] font-medium leading-[1.35] text-[color:var(--shell-hero-texto-secundario)]">
-        {numero.descripcion}
-      </p>
+
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
+          Número personal
+        </p>
+        <p className="mt-1 text-[15px] font-semibold leading-tight text-[color:var(--shell-texto)]">
+          Tu pulso del día
+        </p>
+        <p className="mt-1 text-[13px] leading-5 text-[color:var(--shell-texto-secundario)]">
+          {numero.descripcion}
+        </p>
+      </div>
     </PanelGlass>
   );
 }

@@ -86,6 +86,10 @@ const ESTILO_BADGE_SHELL = {
   background: "var(--shell-chip)",
   color: "var(--color-acento)",
 } as const;
+const ESTILO_ICONO_PODCAST = {
+  borderColor: "var(--shell-chip-borde)",
+  background: "var(--shell-superficie-fuerte)",
+} as const;
 
 function formatearDuracionMinutos(segundos?: number | null) {
   return `${Math.max(1, Math.floor((segundos ?? 0) / 60))} min`;
@@ -135,21 +139,18 @@ function CardEpisodio({
 
   return (
     <div className="tema-superficie-panel group relative h-full overflow-hidden rounded-[28px] p-6 transition-all duration-300 hover:-translate-y-1">
-      <div
-        className={`pointer-events-none absolute inset-x-6 top-0 h-24 bg-gradient-to-r ${config.gradiente} opacity-20 blur-3xl transition-opacity duration-300 group-hover:opacity-30`}
-      />
-
       <div className="relative flex h-full flex-col gap-6">
         <div className="flex items-start gap-4">
           <div className="relative shrink-0">
             <div
-              className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${config.gradiente} shadow-[var(--shell-sombra-suave)] ring-1 ring-shell-borde`}
+              className="flex h-14 w-14 items-center justify-center rounded-2xl border text-[color:var(--color-acento)] shadow-[var(--shell-sombra-suave)]"
+              style={ESTILO_ICONO_PODCAST}
             >
               <Icono
                 nombre={config.icono}
                 tamaño={24}
                 peso="fill"
-                className="text-white/90"
+                className="text-[color:var(--color-acento)]"
               />
             </div>
             {bloqueado && (
@@ -253,21 +254,13 @@ export default function PaginaPodcast() {
   const usuario = useStoreAuth((s) => s.usuario);
   const esPremium = esPlanPago(usuario?.plan_slug);
 
-  // Polling rápido si hay algún episodio generándose
-  const hayGenerando = generarMutation.isPending;
-
   const { data: episodiosHoy, isLoading: cargando } =
-    usarPodcastHoy(hayGenerando);
+    usarPodcastHoy(generarMutation.isPending);
   const { data: historial, isLoading: cargandoHistorial } =
     usarPodcastHistorial();
   const { setPistaActual, pistaActual } = useStoreUI();
 
   const mapaHoy = new Map((episodiosHoy ?? []).map((ep) => [ep.tipo, ep]));
-  // Activar polling rápido también si hay episodios en proceso
-  const hayEnProceso = (episodiosHoy ?? []).some(
-    (ep) => ep.estado === "generando_guion" || ep.estado === "generando_audio"
-  );
-  usarPodcastHoy(hayEnProceso);
 
   useEffect(() => {
     precargarAudiosPodcast([...(episodiosHoy ?? []), ...(historial ?? [])]);
@@ -285,13 +278,6 @@ export default function PaginaPodcast() {
       <HeaderMobile titulo="Podcasts" />
       <div className="relative overflow-hidden" style={{ background: "var(--shell-fondo)" }}>
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-72"
-          style={{
-            background:
-              "radial-gradient(circle_at_top_left, var(--shell-glow-1), transparent 48%)",
-          }}
-        />
-        <div
           className="pointer-events-none absolute right-[-120px] top-20 h-80 w-80 rounded-full blur-3xl"
           style={{ background: "var(--shell-glow-2)" }}
         />
@@ -301,32 +287,35 @@ export default function PaginaPodcast() {
         />
 
         <div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-4 py-8 sm:px-6">
-          <section className="tema-superficie-hero relative overflow-hidden rounded-[24px] px-6 py-6 sm:px-7 sm:py-7">
+          <section className="tema-superficie-panel relative overflow-hidden rounded-[24px] px-6 py-6 sm:px-7 sm:py-7">
             <div
-              className="pointer-events-none absolute -right-12 top-[-72px] h-44 w-44 rounded-full blur-3xl"
+              className="pointer-events-none absolute -right-10 top-[-48px] h-28 w-28 rounded-full blur-3xl"
               style={{ background: "var(--shell-glow-2)" }}
             />
             <div
-              className="pointer-events-none absolute bottom-[-64px] left-10 h-36 w-36 rounded-full blur-3xl"
+              className="pointer-events-none absolute bottom-[-48px] left-8 h-24 w-24 rounded-full blur-3xl"
               style={{ background: "var(--shell-glow-1)" }}
             />
 
             <div className="relative max-w-2xl">
               <div className="flex items-start gap-4">
-                <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[22px] bg-gradient-to-br from-violet-500 to-violet-300 shadow-[var(--shell-sombra-fuerte)] sm:flex">
+                <div
+                  className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-[18px] border sm:flex"
+                  style={ESTILO_ICONO_PODCAST}
+                >
                   <Icono
                     nombre="microfono"
-                    tamaño={30}
+                    tamaño={26}
                     peso="fill"
-                    className="text-white"
+                    className="text-[color:var(--color-acento)]"
                   />
                 </div>
                 <div>
-                  <h1 className="tema-hero-titulo text-[26px] font-semibold tracking-[-0.03em] sm:text-[30px]">
+                  <h1 className="text-[26px] font-semibold tracking-[-0.03em] text-[color:var(--shell-texto)] sm:text-[30px]">
                     Tus Podcasts Cósmicos
                   </h1>
-                  <p className="tema-hero-secundario mt-3 max-w-xl text-[14px] leading-6">
-                    Elegí una escucha breve, profunda o extendida con la misma gramática visual del dashboard light.
+                  <p className="mt-3 max-w-xl text-[14px] leading-6 text-[color:var(--shell-texto-secundario)]">
+                    Elegí una escucha breve, semanal o mensual con la misma superficie clara que usamos en Carta Astral y dashboard.
                   </p>
                 </div>
               </div>
@@ -465,13 +454,14 @@ export default function PaginaPodcast() {
                       }
                     >
                       <div
-                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${config.gradiente} shadow-[var(--shell-sombra-suave)]`}
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border shadow-[var(--shell-sombra-suave)]"
+                        style={ESTILO_ICONO_PODCAST}
                       >
                         <Icono
                           nombre={enReproduccion ? "pausar" : "reproducir"}
                           tamaño={18}
                           peso="fill"
-                          className="text-white/88"
+                          className="text-[color:var(--color-acento)]"
                         />
                       </div>
                       <div className="min-w-0 flex-1">

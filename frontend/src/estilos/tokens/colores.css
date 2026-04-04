@@ -83,7 +83,7 @@ html[data-tema="claro"],
   --shell-superficie-suave: rgba(124, 77, 255, 0.06);
   --shell-panel: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(246, 240, 252, 0.92));
   --shell-panel-suave: linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(244, 237, 251, 0.82));
-  --shell-hero: radial-gradient(circle_at_top_left, rgba(179, 136, 255, 0.14), transparent 32%), linear-gradient(135deg, rgba(90, 58, 170, 0.98), rgba(62, 38, 132, 0.98));
+  --shell-hero: radial-gradient(circle at top left, rgba(179, 136, 255, 0.14), transparent 32%), linear-gradient(135deg, rgba(90, 58, 170, 0.98), rgba(62, 38, 132, 0.98));
   --shell-hero-borde: rgba(124, 77, 255, 0.18);
   --shell-hero-superficie: rgba(255, 255, 255, 0.08);
   --shell-hero-superficie-fuerte: rgba(255, 255, 255, 0.12);
@@ -182,7 +182,7 @@ html[data-tema="claro"],
     --shell-superficie-suave: rgba(255, 255, 255, 0.04);
     --shell-panel: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
     --shell-panel-suave: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-    --shell-hero: radial-gradient(circle_at_top_left, rgba(179, 136, 255, 0.2), transparent 32%), linear-gradient(135deg, rgba(45, 27, 105, 0.96), rgba(22, 1, 27, 0.98));
+    --shell-hero: radial-gradient(circle at top left, rgba(179, 136, 255, 0.2), transparent 32%), linear-gradient(135deg, rgba(45, 27, 105, 0.96), rgba(22, 1, 27, 0.98));
     --shell-hero-borde: rgba(255, 255, 255, 0.08);
     --shell-hero-superficie: rgba(255, 255, 255, 0.08);
     --shell-hero-superficie-fuerte: rgba(255, 255, 255, 0.12);
@@ -281,7 +281,7 @@ html[data-tema="oscuro"] {
   --shell-superficie-suave: rgba(255, 255, 255, 0.04);
   --shell-panel: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
   --shell-panel-suave: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-  --shell-hero: radial-gradient(circle_at_top_left, rgba(179, 136, 255, 0.2), transparent 32%), linear-gradient(135deg, rgba(45, 27, 105, 0.96), rgba(22, 1, 27, 0.98));
+  --shell-hero: radial-gradient(circle at top left, rgba(179, 136, 255, 0.2), transparent 32%), linear-gradient(135deg, rgba(45, 27, 105, 0.96), rgba(22, 1, 27, 0.98));
   --shell-hero-borde: rgba(255, 255, 255, 0.08);
   --shell-hero-superficie: rgba(255, 255, 255, 0.08);
   --shell-hero-superficie-fuerte: rgba(255, 255, 255, 0.12);

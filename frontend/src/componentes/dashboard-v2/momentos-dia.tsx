@@ -2,7 +2,7 @@ import type { MomentoClaveDTO } from "@/lib/tipos";
 
 const ICONO_BLOQUE: Record<string, React.ReactNode> = {
   manana: (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="30" height="30" viewBox="0 0 36 36" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       {/* Arco horizonte */}
       <path d="M6 26c0-6.627 5.373-12 12-12s12 5.373 12 12" />
       {/* Flecha arriba */}
@@ -13,7 +13,7 @@ const ICONO_BLOQUE: Record<string, React.ReactNode> = {
     </svg>
   ),
   tarde: (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="30" height="30" viewBox="0 0 36 36" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="18" cy="18" r="5" />
       {/* Rayos */}
       <line x1="18" y1="5" x2="18" y2="9" />
@@ -27,7 +27,7 @@ const ICONO_BLOQUE: Record<string, React.ReactNode> = {
     </svg>
   ),
   noche: (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="30" height="30" viewBox="0 0 36 36" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M28 20a11 11 0 01-14.8-14.8A12 12 0 1028 20z" />
     </svg>
   ),
@@ -37,6 +37,17 @@ interface MomentosDiaProps {
   momentos: MomentoClaveDTO[];
 }
 
+const ESTILO_TARJETA_MOMENTOS = {
+  background: "var(--shell-panel-suave)",
+  border: "1px solid var(--shell-borde)",
+  boxShadow: "var(--shell-sombra-suave)",
+} as const;
+
+const ESTILO_ICONO_MOMENTO = {
+  borderColor: "var(--shell-chip-borde)",
+  background: "var(--shell-superficie-fuerte)",
+} as const;
+
 export function MomentosDia({ momentos }: MomentosDiaProps) {
   const ordenBloques = ["manana", "tarde", "noche"] as const;
   const momentosOrdenados = ordenBloques
@@ -45,19 +56,19 @@ export function MomentosDia({ momentos }: MomentosDiaProps) {
 
   return (
     <div
-      className="flex flex-1 flex-col justify-between overflow-hidden divide-y rounded-[18px]"
-      style={{
-        background: "var(--shell-hero-superficie)",
-        borderColor: "var(--shell-hero-borde)",
-      }}
+      className="flex flex-1 flex-col justify-between overflow-hidden divide-y divide-[var(--shell-borde)] rounded-[18px]"
+      style={ESTILO_TARJETA_MOMENTOS}
     >
       {momentosOrdenados.map((momento) => (
-        <div key={momento.bloque} className="flex flex-1 items-center gap-3 px-4 py-3.5">
-          <div className="shrink-0 opacity-90 text-[color:var(--shell-hero-texto-secundario)]">
+        <div key={momento.bloque} className="flex flex-1 items-center gap-2.5 px-3 py-2">
+          <div
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border text-[color:var(--color-acento)]"
+            style={ESTILO_ICONO_MOMENTO}
+          >
             {ICONO_BLOQUE[momento.bloque] ?? ICONO_BLOQUE.manana}
           </div>
           <div className="flex-1">
-            <p className="text-[14px] font-medium leading-[1.45] text-[color:var(--shell-hero-texto-secundario)]">
+            <p className="text-[12px] font-medium leading-[1.35] text-[color:var(--shell-texto)]">
               {momento.frase}
             </p>
           </div>

@@ -230,6 +230,27 @@ class ServicioOraculo:
             else:
                 partes.append(f"- {nombre}: {signo}{retro}")
 
+        # Próximos días (si disponibles)
+        proximos = transitos.get("proximos_dias", [])
+        if proximos:
+            partes.append("")
+            partes.append("### Próximos días")
+            for dia in proximos:
+                fecha = dia.get("fecha", "?")
+                fase = dia.get("fase_lunar", "?")
+                planetas_dia = dia.get("planetas", [])
+                luna_dia = next((p for p in planetas_dia if p.get("nombre") == "Luna"), None)
+                sol_dia = next((p for p in planetas_dia if p.get("nombre") == "Sol"), None)
+                resumen_dia = f"- {fecha} — {fase}"
+                if luna_dia:
+                    resumen_dia += f" · Luna en {luna_dia.get('signo', '?')}"
+                if sol_dia:
+                    resumen_dia += f" · Sol en {sol_dia.get('signo', '?')}"
+                retros = [p.get("nombre") for p in planetas_dia if p.get("retrogrado")]
+                if retros:
+                    resumen_dia += f" · Retro: {', '.join(retros)}"
+                partes.append(resumen_dia)
+
         return "\n".join(partes)
 
     # Patrón para detectar bullets con fechas/rangos (ej: "- 10-16 de abril —")

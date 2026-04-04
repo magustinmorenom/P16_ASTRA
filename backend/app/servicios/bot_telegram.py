@@ -244,6 +244,18 @@ class BotTelegram:
 
             perfil_cosmico = await self._obtener_contexto_cosmico(sesion, vinculo.usuario_id)
             transitos = ServicioTransitos.obtener_transitos_actuales()
+            # Agregar tránsitos de próximos 3 días
+            from datetime import date, timedelta
+            proximos = []
+            for i in range(1, 4):
+                fecha_f = (date.today() + timedelta(days=i)).isoformat()
+                try:
+                    t = await ServicioTransitos.obtener_transitos_fecha_persistido(fecha_f, sesion)
+                    proximos.append({"fecha": fecha_f, "planetas": t.get("planetas", []), "fase_lunar": t.get("fase_lunar", "")})
+                except Exception:
+                    pass
+            if proximos:
+                transitos["proximos_dias"] = proximos
 
             # 5. Obtener historial de conversación
             repo_conv = RepositorioConversacion(sesion)

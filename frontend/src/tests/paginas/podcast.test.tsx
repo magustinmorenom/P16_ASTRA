@@ -31,6 +31,26 @@ vi.mock("@/lib/stores/store-ui", () => ({
   }),
 }));
 
+const ESTADO_AUTH_PREMIUM = {
+  usuario: {
+    id: "usuario-premium",
+    nombre: "Lucía Premium",
+    email: "lucia@astra.test",
+    plan_slug: "premium",
+  },
+  autenticado: true,
+};
+
+vi.mock("@/lib/stores/store-auth", () => ({
+  useStoreAuth: Object.assign(
+    (selector?: (estado: typeof ESTADO_AUTH_PREMIUM) => unknown) =>
+      selector ? selector(ESTADO_AUTH_PREMIUM) : ESTADO_AUTH_PREMIUM,
+    {
+      getState: () => ESTADO_AUTH_PREMIUM,
+    },
+  ),
+}));
+
 import PaginaPodcast from "@/app/(app)/podcast/page";
 
 const EPISODIO_LISTO = {
@@ -77,9 +97,8 @@ describe("PaginaPodcast", () => {
 
     renderConProveedores(<PaginaPodcast />);
 
-    expect(
-      screen.getByText("Elegí el podcast personalizado que querés escuchar")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Tus Podcasts Cósmicos")).toBeInTheDocument();
+    expect(screen.getByText("Elegí tu podcast")).toBeInTheDocument();
     expect(screen.getByText("Podcast diario")).toBeInTheDocument();
     expect(
       screen.getByText("Cómo influyen hoy los tránsitos específicamente en vos.")
@@ -137,7 +156,7 @@ describe("PaginaPodcast", () => {
 
     renderConProveedores(<PaginaPodcast />);
 
-    expect(screen.getByText("2 min")).toBeInTheDocument();
+    expect(screen.getAllByText(/2 min/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(EPISODIO_LISTO.titulo).length).toBeGreaterThanOrEqual(1);
   });
 

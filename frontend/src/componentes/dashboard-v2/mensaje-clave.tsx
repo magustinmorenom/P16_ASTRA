@@ -8,7 +8,7 @@ interface MensajeClaveProps {
 
 export function MensajeClave({ nombreUsuario, titulo, fraseSintesis }: MensajeClaveProps) {
   return (
-    <div className="rounded-[10px] bg-gradient-to-br from-[#1a0e3e] via-[#2D1B69]/80 to-[#382954] px-5 py-5 flex flex-col gap-3 relative overflow-hidden">
+    <div className="rounded-[10px] bg-gradient-to-br from-violet-950 via-violet-900/80 to-violet-800 px-5 py-5 flex flex-col gap-3 relative overflow-hidden">
       {/* Orbe decorativo */}
       <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-violet-500/15 blur-3xl pointer-events-none" />
       <h2 className="tema-hero-titulo relative text-[22px] font-normal leading-snug">

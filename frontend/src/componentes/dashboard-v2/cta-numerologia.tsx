@@ -34,16 +34,16 @@ export function CtaNumerologia({
   const contenido = (
     <>
       {/* Fondo gradiente */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#2D1B69] via-[#4A2D8C] to-[#7C4DFF]" />
+      <div className="absolute inset-0 bg-gradient-to-r from-violet-950 via-violet-800 to-violet-500" />
 
       {/* Orbes decorativos */}
-      <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-[#B388FF]/20 blur-3xl pointer-events-none" />
+      <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-violet-300/20 blur-3xl pointer-events-none" />
       <div className="absolute -left-8 -bottom-8 h-28 w-28 rounded-full bg-fuchsia-500/15 blur-3xl pointer-events-none" />
 
       {/* Contenido */}
       <div className="relative flex items-center gap-4 px-5 py-4">
         {/* Icono grande con numero */}
-        <div className="h-[52px] w-[52px] rounded-xl backdrop-blur-[21px] bg-white/[0.10] border border-white/[0.15] flex items-center justify-center shrink-0">
+        <div className="h-[52px] w-[52px] rounded-xl backdrop-blur-[21px] flex items-center justify-center shrink-0" style={{ background: "var(--shell-hero-superficie)", borderWidth: 1, borderColor: "var(--shell-hero-superficie-fuerte)" }}>
           {numeroPersonal ? (
             <span className="font-[family-name:var(--font-inria)] text-[26px] font-light leading-none text-[color:var(--shell-hero-texto)]">
               {numeroPersonal}
@@ -64,7 +64,7 @@ export function CtaNumerologia({
         </div>
 
         {mostrarAccion && (
-          <div className="h-9 w-9 rounded-full bg-white/[0.10] border border-white/[0.10] flex items-center justify-center shrink-0 group-hover:bg-white/[0.20] transition-colors">
+          <div className="h-9 w-9 rounded-full flex items-center justify-center shrink-0 transition-colors" style={{ background: "var(--shell-hero-superficie)", borderWidth: 1, borderColor: "var(--shell-hero-borde-sutil)" }}>
             <Icono nombre="flecha" tamaño={16} className="text-[color:var(--shell-hero-texto)]" />
           </div>
         )}

@@ -87,11 +87,6 @@ export default function PaginaDashboard() {
     [episodiosHoy]
   );
 
-  const hayEnProceso = (episodiosHoy ?? []).some(
-    (ep) => ep.estado === "generando_guion" || ep.estado === "generando_audio"
-  );
-  usarPodcastHoy(hayEnProceso);
-
   useEffect(() => {
     precargarAudiosPodcast(episodiosHoy ?? []);
   }, [episodiosHoy]);
@@ -203,7 +198,7 @@ export default function PaginaDashboard() {
       )}
 
       {/* Contenido principal — dark theme unificado */}
-      <section className="flex-1 scroll-sutil-dark px-4 pb-4 pt-5 lg:px-6 lg:pb-6 lg:pt-8 flex flex-col gap-4 lg:gap-6">
+      <section className="flex flex-1 flex-col gap-4 px-4 pb-4 pt-2 scroll-sutil-dark lg:gap-6 lg:px-6 lg:pb-6 lg:pt-4">
         {/* ---- PRONÓSTICO ---- */}
         {cargandoPronostico ? (
           <div className="flex flex-col gap-3 lg:gap-4">

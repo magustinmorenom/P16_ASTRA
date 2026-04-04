@@ -3084,3 +3084,151 @@ Se cerró la siguiente fase del light theme en los módulos analíticos que toda
 2. En `Numerología`, la pantalla pasa de una estética nocturna fija a una lectura clara con superficies blancas/violeta suave; el hero usa texto de contraste oscuro, los meses y el chip `Ahora` recuperan legibilidad y el panel móvil mantiene la misma lógica visual.
 3. En `Diseño Humano`, el hero, las listas técnicas y el modal de `Body Graph` dejan de sentirse heredados del dark original; tipo, autoridad, perfil, centros, canales y activaciones ahora responden al mismo sistema visual que el resto de la web.
 4. Los chips y badges seleccionados o destacados de estas tres pantallas se normalizan con tokens semánticos de violeta/exito/error del shell, evitando verdes o transparencias con poco contraste en light.
+
+---
+
+## Sesion: Web — dashboard light, upgrade de la primera tarjeta
+**Fecha:** 2026-04-04 ~13:00 (ARG)
+
+### Que se hizo
+Se refinó la primera tarjeta del hero del dashboard para que deje de verse como un bloque violeta heredado del dark mode. La tarjeta `Número personal` ahora usa una superficie clara integrada al sistema light, con el violeta reservado como acento tipográfico y no como fondo dominante.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/numero-del-dia.tsx` | Replantea la tarjeta `Número personal` con una jerarquía más editorial, fondo claro, placa numérica suave y mejor contraste para light mode |
+| `context/resumen-de-cambios.md` | Documenta este ajuste puntual del dashboard light |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `eslint` sobre `frontend/src/componentes/dashboard-v2/numero-del-dia.tsx` y `5/5` tests de `frontend/src/tests/paginas/dashboard.test.tsx` dentro de `frontend/` usando Node `20` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. La tarjeta `Número personal` del hero mantiene su ubicación y el mismo dato funcional, pero cambia su materialidad visual para no competir con el fondo ciruela del hero.
+2. El número se presenta dentro de una placa clara con borde sutil y tipografía destacada, mientras el resto del texto usa la escala de contraste del shell light.
+3. En light mode, el resultado se siente más premium y consistente con el resto del dashboard; en dark mode, la misma tarjeta sigue funcionando porque depende de tokens semánticos y no de colores hardcodeados.
+
+---
+
+## Sesion: Calendario Cósmico — tooltip compacto y reposicionamiento de hover
+**Fecha:** 2026-04-04 ~13:08 (ARG)
+
+### Que se hizo
+Se corrigió el comportamiento del tooltip flotante en la grilla mensual del `Calendario Cósmico`. Ahora acompaña el hover en tiempo real, invierte su posición contra los bordes del viewport y se limpia en `scroll` o `resize` para no quedar desfasado ni montarse sobre el extremo derecho.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/calendario-cosmico/_componentes/calendario-mes.tsx` | Reemplaza el posicionamiento estático del tooltip por cálculo dinámico en `mousemove`, con límites de viewport y cierre automático en scroll/resize |
+| `frontend/src/tests/paginas/calendario-cosmico.test.tsx` | Actualiza la suite a la UI compacta actual y agrega cobertura del cálculo de reposicionamiento del tooltip |
+| `context/resumen-de-cambios.md` | Documenta esta corrección puntual de interacción |
+
+### Tests
+0 archivos nuevos. Pasaron `eslint` sobre `frontend/src/app/(app)/calendario-cosmico/_componentes/calendario-mes.tsx` y `frontend/src/tests/paginas/calendario-cosmico.test.tsx`, más `4/4` tests de `frontend/src/tests/paginas/calendario-cosmico.test.tsx` dentro de `frontend/`.
+
+### Como funciona
+1. Cuando el usuario entra a un casillero con eventos, el tooltip aparece pegado al cursor en lugar de quedarse en la posición inicial del `mouseenter`.
+2. Si el cursor está cerca del borde derecho o inferior, la caja se invierte hacia la izquierda o hacia arriba para mantenerse dentro del viewport.
+3. Si el usuario hace scroll sobre la grilla o cambia el tamaño de la ventana, el tooltip activo se cierra para evitar posiciones obsoletas o superpuestas.
+
+---
+
+## Sesion: Calendario Cósmico — recodificación del hover anclado al casillero
+**Fecha:** 2026-04-04 ~13:14 (ARG)
+
+### Que se hizo
+Se recodificó la interacción de hover del calendario mensual para dejar de seguir al cursor y pasar a un tooltip anclado al casillero activo. El posicionamiento ahora se calcula con el tamaño real del popover y con el rectángulo del día hovered/focused, lo que elimina el desfase visual y vuelve estable el comportamiento en los bordes.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/calendario-cosmico/_componentes/calendario-mes.tsx` | Reescribe el sistema de hover: elimina `mousemove`, separa contenido y posición del tooltip, lo ancla al botón del día y reposiciona usando tamaño medido + viewport |
+| `frontend/src/tests/paginas/calendario-cosmico.test.tsx` | Ajusta la cobertura para validar el cálculo del tooltip anclado al casillero y mantener la interacción de hover del módulo |
+| `context/resumen-de-cambios.md` | Documenta esta recodificación del hover |
+
+### Tests
+0 archivos nuevos. Pasaron `eslint` sobre `frontend/src/app/(app)/calendario-cosmico/_componentes/calendario-mes.tsx` y `frontend/src/tests/paginas/calendario-cosmico.test.tsx`, más `4/4` tests de `frontend/src/tests/paginas/calendario-cosmico.test.tsx` dentro de `frontend/`.
+
+### Como funciona
+1. Al entrar con mouse o foco a un día del calendario, el sistema guarda el casillero activo como ancla visual y no vuelve a seguir el puntero.
+2. El tooltip se renderiza una vez, mide su tamaño real y calcula su posición final centrado sobre el día, priorizando aparecer arriba y cayendo debajo sólo si no hay espacio.
+3. En bordes laterales o en ventanas más chicas, la posición horizontal se clampa al viewport para que el popover no se corte ni quede montado de forma errática.
+4. Cuando el usuario sale del casillero, hace blur o el ancla queda fuera de pantalla durante scroll/resize, el hover se limpia y no deja overlays colgados.
+
+---
+
+## Sesion: Web — dashboard light, unificación del hero editorial
+**Fecha:** 2026-04-04 ~13:05 (ARG)
+
+### Que se hizo
+Se hizo una segunda pasada sobre el hero del dashboard para unificar la familia visual de sus tarjetas internas en light mode. Además se corrigió la placa de `Número personal`, que había quedado con un degradé inconsistente respecto del sistema ciruela/light que venimos usando.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/tarjeta-fecha.tsx` | Convierte la tarjeta de fecha a una placa clara con badge de día y jerarquía más editorial |
+| `frontend/src/componentes/dashboard-v2/numero-del-dia.tsx` | Quita el degradé inconsistente y deja la placa numérica con acento violeta controlado y fondo sólido del sistema |
+| `frontend/src/componentes/dashboard-v2/luna-posicion.tsx` | Migra la tarjeta lunar a una superficie clara con icono contenido y metadata consistente con light |
+| `frontend/src/componentes/dashboard-v2/niveles-energia.tsx` | Replantea las barras de intuición/claridad/fuerza con contenedores claros, acento violeta y lectura más limpia |
+| `frontend/src/componentes/dashboard-v2/momentos-dia.tsx` | Reconvierte la lista de momentos del día a una tarjeta clara con chips de bloque y mejor contraste |
+| `context/resumen-de-cambios.md` | Documenta esta unificación visual del hero del dashboard |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `eslint` sobre los 5 componentes de `frontend/src/componentes/dashboard-v2/` tocados y `5/5` tests de `frontend/src/tests/paginas/dashboard.test.tsx` dentro de `frontend/` usando Node `20` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. El hero del dashboard mantiene su estructura, pero las tarjetas internas dejan de apoyarse en vidrios violetas oscuros y pasan a una lógica más clara y más coherente con el light mode.
+2. Fecha, número personal, fase lunar, momentos del día y niveles de energía ahora comparten el mismo lenguaje material: superficies claras, bordes suaves y acento violeta sólo en puntos de énfasis.
+3. La tarjeta `Número personal` conserva el foco tipográfico, pero sin el degradé anterior; eso la integra mejor al conjunto y evita que se vea como una pieza ajena al sistema visual del hero.
+
+---
+
+## Sesion: Web — dashboard y podcast, neutralización final del hero light
+**Fecha:** 2026-04-04 ~16:21 (ARG)
+
+### Que se hizo
+Se hizo una nueva revisión del hero del dashboard y de la portada de podcast para quitar el peso violeta residual y alinearlos con la superficie clara que ya usa Carta Astral. También se corrigió la percepción de re-render en podcast eliminando la doble suscripción a `usarPodcastHoy` y dejando el polling concentrado en un solo query con intervalo dinámico.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Reduce la presencia violeta del hero, ajusta glows al patrón de Carta Astral, neutraliza el CTA principal y compacta la estructura interna |
+| `frontend/src/componentes/dashboard-v2/momentos-dia.tsx` | Compacta la lista de etapas del día, elimina los chips de mañana/tarde/noche y deja sólo el icono como identificador |
+| `frontend/src/app/(app)/dashboard/page.tsx` | Reduce el margen superior del contenido para acercar el hero al borde superior del shell |
+| `frontend/src/app/(app)/podcast/page.tsx` | Quita la lectura violeta del hero y de las cards/lista de historial, pasando iconografía y superficies a materiales claros del sistema |
+| `frontend/src/lib/hooks/usar-podcast.ts` | Centraliza el polling del estado de podcasts en un solo query y acelera el refresco sólo cuando hay generación en curso |
+| `frontend/src/tests/paginas/podcast.test.tsx` | Actualiza la suite al copy actual y fija un estado premium explícito para que los asserts no dependan del store implícito |
+| `context/resumen-de-cambios.md` | Documenta esta revisión visual y funcional |
+
+### Tests
+0 archivos nuevos. Pasaron `eslint` sobre los archivos tocados dentro de `frontend/`, `13/13` tests de `frontend/src/tests/paginas/dashboard.test.tsx` y `frontend/src/tests/paginas/podcast.test.tsx`, y `npm run build` completo en `frontend/`.
+
+### Como funciona
+1. El hero principal del dashboard sigue mostrando fecha, podcast, etapas del día y métricas, pero ahora sobre una superficie clara más cercana a Carta Astral y con menos padding superior en la página.
+2. Las etapas del día pasan a una lectura más compacta: cada bloque queda identificado por su icono y su frase, sin chips redundantes que duplicaban la información.
+3. La portada de podcast usa el mismo lenguaje material claro en hero, cards e historial, de modo que el módulo deja de sentirse como una pantalla aparte teñida de violeta.
+4. El refresco de `Elegí tu podcast` ya no depende de dos consultas activas sobre la misma key; el hook decide solo si refresca cada 5 segundos cuando un episodio está en proceso o cada 60 segundos cuando todo está estable.
+
+---
+
+## Sesion: Web — dashboard light, corrección estructural del alto del hero
+**Fecha:** 2026-04-04 ~16:30 (ARG)
+
+### Que se hizo
+Se corrigió el alto excesivo del hero principal del dashboard con un ajuste estructural, no sólo de padding. El resumen derecho dejó de apilar tres tarjetas altas en desktop y pasó a una composición compacta que reduce la altura total del bloque.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Reorganiza el layout desktop del hero para que la columna derecha use un resumen compacto y no fuerce una fila tan alta |
+| `frontend/src/componentes/dashboard-v2/numero-del-dia.tsx` | Agrega variante `compacto` para el resumen desktop del hero |
+| `frontend/src/componentes/dashboard-v2/luna-posicion.tsx` | Agrega variante `compacto` con lectura más breve para el hero |
+| `frontend/src/componentes/dashboard-v2/niveles-energia.tsx` | Agrega variante `compacto` con métricas resumidas en una sola fila |
+| `context/resumen-de-cambios.md` | Documenta esta corrección puntual del hero |
+
+### Tests
+0 archivos nuevos. Pasaron `eslint` sobre los componentes tocados dentro de `frontend/`, `5/5` tests de `frontend/src/tests/paginas/dashboard.test.tsx`, y `npm run build` completo en `frontend/`.
+
+### Como funciona
+1. En mobile el hero mantiene la lógica horizontal de tarjetas para no romper la navegación compacta.
+2. En desktop, el bloque derecho ya no apila número, luna y niveles como tres cards altas; ahora usa dos tarjetas compactas arriba y un resumen horizontal de métricas abajo.
+3. Ese cambio baja la altura real del hero completo, porque la grilla ya no toma como referencia una tercera columna sobredimensionada.

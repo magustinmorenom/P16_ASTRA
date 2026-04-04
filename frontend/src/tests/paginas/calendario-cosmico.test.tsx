@@ -17,6 +17,7 @@ vi.mock("@/lib/hooks", () => ({
 }));
 
 import PaginaCalendarioCosmico from "@/app/(app)/calendario-cosmico/page";
+import { calcularPosicionTooltip } from "@/app/(app)/calendario-cosmico/_componentes/calendario-mes";
 
 function crearDia(fecha: string) {
   const esHoy = fecha === "2026-04-03";
@@ -113,15 +114,13 @@ describe("PaginaCalendarioCosmico", () => {
     vi.useRealTimers();
   });
 
-  it("renderiza la vista mensual real con año y día personal", () => {
+  it("renderiza la vista mensual compacta con ritmo personal integrado", () => {
     renderConProveedores(<PaginaCalendarioCosmico />);
 
-    expect(
-      screen.getByText(/Calendario mensual compacto, fijo en hoy y en la semana actual/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Año personal 8")).toBeInTheDocument();
-    expect(screen.getByText("Hoy vibra en 6")).toBeInTheDocument();
-    expect(screen.getByText("Mercurio inicia retrogradación")).toBeInTheDocument();
+    expect(screen.getByText(/abril 2026/i)).toBeInTheDocument();
+    expect(screen.getByText(/Año 8 · Día 6/i)).toBeInTheDocument();
+    expect(screen.getByText(/hasta mayo/i)).toBeInTheDocument();
+    expect(screen.getByText("Mercurio R")).toBeInTheDocument();
   });
 
   it("permite avanzar a la ventana del próximo mes", () => {
@@ -132,7 +131,7 @@ describe("PaginaCalendarioCosmico", () => {
     expect(screen.getByText(/mayo 2026/i)).toBeInTheDocument();
   });
 
-  it("actualiza el detalle cuando el usuario selecciona otro día", () => {
+  it("muestra el tooltip del día y conserva el contenido astral al hacer hover", () => {
     renderConProveedores(<PaginaCalendarioCosmico />);
 
     const manana = screen.getAllByRole("button").find((boton) =>
@@ -141,9 +140,29 @@ describe("PaginaCalendarioCosmico", () => {
 
     expect(manana).toBeDefined();
     if (manana) {
-      fireEvent.click(manana);
+      fireEvent.mouseEnter(manana, { clientX: 980, clientY: 220 });
     }
 
-    expect(screen.getByText(/Venus entra en Aries/i)).toBeInTheDocument();
+    expect(screen.getByText(/Día personal 7 · Año 8/i)).toBeInTheDocument();
+    expect(screen.getByText(/Venus cambia de Piscis a Aries/i)).toBeInTheDocument();
+  });
+
+  it("reubica el tooltip hacia la izquierda y arriba cuando el casillero queda contra el borde", () => {
+    expect(
+      calcularPosicionTooltip({
+        ancla: {
+          top: 780,
+          left: 1450,
+          right: 1590,
+          bottom: 870,
+          width: 140,
+          height: 90,
+        },
+        tooltipWidth: 296,
+        tooltipHeight: 212,
+        viewportWidth: 1600,
+        viewportHeight: 900,
+      }),
+    ).toEqual({ x: 1288, y: 554 });
   });
 });

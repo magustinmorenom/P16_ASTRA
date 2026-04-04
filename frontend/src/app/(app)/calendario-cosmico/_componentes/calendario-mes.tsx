@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import {
   eachDayOfInterval,
   endOfMonth,
@@ -29,11 +29,60 @@ const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 interface TooltipDiaState {
   fecha: string;
-  x: number;
-  y: number;
   eventos: EventoClaveCalendario[];
   ritmo: RitmoPersonalCalendario | null;
   faseLunar: string;
+}
+
+interface PosicionTooltipState {
+  x: number;
+  y: number;
+}
+
+interface RectAnclaTooltip {
+  top: number;
+  left: number;
+  right: number;
+  bottom: number;
+  width: number;
+  height: number;
+}
+
+const ANCHO_MAXIMO_TOOLTIP = 296;
+const MARGEN_TOOLTIP = 16;
+const SEPARACION_TOOLTIP = 14;
+
+function limitar(valor: number, minimo: number, maximo: number) {
+  return Math.min(Math.max(valor, minimo), maximo);
+}
+
+export function calcularPosicionTooltip({
+  ancla,
+  tooltipWidth,
+  tooltipHeight,
+  viewportWidth,
+  viewportHeight,
+}: {
+  ancla: RectAnclaTooltip;
+  tooltipWidth: number;
+  tooltipHeight: number;
+  viewportWidth: number;
+  viewportHeight: number;
+}) {
+  const maxX = Math.max(MARGEN_TOOLTIP, viewportWidth - tooltipWidth - MARGEN_TOOLTIP);
+  const maxY = Math.max(MARGEN_TOOLTIP, viewportHeight - tooltipHeight - MARGEN_TOOLTIP);
+
+  const x = ancla.left + ancla.width / 2 - tooltipWidth / 2;
+  let y = ancla.top - tooltipHeight - SEPARACION_TOOLTIP;
+
+  if (y < MARGEN_TOOLTIP) {
+    y = ancla.bottom + SEPARACION_TOOLTIP;
+  }
+
+  return {
+    x: limitar(x, MARGEN_TOOLTIP, maxX),
+    y: limitar(y, MARGEN_TOOLTIP, maxY),
+  };
 }
 
 function tonoEvento(impacto: EventoClaveCalendario["impacto"]) {
@@ -58,19 +107,33 @@ function tonoEvento(impacto: EventoClaveCalendario["impacto"]) {
 
 function TooltipDiaCalendario({
   estado,
+  posicion,
+  referencia,
 }: {
   estado: TooltipDiaState;
+  posicion: PosicionTooltipState | null;
+  referencia: RefObject<HTMLDivElement | null>;
 }) {
   const primerEvento = estado.eventos[0];
+  const visible = posicion !== null;
 
   return (
     <div
-      className="pointer-events-none fixed z-[100] animate-[tooltip-in_180ms_ease-out_both]"
-      style={{ left: estado.x, top: estado.y }}
+      ref={referencia}
+      className={cn(
+        "pointer-events-none fixed z-[100] transition-opacity duration-150",
+        visible && "animate-[tooltip-in_180ms_ease-out_both]",
+      )}
+      style={{
+        left: posicion?.x ?? -9999,
+        top: posicion?.y ?? -9999,
+        opacity: visible ? 1 : 0,
+      }}
     >
       <div
-        className="w-[280px] rounded-[22px] border px-4 py-3.5 backdrop-blur-3xl"
+        className="rounded-[22px] border px-4 py-3.5 backdrop-blur-3xl"
         style={{
+          width: `min(${ANCHO_MAXIMO_TOOLTIP}px, calc(100vw - 32px))`,
           background: "var(--shell-panel)",
           borderColor: "var(--shell-borde)",
           boxShadow: "var(--shell-sombra-fuerte)",
@@ -155,7 +218,10 @@ export function CalendarioMes({
 }) {
   const contenedorSemanasRef = useRef<HTMLDivElement | null>(null);
   const refsSemana = useRef<Record<number, HTMLDivElement | null>>({});
+  const anclaTooltipRef = useRef<HTMLButtonElement | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [tooltip, setTooltip] = useState<TooltipDiaState | null>(null);
+  const [posicionTooltip, setPosicionTooltip] = useState<PosicionTooltipState | null>(null);
 
   const mapaDias = useMemo(() => {
     return new Map(dias.map((dia) => [dia.fecha, dia]));
@@ -190,6 +256,80 @@ export function CalendarioMes({
     if (!fila || typeof fila.scrollIntoView !== "function") return;
     fila.scrollIntoView({ block: "nearest" });
   }, [indiceSemanaActiva, semanas.length]);
+
+  function ocultarTooltip() {
+    anclaTooltipRef.current = null;
+    setTooltip(null);
+    setPosicionTooltip(null);
+  }
+
+  useEffect(() => {
+    if (!tooltip) return;
+
+    const reposicionar = () => {
+      const elementoAncla = anclaTooltipRef.current;
+      const elementoTooltip = tooltipRef.current;
+
+      if (!elementoAncla || !elementoTooltip) return;
+
+      const rect = elementoAncla.getBoundingClientRect();
+      const fueraDePantalla =
+        rect.bottom < 0 ||
+        rect.top > window.innerHeight ||
+        rect.right < 0 ||
+        rect.left > window.innerWidth;
+
+      if (fueraDePantalla) {
+        ocultarTooltip();
+        return;
+      }
+
+      const { x, y } = calcularPosicionTooltip({
+        ancla: {
+          top: rect.top,
+          left: rect.left,
+          right: rect.right,
+          bottom: rect.bottom,
+          width: rect.width,
+          height: rect.height,
+        },
+        tooltipWidth: elementoTooltip.offsetWidth,
+        tooltipHeight: elementoTooltip.offsetHeight,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+      });
+
+      setPosicionTooltip((actual) => {
+        if (actual?.x === x && actual?.y === y) {
+          return actual;
+        }
+
+        return { x, y };
+      });
+    };
+
+    const frame = window.requestAnimationFrame(reposicionar);
+    window.addEventListener("resize", reposicionar);
+    window.addEventListener("scroll", reposicionar, true);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", reposicionar);
+      window.removeEventListener("scroll", reposicionar, true);
+    };
+  }, [tooltip]);
+
+  function mostrarTooltip(
+    fecha: string,
+    faseLunar: string,
+    eventos: EventoClaveCalendario[],
+    ritmo: RitmoPersonalCalendario | null,
+    elementoAncla: HTMLButtonElement,
+  ) {
+    anclaTooltipRef.current = elementoAncla;
+    setPosicionTooltip(null);
+    setTooltip({ fecha, eventos, ritmo, faseLunar });
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -288,28 +428,26 @@ export function CalendarioMes({
                     onClick={() => onSeleccionarFecha(fechaStr)}
                     onMouseEnter={(e) => {
                       if (!dia) return;
-                      const mx = e.clientX;
-                      const my = e.clientY;
-                      const tw = 296;
-                      const th = 190;
-                      const vw = window.innerWidth;
-                      const vh = window.innerHeight;
-
-                      // Posicionar cerca del cursor
-                      let x = mx + 12;
-                      let y = my - th - 8;
-
-                      // Si se sale por la derecha, mover a la izquierda del cursor
-                      if (x + tw > vw - 12) x = mx - tw - 12;
-                      if (x < 12) x = 12;
-
-                      // Si se sale por arriba, mover debajo del cursor
-                      if (y < 12) y = my + 16;
-                      if (y + th > vh - 12) y = vh - th - 12;
-
-                      setTooltip({ fecha: fechaStr, x, y, eventos, ritmo, faseLunar: dia.fase_lunar });
+                      mostrarTooltip(
+                        fechaStr,
+                        dia.fase_lunar,
+                        eventos,
+                        ritmo,
+                        e.currentTarget,
+                      );
                     }}
-                    onMouseLeave={() => setTooltip(null)}
+                    onFocus={(e) => {
+                      if (!dia) return;
+                      mostrarTooltip(
+                        fechaStr,
+                        dia.fase_lunar,
+                        eventos,
+                        ritmo,
+                        e.currentTarget,
+                      );
+                    }}
+                    onMouseLeave={ocultarTooltip}
+                    onBlur={ocultarTooltip}
                     className={cn(
                       "relative min-h-[80px] border-r px-2.5 py-2.5 text-left transition-colors last:border-r-0 sm:min-h-[90px]",
                       !perteneceAlMes && "opacity-55",
@@ -382,7 +520,13 @@ export function CalendarioMes({
         })}
       </div>
 
-      {tooltip ? <TooltipDiaCalendario estado={tooltip} /> : null}
+      {tooltip ? (
+        <TooltipDiaCalendario
+          estado={tooltip}
+          posicion={posicionTooltip}
+          referencia={tooltipRef}
+        />
+      ) : null}
     </div>
   );
 }
