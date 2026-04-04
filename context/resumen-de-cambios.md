@@ -3232,3 +3232,178 @@ Se corrigió el alto excesivo del hero principal del dashboard con un ajuste est
 1. En mobile el hero mantiene la lógica horizontal de tarjetas para no romper la navegación compacta.
 2. En desktop, el bloque derecho ya no apila número, luna y niveles como tres cards altas; ahora usa dos tarjetas compactas arriba y un resumen horizontal de métricas abajo.
 3. Ese cambio baja la altura real del hero completo, porque la grilla ya no toma como referencia una tercera columna sobredimensionada.
+
+---
+
+## Sesion: Web — dashboard, arreglo puntual del alto del bloque superior
+**Fecha:** 2026-04-04 ~17:27 (ARG)
+
+### Que se hizo
+Se corrigió el alto insuficiente de la tarjeta superior del dashboard en desktop. El problema venía de una combinación de `overflow-hidden` con una columna interna que usaba `h-full` dentro de una grilla sin altura mínima explícita, lo que terminaba recortando el contenido inferior.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Agrega altura mínima real al contenedor, ajusta la grilla desktop y elimina la dependencia de `h-full` que comprimía la tarjeta |
+| `frontend/src/componentes/dashboard-v2/niveles-energia.tsx` | Elimina helper visual muerto para dejar el módulo sin warnings en lint |
+| `frontend/src/tests/paginas/dashboard.test.tsx` | Limpia el mock de `next/image` para que la verificación del dashboard pase sin warnings |
+| `context/resumen-de-cambios.md` | Documenta esta corrección puntual del alto del bloque inicial |
+
+### Tests
+Pasaron `eslint` sin warnings sobre el alcance del dashboard, `5/5` tests de `frontend/src/tests/paginas/dashboard.test.tsx`, y `npm run build` completo en `frontend/` usando Node `20` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. En desktop, la tarjeta principal ahora reserva altura suficiente desde el contenedor exterior y desde la grilla interna, en vez de depender sólo del contenido visible de la primera fila.
+2. La columna izquierda ya no usa `h-full` dentro de una grilla sin alto explícito, por lo que los CTAs y el resto del contenido dejan de desbordar hacia abajo y quedar recortados.
+3. La columna derecha con resúmenes compactos también participa mejor del alto compartido, de modo que el primer bloque del dashboard vuelve a leerse como una pieza completa y no como una franja demasiado baja.
+
+---
+
+## Sesion: Web — dashboard, ajuste final de altura del bloque superior
+**Fecha:** 2026-04-04 ~17:33 (ARG)
+
+### Que se hizo
+Se hizo una segunda pasada puntual sobre el alto del bloque superior del dashboard después de revisar la captura final. El bloque ya no quedaba recortado, pero seguía demasiado bajo para el peso visual que necesita; por eso se subió otra vez la altura mínima del contenedor y se alineó el skeleton al nuevo tamaño.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Sube nuevamente la altura mínima desktop del contenedor y de la grilla interna para que el bloque tenga presencia suficiente sin recortar el contenido |
+| `frontend/src/app/(app)/dashboard/page.tsx` | Ajusta la altura del skeleton principal para que la carga respete la nueva escala del bloque superior |
+| `context/resumen-de-cambios.md` | Documenta este ajuste final de altura |
+
+### Tests
+Pasaron `eslint` sin warnings sobre el alcance del dashboard, `5/5` tests de `frontend/src/tests/paginas/dashboard.test.tsx`, y `npm run build` completo en `frontend/` usando Node `20` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. El bloque superior mantiene la misma composición, pero con una reserva vertical más generosa en desktop.
+2. La grilla interna ahora acompaña ese alto, así que fecha, texto, momentos y tarjetas compactas respiran mejor y no quedan apretados dentro del contenedor.
+3. El estado de carga visual ya no “encoge” respecto de la tarjeta real, porque el skeleton usa la misma escala nueva.
+
+---
+
+## Sesion: Web — dashboard, superficies lisas en el panel superior
+**Fecha:** 2026-04-04 ~17:44 (ARG)
+
+### Que se hizo
+Se aplanó el material visual del panel superior del dashboard para quitar la sensación de relieve en light mode. El bloque principal y sus tarjetas internas dejaron de usar glow, sombras suaves y fondos degradados, pasando a superficies lisas con borde sutil.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Quita los glows decorativos del panel superior y fuerza una superficie plana para el contenedor y los CTAs |
+| `frontend/src/componentes/dashboard-v2/tarjeta-fecha.tsx` | Convierte la tarjeta de fecha a una placa lisa sin sombra interna |
+| `frontend/src/componentes/dashboard-v2/momentos-dia.tsx` | Reemplaza el fondo degradado de la lista por un fondo plano y sin blur |
+| `frontend/src/componentes/dashboard-v2/numero-del-dia.tsx` | Aplana la tarjeta y la placa del número personal para sacar el efecto de relieve |
+| `frontend/src/componentes/dashboard-v2/luna-posicion.tsx` | Deja la tarjeta lunar y su ícono sobre fondos lisos y sin sombra |
+| `frontend/src/componentes/dashboard-v2/niveles-energia.tsx` | Quita el glow de los segmentos activos y deja métricas y barras sobre superficies planas |
+| `context/resumen-de-cambios.md` | Documenta esta limpieza visual del panel superior |
+
+### Tests
+Pasaron `eslint` sobre los componentes del dashboard tocados, `5/5` tests de `frontend/src/tests/paginas/dashboard.test.tsx`, y `npm run build` completo en `frontend/` usando Node `20` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. El panel superior mantiene la misma estructura y contenido, pero su contenedor principal ahora se renderiza como una superficie plana, sin brillos ambientales ni degradé de fondo.
+2. Las tarjetas internas de momentos, número, luna y energía usan el mismo lenguaje material: fondo liso, borde suave y sin blur ni sombra marcada.
+3. Las métricas de energía siguen destacando el valor activo con violeta, pero sin el halo brillante que generaba la sensación de relieve en el conjunto.
+
+---
+
+## Sesion: Web — dashboard, consolidación del resumen personal
+**Fecha:** 2026-04-04 ~18:28 (ARG)
+
+### Que se hizo
+Se consolidó la zona derecha del panel superior del dashboard en una sola tarjeta editorial, sin tarjetas anidadas. Además se ajustaron los textos y la jerarquía del resumen para que `Número del día`, `Luna en {signo}` e `Intensidad / Claridad / Fuerza` se lean como un único bloque premium con separadores sutiles.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/resumen-personal-unificado.tsx` | Nuevo resumen desktop unificado con secciones internas para número del día, luna y barras de intensidad/claridad/fuerza |
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Integra el nuevo resumen unificado y devuelve una profundidad leve al panel y a los CTAs |
+| `frontend/src/componentes/dashboard-v2/momentos-dia.tsx` | Quita el recuadro de los íconos de mañana/tarde/noche y mantiene la tarjeta con una sombra sutil |
+| `frontend/src/componentes/dashboard-v2/numero-del-dia.tsx` | Actualiza el copy a `Número del día` y mantiene la versión mobile alineada con la nueva nomenclatura |
+| `frontend/src/componentes/dashboard-v2/luna-posicion.tsx` | Pasa a destacar `Luna en {signo}` y usa el icono de fase lunar sin recuadro |
+| `frontend/src/componentes/dashboard-v2/niveles-energia.tsx` | Renombra la primera métrica a `Intensidad` y mantiene la familia de barras con el lenguaje actualizado |
+| `frontend/src/tests/paginas/dashboard.test.tsx` | Refuerza la cobertura del dashboard para el nuevo copy y el nuevo resumen unificado |
+| `context/resumen-de-cambios.md` | Documenta esta consolidación del panel de resumen |
+
+### Tests
+Pasaron `eslint` sobre los componentes tocados del dashboard, `5/5` tests de `frontend/src/tests/paginas/dashboard.test.tsx`, y `npm run build` completo en `frontend/` usando Node `20` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. En desktop, la columna derecha ya no apila tres mini tarjetas: ahora renderiza una sola tarjeta con divisores finos entre `Número del día`, `Luna en {signo}` y las tres métricas del cierre.
+2. El número y la luna dejan de apoyarse en recuadros internos; pasan a una lectura más directa, con el número suelto y el icono real de fase lunar como acento.
+3. `Intensidad`, `Claridad` y `Fuerza` se muestran con nombre completo y una barra de 1 a 10 dentro del mismo bloque, para que el resumen cierre como una única pieza y no como una suma de widgets.
+
+---
+
+## Sesion: Web — dashboard, corrección de altura real del panel superior
+**Fecha:** 2026-04-04 ~18:38 (ARG)
+
+### Que se hizo
+Se corrigió el alto del panel superior después de detectar que la tarjeta seguía cortando contenido en desktop. La causa era una combinación de `min-height` todavía activos y elementos internos con `flex-1`/`justify-between` que seguían estirando o recortando la composición en lugar de medir por contenido.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Elimina las alturas mínimas desktop restantes y evita que las columnas izquierda, central y derecha vuelvan a imponer una altura artificial |
+| `frontend/src/componentes/dashboard-v2/momentos-dia.tsx` | Quita el estiramiento vertical de la tarjeta y de sus filas para que la altura salga de las tres etapas reales del día |
+| `context/resumen-de-cambios.md` | Documenta esta corrección final del alto real del panel |
+
+### Tests
+Pasaron `eslint` sobre `hero-seccion.tsx`, `momentos-dia.tsx` y `dashboard.test.tsx`, `5/5` tests de `frontend/src/tests/paginas/dashboard.test.tsx`, y `npm run build` completo en `frontend/` usando Node `20` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. El contenedor superior ya no reserva alto mínimo en desktop; ahora toma la altura del contenido más alto real del panel.
+2. `Momentos del día` deja de repartirse el espacio como una columna elástica y pasa a una pila compacta de tres filas, evitando que el panel se infle o que corte la última etapa.
+3. La grilla conserva los divisores y la estructura visual, pero sin depender de alturas forzadas que desalineaban el bloque respecto de su contenido.
+
+---
+
+## Sesion: Web — dashboard, refactor de altura del panel principal
+**Fecha:** 2026-04-04 ~18:46 (ARG)
+
+### Que se hizo
+Se analizó la causa de la altura insuficiente recurrente del panel principal del dashboard y se aplicó un refactor estructural mínimo. El problema no era sólo un `min-height`, sino la combinación de una grilla desktop con wrappers `flex` innecesarios y un resumen derecho que dependía de `h-full` dentro de una fila de grid con alto indefinido.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Simplifica la composición desktop del panel quitando wrappers `flex` innecesarios en columnas que afectaban el cálculo intrínseco de altura |
+| `frontend/src/componentes/dashboard-v2/resumen-personal-unificado.tsx` | Elimina la dependencia de `h-full/min-height` para que el resumen derecho mida por contenido real y no por una altura porcentual frágil |
+| `frontend/src/componentes/dashboard-v2/momentos-dia.tsx` | Mantiene la tarjeta central como bloque natural por contenido para que no intervenga en el cálculo con una altura elástica |
+| `frontend/src/app/(app)/dashboard/page.tsx` | Ajusta la altura del skeleton principal para alinearla con la nueva escala real del panel |
+| `context/resumen-de-cambios.md` | Documenta el análisis y este refactor estructural del panel principal |
+
+### Tests
+Pasaron `eslint` sobre `dashboard/page.tsx`, `hero-seccion.tsx`, `resumen-personal-unificado.tsx`, `momentos-dia.tsx` y `dashboard.test.tsx`, `5/5` tests de `frontend/src/tests/paginas/dashboard.test.tsx`, y `npm run build` completo en `frontend/` usando Node `20` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. La grilla desktop sigue siendo de tres columnas, pero ahora sus columnas se apoyan en bloques normales de contenido en lugar de wrappers flex que introducían mediciones inestables.
+2. El resumen derecho deja de depender de `height: 100%` dentro de un contexto donde la fila del grid no tenía un alto explícito; eso evita que el navegador subestime la altura total y que el `overflow-hidden` del panel recorte contenido.
+3. El panel principal vuelve a medir por el contenido real de sus tres columnas, por lo que la tarjeta deja de quedar sistemáticamente “chica” cada vez que cambia el contenido interno.
+
+---
+
+## Sesion: Web — dashboard, estabilización definitiva del alto del panel principal
+**Fecha:** 2026-04-04 ~19:14 (ARG)
+
+### Que se hizo
+Se aplicó un refactor estructural medio para eliminar el encogimiento del panel superior en desktop. La causa principal detectada fue el contrato `h-full` + contenedor `flex` con hijos `flex-shrink` en la página de dashboard, que comprimía el bloque principal para “entrar” en viewport.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/app/(app)/dashboard/page.tsx` | Cambia el contrato de altura del contenedor principal a medición intrínseca por contenido, evita el shrink de secciones y ajusta el skeleton del panel superior |
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Consolida layout en `grid` explícito (sin mezcla inestable `flex+grid`), mantiene 3 columnas desktop y agrega CTA secundario honesto para mañana con callback informativo |
+| `frontend/src/componentes/dashboard-v2/momentos-dia.tsx` | Refuerza filas de alto natural y vuelve a exponer etiquetas explícitas `Mañana`, `Tarde`, `Noche` sin contenedores de icono inflados |
+| `frontend/src/tests/paginas/dashboard.test.tsx` | Amplía cobertura para estados `pendiente/listo/generando`, etiquetas de momentos y feedback informativo del CTA secundario |
+| `context/resumen-de-cambios.md` | Documenta esta estabilización estructural final |
+
+### Tests
+Pasaron `eslint` sobre `dashboard/page.tsx`, `hero-seccion.tsx`, `resumen-personal-unificado.tsx`, `momentos-dia.tsx` y `dashboard.test.tsx`; `8/8` tests de `frontend/src/tests/paginas/dashboard.test.tsx`; y `npm run build` completo en `frontend/` usando Node `20` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. El dashboard dejó de forzar una altura fija al contenedor de secciones; ahora el panel superior mide por contenido real y no se comprime por flexbox.
+2. El panel superior mantiene su estructura de 3 columnas en desktop con separadores, pero cada columna se mide por su altura intrínseca y ya no depende de `h-full/min-height` para verse completa.
+3. El CTA de mañana deja de disparar generación falsa y muestra un toast informativo claro sobre disponibilidad del audio.

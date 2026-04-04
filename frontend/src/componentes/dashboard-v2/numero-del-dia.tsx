@@ -7,14 +7,16 @@ interface NumeroDelDiaProps {
 }
 
 const ESTILO_TARJETA_NUMERO = {
-  background: "var(--shell-panel-suave)",
+  background: "rgba(255, 255, 255, 0.82)",
   borderColor: "var(--shell-borde-fuerte)",
+  boxShadow: "0 8px 18px rgba(93, 53, 167, 0.05)",
+  backdropFilter: "none",
 } as const;
 
 const ESTILO_PLACA_NUMERO = {
-  background: "var(--shell-superficie-fuerte)",
+  background: "rgba(255, 255, 255, 0.94)",
   borderColor: "var(--shell-chip-borde)",
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.42)",
+  boxShadow: "none",
 } as const;
 
 export function NumeroDelDia({ numero, compacto = false }: NumeroDelDiaProps) {
@@ -35,7 +37,7 @@ export function NumeroDelDia({ numero, compacto = false }: NumeroDelDiaProps) {
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-semibold text-[color:var(--shell-texto)]">
-            Número personal
+            Número del día
           </p>
           <p className="mt-0.5 text-[11px] leading-4 text-[color:var(--shell-texto-secundario)] line-clamp-2">
             {numero.descripcion}
@@ -65,7 +67,7 @@ export function NumeroDelDia({ numero, compacto = false }: NumeroDelDiaProps) {
 
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
-          Número personal
+          Número del día
         </p>
         <p className="mt-1 text-[15px] font-semibold leading-tight text-[color:var(--shell-texto)]">
           Tu pulso del día

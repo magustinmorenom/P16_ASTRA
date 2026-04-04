@@ -37,15 +37,17 @@ interface MomentosDiaProps {
   momentos: MomentoClaveDTO[];
 }
 
-const ESTILO_TARJETA_MOMENTOS = {
-  background: "var(--shell-panel-suave)",
-  border: "1px solid var(--shell-borde)",
-  boxShadow: "var(--shell-sombra-suave)",
-} as const;
+const ETIQUETA_BLOQUE: Record<string, string> = {
+  manana: "Mañana",
+  tarde: "Tarde",
+  noche: "Noche",
+};
 
-const ESTILO_ICONO_MOMENTO = {
-  borderColor: "var(--shell-chip-borde)",
-  background: "var(--shell-superficie-fuerte)",
+const ESTILO_TARJETA_MOMENTOS = {
+  background: "rgba(255, 255, 255, 0.82)",
+  border: "1px solid var(--shell-borde)",
+  boxShadow: "0 8px 18px rgba(93, 53, 167, 0.05)",
+  backdropFilter: "none",
 } as const;
 
 export function MomentosDia({ momentos }: MomentosDiaProps) {
@@ -56,19 +58,19 @@ export function MomentosDia({ momentos }: MomentosDiaProps) {
 
   return (
     <div
-      className="flex flex-1 flex-col justify-between overflow-hidden divide-y divide-[var(--shell-borde)] rounded-[18px]"
+      className="flex w-full flex-col overflow-hidden divide-y divide-[var(--shell-borde)] rounded-[18px]"
       style={ESTILO_TARJETA_MOMENTOS}
     >
       {momentosOrdenados.map((momento) => (
-        <div key={momento.bloque} className="flex flex-1 items-center gap-2.5 px-3 py-2">
-          <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border text-[color:var(--color-acento)]"
-            style={ESTILO_ICONO_MOMENTO}
-          >
+        <div key={momento.bloque} className="flex items-center gap-2.5 px-3 py-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[color:var(--color-acento)]">
             {ICONO_BLOQUE[momento.bloque] ?? ICONO_BLOQUE.manana}
           </div>
-          <div className="flex-1">
-            <p className="text-[12px] font-medium leading-[1.35] text-[color:var(--shell-texto)]">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--shell-texto-tenue)]">
+              {ETIQUETA_BLOQUE[momento.bloque] ?? "Mañana"}
+            </p>
+            <p className="mt-0.5 text-[12px] font-medium leading-[1.35] text-[color:var(--shell-texto)]">
               {momento.frase}
             </p>
           </div>

@@ -71,7 +71,7 @@ export default function PaginaDashboard() {
 
   const { data: episodiosHoy } = usarPodcastHoy(generarMutation.isPending);
 
-  const { setPistaActual, pistaActual, toggleReproduccion } = useStoreUI();
+  const { setPistaActual, pistaActual, toggleReproduccion, mostrarToast } = useStoreUI();
 
   const fechaHoy = useMemo(() => {
     return new Date().toLocaleDateString("es-ES", {
@@ -142,6 +142,13 @@ export default function PaginaDashboard() {
     mapaEpisodios.get("semana")?.estado === "generando_guion" ||
     mapaEpisodios.get("semana")?.estado === "generando_audio";
 
+  function manejarInfoPodcastManana() {
+    mostrarToast(
+      "info",
+      "El audio de mañana se habilita cuando comienza el próximo día."
+    );
+  }
+
   // =========================================================================
   // DASHBOARD UNIFICADO — dark ciruela (mobile + desktop)
   // =========================================================================
@@ -162,7 +169,7 @@ export default function PaginaDashboard() {
   ];
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex min-h-0 flex-col">
       {/* Header solo en mobile */}
       {esMobile && (
         <HeaderMobile
@@ -198,11 +205,11 @@ export default function PaginaDashboard() {
       )}
 
       {/* Contenido principal — dark theme unificado */}
-      <section className="flex flex-1 flex-col gap-4 px-4 pb-4 pt-2 scroll-sutil-dark lg:gap-6 lg:px-6 lg:pb-6 lg:pt-4">
+      <section className="flex flex-col gap-4 px-4 pb-4 pt-2 scroll-sutil-dark [&>*]:shrink-0 lg:gap-6 lg:px-6 lg:pb-6 lg:pt-4">
         {/* ---- PRONÓSTICO ---- */}
         {cargandoPronostico ? (
           <div className="flex flex-col gap-3 lg:gap-4">
-            <Esqueleto className="h-[200px] lg:h-[268px] rounded-[10px] !bg-[var(--shell-superficie)]" />
+            <Esqueleto className="h-[220px] lg:h-[320px] rounded-[10px] !bg-[var(--shell-superficie)]" />
             <Esqueleto className="h-[140px] lg:h-[180px] rounded-[10px] !bg-[var(--shell-superficie)]" />
             <Esqueleto className="h-[100px] lg:h-[120px] rounded-[10px] !bg-[var(--shell-superficie)]" />
           </div>
@@ -260,6 +267,7 @@ export default function PaginaDashboard() {
               podcastGenerando={podcastDiaGenerando ?? false}
               onReproducirPodcast={() => manejarPlayPodcast("dia")}
               onGenerarPodcast={() => generarMutation.mutate("dia")}
+              onInformarPodcastManana={manejarInfoPodcastManana}
             />
 
             {/* 2. Áreas de Vida */}
