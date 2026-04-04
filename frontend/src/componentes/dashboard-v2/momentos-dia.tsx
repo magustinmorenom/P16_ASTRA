@@ -35,6 +35,7 @@ const ICONO_BLOQUE: Record<string, React.ReactNode> = {
 
 interface MomentosDiaProps {
   momentos: MomentoClaveDTO[];
+  expandido?: boolean;
 }
 
 const ETIQUETA_BLOQUE: Record<string, string> = {
@@ -50,7 +51,7 @@ const ESTILO_TARJETA_MOMENTOS = {
   backdropFilter: "none",
 } as const;
 
-export function MomentosDia({ momentos }: MomentosDiaProps) {
+export function MomentosDia({ momentos, expandido = false }: MomentosDiaProps) {
   const ordenBloques = ["manana", "tarde", "noche"] as const;
   const momentosOrdenados = ordenBloques
     .map((b) => momentos.find((m) => m.bloque === b))
@@ -58,11 +59,18 @@ export function MomentosDia({ momentos }: MomentosDiaProps) {
 
   return (
     <div
-      className="flex w-full flex-col overflow-hidden divide-y divide-[var(--shell-borde)] rounded-[18px]"
+      className={`flex w-full flex-col overflow-hidden divide-y divide-[var(--shell-borde)] rounded-[18px] ${
+        expandido ? "lg:h-full" : ""
+      }`}
       style={ESTILO_TARJETA_MOMENTOS}
     >
       {momentosOrdenados.map((momento) => (
-        <div key={momento.bloque} className="flex items-center gap-2.5 px-3 py-3">
+        <div
+          key={momento.bloque}
+          className={`flex items-center gap-2.5 px-3 py-3 ${
+            expandido ? "lg:flex-1 lg:py-2.5" : ""
+          }`}
+        >
           <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[color:var(--color-acento)]">
             {ICONO_BLOQUE[momento.bloque] ?? ICONO_BLOQUE.manana}
           </div>

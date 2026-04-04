@@ -3407,3 +3407,26 @@ Pasaron `eslint` sobre `dashboard/page.tsx`, `hero-seccion.tsx`, `resumen-person
 1. El dashboard dejó de forzar una altura fija al contenedor de secciones; ahora el panel superior mide por contenido real y no se comprime por flexbox.
 2. El panel superior mantiene su estructura de 3 columnas en desktop con separadores, pero cada columna se mide por su altura intrínseca y ya no depende de `h-full/min-height` para verse completa.
 3. El CTA de mañana deja de disparar generación falsa y muestra un toast informativo claro sobre disponibilidad del audio.
+
+---
+
+## Sesion: Web — dashboard, balance vertical de columnas del panel principal
+**Fecha:** 2026-04-04 ~19:28 (ARG)
+
+### Que se hizo
+Se ajustó el panel superior para balancear visualmente el alto entre columnas sin volver al recorte. La columna izquierda y la central ahora acompañan el alto real del bloque derecho, eliminando el vacío inferior que aparecía en desktop.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Cambia la grilla desktop a `items-stretch`, convierte columna izquierda a layout flex de altura completa y ancla las acciones al final para equilibrar el bloque |
+| `frontend/src/componentes/dashboard-v2/momentos-dia.tsx` | Agrega modo `expandido` para que las tres filas de momentos se distribuyan en alto cuando el panel está en desktop |
+| `context/resumen-de-cambios.md` | Documenta este ajuste de balance visual |
+
+### Tests
+Pasaron `eslint` sobre `hero-seccion.tsx` y `momentos-dia.tsx`; `8/8` tests de `frontend/src/tests/paginas/dashboard.test.tsx`; y `npm run build` completo en `frontend/` usando Node `20` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. El alto total sigue siendo intrínseco (por contenido), pero en desktop la grilla estira las columnas para mantener una lectura más pareja.
+2. El bloque de acciones de la columna izquierda se ubica al fondo del panel, lo que compensa el peso visual de la tarjeta derecha.
+3. La tarjeta de `Momentos del día` puede ocupar la altura disponible con tres filas proporcionadas, evitando que quede “flotando” con demasiado aire por debajo.

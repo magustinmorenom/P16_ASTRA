@@ -80,12 +80,12 @@ export function HeroSeccion({
       className="tema-superficie-panel relative overflow-visible rounded-[24px] px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6"
       style={estiloPanelResumen}
     >
-      <div className="relative z-10 grid grid-cols-1 gap-0 lg:grid-cols-[minmax(240px,1.12fr)_minmax(220px,0.92fr)_minmax(280px,1fr)] lg:items-start">
+      <div className="relative z-10 grid grid-cols-1 gap-0 lg:grid-cols-[minmax(240px,1.12fr)_minmax(220px,0.92fr)_minmax(280px,1fr)] lg:items-stretch">
         <div
-          className="border-b pb-4 lg:self-start lg:border-b-0 lg:border-r lg:pb-0 lg:pr-5"
+          className="border-b pb-4 lg:flex lg:h-full lg:flex-col lg:border-b-0 lg:border-r lg:pb-0 lg:pr-5"
           style={{ borderColor: "var(--shell-borde)" }}
         >
-          <div className="space-y-5">
+          <div className="flex h-full flex-col gap-5">
             <div className="flex items-start gap-4">
               <TarjetaFecha fecha={fecha} />
               <div className="min-w-0 flex-1">
@@ -98,11 +98,11 @@ export function HeroSeccion({
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5 pb-0.5 lg:pt-2">
+            <div className="mt-auto flex flex-col items-start gap-2.5 pb-0.5 lg:pt-2">
               <button
                 onClick={podcastListo ? onReproducirPodcast : onGenerarPodcast}
                 disabled={podcastGenerando}
-                className="flex min-h-[38px] items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex min-h-[38px] max-w-full items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                 style={estiloBotonPrincipal}
               >
                 <span
@@ -132,7 +132,7 @@ export function HeroSeccion({
               <button
                 onClick={onInformarPodcastManana}
                 disabled={podcastGenerando}
-                className="flex min-h-[38px] items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors hover:text-[color:var(--shell-texto)] disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex min-h-[38px] max-w-full items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors hover:text-[color:var(--shell-texto)] disabled:cursor-not-allowed disabled:opacity-70"
                 style={estiloBotonSecundario}
               >
                 <Icono nombre="destello" tamaño={13} peso="fill" />
@@ -143,10 +143,10 @@ export function HeroSeccion({
         </div>
 
         <div
-          className="min-w-0 border-b py-3.5 lg:self-start lg:border-b-0 lg:border-r lg:px-4 lg:py-0 lg:pl-4 lg:pr-4"
+          className="min-w-0 border-b py-3.5 lg:flex lg:h-full lg:border-b-0 lg:border-r lg:px-4 lg:py-0 lg:pl-4 lg:pr-4"
           style={{ borderColor: "var(--shell-borde)" }}
         >
-          <MomentosDia momentos={momentos} />
+          <MomentosDia momentos={momentos} expandido />
         </div>
 
         <div className="grid grid-cols-1 gap-2.5 pt-3.5 sm:grid-cols-3 lg:hidden">
@@ -155,7 +155,7 @@ export function HeroSeccion({
           <NivelesEnergia energia={energia} claridad={claridad} fuerza={fuerza} />
         </div>
 
-        <div className="hidden lg:block lg:min-w-0 lg:self-start lg:pl-4">
+        <div className="hidden lg:block lg:min-w-0 lg:pl-4">
           <ResumenPersonalUnificado
             numero={numero}
             luna={luna}
