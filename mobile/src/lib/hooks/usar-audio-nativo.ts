@@ -136,6 +136,7 @@ export function usarAudioNativo() {
     progresoSegundos,
     volumen,
     silenciado,
+    segmentoActual,
     porcentaje,
     toggleReproduccion,
     setVolumen,

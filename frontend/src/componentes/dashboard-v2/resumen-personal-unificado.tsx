@@ -12,9 +12,9 @@ interface ResumenPersonalUnificadoProps {
 }
 
 const ESTILO_CONTENEDOR = {
-  background: "rgba(255, 255, 255, 0.84)",
+  background: "var(--shell-superficie)",
   borderColor: "var(--shell-borde)",
-  boxShadow: "0 10px 24px rgba(93, 53, 167, 0.06)",
+  boxShadow: "none",
   backdropFilter: "none",
 } as const;
 
@@ -107,11 +107,11 @@ export function ResumenPersonalUnificado({
       <div className="border-t border-[var(--shell-borde)]" />
 
       <div className="flex flex-col">
-        <FilaMetrica etiqueta="Intensidad" valor={energia} icono="wifi" />
+        <FilaMetrica etiqueta="Intuición" valor={fuerza} icono="wifi" />
         <div className="border-t border-[var(--shell-borde)]" />
         <FilaMetrica etiqueta="Claridad" valor={claridad} icono="ojo" />
         <div className="border-t border-[var(--shell-borde)]" />
-        <FilaMetrica etiqueta="Fuerza" valor={fuerza} icono="rayo" />
+        <FilaMetrica etiqueta="Energía" valor={energia} icono="rayo" />
       </div>
     </PanelGlass>
   );

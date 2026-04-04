@@ -57,22 +57,26 @@ export function HeroSeccion({
       ? "Tu audio del día ya está listo"
       : "Tu audio del día todavía no fue generado";
   const estiloPanelResumen = {
-    background: "rgba(255, 255, 255, 0.88)",
+    background: "var(--shell-superficie-fuerte)",
     borderColor: "var(--shell-borde)",
-    boxShadow: "0 14px 32px rgba(93, 53, 167, 0.05)",
+    boxShadow: "var(--shell-sombra-suave)",
     backdropFilter: "none",
   } as const;
   const estiloBotonPrincipal = {
-    borderColor: "var(--shell-borde)",
-    background: "rgba(255, 255, 255, 0.96)",
+    borderColor: "var(--shell-borde-fuerte)",
+    background: "var(--shell-gradiente-acento-suave)",
     color: "var(--shell-texto)",
-    boxShadow: "0 8px 18px rgba(93, 53, 167, 0.06)",
+    boxShadow: "none",
+  } as const;
+  const estiloIconoBotonPrincipal = {
+    borderColor: "var(--shell-borde-fuerte)",
+    background: "var(--shell-superficie)",
   } as const;
   const estiloBotonSecundario = {
     borderColor: "var(--shell-borde)",
-    background: "rgba(255, 255, 255, 0.8)",
+    background: "var(--shell-superficie-suave)",
     color: "var(--shell-texto-secundario)",
-    boxShadow: "0 6px 14px rgba(93, 53, 167, 0.04)",
+    boxShadow: "none",
   } as const;
 
   return (
@@ -107,10 +111,7 @@ export function HeroSeccion({
               >
                 <span
                   className="flex h-6 w-6 items-center justify-center rounded-full border"
-                  style={{
-                    borderColor: "var(--shell-chip-borde)",
-                    background: "var(--shell-chip)",
-                  }}
+                  style={estiloIconoBotonPrincipal}
                 >
                   {podcastGenerando ? (
                     <div

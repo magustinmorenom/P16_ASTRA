@@ -314,17 +314,29 @@ export function SemanaV2({
             className={`flex-1 rounded-2xl overflow-hidden relative transition-opacity duration-200 ${
               !podcastHabilitado ? "opacity-50" : ""
             }`}
+            style={{
+              borderColor: "var(--shell-borde-fuerte)",
+              borderWidth: 1,
+              background: "var(--shell-gradiente-acento-suave)",
+              boxShadow: "none",
+            }}
           >
-            <div className="absolute inset-0 tema-gradiente-acento" />
             <div className="relative flex items-center gap-2 px-4 py-2.5">
-              <span className="h-[33px] w-[36px] rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--shell-hero-superficie)", borderColor: "var(--shell-hero-borde-sutil)", borderWidth: 1 }}>
+              <span
+                className="h-[33px] w-[36px] rounded-xl flex items-center justify-center shrink-0"
+                style={{
+                  background: "var(--shell-superficie)",
+                  borderColor: "var(--shell-borde-fuerte)",
+                  borderWidth: 1,
+                }}
+              >
                 {generandoPodcast ? (
-                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-[color:var(--color-acento)] border-t-transparent" />
                 ) : (
-                  <Icono nombre="destello" tamaño={16} peso="fill" className="text-[color:var(--shell-hero-texto)]" />
+                  <Icono nombre="destello" tamaño={16} peso="fill" className="text-[color:var(--color-acento)]" />
                 )}
               </span>
-              <span className="text-[color:var(--shell-hero-texto-secundario)] text-[11px] font-medium tracking-[2px] text-center uppercase flex-1">
+              <span className="text-[color:var(--shell-texto)] text-[11px] font-medium tracking-[2px] text-center uppercase flex-1">
                 {verSiguiente && !podcastHabilitado
                   ? "El sábado se habilita este podcast"
                   : `Genera podcast de tu semana ${rangoTexto}`}

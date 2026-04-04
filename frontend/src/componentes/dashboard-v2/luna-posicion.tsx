@@ -8,9 +8,9 @@ interface LunaPosicionProps {
 }
 
 const ESTILO_TARJETA_LUNA = {
-  background: "rgba(255, 255, 255, 0.82)",
+  background: "var(--shell-superficie)",
   borderColor: "var(--shell-borde)",
-  boxShadow: "0 8px 18px rgba(93, 53, 167, 0.05)",
+  boxShadow: "none",
   backdropFilter: "none",
 } as const;
 

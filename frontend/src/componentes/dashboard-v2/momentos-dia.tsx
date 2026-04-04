@@ -45,9 +45,9 @@ const ETIQUETA_BLOQUE: Record<string, string> = {
 };
 
 const ESTILO_TARJETA_MOMENTOS = {
-  background: "rgba(255, 255, 255, 0.82)",
+  background: "var(--shell-superficie)",
   border: "1px solid var(--shell-borde)",
-  boxShadow: "0 8px 18px rgba(93, 53, 167, 0.05)",
+  boxShadow: "none",
   backdropFilter: "none",
 } as const;
 

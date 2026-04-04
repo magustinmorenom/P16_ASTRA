@@ -9,14 +9,14 @@ interface NivelesEnergiaProps {
 }
 
 const ESTILO_TARJETA_NIVELES = {
-  background: "rgba(255, 255, 255, 0.82)",
+  background: "var(--shell-superficie)",
   borderColor: "var(--shell-borde)",
-  boxShadow: "0 8px 18px rgba(93, 53, 167, 0.05)",
+  boxShadow: "none",
   backdropFilter: "none",
 } as const;
 
 const ESTILO_BARRA_NIVEL = {
-  background: "rgba(255, 255, 255, 0.94)",
+  background: "var(--shell-superficie-fuerte)",
   borderColor: "var(--shell-borde)",
 } as const;
 
@@ -66,9 +66,9 @@ export function NivelesEnergia({
         style={ESTILO_TARJETA_NIVELES}
       >
         {([
-          { etiqueta: "Intensidad", valor: energia, icono: "wifi" as const },
+          { etiqueta: "Intuición", valor: fuerza, icono: "wifi" as const },
           { etiqueta: "Claridad", valor: claridad, icono: "ojo" as const },
-          { etiqueta: "Fuerza", valor: fuerza, icono: "rayo" as const },
+          { etiqueta: "Energía", valor: energia, icono: "rayo" as const },
         ]).map((item) => (
           <div key={item.etiqueta} className="flex items-center gap-1.5">
             <Icono nombre={item.icono} tamaño={12} peso="fill" className="text-[color:var(--color-acento)]" />
@@ -86,9 +86,9 @@ export function NivelesEnergia({
       className="flex flex-col justify-center gap-2 p-2.5"
       style={ESTILO_TARJETA_NIVELES}
     >
-      <BarraSegmentos etiqueta="Intensidad" valor={energia} icono="wifi" />
+      <BarraSegmentos etiqueta="Intuición" valor={fuerza} icono="wifi" />
       <BarraSegmentos etiqueta="Claridad" valor={claridad} icono="ojo" />
-      <BarraSegmentos etiqueta="Fuerza" valor={fuerza} icono="rayo" />
+      <BarraSegmentos etiqueta="Energía" valor={energia} icono="rayo" />
     </PanelGlass>
   );
 }

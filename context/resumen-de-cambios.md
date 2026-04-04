@@ -3430,3 +3430,57 @@ Pasaron `eslint` sobre `hero-seccion.tsx` y `momentos-dia.tsx`; `8/8` tests de `
 1. El alto total sigue siendo intrínseco (por contenido), pero en desktop la grilla estira las columnas para mantener una lectura más pareja.
 2. El bloque de acciones de la columna izquierda se ubica al fondo del panel, lo que compensa el peso visual de la tarjeta derecha.
 3. La tarjeta de `Momentos del día` puede ocupar la altura disponible con tres filas proporcionadas, evitando que quede “flotando” con demasiado aire por debajo.
+
+---
+
+## Sesion: Web — dashboard, renombre de niveles y CTAs en violeta claro
+**Fecha:** 2026-04-04 ~20:04 (ARG)
+
+### Que se hizo
+Se actualizó el lenguaje de niveles del panel a `Intuición / Claridad / Energía` y se migró el tono de los CTAs de generación de audio a un violeta claro consistente con el shell light. El mismo tratamiento se aplicó al botón de generación del podcast semanal.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `frontend/src/componentes/dashboard-v2/resumen-personal-unificado.tsx` | Renombra métricas (`Intuición`, `Claridad`, `Energía`) y ajusta mapeo de valores para que intuición use el indicador de conexión |
+| `frontend/src/componentes/dashboard-v2/niveles-energia.tsx` | Replica el cambio de labels/mapeo en la variante mobile/compacta |
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Pasa los CTAs `Generar audio de hoy` y `Audio de mañana` a violeta claro (bordes, fondos y sombra) |
+| `frontend/src/componentes/dashboard-v2/semana-v2.tsx` | Aplica el mismo tono violeta claro al botón `Genera podcast de tu semana` |
+| `frontend/src/tests/paginas/dashboard.test.tsx` | Ajusta asserts al nuevo naming de niveles (`Intuición`, `Energía`) |
+| `context/resumen-de-cambios.md` | Documenta esta actualización |
+
+### Tests
+Pasaron `eslint` sobre `hero-seccion.tsx`, `semana-v2.tsx`, `resumen-personal-unificado.tsx`, `niveles-energia.tsx` y `dashboard.test.tsx`; y `8/8` tests de `frontend/src/tests/paginas/dashboard.test.tsx` dentro de `frontend/` usando Node `20` con `PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+
+### Como funciona
+1. En desktop y mobile, la primera métrica deja de mostrarse como intensidad y pasa a `Intuición`, usando el valor de conexión.
+2. La tercera métrica se presenta como `Energía`, manteniendo su valor de energía diaria.
+3. Los tres CTAs de generación (hoy, mañana, semanal) comparten ahora un tratamiento visual en violeta claro: más visibles, coherentes entre sí y alineados al sistema light del dashboard.
+
+---
+
+## Sesion: Mobile — chat en tab principal y podcast con lyrics sincronizadas
+**Fecha:** 2026-04-04 ~20:13 (ARG)
+
+### Que se hizo
+Se promovió el chat a la navegación principal inferior para darle más protagonismo y se transformó el reproductor completo de podcasts para mostrar el texto del episodio sincronizado con el audio, con auto-scroll y salto por segmento.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `mobile/src/app/(tabs)/chat.tsx` | Nueva pantalla tab de chat con entrada directa, estado de plan simplificado y conversación integrada al shell principal |
+| `mobile/src/app/(features)/oraculo.tsx` | Redirecciona la ruta legacy del oráculo al nuevo tab `Chat` para no romper accesos existentes |
+| `mobile/src/app/(tabs)/_layout.tsx` | Reemplaza `Descubrir` por `Chat` en la barra inferior, le da tratamiento visual destacado y deja `Descubrir` oculto pero accesible por navegación interna |
+| `mobile/src/app/(tabs)/index.tsx` | Actualiza el CTA principal del dashboard para abrir el nuevo tab de chat |
+| `mobile/src/app/(tabs)/descubrir.tsx` | Actualiza el acceso del módulo oracular para abrir el tab de chat |
+| `mobile/src/componentes/layouts/reproductor-completo.tsx` | Agrega vista tipo lyrics con resaltado del segmento activo, auto-scroll y seek por toque |
+| `mobile/src/lib/hooks/usar-audio-nativo.ts` | Expone `segmentoActual` al reproductor para sincronizar texto y progreso |
+| `context/resumen-de-cambios.md` | Documenta esta sesión mobile |
+
+### Tests
+0 tests nuevos/modificados. Pasaron `npm run typecheck`, `npm run doctor`, `npm run export:ios` y `npm run export:android` dentro de `mobile/`.
+
+### Como funciona
+1. La barra inferior ahora expone `Chat` como destino principal, ubicado al centro y con mayor peso visual; `Descubrir` deja de ocupar un slot de tab pero sigue disponible desde los CTAs internos.
+2. Cualquier acceso viejo al oráculo cae en la nueva tab mediante redirección, así que no se rompe el flujo previo ni los links internos existentes.
+3. Cuando se reproduce un podcast y el usuario expande el mini reproductor, la pantalla completa muestra el texto segmentado del episodio, resalta la línea activa según el tiempo actual y permite tocar cualquier bloque para saltar a ese punto del audio.

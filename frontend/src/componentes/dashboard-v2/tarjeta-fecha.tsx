@@ -14,7 +14,7 @@ interface TarjetaFechaProps {
 
 const ESTILO_TARJETA_FECHA = {
   borderColor: "var(--shell-borde)",
-  background: "rgba(255, 255, 255, 0.92)",
+  background: "var(--shell-superficie-fuerte)",
   boxShadow: "none",
 } as const;
 

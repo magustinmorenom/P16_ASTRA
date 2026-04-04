@@ -7,14 +7,14 @@ interface NumeroDelDiaProps {
 }
 
 const ESTILO_TARJETA_NUMERO = {
-  background: "rgba(255, 255, 255, 0.82)",
+  background: "var(--shell-superficie)",
   borderColor: "var(--shell-borde-fuerte)",
-  boxShadow: "0 8px 18px rgba(93, 53, 167, 0.05)",
+  boxShadow: "none",
   backdropFilter: "none",
 } as const;
 
 const ESTILO_PLACA_NUMERO = {
-  background: "rgba(255, 255, 255, 0.94)",
+  background: "var(--shell-superficie-fuerte)",
   borderColor: "var(--shell-chip-borde)",
   boxShadow: "none",
 } as const;

@@ -221,7 +221,8 @@ describe("PaginaDashboard", () => {
     expect(screen.getByRole("button", { name: /Audio de mañana/i })).toBeInTheDocument();
     expect(screen.getAllByText(/Número del día/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Luna en Sagitario/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Intensidad/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Intuición/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Energía/i).length).toBeGreaterThan(0);
   });
 
   it("muestra 'Escuchar ahora' cuando el podcast del día está listo", () => {
