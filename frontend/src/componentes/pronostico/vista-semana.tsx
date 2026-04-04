@@ -61,7 +61,7 @@ export function VistaSemana({ semana }: VistaSemanaProps) {
                   style={{ width: `${dia.energia * 10}%` }}
                 />
               </div>
-              <p className="text-[9px] text-[#8A8580] leading-tight line-clamp-2">
+              <p className="text-[11px] text-[color:var(--shell-texto-secundario)] leading-tight line-clamp-2">
                 {dia.frase_corta}
               </p>
             </div>

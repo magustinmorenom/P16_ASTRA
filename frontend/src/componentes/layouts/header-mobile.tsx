@@ -27,9 +27,9 @@ function obtenerClasesMeta(tono: MetaHeaderMobile["tono"] = "violeta"): string {
     case "oro":
       return "border-[var(--shell-chip-borde)] bg-[var(--shell-chip)] text-[color:var(--color-acento)]";
     case "verde":
-      return "border-emerald-400/25 bg-emerald-400/10 text-emerald-300";
+      return "border-[color-mix(in_srgb,var(--color-exito)_25%,transparent)] bg-[color-mix(in_srgb,var(--color-exito)_10%,transparent)] text-[color:var(--color-exito)]";
     case "rojo":
-      return "border-rose-400/25 bg-rose-400/10 text-rose-300";
+      return "border-[color-mix(in_srgb,var(--color-error)_25%,transparent)] bg-[color-mix(in_srgb,var(--color-error)_10%,transparent)] text-[color:var(--color-error)]";
     default:
       return "border-[var(--shell-chip-borde)] bg-[var(--shell-chip)] text-[color:var(--color-acento)]";
   }
@@ -55,7 +55,7 @@ export default function HeaderMobile({
       <div className="px-4 pb-4 pt-2">
         <div
           className={cn(
-            "overflow-hidden rounded-[24px] border shadow-[0_12px_32px_rgba(10,4,25,0.4)] backdrop-blur-xl",
+            "overflow-hidden rounded-[24px] border shadow-[var(--shell-sombra-fuerte)] backdrop-blur-xl",
             transparente
               ? "border-[var(--shell-borde)] bg-[var(--shell-superficie)]"
               : "border-[var(--shell-borde)] bg-[var(--shell-navbar)]"
@@ -82,7 +82,7 @@ export default function HeaderMobile({
                 {children ?? (
                   <>
                     {etiqueta && (
-                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[color:var(--color-acento)]">
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-acento)]">
                         {etiqueta}
                       </p>
                     )}

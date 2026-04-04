@@ -97,13 +97,13 @@ export default function ReproductorCosmico() {
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white transition-transform hover:scale-105 sm:h-11 sm:w-11"
           >
             {mostrandoCarga ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#1A1128] border-t-transparent" />
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-[color:var(--color-violet-950)] border-t-transparent" />
             ) : (
               <Icono
                 nombre={reproduciendo ? "pausar" : "reproducir"}
                 tamaño={20}
                 peso="fill"
-                className="text-[#1A1128]"
+                className="text-[color:var(--color-violet-950)]"
               />
             )}
           </button>

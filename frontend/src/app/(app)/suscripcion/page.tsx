@@ -47,7 +47,7 @@ const ESTILO_BOTON_LINEA = {
 } as const;
 const ESTILO_BOTON_PELIGRO = {
   background: "var(--color-error)",
-  color: "#ffffff",
+  color: "var(--shell-hero-texto)",
 } as const;
 const ESTILO_BADGE_VIOLETA = {
   borderColor: "var(--shell-chip-borde)",
@@ -422,7 +422,7 @@ export default function PaginaSuscripcion() {
               <div className="mt-4 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div className="min-w-0">
                   <div className="flex items-start gap-4">
-                    <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(135deg,rgba(124,77,255,0.92),rgba(179,136,255,0.7))] p-4 text-[color:var(--shell-hero-texto)] shadow-[0_16px_34px_rgba(34,10,76,0.34)]">
+                    <div className="rounded-[22px] border border-shell-borde tema-gradiente-acento p-4 text-[color:var(--shell-hero-texto)] shadow-[var(--shell-sombra-fuerte)]">
                       <Icono nombre="corona" tamaño={24} />
                     </div>
 
@@ -497,8 +497,7 @@ export default function PaginaSuscripcion() {
 
           <div className="mt-6">
             <section className={`${SUPERFICIE_PANEL} p-5 lg:p-6`}>
-              <EtiquetaPanel>Planes disponibles</EtiquetaPanel>
-              <h2 className="mt-2 text-base font-semibold tracking-tight text-[color:var(--shell-texto)]">
+              <h2 className="text-base font-semibold tracking-tight text-[color:var(--shell-texto)]">
                 Elegí tu plan
               </h2>
 
@@ -547,17 +546,17 @@ export default function PaginaSuscripcion() {
                             style={
                               esMax
                                 ? {
-                                    borderColor: "rgba(255, 255, 255, 0.1)",
+                                    borderColor: "var(--shell-borde)",
                                     background:
-                                      "linear-gradient(135deg, rgba(124,77,255,0.9), rgba(179,136,255,0.7))",
-                                    color: "#ffffff",
+                                      "var(--shell-gradiente-acento)",
+                                    color: "var(--shell-hero-texto)",
                                   }
                                 : esPremium
                                   ? {
-                                      borderColor: "rgba(255, 255, 255, 0.1)",
+                                      borderColor: "var(--shell-borde)",
                                       background:
-                                        "linear-gradient(135deg, rgba(124,77,255,0.78), rgba(179,136,255,0.52))",
-                                      color: "#ffffff",
+                                        "var(--shell-gradiente-acento-suave)",
+                                      color: "var(--shell-hero-texto)",
                                     }
                                   : {
                                       borderColor: "var(--shell-chip-borde)",
@@ -607,7 +606,7 @@ export default function PaginaSuscripcion() {
                               <Icono
                                 nombre="check"
                                 tamaño={15}
-                                className={esMax ? "mt-1 text-[#D8C0FF]" : esPremium ? "mt-1 text-[#B388FF]" : "mt-1 text-[color:var(--shell-texto-tenue)]"}
+                                className={esMax ? "mt-1 text-shell-badge-acento" : esPremium ? "mt-1 text-acento" : "mt-1 text-[color:var(--shell-texto-tenue)]"}
                               />
                               <span>{feature}</span>
                             </li>
@@ -717,8 +716,7 @@ export default function PaginaSuscripcion() {
           <section className={`${SUPERFICIE_PANEL} mt-6 p-5 lg:p-6`}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <EtiquetaPanel>Facturación</EtiquetaPanel>
-                <h2 className="mt-2 text-base font-semibold tracking-tight text-[color:var(--shell-texto)]">
+                <h2 className="text-base font-semibold tracking-tight text-[color:var(--shell-texto)]">
                   Pagos y comprobantes
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">

@@ -166,8 +166,8 @@ function BarraProgreso({
           style={{
             width: `${((paso + 1) / 2) * 100}%`,
             background: esHero
-              ? "linear-gradient(135deg, rgba(240, 214, 138, 0.95), rgba(179, 136, 255, 0.92))"
-              : "linear-gradient(135deg, rgba(124, 77, 255, 1), rgba(179, 136, 255, 0.88))",
+              ? "linear-gradient(135deg, var(--color-dorado-300), var(--color-violet-300))"
+              : "var(--shell-gradiente-boton)",
           }}
         />
       </div>
@@ -363,8 +363,7 @@ function PasoDatosCompletos({
             <div
               className="flex h-11 w-11 items-center justify-center rounded-[18px]"
               style={{
-                background:
-                  "linear-gradient(135deg, rgba(124, 77, 255, 0.18), rgba(179, 136, 255, 0.12))",
+                background: "var(--shell-gradiente-acento-suave)",
                 color: "var(--color-acento)",
               }}
             >
@@ -544,9 +543,8 @@ function PasoDatosCompletos({
         disabled={!puedeAvanzar}
         className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[22px] px-5 text-sm font-semibold text-white transition-all hover:brightness-[1.03] disabled:cursor-not-allowed disabled:opacity-45"
         style={{
-          background:
-            "linear-gradient(135deg, rgba(124, 77, 255, 1), rgba(179, 136, 255, 0.9))",
-          boxShadow: "0 20px 36px rgba(72, 36, 136, 0.24)",
+          background: "var(--shell-gradiente-boton)",
+          boxShadow: "var(--shell-sombra-suave)",
         }}
       >
         <Icono nombre="destello" tamaño={18} />
@@ -730,12 +728,12 @@ function PasoCalculando({
             <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-white/55" />
           </div>
           <div className="absolute inset-3 animate-[spin_8s_linear_infinite_reverse] rounded-full border border-white/22">
-            <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-[#B388FF]" />
+            <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-violet-300" />
           </div>
           <div className="absolute inset-6 animate-[spin_5s_linear_infinite] rounded-full border border-white/18">
-            <div className="absolute -top-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[#F0D68A]" />
+            <div className="absolute -top-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-dorado-400" />
           </div>
-          <div className="absolute inset-9 flex items-center justify-center rounded-full bg-[linear-gradient(135deg,rgba(240,214,138,0.96),rgba(212,162,52,0.88))] shadow-[0_18px_38px_rgba(18,1,23,0.34)]">
+          <div className="absolute inset-9 flex items-center justify-center rounded-full shadow-[var(--shell-sombra-fuerte)]" style={{ background: "linear-gradient(135deg, var(--color-dorado-300), var(--color-dorado-500))" }}>
             <Icono nombre="destello" tamaño={20} className="text-white" />
           </div>
         </div>
@@ -789,7 +787,7 @@ function PasoCalculando({
                         "text-[color:var(--shell-hero-texto-secundario)]",
                       estadoActual === "completado" &&
                         "text-[color:var(--shell-hero-texto)]",
-                      estadoActual === "error" && "text-[#fecaca]",
+                      estadoActual === "error" && "text-red-200",
                     )}
                   >
                     {estadoActual === "completado"
@@ -803,8 +801,8 @@ function PasoCalculando({
         </div>
 
         {tieneErrores ? (
-          <div className="mt-4 rounded-[22px] border border-[rgba(239,68,68,0.22)] bg-[rgba(239,68,68,0.14)] px-4 py-3">
-            <p className="text-sm leading-6 text-[#fecaca]">
+          <div className="mt-4 rounded-[22px] border px-4 py-3" style={{ borderColor: "var(--shell-badge-error-borde)", background: "var(--shell-badge-error-fondo)" }}>
+            <p className="text-sm leading-6 text-red-200">
               Algunos cálculos no terminaron correctamente. Podrás recalcularlos
               desde tu perfil o al volver a entrar a cada módulo.
             </p>
@@ -818,7 +816,7 @@ function PasoCalculando({
 function IndicadorEstado({ estado }: { estado: EstadoItem }) {
   if (estado === "completado") {
     return (
-      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/90 text-white shadow-[0_12px_24px_rgba(16,185,129,0.24)]">
+      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-exito/90 text-white shadow-[var(--shell-sombra-suave)]">
         <Icono nombre="check" tamaño={15} />
       </div>
     );
@@ -826,7 +824,7 @@ function IndicadorEstado({ estado }: { estado: EstadoItem }) {
 
   if (estado === "error") {
     return (
-      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500/90 text-white shadow-[0_12px_24px_rgba(239,68,68,0.22)]">
+      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-error/90 text-white shadow-[var(--shell-sombra-suave)]">
         <Icono nombre="x" tamaño={15} />
       </div>
     );
@@ -835,7 +833,7 @@ function IndicadorEstado({ estado }: { estado: EstadoItem }) {
   if (estado === "en_curso") {
     return (
       <div className="flex h-7 w-7 items-center justify-center">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/45 border-t-[#F0D68A]" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/45 border-t-dorado-400" />
       </div>
     );
   }

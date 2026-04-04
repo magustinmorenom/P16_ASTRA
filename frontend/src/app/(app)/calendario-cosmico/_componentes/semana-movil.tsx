@@ -51,10 +51,10 @@ export function SemanaMovil({
               className={cn(
                 "shrink-0 w-24 rounded-xl p-3 flex flex-col items-center gap-1.5 transition-all border",
                 esHoy
-                  ? "bg-[#7C4DFF] text-white border-[#7C4DFF]"
+                  ? "bg-primario text-white border-primario"
                   : seleccionado
-                    ? "bg-[#F5F0FF] border-[#B388FF]"
-                    : "bg-white border-[#E8E4E0] hover:border-[#B388FF]"
+                    ? "bg-violet-50 border-violet-300"
+                    : "bg-fondo-tarjeta border-borde hover:border-violet-300"
               )}
             >
               <p
@@ -80,7 +80,7 @@ export function SemanaMovil({
                   <IconoSigno
                     signo={sol.signo}
                     tamaño={14}
-                    className={esHoy ? "text-white/90" : "text-[#7C4DFF]"}
+                    className={esHoy ? "text-white/90" : "text-primario"}
                   />
                 </div>
               )}
@@ -89,11 +89,11 @@ export function SemanaMovil({
               {luna && (
                 <p
                   className={cn(
-                    "text-[9px]",
-                    esHoy ? "text-white/70" : "text-texto-terciario"
+                    "text-[11px]",
+                    esHoy ? "text-white/70" : "text-[color:var(--shell-texto-secundario)]"
                   )}
                 >
-                  Luna {luna.signo}
+                  {luna.signo}
                 </p>
               )}
 

@@ -497,7 +497,7 @@ export default function PaginaNumerologia() {
                 </span>
 
                 <div className="relative z-10 mt-5 flex items-start gap-4">
-                  <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-gradient-to-br from-[#7C4DFF] to-[#B388FF] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
+                  <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-gradient-to-br from-violet-500 to-violet-300 shadow-[var(--shell-sombra-fuerte)] sm:flex">
                     <IconoAstral nombre="numerologia" tamaño={30} className="text-white" />
                   </div>
                   <div>
@@ -583,8 +583,8 @@ export default function PaginaNumerologia() {
                 </form>
 
                 {mutacion.isError && (
-                  <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3">
-                    <p className="text-[14px] text-red-300">
+                  <div className="mt-4 rounded-2xl border border-error/20 bg-error/10 px-4 py-3">
+                    <p className="text-[14px] text-error">
                       {mutacion.error?.message ?? "Error al calcular la numerología."}
                     </p>
                   </div>
@@ -681,7 +681,7 @@ export default function PaginaNumerologia() {
           />
 
           <div className="relative z-10 flex items-start gap-3">
-            <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#7C4DFF] to-[#B388FF] shadow-[0_14px_32px_rgba(34,12,72,0.36)] sm:flex">
+            <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-violet-500 to-violet-300 shadow-[var(--shell-sombra-fuerte)] sm:flex">
               <IconoAstral nombre="numerologia" tamaño={24} className="text-white" />
             </div>
             <div className="min-w-0 flex-1">
@@ -737,7 +737,7 @@ export default function PaginaNumerologia() {
                   <span
                     className={cn(
                       "shrink-0 text-[28px] font-semibold leading-none tracking-[-0.04em]",
-                      maestro ? "text-[#D4A234]" : "text-[color:var(--color-acento)]",
+                      maestro ? "text-dorado-500" : "text-[color:var(--color-acento)]",
                     )}
                     style={{ minWidth: "2.2rem", textAlign: "center" }}
                   >
@@ -952,11 +952,11 @@ export default function PaginaNumerologia() {
                               ? "var(--shell-texto-tenue)"
                               : "var(--shell-texto-secundario)",
                           boxShadow: activa || seleccionado
-                            ? "0 0 0 4px rgba(124, 77, 255, 0.12)"
+                            ? "var(--shell-sombra-suave)"
                             : undefined,
                         }}
                       >
-                        <span className={cn(maestro ? "text-[#D4A234]" : "")}>
+                        <span className={cn(maestro ? "text-dorado-500" : "")}>
                           {etapa.numero}
                         </span>
                       </div>

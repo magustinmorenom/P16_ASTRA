@@ -167,10 +167,9 @@ export default function PaginaLogin() {
           variante="primario"
           tamaño="lg"
           cargando={login.isPending}
-          className="mt-2 h-12 w-full rounded-[20px] border-0 shadow-[0_20px_36px_rgba(72,36,136,0.24)] hover:brightness-[1.03]"
+          className="mt-2 h-12 w-full rounded-[20px] border-0 shadow-[var(--shell-sombra-suave)] hover:brightness-[1.03]"
           style={{
-            background:
-              "linear-gradient(135deg, rgba(124, 77, 255, 1), rgba(179, 136, 255, 0.9))",
+            background: "var(--shell-gradiente-boton)",
           }}
         >
           Iniciar sesión

@@ -37,17 +37,17 @@ const TIPO_CONFIG: Record<
   dia: {
     etiquetaReproductor: COPY_PODCAST_WEB.dia.etiquetaReproductor,
     icono: "sol",
-    gradiente: "from-[#7C4DFF] to-[#B388FF]",
+    gradiente: "from-violet-500 to-violet-300",
   },
   semana: {
     etiquetaReproductor: COPY_PODCAST_WEB.semana.etiquetaReproductor,
     icono: "destello",
-    gradiente: "from-[#4A2D8C] to-[#7C4DFF]",
+    gradiente: "from-violet-800 to-violet-500",
   },
   mes: {
     etiquetaReproductor: COPY_PODCAST_WEB.mes.etiquetaReproductor,
     icono: "luna",
-    gradiente: "from-[#2D1B69] to-[#4A2D8C]",
+    gradiente: "from-violet-950 to-violet-800",
   },
 };
 
@@ -240,8 +240,8 @@ export default function PaginaDashboard() {
                   onClick={() => reintentarPronostico()}
                   className="rounded-xl border px-5 py-2.5 text-[14px] font-medium text-white transition-colors"
                   style={{
-                    borderColor: "rgba(255, 255, 255, 0.14)",
-                    background: "rgba(255, 255, 255, 0.08)",
+                    borderColor: "var(--shell-borde)",
+                    background: "var(--shell-superficie)",
                   }}
                 >
                   Reintentar

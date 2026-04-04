@@ -241,9 +241,8 @@ export default function PaginaCartaNatal() {
                 style={{ background: "var(--shell-glow-2)" }}
               />
               <div className="relative z-10">
-                <p className={`${ETIQUETA_CARTA} text-[color:var(--color-acento)]`}>Carta astral</p>
-                <div className="mt-4 flex items-start gap-4">
-                  <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#B388FF] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
+                <div className="flex items-start gap-4">
+                  <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-violet-500 via-violet-400 to-violet-300 shadow-[var(--shell-sombra-fuerte)] sm:flex">
                     <IconoAstral nombre="astrologia" tamaño={30} className="text-white" />
                   </div>
                   <div>
@@ -268,7 +267,7 @@ export default function PaginaCartaNatal() {
             </div>
 
             <div className={`${SUPERFICIE_CLARA_CARTA} flex items-center justify-center gap-3 px-5 py-4`}>
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#7C4DFF] border-t-transparent" />
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primario border-t-transparent" />
               <p className="text-[13px] text-[color:var(--shell-texto-secundario)]">Cargando tu carta natal...</p>
             </div>
           </section>
@@ -297,11 +296,8 @@ export default function PaginaCartaNatal() {
 
               <div className="relative z-10 grid gap-6 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
                 <div>
-                  <p className={`${ETIQUETA_CARTA} text-[color:var(--color-acento)]`}>
-                    Lectura natal
-                  </p>
-                  <div className="mt-4 flex items-start gap-4">
-                    <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#B388FF] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
+                  <div className="flex items-start gap-4">
+                    <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-violet-500 via-violet-400 to-violet-300 shadow-[var(--shell-sombra-fuerte)] sm:flex">
                       <IconoAstral nombre="astrologia" tamaño={30} className="text-white" />
                     </div>
                     <div>
@@ -315,17 +311,7 @@ export default function PaginaCartaNatal() {
                     </div>
                   </div>
 
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {["Tríada", "Pulso", "Planetas", "Rueda a pedido"].map((item) => (
-                      <span
-                        key={item}
-                        className="rounded-full border px-3 py-1.5 text-[11px] font-medium"
-                        style={ESTILO_CHIP}
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
+                  {/* Chips estáticos eliminados — info ya en la descripción */}
                 </div>
 
                 <div className={`${SUPERFICIE_CLARA_CARTA} p-4 lg:p-5`}>
@@ -347,8 +333,8 @@ export default function PaginaCartaNatal() {
                   </div>
 
                   {mutacion.isError && (
-                    <div className="mt-4 rounded-2xl border border-red-200/70 bg-red-50/90 px-4 py-3">
-                      <p className="text-[13px] text-red-600">
+                    <div className="mt-4 rounded-2xl border border-error/20 bg-error/10 px-4 py-3">
+                      <p className="text-[13px] text-error">
                         {mutacion.error?.message || "Error al calcular la carta natal."}
                       </p>
                     </div>

@@ -3,6 +3,8 @@
 import { format, isToday, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 
+import { Icono } from "@/componentes/ui/icono";
+import { IconoFaseLunar } from "@/componentes/ui/icono-fase-lunar";
 import { IconoSigno } from "@/componentes/ui/icono-astral";
 import type { TransitosDia } from "@/lib/tipos";
 import {
@@ -34,18 +36,15 @@ export function PanelDetalleDia({
   if (!dia) {
     return (
       <aside
-        className="flex min-h-[240px] flex-col justify-center px-4 py-5 lg:min-h-0 lg:border-l lg:px-5"
+        className="flex min-h-[240px] flex-col items-center justify-center px-4 py-8 text-center lg:min-h-0 lg:border-l lg:px-5"
         style={{ borderColor: "var(--shell-borde)" }}
       >
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
-          Día seleccionado
-        </p>
-        <h3 className="mt-2 text-lg font-semibold text-[color:var(--shell-texto)]">
+        <Icono nombre="calendario" tamaño={28} className="mb-3 text-[color:var(--shell-texto-tenue)]" />
+        <p className="text-sm font-medium text-[color:var(--shell-texto)]">
           Elegí un día del mes
-        </h3>
-        <p className="mt-2 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
-          El panel contextual muestra número personal, fase lunar y los hitos de tránsito
-          más relevantes del día que marques.
+        </p>
+        <p className="mt-1 text-xs text-[color:var(--shell-texto-secundario)]">
+          Vas a ver número personal, fase lunar y eventos del día
         </p>
       </aside>
     );
@@ -62,110 +61,90 @@ export function PanelDetalleDia({
       className="flex flex-col lg:border-l"
       style={{ borderColor: "var(--shell-borde)" }}
     >
+      {/* Fecha + descripción */}
       <div className="border-b px-4 py-4 lg:px-5" style={{ borderColor: "var(--shell-borde)" }}>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
-          {isToday(fecha) ? "Hoy" : "Detalle del día"}
-        </p>
-        <h3 className="mt-1 text-lg font-semibold text-[color:var(--shell-texto)]">
-          {format(fecha, "EEEE d 'de' MMMM", { locale: es })}
+        <h3 className="text-lg font-semibold capitalize text-[color:var(--shell-texto)]">
+          {isToday(fecha) ? "Hoy" : format(fecha, "EEEE d", { locale: es })}
+          <span className="ml-1 text-[color:var(--shell-texto-secundario)] font-normal text-sm">
+            {format(fecha, "MMMM", { locale: es })}
+          </span>
         </h3>
         <p className="mt-2 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
           {eventos[0]?.descripcion ?? describirFaseLunar(dia.fase_lunar)}
         </p>
       </div>
 
+      {/* Ritmo personal — inline */}
       <div className="border-b px-4 py-4 lg:px-5" style={{ borderColor: "var(--shell-borde)" }}>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
-          Ritmo personal
-        </p>
         {ritmo ? (
           <>
-            <div className="mt-3 flex items-end gap-5">
-              <div>
-                <p className="text-[28px] font-semibold leading-none text-[color:var(--shell-texto)]">
-                  {ritmo.dia}
-                </p>
-                <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
-                  Día personal
-                </p>
+            <div className="flex items-baseline gap-6">
+              <div className="flex items-baseline gap-2">
+                <Icono nombre="calendario" tamaño={14} className="text-[color:var(--color-acento)]" />
+                <span className="text-xs text-[color:var(--shell-texto-secundario)]">Día</span>
+                <span className="text-[22px] font-bold text-[color:var(--shell-texto)]">{ritmo.dia}</span>
               </div>
-              <div>
-                <p className="text-[22px] font-semibold leading-none text-[color:var(--shell-texto)]">
-                  {ritmo.anio}
-                </p>
-                <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
-                  Año personal
-                </p>
+              <div className="flex items-baseline gap-2">
+                <Icono nombre="reloj" tamaño={14} className="text-[color:var(--color-acento)]" />
+                <span className="text-xs text-[color:var(--shell-texto-secundario)]">Año</span>
+                <span className="text-[18px] font-semibold text-[color:var(--shell-texto)]">{ritmo.anio}</span>
               </div>
             </div>
-            <p className="mt-3 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
-              Día {ritmo.dia}: {ritmo.descripcionDia}. Año {ritmo.anio}: {ritmo.descripcionAnio}.
+            <p className="mt-2 text-[12px] leading-5 text-[color:var(--shell-texto-secundario)]">
+              {ritmo.descripcionDia}
             </p>
           </>
         ) : (
-          <p className="mt-3 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
-            Completá tu perfil natal para activar año, mes y día personal dentro del calendario.
+          <p className="text-sm text-[color:var(--shell-texto-secundario)]">
+            Completá tu perfil natal para activar el ritmo personal.
           </p>
         )}
       </div>
 
-      <div className="border-b px-4 py-4 lg:px-5" style={{ borderColor: "var(--shell-borde)" }}>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
-          Momentos clave
-        </p>
-        <div className="mt-3 flex flex-col gap-3">
-          {eventos.length > 0 ? (
-            eventos.map((evento) => (
+      {/* Eventos */}
+      {eventos.length > 0 && (
+        <div className="border-b px-4 py-4 lg:px-5" style={{ borderColor: "var(--shell-borde)" }}>
+          <div className="flex flex-col gap-3">
+            {eventos.map((evento) => (
               <div key={evento.id} className="flex gap-3">
                 <span
-                  className="mt-1.5 h-2 w-2 rounded-full"
+                  className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
                   style={{ background: tonoTexto(evento.impacto) }}
                 />
                 <div className="min-w-0">
-                  <p
-                    className="text-sm font-medium"
-                    style={{ color: tonoTexto(evento.impacto) }}
-                  >
+                  <p className="text-sm font-medium" style={{ color: tonoTexto(evento.impacto) }}>
                     {evento.titulo}
                   </p>
-                  <p className="mt-1 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
+                  <p className="mt-0.5 text-[12px] leading-5 text-[color:var(--shell-texto-secundario)]">
                     {evento.descripcion}
                   </p>
                 </div>
               </div>
-            ))
-          ) : (
-            <p className="text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
-              No hay cambios fuertes cargados para esta fecha. El foco está más en sostener el
-              ritmo que en reaccionar a un hito puntual.
-            </p>
-          )}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
+      {/* Luna + retro — compacto */}
       <div className="border-b px-4 py-4 lg:px-5" style={{ borderColor: "var(--shell-borde)" }}>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
-          Luna y movimiento
+        <div className="flex items-center gap-2.5">
+          <IconoFaseLunar fase={dia.fase_lunar} tamaño={20} className="text-[color:var(--color-acento)]" />
+          <span className="text-sm font-medium text-[color:var(--shell-texto)]">{dia.fase_lunar}</span>
+        </div>
+        <p className="mt-1.5 text-[12px] leading-5 text-[color:var(--shell-texto-secundario)]">
+          {describirFaseLunar(dia.fase_lunar)}
         </p>
-        <p className="mt-3 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
-          {dia.fase_lunar}. {describirFaseLunar(dia.fase_lunar)}
-        </p>
-        {retrogradosActivos.length > 0 ? (
-          <p className="mt-3 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
-            Retro activos: {retrogradosActivos.join(", ")}.
-          </p>
-        ) : (
-          <p className="mt-3 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
-            No hay retrogradaciones activas entre los planetas visibles del detalle.
+        {retrogradosActivos.length > 0 && (
+          <p className="mt-2 flex items-center gap-1.5 text-[12px] text-[color:var(--shell-texto-secundario)]">
+            <Icono nombre="flechaIzquierda" tamaño={12} className="text-[color:var(--shell-badge-error-texto)]" />
+            Retro: {retrogradosActivos.join(", ")}
           </p>
         )}
       </div>
 
+      {/* Planetas */}
       <div className="px-4 py-4 lg:px-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
-          Planetas de referencia
-        </p>
-        <div className="mt-3 flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
           {planetasClave.map((planeta) => (
             <div key={planeta.nombre} className="flex items-center gap-3">
               <IconoSigno
@@ -176,11 +155,11 @@ export function PanelDetalleDia({
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-[color:var(--shell-texto)]">
                   {planeta.nombre}
-                  {planeta.retrogrado ? (
+                  {planeta.retrogrado && (
                     <span className="ml-1 text-[color:var(--shell-badge-error-texto)]">R</span>
-                  ) : null}
+                  )}
                 </p>
-                <p className="text-sm text-[color:var(--shell-texto-secundario)]">
+                <p className="text-xs text-[color:var(--shell-texto-secundario)]">
                   {planeta.signo} · {planeta.grado_en_signo.toFixed(1)}°
                 </p>
               </div>

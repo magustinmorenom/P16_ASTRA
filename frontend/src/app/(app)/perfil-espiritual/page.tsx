@@ -17,8 +17,8 @@ const CUADRANTES: {
     clave: "fortalezas",
     titulo: "Fortalezas",
     icono: "escudo",
-    acento: "text-emerald-500",
-    fondo: "bg-emerald-500/8",
+    acento: "text-exito",
+    fondo: "bg-exito/8",
   },
   {
     clave: "oportunidades",
@@ -31,15 +31,15 @@ const CUADRANTES: {
     clave: "debilidades",
     titulo: "Debilidades",
     icono: "ojo",
-    acento: "text-[#E57373]",
-    fondo: "bg-[#E57373]/8",
+    acento: "text-error",
+    fondo: "bg-error/8",
   },
   {
     clave: "amenazas",
     titulo: "Amenazas",
     icono: "rayo",
-    acento: "text-[#CE93D8]",
-    fondo: "bg-[#CE93D8]/8",
+    acento: "text-violet-300",
+    fondo: "bg-violet-300/8",
   },
 ];
 
@@ -82,7 +82,7 @@ function AnimacionOrbital() {
         <div className="absolute inset-6 animate-[spin_5s_linear_infinite] rounded-full border border-[color:var(--color-acento)]/40">
           <div className="absolute -top-0.5 left-1/2 -ml-0.5 h-1.5 w-1.5 rounded-full bg-[color:var(--color-acento)]/60" />
         </div>
-        <div className="absolute inset-8 flex animate-pulse items-center justify-center rounded-full bg-gradient-to-br from-[#B388FF] to-[#7C4DFF]">
+        <div className="absolute inset-8 flex animate-pulse items-center justify-center rounded-full bg-gradient-to-br from-violet-300 to-violet-500">
           <Icono nombre="destello" tamaño={16} className="text-white" />
         </div>
       </div>

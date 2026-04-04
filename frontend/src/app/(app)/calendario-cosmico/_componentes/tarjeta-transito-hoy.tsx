@@ -19,7 +19,7 @@ export function TarjetaTransitoHoy({
 }) {
   if (cargando) {
     return (
-      <div className="rounded-[20px] bg-gradient-to-b from-[#2D1B69] via-[#4A2D8C] to-[#7C4DFF] p-5">
+      <div className="rounded-[20px] bg-gradient-to-b from-violet-950 via-violet-800 to-violet-500 p-5">
         <Esqueleto className="h-5 w-36 bg-white/20 mb-4" />
         <div className="flex flex-wrap gap-2">
           {Array.from({ length: 11 }).map((_, i) => (
@@ -33,7 +33,7 @@ export function TarjetaTransitoHoy({
   if (!datos) return null;
 
   return (
-    <div className="rounded-[20px] bg-gradient-to-b from-[#2D1B69] via-[#4A2D8C] to-[#7C4DFF] p-5">
+    <div className="rounded-[20px] bg-gradient-to-b from-violet-950 via-violet-800 to-violet-500 p-5">
       <p className="text-violet-300 text-[11px] font-semibold tracking-widest uppercase mb-3">
         Tránsitos de Hoy
       </p>
@@ -47,18 +47,18 @@ export function TarjetaTransitoHoy({
             <IconoSigno
               signo={planeta.signo}
               tamaño={18}
-              className="text-[#B388FF]"
+              className="text-violet-300"
             />
             <div className="flex flex-col">
               <span className="text-[12px] font-semibold text-white leading-tight">
                 {planeta.nombre}
               </span>
-              <span className="text-[10px] text-[#B388FF] leading-tight">
+              <span className="text-[10px] text-violet-300 leading-tight">
                 {planeta.signo} {formatearGrado(planeta.grado_en_signo)}
               </span>
             </div>
             {planeta.retrogrado && (
-              <span className="text-[9px] text-red-300 font-bold ml-0.5">R</span>
+              <span className="text-[11px] text-red-300 font-bold ml-0.5">R</span>
             )}
           </div>
         ))}

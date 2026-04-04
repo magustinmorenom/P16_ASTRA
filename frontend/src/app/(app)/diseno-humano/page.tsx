@@ -358,7 +358,7 @@ function HeroDisenoHumano({
         </p>
 
         <div className="mt-4 flex items-start gap-4">
-          <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,rgba(124,77,255,0.48),rgba(179,136,255,0.22))] text-white shadow-[0_16px_40px_rgba(20,8,42,0.3)] sm:flex">
+          <div className="tema-gradiente-acento-suave hidden h-16 w-16 shrink-0 items-center justify-center rounded-[18px] text-white shadow-[var(--shell-sombra-fuerte)] sm:flex">
             <IconoAstral nombre="personal" tamaño={30} className="text-white" />
           </div>
 
@@ -652,7 +652,7 @@ export default function PaginaDisenoHumano() {
             </div>
 
             <div className={cn(PANEL_CLARO, "flex items-center justify-center gap-3 px-5 py-4")}>
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#7C4DFF] border-t-transparent" />
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
               <p className="text-[13px] text-[color:var(--shell-texto-secundario)]">
                 Cargando tu Diseño Humano…
               </p>
@@ -712,8 +712,8 @@ export default function PaginaDisenoHumano() {
                   </div>
 
                   {mutacion.isError && (
-                    <div className="mt-4 rounded-2xl border border-red-200/70 bg-red-50/90 px-4 py-3">
-                      <p className="text-[13px] text-red-600">
+                    <div className="mt-4 rounded-2xl border px-4 py-3" style={{ borderColor: "var(--shell-badge-error-borde)", background: "var(--shell-badge-error-fondo)" }}>
+                      <p className="text-[13px] text-[color:var(--shell-badge-error-texto)]">
                         {mutacion.error?.message ||
                           "Error al calcular el Diseño Humano."}
                       </p>

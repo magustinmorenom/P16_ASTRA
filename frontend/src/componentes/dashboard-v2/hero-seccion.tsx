@@ -65,10 +65,7 @@ export function HeroSeccion({
             <div className="flex items-start gap-4">
               <TarjetaFecha fecha={fecha} />
               <div className="min-w-0 flex-1">
-                <p className="tema-hero-tenue text-[10px] font-semibold uppercase tracking-[0.2em]">
-                  Centro diario
-                </p>
-                <p className="tema-hero-titulo mt-2 text-[18px] font-semibold leading-tight">
+                <p className="tema-hero-titulo text-[18px] font-semibold leading-tight">
                   {nombreUsuario}, seguí con lo importante.
                 </p>
                 <p className="tema-hero-secundario mt-2 text-[13px] leading-6">

@@ -43,15 +43,15 @@ const CONFIG_TIPO_PODCAST: Record<
 > = {
   dia: {
     icono: "sol",
-    gradiente: "from-[#7C4DFF] to-[#B388FF]",
+    gradiente: "from-violet-500 to-violet-300",
   },
   semana: {
     icono: "destello",
-    gradiente: "from-[#4A2D8C] to-[#7C4DFF]",
+    gradiente: "from-violet-800 to-violet-500",
   },
   mes: {
     icono: "luna",
-    gradiente: "from-[#2D1B69] to-[#4A2D8C]",
+    gradiente: "from-violet-950 to-violet-800",
   },
 };
 
@@ -68,17 +68,17 @@ const CONFIG_MENU_PODCAST: Record<
   dia: {
     titulo: COPY_PODCAST_WEB.dia.etiquetaReproductor,
     icono: "sol",
-    gradiente: "from-[#7C4DFF] to-[#B388FF]",
+    gradiente: "from-violet-500 to-violet-300",
   },
   semana: {
     titulo: COPY_PODCAST_WEB.semana.etiquetaReproductor,
     icono: "destello",
-    gradiente: "from-[#4A2D8C] to-[#7C4DFF]",
+    gradiente: "from-violet-800 to-violet-500",
   },
   mes: {
     titulo: COPY_PODCAST_WEB.mes.etiquetaReproductor,
     icono: "luna",
-    gradiente: "from-[#2D1B69] to-[#7C4DFF]",
+    gradiente: "from-violet-950 to-violet-500",
   },
 };
 
@@ -475,7 +475,7 @@ export default function Navbar() {
           </button>
 
           <div className="hidden min-w-0 xl:flex xl:flex-col">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[color:var(--color-acento)]">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-acento)]">
               {contextoRuta.etiqueta}
             </span>
             <p className="text-[14px] font-semibold leading-tight text-[color:var(--shell-texto)]">
@@ -491,7 +491,7 @@ export default function Navbar() {
               style={{ background: "var(--shell-superficie-suave)" }}
             >
               {estadoCabecera.etiqueta && (
-                <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--color-acento)]">
+                <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-acento)]">
                   {estadoCabecera.etiqueta}
                 </p>
               )}
@@ -550,8 +550,8 @@ export default function Navbar() {
             </button>
 
             <span className="btn-podcast-menu-aura pointer-events-none absolute inset-0 z-0 rounded-full" />
-            <span className="btn-podcast-menu-orbita pointer-events-none absolute -inset-1 z-0 rounded-full border border-[#B388FF]/0" />
-            <span className="btn-podcast-menu-destello pointer-events-none absolute -right-1.5 -top-1.5 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-[#B388FF]/10 text-[#EADFFF] opacity-0">
+            <span className="btn-podcast-menu-orbita pointer-events-none absolute -inset-1 z-0 rounded-full border border-violet-300/0" />
+            <span className="btn-podcast-menu-destello pointer-events-none absolute -right-1.5 -top-1.5 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-violet-300/10 text-shell-badge-acento opacity-0">
               <Icono nombre="destello" tamaño={10} peso="fill" />
             </span>
 
@@ -636,21 +636,21 @@ export default function Navbar() {
                         disabled={estaGenerando}
                         className={`group/item flex items-center gap-3 rounded-[20px] border px-3 py-2.5 text-left transition-all duration-200 ${
                           estaActivo
-                            ? "border-[#B388FF]/22 bg-[linear-gradient(135deg,rgba(124,77,255,0.22),rgba(179,136,255,0.08))] shadow-[0_12px_28px_rgba(20,8,42,0.26)]"
-                          : "border-[var(--shell-borde)] bg-transparent"
+                            ? "border-violet-300/22 tema-gradiente-acento-suave shadow-[var(--shell-sombra-suave)]"
+                          : "border-shell-borde bg-transparent"
                         } disabled:cursor-not-allowed disabled:opacity-80`}
                       >
                         <div
-                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br ${config.gradiente} shadow-[0_12px_28px_rgba(18,4,38,0.28)] ring-1 ring-white/15`}
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br ${config.gradiente} shadow-[var(--shell-sombra-suave)] ring-1 ring-shell-borde`}
                         >
                           {estaGenerando ? (
-                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/80 border-t-transparent" />
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-shell-hero-texto/80 border-t-transparent" />
                           ) : (
                             <Icono
                               nombre={config.icono}
                               tamaño={18}
                               peso="fill"
-                              className="text-white/92"
+                              className="text-shell-hero-texto/92"
                             />
                           )}
                         </div>
@@ -661,8 +661,8 @@ export default function Navbar() {
                               {config.titulo}
                             </p>
                             {estaListo && (
-                              <span className="rounded-full border border-[#B388FF]/20 bg-[#7C4DFF]/12 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#E7DAFF]">
-                                Listo
+                              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500">
+                                <Icono nombre="check" tamaño={10} className="text-white" />
                               </span>
                             )}
                           </div>
@@ -676,8 +676,8 @@ export default function Navbar() {
                           title={accionAria}
                           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
                             estaActivo
-                              ? "border-[#B388FF]/28 bg-[#7C4DFF]/18 text-white"
-                            : "border-[var(--shell-borde)] bg-[var(--shell-superficie)] text-[color:var(--shell-texto-secundario)]"
+                              ? "border-violet-300/28 bg-violet-500/18 text-shell-hero-texto"
+                            : "border-shell-borde bg-shell-superficie text-shell-texto-secundario"
                           }`}
                         >
                           <Icono
@@ -705,7 +705,7 @@ export default function Navbar() {
           >
             <span
               className={`h-2 w-2 rounded-full ${
-                esPremium ? "bg-[#D8C0FF]" : "bg-[#B388FF]"
+                esPremium ? "bg-shell-badge-acento" : "bg-violet-300"
               }`}
             />
             {esPremium ? `${etiquetaPlan} activo` : "Plan Free"}
@@ -717,13 +717,13 @@ export default function Navbar() {
                 setMenuPodcastsAbierto(false);
                 setMenuUsuarioAbierto(!menuUsuarioAbierto);
               }}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full border bg-gradient-to-br from-violet-500 to-violet-700 text-xs font-bold text-white shadow-[0_10px_24px_rgba(32,10,74,0.3)]"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border bg-gradient-to-br from-violet-500 to-violet-700 text-xs font-bold text-shell-hero-texto shadow-[var(--shell-sombra-suave)]"
               style={{ borderColor: "var(--shell-borde-fuerte)" }}
               aria-label="Menu de usuario"
             >
               {inicialesUsuario}
               {esPremium && (
-                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#D8C0FF] text-[8px] text-[#3E1A74]">
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-shell-badge-acento text-[8px] text-shell-badge-acento-texto">
                   <Icono nombre="corona" tamaño={10} />
                 </span>
               )}
@@ -758,8 +758,8 @@ export default function Navbar() {
                       <span
                         className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
                           esPremium
-                            ? "border-[#B388FF]/25 bg-[#B388FF]/12 text-[#E7DAFF]"
-                            : "border-white/[0.08] bg-white/[0.05] text-white/70"
+                            ? "border-shell-badge-violeta-borde bg-shell-badge-violeta-fondo text-shell-badge-violeta-texto"
+                            : "border-shell-borde bg-shell-superficie-suave text-shell-texto-secundario"
                         }`}
                       >
                         {esPremium ? etiquetaPlan : "Free"}
@@ -809,7 +809,7 @@ export default function Navbar() {
                     <Link
                       href="/admin"
                       onClick={() => setMenuUsuarioAbierto(false)}
-                      className="flex items-center gap-3 rounded-2xl bg-red-500/10 px-3 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20 hover:text-red-300"
+                      className="flex items-center gap-3 rounded-2xl bg-peligro-suave px-3 py-2.5 text-sm font-medium text-peligro transition-colors hover:bg-peligro-suave hover:text-peligro-hover"
                     >
                       <Icono nombre="escudo" tamaño={16} />
                       Backoffice
@@ -818,7 +818,7 @@ export default function Navbar() {
 
                   <button
                     onClick={manejarCerrarSesion}
-                    className="mt-1 flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-[#F3B1B1] transition-colors hover:bg-[#E57373]/10 hover:text-[#FFD7D7]"
+                    className="mt-1 flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-peligro-texto transition-colors hover:bg-peligro-suave hover:text-peligro-texto-hover"
                   >
                     <Icono nombre="salir" tamaño={16} />
                     Cerrar sesión

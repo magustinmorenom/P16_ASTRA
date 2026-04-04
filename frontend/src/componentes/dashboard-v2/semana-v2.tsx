@@ -267,15 +267,9 @@ export function SemanaV2({
                   >
                     {hoy && (
                       <span
-                        className="absolute -top-1.5 -right-1.5 rounded-full border px-1.5 py-[1px] text-[8px] font-bold uppercase tracking-wider shadow-[0_2px_6px_rgba(124,77,255,0.24)]"
-                        style={{
-                          borderColor: "var(--shell-badge-violeta-borde)",
-                          background: "var(--shell-badge-violeta-fondo)",
-                          color: "var(--shell-badge-violeta-texto)",
-                        }}
-                      >
-                        Hoy
-                      </span>
+                        className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full shadow-[0_0_6px_rgba(124,77,255,0.4)]"
+                        style={{ background: "var(--color-acento)" }}
+                      />
                     )}
                     <div
                       className="flex min-w-[40px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border px-2 py-1.5 backdrop-blur-[21px]"

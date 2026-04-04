@@ -41,11 +41,11 @@ const SUPERFICIE_PANEL =
   "tema-superficie-panel rounded-[24px]";
 const ESTILO_BOTON_PRIMARIO = {
   background: "var(--color-primario)",
-  color: "#ffffff",
+  color: "var(--shell-hero-texto)",
 } as const;
 const ESTILO_BOTON_PELIGRO = {
   background: "var(--color-error)",
-  color: "#ffffff",
+  color: "var(--shell-hero-texto)",
 } as const;
 const ESTILO_ICONO_ITEM = {
   borderColor: "var(--shell-borde)",
@@ -240,8 +240,8 @@ function IconoItemPerfil({
   const style =
     tono === "error"
       ? {
-          borderColor: "rgba(239, 68, 68, 0.18)",
-          background: "rgba(239, 68, 68, 0.08)",
+          borderColor: "var(--shell-badge-error-borde)",
+          background: "var(--shell-badge-error-fondo)",
           color: "var(--color-error)",
         }
       : ESTILO_ICONO_ITEM;
@@ -284,7 +284,7 @@ function ModalConfirmacionEdicion({
         className="tema-superficie-panel w-full max-w-md rounded-[30px] p-5"
       >
         <div className="flex items-start gap-3">
-          <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(135deg,rgba(124,77,255,0.9),rgba(179,136,255,0.7))] p-3 text-white shadow-[0_12px_28px_rgba(38,18,78,0.32)]">
+          <div className="rounded-[22px] border border-shell-borde tema-gradiente-acento p-3 text-white shadow-[var(--shell-sombra-suave)]">
             <Icono nombre="lapiz" tamaño={18} />
           </div>
           <div className="min-w-0">
@@ -662,7 +662,7 @@ export default function PaginaPerfil() {
                   <Avatar
                     nombre={usuario?.nombre ?? "Usuario"}
                     tamaño="lg"
-                    className="ring-1 ring-white/15 shadow-[0_14px_32px_rgba(22,6,48,0.35)]"
+                    className="ring-1 ring-shell-borde shadow-[var(--shell-sombra-fuerte)]"
                   />
 
                   <div className="min-w-0">

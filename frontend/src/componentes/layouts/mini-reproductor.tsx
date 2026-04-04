@@ -99,13 +99,13 @@ export default function MiniReproductor() {
             className="touch-feedback flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white"
           >
             {mostrandoCarga ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#1A1128] border-t-transparent" />
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[color:var(--color-violet-950)] border-t-transparent" />
             ) : (
               <Icono
                 nombre={reproduciendo ? "pausar" : "reproducir"}
                 tamaño={18}
                 peso="fill"
-                className="text-[#1A1128]"
+                className="text-[color:var(--color-violet-950)]"
               />
             )}
           </button>
@@ -141,7 +141,7 @@ export default function MiniReproductor() {
 
           <div className="flex flex-1 items-center justify-center px-12">
             <div
-              className={`flex aspect-square w-full max-w-[300px] items-center justify-center rounded-[24px] bg-gradient-to-br ${pistaActual.gradiente} shadow-[0_16px_64px_rgba(124,77,255,0.3)]`}
+              className={`flex aspect-square w-full max-w-[300px] items-center justify-center rounded-[24px] bg-gradient-to-br ${pistaActual.gradiente} shadow-[var(--shell-sombra-fuerte)]`}
             >
               <Icono
                 nombre={pistaActual.icono}
@@ -199,13 +199,13 @@ export default function MiniReproductor() {
               className="touch-feedback flex h-16 w-16 items-center justify-center rounded-full bg-white"
             >
               {mostrandoCarga ? (
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#1A1128] border-t-transparent" />
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-[color:var(--color-violet-950)] border-t-transparent" />
               ) : (
                 <Icono
                   nombre={reproduciendo ? "pausar" : "reproducir"}
                   tamaño={28}
                   peso="fill"
-                  className="text-[#1A1128]"
+                  className="text-[color:var(--color-violet-950)]"
                 />
               )}
             </button>

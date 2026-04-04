@@ -117,6 +117,22 @@ html[data-tema="claro"],
   --shell-glow-2: rgba(179, 136, 255, 0.12);
   --shell-logo-filter: brightness(0) saturate(100%);
 
+  /* --- Peligro/Danger --- */
+  --color-peligro: #dc2626;
+  --color-peligro-hover: #b91c1c;
+  --color-peligro-suave: rgba(220, 38, 38, 0.1);
+  --color-peligro-texto: #c75050;
+  --color-peligro-texto-hover: #e87c7c;
+
+  /* --- Gradientes semánticos (para style={}) --- */
+  --shell-gradiente-acento: linear-gradient(135deg, rgba(90, 58, 170, 0.96), rgba(62, 38, 132, 0.96));
+  --shell-gradiente-acento-suave: linear-gradient(135deg, rgba(124, 77, 255, 0.12), rgba(179, 136, 255, 0.08));
+  --shell-gradiente-boton: linear-gradient(135deg, rgba(124, 77, 255, 1), rgba(179, 136, 255, 0.9));
+
+  /* --- Badge tokens adicionales --- */
+  --shell-badge-acento: #d8c0ff;
+  --shell-badge-acento-texto: #3e1a74;
+
   --scroll-thumb: rgba(124, 77, 255, 0.2);
   --scroll-thumb-hover: rgba(124, 77, 255, 0.36);
 }
@@ -197,6 +213,22 @@ html[data-tema="claro"],
     --shell-glow-2: rgba(179, 136, 255, 0.14);
     --shell-logo-filter: none;
 
+    /* --- Peligro/Danger --- */
+    --color-peligro: #f87171;
+    --color-peligro-hover: #fca5a5;
+    --color-peligro-suave: rgba(248, 113, 113, 0.14);
+    --color-peligro-texto: #f3b1b1;
+    --color-peligro-texto-hover: #ffd7d7;
+
+    /* --- Gradientes semánticos --- */
+    --shell-gradiente-acento: linear-gradient(135deg, rgba(45, 27, 105, 0.96), rgba(22, 1, 27, 0.96));
+    --shell-gradiente-acento-suave: linear-gradient(135deg, rgba(124, 77, 255, 0.18), rgba(179, 136, 255, 0.12));
+    --shell-gradiente-boton: linear-gradient(135deg, rgba(124, 77, 255, 1), rgba(179, 136, 255, 0.9));
+
+    /* --- Badge tokens adicionales --- */
+    --shell-badge-acento: #eadfff;
+    --shell-badge-acento-texto: #eadfff;
+
     --scroll-thumb: rgba(124, 77, 255, 0.24);
     --scroll-thumb-hover: rgba(179, 136, 255, 0.42);
   }
@@ -276,6 +308,22 @@ html[data-tema="oscuro"] {
   --shell-glow-1: rgba(124, 77, 255, 0.18);
   --shell-glow-2: rgba(179, 136, 255, 0.14);
   --shell-logo-filter: none;
+
+  /* --- Peligro/Danger --- */
+  --color-peligro: #f87171;
+  --color-peligro-hover: #fca5a5;
+  --color-peligro-suave: rgba(248, 113, 113, 0.14);
+  --color-peligro-texto: #f3b1b1;
+  --color-peligro-texto-hover: #ffd7d7;
+
+  /* --- Gradientes semánticos --- */
+  --shell-gradiente-acento: linear-gradient(135deg, rgba(45, 27, 105, 0.96), rgba(22, 1, 27, 0.96));
+  --shell-gradiente-acento-suave: linear-gradient(135deg, rgba(124, 77, 255, 0.18), rgba(179, 136, 255, 0.12));
+  --shell-gradiente-boton: linear-gradient(135deg, rgba(124, 77, 255, 1), rgba(179, 136, 255, 0.9));
+
+  /* --- Badge tokens adicionales --- */
+  --shell-badge-acento: #eadfff;
+  --shell-badge-acento-texto: #eadfff;
 
   --scroll-thumb: rgba(124, 77, 255, 0.24);
   --scroll-thumb-hover: rgba(179, 136, 255, 0.42);

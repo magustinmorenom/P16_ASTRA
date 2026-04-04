@@ -158,7 +158,7 @@ export default function SidebarNavegacion() {
                         ? "justify-center px-0 py-3"
                         : "gap-3 px-3 py-3",
                       estaActivo
-                        ? "border text-[color:var(--shell-texto)] shadow-[0_12px_28px_rgba(20,8,42,0.12)]"
+                        ? "border text-[color:var(--shell-texto)] shadow-[var(--shell-sombra-suave)]"
                         : "border border-transparent text-[color:var(--shell-texto-tenue)]"
                     )}
                     style={{
@@ -270,8 +270,8 @@ export default function SidebarNavegacion() {
               className={cn(
                 "flex w-full items-center justify-center rounded-xl py-2.5 transition-all duration-200",
                 tieneCalculos && !cargandoCalculos
-                  ? "text-white/35 hover:bg-[#7C4DFF]/10 hover:text-[#D9C2FF]"
-                  : "text-white/15 cursor-not-allowed"
+                  ? "text-shell-texto-tenue hover:bg-shell-chip-hover hover:text-shell-texto-secundario"
+                  : "text-shell-texto-tenue/40 cursor-not-allowed"
               )}
             >
               <Icono nombre="descarga" tamaño={20} />
@@ -302,7 +302,7 @@ export default function SidebarNavegacion() {
         <>
           <div
             className="fixed inset-0 z-40 lg:hidden"
-            style={{ background: "rgba(28, 18, 47, 0.24)" }}
+            style={{ background: "var(--shell-overlay-suave)" }}
             onClick={cerrarSidebar}
           />
           <aside
@@ -428,7 +428,7 @@ export default function SidebarNavegacion() {
       {modalDescarga && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center"
-          style={{ background: "rgba(28, 18, 47, 0.24)" }}
+          style={{ background: "var(--shell-overlay-suave)" }}
         >
           <div
             ref={modalRef}
@@ -456,29 +456,29 @@ export default function SidebarNavegacion() {
               <button
                 onClick={descargarPDF}
                 disabled={descargando !== null}
-                className="flex flex-1 flex-col items-center gap-2 rounded-[18px] border border-white/[0.08] bg-white/[0.04] p-4 transition-colors hover:border-[#B388FF]/24 hover:bg-white/[0.08] disabled:opacity-50"
+                className="flex flex-1 flex-col items-center gap-2 rounded-[18px] border border-shell-borde bg-shell-superficie-suave p-4 transition-colors hover:border-shell-chip-borde hover:bg-shell-chip-hover disabled:opacity-50"
               >
                 {descargando === "pdf" ? (
-                  <Icono nombre="descarga" tamaño={24} className="animate-bounce text-[#D8C0FF]" />
+                  <Icono nombre="descarga" tamaño={24} className="animate-bounce text-shell-badge-acento" />
                 ) : (
-                  <Icono nombre="descarga" tamaño={24} className="text-[#D8C0FF]" />
+                  <Icono nombre="descarga" tamaño={24} className="text-shell-badge-acento" />
                 )}
-                <span className="text-sm font-semibold text-white">PDF</span>
-                <span className="text-[11px] text-white/48">Formato visual ASTRA</span>
+                <span className="text-sm font-semibold text-shell-texto">PDF</span>
+                <span className="text-[11px] text-shell-texto-tenue">Formato visual ASTRA</span>
               </button>
 
               <button
                 onClick={descargarMarkdown}
                 disabled={descargando !== null}
-                className="flex flex-1 flex-col items-center gap-2 rounded-[18px] border border-white/[0.08] bg-white/[0.04] p-4 transition-colors hover:border-[#B388FF]/24 hover:bg-white/[0.08] disabled:opacity-50"
+                className="flex flex-1 flex-col items-center gap-2 rounded-[18px] border border-shell-borde bg-shell-superficie-suave p-4 transition-colors hover:border-shell-chip-borde hover:bg-shell-chip-hover disabled:opacity-50"
               >
                 {descargando === "md" ? (
-                  <Icono nombre="descarga" tamaño={24} className="animate-bounce text-[#D8C0FF]" />
+                  <Icono nombre="descarga" tamaño={24} className="animate-bounce text-shell-badge-acento" />
                 ) : (
-                  <Icono nombre="descarga" tamaño={24} className="text-[#D8C0FF]" />
+                  <Icono nombre="descarga" tamaño={24} className="text-shell-badge-acento" />
                 )}
-                <span className="text-sm font-semibold text-white">Markdown</span>
-                <span className="text-[11px] text-white/48">Texto editable</span>
+                <span className="text-sm font-semibold text-shell-texto">Markdown</span>
+                <span className="text-[11px] text-shell-texto-tenue">Texto editable</span>
               </button>
             </div>
           </div>

@@ -95,7 +95,7 @@ export default function PaginaDescubrir() {
         <div className="relative z-10 mx-auto max-w-6xl px-4 py-5 lg:px-6 lg:py-6">
           <section className={`${SUPERFICIE_HERO} p-5 sm:p-6 lg:p-7`}>
             <div className="flex items-start gap-4">
-              <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(135deg,rgba(124,77,255,0.92),rgba(179,136,255,0.72))] p-4 text-white shadow-[0_16px_34px_rgba(34,10,76,0.34)]">
+              <div className="tema-gradiente-acento rounded-[22px] border border-shell-borde p-4 text-white shadow-[var(--shell-sombra-fuerte)]">
                 <IconoAstral nombre="libro" tamaño={24} className="text-white" />
               </div>
 
@@ -126,8 +126,7 @@ export default function PaginaDescubrir() {
                     className="rounded-[18px] border p-3"
                     style={{
                       borderColor: "var(--shell-chip-borde)",
-                      background:
-                        "linear-gradient(135deg, rgba(124, 77, 255, 0.18), rgba(179, 136, 255, 0.1))",
+                      background: "var(--shell-gradiente-acento-suave)",
                       color: "var(--color-acento)",
                     }}
                   >

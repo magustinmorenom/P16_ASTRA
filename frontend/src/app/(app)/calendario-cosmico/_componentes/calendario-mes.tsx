@@ -14,6 +14,7 @@ import {
 import { es } from "date-fns/locale";
 
 import { Icono } from "@/componentes/ui/icono";
+import { IconoFaseLunar } from "@/componentes/ui/icono-fase-lunar";
 import type { TransitosDia } from "@/lib/tipos";
 import { cn } from "@/lib/utilidades/cn";
 import {
@@ -87,12 +88,13 @@ function TooltipDiaCalendario({
             </p>
           </div>
           <span
-            className="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]"
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold"
             style={{
               background: "var(--shell-chip)",
               color: "var(--color-acento)",
             }}
           >
+            <IconoFaseLunar fase={estado.faseLunar} tamaño={13} className="text-[color:var(--color-acento)]" />
             {estado.faseLunar}
           </span>
         </div>
@@ -196,27 +198,10 @@ export function CalendarioMes({
           <h2 className="text-[17px] font-semibold capitalize text-[color:var(--shell-texto)]">
             {format(mesVisible, "MMMM yyyy", { locale: es })}
           </h2>
-          {ritmoHoy ? (
-            <>
-              <span
-                className="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]"
-                style={{ background: "var(--shell-chip)", color: "var(--color-acento)" }}
-              >
-                Año {ritmoHoy.anio}
-              </span>
-              <span
-                className="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]"
-                style={{ background: "var(--shell-chip)", color: "var(--color-acento)" }}
-              >
-                Hoy {ritmoHoy.dia}
-              </span>
-            </>
-          ) : null}
-          <span
-            className="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]"
-            style={{ background: "var(--shell-superficie-suave)", color: "var(--shell-texto-tenue)" }}
-          >
-            Hasta {limiteTexto}
+          <span className="text-[12px] text-[color:var(--shell-texto-secundario)]">
+            {ritmoHoy ? `Año ${ritmoHoy.anio} · Día ${ritmoHoy.dia}` : ""}
+            {ritmoHoy ? " · " : ""}
+            hasta {limiteTexto}
           </span>
         </div>
 
@@ -301,23 +286,32 @@ export function CalendarioMes({
                     key={fechaStr}
                     type="button"
                     onClick={() => onSeleccionarFecha(fechaStr)}
-                    onMouseEnter={(evento) => {
+                    onMouseEnter={(e) => {
                       if (!dia) return;
-                      const rect = (evento.currentTarget as HTMLElement).getBoundingClientRect();
-                      const x = Math.min(Math.max(16, rect.left), window.innerWidth - 300);
-                      const y = Math.max(16, rect.top - 180);
-                      setTooltip({
-                        fecha: fechaStr,
-                        x,
-                        y,
-                        eventos,
-                        ritmo,
-                        faseLunar: dia.fase_lunar,
-                      });
+                      const mx = e.clientX;
+                      const my = e.clientY;
+                      const tw = 296;
+                      const th = 190;
+                      const vw = window.innerWidth;
+                      const vh = window.innerHeight;
+
+                      // Posicionar cerca del cursor
+                      let x = mx + 12;
+                      let y = my - th - 8;
+
+                      // Si se sale por la derecha, mover a la izquierda del cursor
+                      if (x + tw > vw - 12) x = mx - tw - 12;
+                      if (x < 12) x = 12;
+
+                      // Si se sale por arriba, mover debajo del cursor
+                      if (y < 12) y = my + 16;
+                      if (y + th > vh - 12) y = vh - th - 12;
+
+                      setTooltip({ fecha: fechaStr, x, y, eventos, ritmo, faseLunar: dia.fase_lunar });
                     }}
                     onMouseLeave={() => setTooltip(null)}
                     className={cn(
-                      "relative min-h-[112px] border-r px-3 py-3 text-left transition-colors last:border-r-0 sm:min-h-[124px]",
+                      "relative min-h-[80px] border-r px-2.5 py-2.5 text-left transition-colors last:border-r-0 sm:min-h-[90px]",
                       !perteneceAlMes && "opacity-55",
                     )}
                     style={{
@@ -326,8 +320,9 @@ export function CalendarioMes({
                       background: estaSeleccionado ? "var(--shell-superficie-suave)" : "transparent",
                     }}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
+                    {/* Fila superior: número + luna + ritmo */}
+                    <div className="flex items-center justify-between gap-1">
+                      <div className="flex items-center gap-2">
                         <p
                           className={cn(
                             "text-sm font-semibold",
@@ -338,14 +333,17 @@ export function CalendarioMes({
                         >
                           {format(fecha, "d")}
                         </p>
-                        <p className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-[color:var(--shell-texto-tenue)]">
-                          {esHoy ? "Hoy" : format(fecha, "EEE", { locale: es })}
-                        </p>
+                        {dia?.fase_lunar && (
+                          <IconoFaseLunar
+                            fase={dia.fase_lunar}
+                            tamaño={20}
+                            className="text-[color:var(--color-acento)]"
+                          />
+                        )}
                       </div>
-
                       {ritmo ? (
                         <span
-                          className="inline-flex min-w-[32px] items-center justify-center rounded-full px-2 py-1 text-[11px] font-semibold"
+                          className="inline-flex min-w-[24px] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
                           style={{
                             background: esHoy ? "var(--color-acento)" : "var(--shell-chip)",
                             color: esHoy ? "white" : "var(--color-acento)",
@@ -356,13 +354,10 @@ export function CalendarioMes({
                       ) : null}
                     </div>
 
-                    <div className="mt-3 flex flex-col gap-1.5">
-                      <p className="line-clamp-1 text-[11px] text-[color:var(--shell-texto-secundario)]">
-                        {dia?.fase_lunar ?? "Sin fase disponible"}
-                      </p>
-
-                      {eventos.length > 0 ? (
-                        eventos.slice(0, 2).map((evento) => {
+                    {/* Eventos */}
+                    {eventos.length > 0 && (
+                      <div className="mt-2 flex flex-col gap-1">
+                        {eventos.slice(0, 2).map((evento) => {
                           const tono = tonoEvento(evento.impacto);
                           return (
                             <span
@@ -370,19 +365,15 @@ export function CalendarioMes({
                               className="inline-flex items-center gap-1.5 text-[10px] leading-4 text-[color:var(--shell-texto-secundario)]"
                             >
                               <span
-                                className="h-1.5 w-1.5 rounded-full"
+                                className="h-1.5 w-1.5 shrink-0 rounded-full"
                                 style={{ background: tono.punto }}
                               />
                               <span className="line-clamp-1">{evento.etiquetaCorta}</span>
                             </span>
                           );
-                        })
-                      ) : (
-                        <span className="text-[10px] leading-4 text-[color:var(--shell-texto-tenue)]">
-                          {describirFaseLunar(dia?.fase_lunar ?? "Creciente")}
-                        </span>
-                      )}
-                    </div>
+                        })}
+                      </div>
+                    )}
                   </button>
                 );
               })}

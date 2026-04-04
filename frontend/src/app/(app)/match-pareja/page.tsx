@@ -64,7 +64,7 @@ export default function PaginaMatchPareja() {
               </p>
 
               <div className="mt-5 flex items-start gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#B388FF] shadow-[0_18px_40px_rgba(34,12,72,0.45)]">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-gradient-to-br from-violet-500 via-violet-400 to-violet-300 shadow-[var(--shell-sombra-fuerte)]">
                   <IconoAstral nombre="compatibilidad" tamaño={24} className="text-white" />
                 </div>
 
@@ -84,7 +84,7 @@ export default function PaginaMatchPareja() {
                   className="rounded-[20px] border p-4"
                   style={{
                     borderColor: "var(--shell-borde)",
-                    background: "rgba(255, 255, 255, 0.06)",
+                    background: "var(--shell-superficie-suave)",
                   }}
                 >
                   <div className="space-y-3">
@@ -95,8 +95,8 @@ export default function PaginaMatchPareja() {
                         style={{ borderColor: "var(--shell-hero-borde)" }}
                       >
                         <div
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] text-[#D8C0FF]"
-                          style={{ background: "rgba(255, 255, 255, 0.08)" }}
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] text-shell-badge-acento"
+                          style={{ background: "var(--shell-superficie-suave)" }}
                         >
                           <Icono nombre={feat.icono} tamaño={18} peso="fill" />
                         </div>
@@ -117,7 +117,7 @@ export default function PaginaMatchPareja() {
                   className="rounded-[20px] border p-4"
                   style={{
                     borderColor: "var(--shell-borde)",
-                    background: "rgba(255, 255, 255, 0.06)",
+                    background: "var(--shell-superficie-suave)",
                   }}
                 >
                   <p className="tema-hero-tenue text-[11px] font-semibold uppercase tracking-[0.18em]">
@@ -130,8 +130,8 @@ export default function PaginaMatchPareja() {
                   <div
                     className="tema-hero-tenue mt-5 inline-flex h-10 items-center justify-center rounded-full border px-4 text-sm font-medium"
                     style={{
-                      borderColor: "rgba(255, 255, 255, 0.12)",
-                      background: "rgba(255, 255, 255, 0.06)",
+                      borderColor: "var(--shell-borde)",
+                      background: "var(--shell-superficie-suave)",
                     }}
                   >
                     Disponible pronto
