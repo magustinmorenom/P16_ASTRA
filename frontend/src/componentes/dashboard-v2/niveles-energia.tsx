@@ -15,8 +15,8 @@ function BarraSegmentos({ etiqueta, valor, icono }: { etiqueta: string; valor: n
     <div
       className="flex items-center gap-2 rounded-[10px] border px-2.5 py-1 backdrop-blur-[21px]"
       style={{
-        background: "rgba(255, 255, 255, 0.08)",
-        borderColor: "rgba(255, 255, 255, 0.12)",
+        background: "var(--shell-hero-superficie)",
+        borderColor: "var(--shell-hero-superficie-fuerte)",
       }}
     >
       <span className="flex w-[84px] shrink-0 items-center gap-1.5 text-[12px] font-medium text-[color:var(--shell-hero-texto-secundario)]">

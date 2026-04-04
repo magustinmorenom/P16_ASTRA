@@ -80,21 +80,21 @@ export function HeroSeccion({
                 disabled={podcastGenerando}
                 className="flex items-center gap-2 rounded-full border px-4 py-2 text-[12px] font-medium text-[color:var(--shell-hero-texto)] transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                 style={{
-                  borderColor: "rgba(255, 255, 255, 0.12)",
-                  background: "rgba(255, 255, 255, 0.08)",
+                  borderColor: "var(--shell-hero-borde-sutil)",
+                  background: "var(--shell-hero-superficie)",
                 }}
               >
                 <span
                   className="flex h-7 w-7 items-center justify-center rounded-full border"
                   style={{
-                    borderColor: "rgba(255, 255, 255, 0.12)",
-                    background: "rgba(255, 255, 255, 0.08)",
+                    borderColor: "var(--shell-hero-borde-sutil)",
+                    background: "var(--shell-hero-superficie)",
                   }}
                 >
                   {podcastGenerando ? (
                     <div
                       className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-t-transparent"
-                      style={{ borderColor: "rgba(248, 246, 255, 0.8)" }}
+                      style={{ borderColor: "var(--shell-hero-texto-secundario)" }}
                     />
                   ) : (
                     <Icono
@@ -113,8 +113,8 @@ export function HeroSeccion({
                 disabled={podcastGenerando}
                 className="flex items-center gap-2 rounded-full border px-4 py-2 text-[12px] font-medium text-[color:var(--shell-hero-texto-secundario)] transition-colors hover:text-[color:var(--shell-hero-texto)] disabled:cursor-not-allowed disabled:opacity-70"
                 style={{
-                  borderColor: "rgba(255, 255, 255, 0.1)",
-                  background: "rgba(255, 255, 255, 0.04)",
+                  borderColor: "var(--shell-hero-borde-sutil)",
+                  background: "var(--shell-hero-superficie)",
                 }}
               >
                 <Icono nombre="destello" tamaño={14} peso="fill" />

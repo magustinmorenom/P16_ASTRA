@@ -11,8 +11,8 @@ export function NumeroDelDia({ numero }: NumeroDelDiaProps) {
       <div
         className="flex h-[38px] w-[46px] shrink-0 items-center justify-center rounded-[10px] border backdrop-blur-[21px]"
         style={{
-          background: "rgba(255, 255, 255, 0.08)",
-          borderColor: "rgba(255, 255, 255, 0.12)",
+          background: "var(--shell-hero-superficie)",
+          borderColor: "var(--shell-hero-superficie-fuerte)",
         }}
       >
         <span className="font-[family-name:var(--font-inria)] text-[22px] font-normal text-[color:var(--shell-texto-inverso)]">

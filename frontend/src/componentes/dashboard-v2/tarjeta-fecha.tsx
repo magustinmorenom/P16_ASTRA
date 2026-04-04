@@ -21,8 +21,8 @@ export function TarjetaFecha({ fecha }: TarjetaFechaProps) {
     <div
       className="flex shrink-0 flex-col items-center justify-center rounded-[18px] border px-5 py-4"
       style={{
-        borderColor: "rgba(255, 255, 255, 0.1)",
-        background: "rgba(255, 255, 255, 0.06)",
+        borderColor: "var(--shell-hero-borde-sutil)",
+        background: "var(--shell-hero-superficie)",
       }}
     >
       <span className="font-[family-name:var(--font-inria)] text-[34px] font-light leading-[0.95] tracking-tight text-[color:var(--shell-texto-inverso)]">

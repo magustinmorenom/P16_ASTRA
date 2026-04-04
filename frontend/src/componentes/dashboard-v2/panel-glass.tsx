@@ -19,8 +19,8 @@ export function PanelGlass({
     <div
       className={`rounded-xl border backdrop-blur-[21px] ${className}`}
       style={{
-        background: esHero ? "rgba(255, 255, 255, 0.08)" : "var(--shell-superficie)",
-        borderColor: esHero ? "rgba(255, 255, 255, 0.12)" : "var(--shell-borde)",
+        background: esHero ? "var(--shell-hero-superficie)" : "var(--shell-superficie)",
+        borderColor: esHero ? "var(--shell-hero-superficie-fuerte)" : "var(--shell-borde)",
         ...style,
       }}
     >

@@ -222,15 +222,15 @@ export default function PaginaDashboard() {
               style={{ background: "var(--shell-glow-1)" }}
             />
             <div className="tema-superficie-panel relative z-10 m-3 p-4 lg:m-4 lg:p-5">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-white/60">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[color:var(--shell-texto-tenue)]">
                 Pronóstico Cósmico
               </p>
-              <p className="text-white text-[16px] lg:text-[18px] font-semibold leading-snug mb-2">
+              <p className="text-[color:var(--shell-texto)] text-[16px] lg:text-[18px] font-semibold leading-snug mb-2">
                 {autenticado
                   ? "No pudimos generar tu pronóstico"
                   : "Iniciá sesión para ver tu pronóstico"}
               </p>
-              <p className="mb-4 text-[13px] leading-relaxed text-white/68 lg:text-[14px]">
+              <p className="mb-4 text-[13px] leading-relaxed text-[color:var(--shell-texto-secundario)] lg:text-[14px]">
                 {autenticado
                   ? "Asegurate de tener un perfil con tus datos de nacimiento."
                   : "Necesitás un perfil para personalizar tu pronóstico."}
@@ -238,7 +238,7 @@ export default function PaginaDashboard() {
               {autenticado && (
                 <button
                   onClick={() => reintentarPronostico()}
-                  className="rounded-xl border px-5 py-2.5 text-[14px] font-medium text-white transition-colors"
+                  className="rounded-xl border px-5 py-2.5 text-[14px] font-medium text-[color:var(--shell-texto)] transition-colors"
                   style={{
                     borderColor: "var(--shell-borde)",
                     background: "var(--shell-superficie)",

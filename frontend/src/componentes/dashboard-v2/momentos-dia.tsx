@@ -47,7 +47,7 @@ export function MomentosDia({ momentos }: MomentosDiaProps) {
     <div
       className="flex flex-1 flex-col justify-between overflow-hidden divide-y rounded-[18px]"
       style={{
-        background: "rgba(255, 255, 255, 0.06)",
+        background: "var(--shell-hero-superficie)",
         borderColor: "var(--shell-hero-borde)",
       }}
     >

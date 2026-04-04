@@ -82,12 +82,12 @@ function TooltipDia({ dia, x, y, saliendo }: { dia: DiaSemanalDTO; x: number; y:
         </p>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
-            <Icono nombre="rayo" tamaño={12} peso="fill" className="text-[#B388FF]" />
+            <Icono nombre="rayo" tamaño={12} peso="fill" className="text-[color:var(--color-acento)]" />
             <span className="text-[11px] text-[color:var(--shell-texto-tenue)]">Energía</span>
             <span className="text-[11px] font-semibold text-[color:var(--shell-texto)]">{dia.energia}/10</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Icono nombre="destello" tamaño={12} peso="fill" className="text-[#D4A234]" />
+            <Icono nombre="destello" tamaño={12} peso="fill" className="text-[color:var(--color-acento)]" />
             <span className="text-[11px] text-[color:var(--shell-texto-tenue)]">Nº</span>
             <span className="text-[11px] font-semibold text-[color:var(--shell-texto)]">{dia.numero_personal}</span>
           </div>
@@ -315,16 +315,16 @@ export function SemanaV2({
               !podcastHabilitado ? "opacity-50" : ""
             }`}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0f0826] via-[#1a0e3e] to-[#2d1b69]" />
+            <div className="absolute inset-0 tema-gradiente-acento" />
             <div className="relative flex items-center gap-2 px-4 py-2.5">
-              <span className="h-[33px] w-[36px] rounded-xl bg-white/10 border border-white/[0.08] flex items-center justify-center shrink-0">
+              <span className="h-[33px] w-[36px] rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--shell-hero-superficie)", borderColor: "var(--shell-hero-borde-sutil)", borderWidth: 1 }}>
                 {generandoPodcast ? (
                   <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 ) : (
                   <Icono nombre="destello" tamaño={16} peso="fill" className="text-[color:var(--shell-hero-texto)]" />
                 )}
               </span>
-              <span className="text-[#f8f6ff]/60 text-[11px] font-medium tracking-[2px] text-center uppercase flex-1">
+              <span className="text-[color:var(--shell-hero-texto-secundario)] text-[11px] font-medium tracking-[2px] text-center uppercase flex-1">
                 {verSiguiente && !podcastHabilitado
                   ? "El sábado se habilita este podcast"
                   : `Genera podcast de tu semana ${rangoTexto}`}
