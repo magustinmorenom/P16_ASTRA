@@ -22,6 +22,7 @@ export interface MomentoClaveDTO {
   icono: string;
   frase: string;
   nivel: "favorable" | "neutro" | "precaucion";
+  accionables?: string[];
 }
 
 export interface AlertaCosmicaDTO {

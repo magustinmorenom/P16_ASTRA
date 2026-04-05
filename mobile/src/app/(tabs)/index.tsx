@@ -8,9 +8,15 @@ import {
   ArrowRight,
   CalendarDots,
   ChatCircleDots,
+  Brain,
+  CurrencyDollar,
+  Heart,
+  Heartbeat,
   Moon,
   Play,
+  Rocket,
   Sun,
+  SunHorizon,
   WarningCircle,
 } from "phosphor-react-native";
 import { FondoCosmico } from "@/componentes/layouts/fondo-cosmico";
@@ -22,6 +28,7 @@ import { Tarjeta } from "@/componentes/ui/tarjeta";
 import { AnimacionEntrada } from "@/componentes/ui/animacion-entrada";
 import { IconoAstral, IconoSigno } from "@/componentes/ui/icono-astral";
 import { EstadoVacio } from "@/componentes/feedback/estado-vacio";
+import { GraficaEnergia } from "@/componentes/visualizaciones/grafica-energia";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { useStoreUI, type PistaReproduccion } from "@/lib/stores/store-ui";
 import {
@@ -40,11 +47,9 @@ import type {
   TipoPodcast,
 } from "@/lib/tipos";
 
-function obtenerSaludo(): string {
-  const hora = new Date().getHours();
-  if (hora < 12) return "Buenos dias";
-  if (hora < 19) return "Buenas tardes";
-  return "Buenas noches";
+function obtenerSaludo(nombre?: string | null): string {
+  const primerNombre = nombre?.split(" ")[0] ?? "Explorador";
+  return `Hola ${primerNombre} 👋`;
 }
 
 function formatearFechaDashboard(fecha: Date): string {
@@ -56,11 +61,13 @@ function formatearFechaDashboard(fecha: Date): string {
 }
 
 function formatearDiaSemana(fecha: string): string {
-  return new Date(`${fecha}T12:00:00`).toLocaleDateString("es-AR", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
+  const d = new Date(`${fecha}T12:00:00`);
+  const dia = d.getDate();
+  const nombre = d
+    .toLocaleDateString("es-AR", { weekday: "short" })
+    .replace(".", "")
+    .toLowerCase();
+  return `${nombre} ${dia}`;
 }
 
 function obtenerNivelBadge(nivel: "favorable" | "neutro" | "precaucion") {
@@ -76,16 +83,16 @@ function obtenerUrgenciaBadge(urgencia: "baja" | "media" | "alta") {
 }
 
 function obtenerIconoArea(areaId: string) {
-  const mapa: Record<string, string> = {
-    trabajo: "carrera",
-    amor: "emocion",
-    salud: "salud",
-    finanzas: "suerte",
-    creatividad: "libro",
-    crecimiento: "personal",
+  const mapa: Record<string, typeof Heart> = {
+    trabajo: Rocket,
+    amor: Heart,
+    salud: Heartbeat,
+    finanzas: CurrencyDollar,
+    creatividad: Brain,
+    crecimiento: Rocket,
   };
 
-  return mapa[areaId] ?? "astrologia";
+  return mapa[areaId] ?? Rocket;
 }
 
 function IndicadorHero({
@@ -259,6 +266,8 @@ function TarjetaArea({
 }) {
   const { colores } = usarTema();
 
+  const IconoArea = obtenerIconoArea(area.id);
+
   return (
     <Tarjeta padding="sm" style={{ marginBottom: 10 }}>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -274,7 +283,7 @@ function TarjetaArea({
             justifyContent: "center",
           }}
         >
-          <IconoAstral nombre={obtenerIconoArea(area.id)} tamaño={20} />
+          <IconoArea size={20} color={colores.acento} weight="fill" />
         </View>
 
         <View style={{ marginLeft: 12, flex: 1 }}>
@@ -292,7 +301,9 @@ function TarjetaArea({
           </Text>
         </View>
 
-        <Badge variante={obtenerNivelBadge(area.nivel)}>{area.nivel}</Badge>
+        {area.nivel !== "neutro" && (
+          <Badge variante={obtenerNivelBadge(area.nivel)}>{area.nivel}</Badge>
+        )}
       </View>
 
       <Text
@@ -446,6 +457,15 @@ function TarjetaPodcast({
   );
 }
 
+function calcularLunesSiguiente(): string {
+  const hoy = new Date();
+  const diaSemana = hoy.getDay();
+  const diasHastaLunes = diaSemana === 0 ? 1 : 8 - diaSemana;
+  const lunes = new Date(hoy);
+  lunes.setDate(hoy.getDate() + diasHastaLunes);
+  return lunes.toISOString().split("T")[0];
+}
+
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -454,6 +474,7 @@ export default function DashboardScreen() {
   const { colores, esOscuro } = usarTema();
   const queryClient = useQueryClient();
   const [refrescando, setRefrescando] = useState(false);
+  const [verSiguienteSemana, setVerSiguienteSemana] = useState(false);
 
   const {
     data: pronostico,
@@ -462,6 +483,10 @@ export default function DashboardScreen() {
     refetch,
   } = usarPronosticoDiario();
   const { data: pronosticoSemanal, isLoading: cargandoSemanal } = usarPronosticoSemanal();
+  const {
+    data: semanaSiguiente,
+    isLoading: cargandoSiguiente,
+  } = usarPronosticoSemanal(calcularLunesSiguiente());
   const { data: episodios } = usarPodcastHoy();
   const generarPodcast = usarGenerarPodcast();
 
@@ -525,22 +550,12 @@ export default function DashboardScreen() {
             <View style={{ marginLeft: 12, flex: 1 }}>
               <Text
                 style={{
-                  color: colores.textoSecundario,
-                  fontSize: 13,
-                  fontFamily: "Inter_500Medium",
-                }}
-              >
-                {obtenerSaludo()}
-              </Text>
-              <Text
-                style={{
                   color: colores.primario,
                   fontSize: 22,
                   fontFamily: "Inter_700Bold",
-                  marginTop: 2,
                 }}
               >
-                {usuario?.nombre ?? "Explorador"}
+                {obtenerSaludo(usuario?.nombre)}
               </Text>
             </View>
             <Badge variante={esPremium ? "exito" : "info"}>
@@ -560,13 +575,13 @@ export default function DashboardScreen() {
               borderColor: esOscuro ? "rgba(255,255,255,0.08)" : "rgba(124,77,255,0.12)",
             }}
           >
-            <Badge variante="info">Ritual de hoy</Badge>
-
             <Text
               style={{
-                color: colores.textoSecundario,
-                fontSize: 13,
-                marginTop: 14,
+                color: colores.primario,
+                fontSize: 17,
+                fontFamily: "Inter_600SemiBold",
+                textTransform: "capitalize",
+                letterSpacing: 0.2,
               }}
             >
               {formatearFechaDashboard(new Date())}
@@ -621,84 +636,112 @@ export default function DashboardScreen() {
 
                 <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
                   <IndicadorHero
-                    etiqueta="Energia"
+                    etiqueta="Energía"
                     valor={`${pronostico.clima.energia}/10`}
                   />
                   <IndicadorHero
                     etiqueta="Claridad"
                     valor={`${pronostico.clima.claridad}/10`}
                   />
-                  <IndicadorHero etiqueta="Luna" valor={pronostico.luna.signo} />
+                  <IndicadorHero
+                    etiqueta="Intuición"
+                    valor={`${pronostico.clima.intuicion}/10`}
+                  />
                 </View>
 
-                <View
-                  style={{
-                    marginTop: 18,
-                    paddingTop: 16,
-                    borderTopWidth: 1,
-                    borderTopColor: esOscuro
-                      ? "rgba(255,255,255,0.08)"
-                      : "rgba(124,77,255,0.12)",
-                  }}
-                >
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <View
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 22,
-                        backgroundColor: esOscuro
-                          ? "rgba(255,255,255,0.05)"
-                          : "rgba(255,255,255,0.62)",
-                        borderWidth: 1,
-                        borderColor: esOscuro
-                          ? "rgba(255,255,255,0.08)"
-                          : "rgba(124,77,255,0.12)",
-                        alignItems: "center",
-                        justifyContent: "center",
+                {/* CTA Podcast del día — violeta realzado */}
+                {(() => {
+                  const epHoy = episodios?.find((e) => e.tipo === "dia");
+                  const listoParaReproducir = epHoy?.estado === "listo";
+                  const generandoEp = epHoy?.estado === "generando_guion" || epHoy?.estado === "generando_audio";
+
+                  return (
+                    <Pressable
+                      onPress={() => {
+                        if (listoParaReproducir && epHoy) {
+                          reproducirPodcast(epHoy);
+                        } else if (!generandoEp) {
+                          generarPodcast.mutate("dia");
+                        }
                       }}
+                      disabled={generandoEp}
+                      style={{
+                        marginTop: 18,
+                        paddingVertical: 14,
+                        paddingHorizontal: 16,
+                        borderRadius: 16,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        backgroundColor: esOscuro
+                          ? "rgba(124,77,255,0.18)"
+                          : "rgba(124,77,255,0.1)",
+                        borderWidth: 1,
+                        borderColor: `${colores.acento}40`,
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={listoParaReproducir ? "Reproducir podcast de hoy" : "Generar podcast de hoy"}
                     >
-                      <IconoSigno signo={pronostico.luna.signo} tamaño={22} />
-                    </View>
-                    <View style={{ marginLeft: 12, flex: 1 }}>
-                      <Text
+                      <View
                         style={{
-                          color: colores.primario,
-                          fontSize: 15,
-                          fontFamily: "Inter_700Bold",
+                          width: 42,
+                          height: 42,
+                          borderRadius: 21,
+                          backgroundColor: colores.acento,
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                       >
-                        Luna en {pronostico.luna.signo}
-                      </Text>
-                      <Text
-                        style={{
-                          color: colores.textoSecundario,
-                          fontSize: 13,
-                          marginTop: 3,
-                        }}
-                      >
-                        {pronostico.luna.fase} · Numero {pronostico.numero_personal.numero}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={{ flexDirection: "row", gap: 10, marginTop: 16 }}>
-                    <Boton
-                      tamaño="sm"
-                      onPress={() => router.push("/(tabs)/chat" as never)}
-                      icono={<ChatCircleDots size={16} color="white" weight="fill" />}
-                    >
-                      Abrir chat
-                    </Boton>
-                    <Boton
-                      tamaño="sm"
-                      variante="secundario"
-                      onPress={() => router.push("/(tabs)/descubrir" as never)}
-                    >
-                      Explorar modulos
-                    </Boton>
-                  </View>
-                </View>
+                        {generandoEp ? (
+                          <ActivityIndicator size="small" color="white" />
+                        ) : (
+                          <Play size={18} color="white" weight="fill" />
+                        )}
+                      </View>
+                      <View style={{ marginLeft: 12, flex: 1 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center" }}>
+                          {listoParaReproducir && (
+                            <View
+                              style={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: 4,
+                                backgroundColor: colores.exito,
+                                marginRight: 8,
+                              }}
+                            />
+                          )}
+                          <Text
+                            style={{
+                              color: colores.primario,
+                              fontSize: 15,
+                              fontFamily: "Inter_700Bold",
+                            }}
+                          >
+                            {listoParaReproducir
+                              ? "Escuchá tu podcast de hoy"
+                              : generandoEp
+                              ? "Preparando tu podcast..."
+                              : "Generar podcast de hoy"}
+                          </Text>
+                        </View>
+                        <Text
+                          style={{
+                            color: colores.textoSecundario,
+                            fontSize: 12,
+                            marginTop: 3,
+                          }}
+                        >
+                          {listoParaReproducir
+                            ? epHoy?.titulo ?? "Tu resumen cósmico diario"
+                            : "Tu pronóstico narrado en audio"}
+                        </Text>
+                      </View>
+                      {!generandoEp && (
+                        <ArrowRight size={18} color={colores.acento} />
+                      )}
+                    </Pressable>
+                  );
+                })()}
               </>
             )}
           </LinearGradient>
@@ -751,53 +794,120 @@ export default function DashboardScreen() {
 
         {pronostico ? (
           <AnimacionEntrada retraso={150}>
-            <EncabezadoSeccion
-              titulo="Momentos del dia"
-              accion={<Badge variante="info">Numero {pronostico.numero_personal.numero}</Badge>}
-            />
+            <EncabezadoSeccion titulo="Hoy estás para" />
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingRight: 4, marginBottom: 24 }}
             >
-              {pronostico.momentos.map((momento) => (
-                <TarjetaMomento key={momento.bloque} momento={momento} />
-              ))}
+              {pronostico.momentos.map((momento) => {
+                const IconoBloque =
+                  momento.bloque === "manana"
+                    ? SunHorizon
+                    : momento.bloque === "tarde"
+                    ? Sun
+                    : Moon;
+                const horaBloque =
+                  momento.bloque === "manana"
+                    ? "6 – 12h"
+                    : momento.bloque === "tarde"
+                    ? "12 – 19h"
+                    : "19 – 6h";
+
+                return (
+                  <Tarjeta key={momento.bloque} padding="md" style={{ width: 260, marginRight: 12 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+                      <View
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 18,
+                          backgroundColor: `${colores.acento}18`,
+                          borderWidth: 1,
+                          borderColor: `${colores.acento}30`,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <IconoBloque size={18} color={colores.acento} weight="fill" />
+                      </View>
+                      <Text
+                        style={{
+                          color: colores.textoMuted,
+                          fontSize: 12,
+                          fontFamily: "Inter_500Medium",
+                          marginLeft: 10,
+                        }}
+                      >
+                        {horaBloque}
+                      </Text>
+                    </View>
+
+                    {momento.accionables?.length ? (
+                      <View style={{ gap: 6 }}>
+                        {momento.accionables.map((accion: string, i: number) => (
+                          <View
+                            key={i}
+                            style={{ flexDirection: "row", alignItems: "flex-start" }}
+                          >
+                            <View
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: 3,
+                                backgroundColor: colores.acento,
+                                marginTop: 6,
+                                marginRight: 10,
+                              }}
+                            />
+                            <Text
+                              style={{
+                                color: colores.textoSecundario,
+                                fontSize: 13,
+                                lineHeight: 19,
+                                flex: 1,
+                              }}
+                            >
+                              {accion}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    ) : (
+                      <Text
+                        style={{
+                          color: colores.textoSecundario,
+                          fontSize: 13,
+                          lineHeight: 19,
+                        }}
+                      >
+                        {momento.frase}
+                      </Text>
+                    )}
+                  </Tarjeta>
+                );
+              })}
             </ScrollView>
           </AnimacionEntrada>
         ) : null}
 
         {pronostico ? (
           <AnimacionEntrada retraso={190}>
-            <EncabezadoSeccion
-              titulo="Tu foco ahora"
-              accion={
-                <Badge
-                  variante={pronostico.acceso.pronostico_detalle_area ? "exito" : "default"}
-                >
-                  {pronostico.acceso.pronostico_detalle_area ? "Detalle completo" : "Resumen"}
-                </Badge>
-              }
-            />
-            <Text
-              style={{
-                color: colores.textoSecundario,
-                fontSize: 14,
-                lineHeight: 20,
-                marginBottom: 12,
-              }}
+            <EncabezadoSeccion titulo="Tu foco ahora" />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingRight: 4, marginBottom: 24 }}
             >
-              Estas son las areas que hoy conviene mirar primero antes de bajar al detalle.
-            </Text>
-            <View style={{ marginBottom: 24 }}>
-              {pronostico.areas.slice(0, 3).map((area) => (
-                <TarjetaArea
-                  key={area.id}
-                  area={area}
-                  mostrarDetalle={pronostico.acceso.pronostico_detalle_area}
-                />
+              {pronostico.areas.map((area) => (
+                <View key={area.id} style={{ width: 220, marginRight: 12 }}>
+                  <TarjetaArea
+                    area={area}
+                    mostrarDetalle={pronostico.acceso.pronostico_detalle_area}
+                  />
+                </View>
               ))}
-            </View>
+            </ScrollView>
           </AnimacionEntrada>
         ) : null}
 
@@ -807,46 +917,147 @@ export default function DashboardScreen() {
             accion={<CalendarDots size={18} color={colores.acento} weight="fill" />}
           />
 
-          {cargandoSemanal ? (
-            <View style={{ gap: 8, marginBottom: 24 }}>
-              {[1, 2, 3].map((item) => (
-                <Esqueleto key={item} style={{ height: 72, borderRadius: 16 }} />
-              ))}
-            </View>
-          ) : pronosticoSemanal?.semana?.length ? (
-            <View style={{ gap: 8, marginBottom: 24 }}>
-              {pronosticoSemanal.semana.slice(0, 4).map((dia) => (
-                <Tarjeta key={dia.fecha} padding="sm">
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <View style={{ flex: 1 }}>
-                      <Text
-                        style={{
-                          color: colores.primario,
-                          fontSize: 14,
-                          fontFamily: "Inter_700Bold",
-                        }}
-                      >
-                        {formatearDiaSemana(dia.fecha)}
-                      </Text>
-                      <Text
-                        style={{
-                          color: colores.textoSecundario,
-                          fontSize: 12,
-                          marginTop: 3,
-                        }}
-                      >
-                        {dia.frase_corta}
-                      </Text>
-                    </View>
-                    <Badge variante="info">Energia {dia.energia}</Badge>
+          {(() => {
+            const cargando = verSiguienteSemana ? cargandoSiguiente : cargandoSemanal;
+            const datos = verSiguienteSemana
+              ? semanaSiguiente?.semana
+              : pronosticoSemanal?.semana;
+            const hoyStr = new Date().toISOString().split("T")[0];
+
+            if (cargando) {
+              return (
+                <Tarjeta variante="violeta" style={{ marginBottom: 24 }}>
+                  <View style={{ gap: 12 }}>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Esqueleto key={i} style={{ height: 40, borderRadius: 10 }} />
+                    ))}
                   </View>
                 </Tarjeta>
-              ))}
-            </View>
-          ) : null}
+              );
+            }
+
+            if (!datos?.length) return null;
+
+            return (
+              <LinearGradient
+                colors={["#6D28D9", "#4A2D8C"]}
+                style={{
+                  borderRadius: 20,
+                  padding: 18,
+                  marginBottom: 24,
+                }}
+              >
+                {datos.slice(0, 7).map((dia, idx) => {
+                  const esHoy = dia.fecha === hoyStr;
+                  const esUltimo = idx === Math.min(datos.length, 7) - 1;
+
+                  return (
+                    <View key={dia.fecha}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          paddingVertical: 11,
+                        }}
+                      >
+                        <View style={{ width: 52 }}>
+                          <Text
+                            style={{
+                              color: esHoy ? "#FFFFFF" : "rgba(255,255,255,0.7)",
+                              fontSize: 13,
+                              fontFamily: esHoy ? "Inter_700Bold" : "Inter_600SemiBold",
+                            }}
+                          >
+                            {esHoy ? "Hoy" : formatearDiaSemana(dia.fecha)}
+                          </Text>
+                        </View>
+
+                        <Text
+                          style={{
+                            color: "rgba(255,255,255,0.75)",
+                            fontSize: 13,
+                            lineHeight: 18,
+                            flex: 1,
+                            marginHorizontal: 12,
+                          }}
+                          numberOfLines={2}
+                        >
+                          {dia.frase_corta}
+                        </Text>
+
+                        <Text
+                          style={{
+                            color: esHoy ? "#FFFFFF" : "rgba(255,255,255,0.5)",
+                            fontSize: 12,
+                            fontFamily: "Inter_600SemiBold",
+                            minWidth: 20,
+                            textAlign: "right",
+                          }}
+                        >
+                          {dia.energia}
+                        </Text>
+                      </View>
+
+                      {!esUltimo && (
+                        <View
+                          style={{
+                            height: 1,
+                            backgroundColor: "rgba(255,255,255,0.1)",
+                          }}
+                        />
+                      )}
+                    </View>
+                  );
+                })}
+
+                <Pressable
+                  onPress={() => setVerSiguienteSemana(!verSiguienteSemana)}
+                  accessibilityRole="button"
+                  accessibilityLabel={verSiguienteSemana ? "Volver a esta semana" : "Ver siguiente semana"}
+                  style={{
+                    marginTop: 12,
+                    paddingTop: 12,
+                    borderTopWidth: 1,
+                    borderTopColor: "rgba(255,255,255,0.12)",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "rgba(255,255,255,0.85)",
+                      fontSize: 13,
+                      fontFamily: "Inter_600SemiBold",
+                    }}
+                  >
+                    {verSiguienteSemana ? "Volver a esta semana" : "Ver siguiente semana"}
+                  </Text>
+                  <ArrowRight
+                    size={14}
+                    color="rgba(255,255,255,0.85)"
+                    style={{
+                      marginLeft: 6,
+                      transform: [{ rotate: verSiguienteSemana ? "180deg" : "0deg" }],
+                    }}
+                  />
+                </Pressable>
+              </LinearGradient>
+            );
+          })()}
         </AnimacionEntrada>
 
-        <AnimacionEntrada retraso={270}>
+        {pronosticoSemanal?.semana?.length ? (
+          <AnimacionEntrada retraso={250}>
+            <GraficaEnergia
+              datos={pronosticoSemanal.semana}
+              datosSiguiente={semanaSiguiente?.semana}
+              fechaHoy={new Date().toISOString().split("T")[0]}
+            />
+          </AnimacionEntrada>
+        ) : null}
+
+        <AnimacionEntrada retraso={290}>
           <EncabezadoSeccion
             titulo="Podcasts del ciclo"
             accion={
@@ -886,51 +1097,6 @@ export default function DashboardScreen() {
           </ScrollView>
         </AnimacionEntrada>
 
-        <AnimacionEntrada retraso={310}>
-          <Tarjeta variante="violeta">
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <View
-                style={{
-                  width: 46,
-                  height: 46,
-                  borderRadius: 23,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: `${colores.acento}16`,
-                  borderWidth: 1,
-                  borderColor: `${colores.acento}28`,
-                }}
-              >
-                <IconoAstral nombre="personal" tamaño={22} />
-              </View>
-              <View style={{ marginLeft: 12, flex: 1 }}>
-                <Text
-                  style={{
-                    color: colores.primario,
-                    fontSize: 16,
-                    fontFamily: "Inter_700Bold",
-                  }}
-                >
-                  Segui explorando tu mapa
-                </Text>
-                <Text
-                  style={{
-                    color: colores.textoSecundario,
-                    fontSize: 13,
-                    lineHeight: 19,
-                    marginTop: 3,
-                  }}
-                >
-                  Diseño Humano, numerología, calendario cósmico y más, ordenados para
-                  entrar con contexto.
-                </Text>
-              </View>
-              <Pressable onPress={() => router.push("/(tabs)/descubrir" as never)}>
-                <ArrowRight size={20} color={colores.acento} />
-              </Pressable>
-            </View>
-          </Tarjeta>
-        </AnimacionEntrada>
       </ScrollView>
     </FondoCosmico>
   );
