@@ -2,6 +2,7 @@
 
 import { useState, useRef, type FormEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 import { Boton } from "@/componentes/ui/boton";
 import { Input } from "@/componentes/ui/input";
@@ -99,7 +100,12 @@ export default function PaginaOlvideContrasena() {
   // ── Completado ──
   if (paso === "completado") {
     return (
-      <div className="flex flex-col gap-6 text-center">
+      <motion.div
+        className="flex flex-col gap-6 text-center"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] as const }}
+      >
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-exito/10">
           <Icono nombre="verificado" tamaño={28} className="text-exito" />
         </div>
@@ -113,12 +119,17 @@ export default function PaginaOlvideContrasena() {
         >
           Ir al inicio de sesión
         </Link>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <motion.div
+      className="flex flex-col gap-8"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] as const }}
+    >
       <div className="text-center">
         <h1 className="text-3xl font-bold text-texto">
           {paso === "email" && "Restablecer contraseña"}
@@ -286,7 +297,7 @@ export default function PaginaOlvideContrasena() {
           Volver al inicio de sesión
         </Link>
       </p>
-    </div>
+    </motion.div>
   );
 }
 

@@ -46,6 +46,8 @@ Dividí el día en 3 bloques interpretando el movimiento lunar:
 - **Tarde** (12-19h): Luna avanzando
 - **Noche** (19-6h): Luna cerrando el tránsito
 
+Para cada bloque, generá 2-3 **accionables concretos**: cosas específicas que hacer o evitar en ese horario. Redactá como instrucciones breves y directas (ej: "Arrancá con la tarea más difícil antes de las 10", "Evitá discusiones entre 14 y 16h"). Basate en los tránsitos, el número del día y la fase lunar.
+
 ### Alertas cósmicas
 
 Incluí alertas solo si hay eventos significativos:
@@ -93,7 +95,8 @@ Respondé ÚNICAMENTE con un JSON válido. Sin texto antes ni después. Sin mark
       "titulo": "Mañana|Tarde|Noche",
       "icono": "sunrise|sun|moon",
       "frase": "string — consejo para ese momento del día",
-      "nivel": "favorable|neutro|precaucion"
+      "nivel": "favorable|neutro|precaucion",
+      "accionables": ["string — acción concreta 1", "string — acción concreta 2"]
     }
   ],
   "alertas": [

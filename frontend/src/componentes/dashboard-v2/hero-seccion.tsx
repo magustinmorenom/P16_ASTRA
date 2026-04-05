@@ -25,6 +25,7 @@ interface HeroSeccionProps {
   onReproducirPodcast: () => void;
   onGenerarPodcast: () => void;
   onInformarPodcastManana: () => void;
+  onLeerDia?: () => void;
 }
 
 const DIAS_CORTOS = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"] as const;
@@ -50,6 +51,7 @@ export function HeroSeccion({
   onReproducirPodcast,
   onGenerarPodcast,
   onInformarPodcastManana,
+  onLeerDia,
 }: HeroSeccionProps) {
   const estadoPodcast = podcastGenerando
     ? "Preparando el audio del día"
@@ -129,6 +131,17 @@ export function HeroSeccion({
                 </span>
                 <span>{podcastGenerando ? "Generando audio" : podcastListo ? "Escuchar ahora" : "Generar audio de hoy"}</span>
               </button>
+
+              {podcastListo && onLeerDia && (
+                <button
+                  onClick={onLeerDia}
+                  className="flex min-h-[38px] max-w-full items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors hover:text-[color:var(--shell-texto)]"
+                  style={estiloBotonSecundario}
+                >
+                  <Icono nombre="articulo" tamaño={13} peso="fill" />
+                  <span>Lee tu día</span>
+                </button>
+              )}
 
               <button
                 onClick={onInformarPodcastManana}

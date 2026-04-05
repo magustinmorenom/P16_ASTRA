@@ -1,7 +1,7 @@
 import { View, Platform } from "react-native";
 import { Tabs } from "expo-router";
 import { BlurView } from "expo-blur";
-import { House, MoonStars, ChatCircleDots, Waveform, UserCircle } from "phosphor-react-native";
+import { House, MoonStars, ChatCircleDots, Compass, UserCircle } from "phosphor-react-native";
 import { MiniReproductor } from "@/componentes/layouts/mini-reproductor";
 import { useStoreUI } from "@/lib/stores/store-ui";
 import { usarTema } from "@/lib/hooks/usar-tema";
@@ -123,11 +123,11 @@ export default function LayoutTabs() {
           }}
         />
         <Tabs.Screen
-          name="podcast"
+          name="descubrir"
           options={{
-            title: "Podcasts",
+            title: "Explorar",
             tabBarIcon: ({ color, size }) => (
-              <Waveform size={size} color={color} weight="fill" />
+              <Compass size={size} color={color} weight="fill" />
             ),
           }}
         />
@@ -141,7 +141,7 @@ export default function LayoutTabs() {
           }}
         />
         <Tabs.Screen
-          name="descubrir"
+          name="podcast"
           options={{
             href: null,
           }}

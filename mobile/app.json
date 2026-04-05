@@ -40,7 +40,15 @@
       "expo-web-browser",
       "expo-splash-screen",
       "expo-font",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#7C4DFF"
+        }
+      ],
+      "@sentry/react-native"
     ]
   }
 }

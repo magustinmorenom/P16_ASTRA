@@ -30,6 +30,9 @@ export function ReproductorCompleto() {
     segmentoActual,
     volumen,
     silenciado,
+    descargandoAudio,
+    progresoDescarga,
+    errorAudio,
     toggleReproduccion,
     setVolumen,
     toggleSilencio,
@@ -135,6 +138,56 @@ export function ReproductorCompleto() {
         >
           {pistaActual.subtitulo}
         </Text>
+
+        {errorAudio && (
+          <View
+            style={{
+              marginTop: 12,
+              backgroundColor: `${colores.error}18`,
+              borderRadius: 10,
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              borderWidth: 1,
+              borderColor: `${colores.error}40`,
+            }}
+          >
+            <Text style={{ color: colores.error, fontSize: 13, textAlign: "center" }}>
+              {errorAudio}
+            </Text>
+          </View>
+        )}
+
+        {descargandoAudio && (
+          <View style={{ marginTop: 12, alignItems: "center" }}>
+            <Text
+              style={{
+                color: colores.acento,
+                fontSize: 13,
+                fontFamily: "Inter_600SemiBold",
+              }}
+            >
+              Descargando {progresoDescarga}%...
+            </Text>
+            <View
+              style={{
+                width: 160,
+                height: 3,
+                borderRadius: 2,
+                backgroundColor: colores.borde,
+                marginTop: 6,
+              }}
+            >
+              <View
+                style={{
+                  width: `${progresoDescarga}%`,
+                  height: 3,
+                  borderRadius: 2,
+                  backgroundColor: colores.acento,
+                }}
+              />
+            </View>
+          </View>
+        )}
       </View>
 
       {segmentos.length > 0 ? (
@@ -268,13 +321,15 @@ export function ReproductorCompleto() {
         >
           <Pressable
             onPress={toggleReproduccion}
+            disabled={descargandoAudio}
             style={{
-              backgroundColor: colores.acento,
+              backgroundColor: descargandoAudio ? colores.borde : colores.acento,
               borderRadius: 32,
               width: 64,
               height: 64,
               alignItems: "center",
               justifyContent: "center",
+              opacity: descargandoAudio ? 0.5 : 1,
             }}
           >
             {reproduciendo ? (

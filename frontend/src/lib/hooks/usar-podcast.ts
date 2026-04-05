@@ -1,15 +1,27 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { clienteApi } from "@/lib/api/cliente";
+import { clienteApi, ErrorAPI } from "@/lib/api/cliente";
 import type { PodcastEpisodio, TipoPodcast } from "@/lib/tipos";
+
+/** No reintentar en errores 403 (falta de permisos/plan). */
+function reintentarSiNoEs403(cantidadFallos: number, error: Error) {
+  if (error instanceof ErrorAPI && error.codigo === 403) return false;
+  return cantidadFallos < 2;
+}
 
 /** Obtiene los episodios de podcast existentes (día/semana/mes actuales). */
 export function usarPodcastHoy(refetchRapido = false) {
   return useQuery({
     queryKey: ["podcast", "hoy"],
     queryFn: () => clienteApi.get<PodcastEpisodio[]>("/podcast/hoy"),
+    retry: reintentarSiNoEs403,
     refetchInterval: (query) => {
+      // No seguir haciendo polling si el error es 403
+      if (query.state.error instanceof ErrorAPI && query.state.error.codigo === 403) {
+        return false;
+      }
+
       const episodios = query.state.data as PodcastEpisodio[] | undefined;
       const hayEnProceso = (episodios ?? []).some(
         (episodio) =>
@@ -32,6 +44,7 @@ export function usarPodcastEpisodio(id: string | null) {
     queryKey: ["podcast", "episodio", id],
     queryFn: () => clienteApi.get<PodcastEpisodio>(`/podcast/episodio/${id}`),
     enabled: !!id,
+    retry: reintentarSiNoEs403,
   });
 }
 
@@ -40,6 +53,7 @@ export function usarPodcastHistorial() {
   return useQuery({
     queryKey: ["podcast", "historial"],
     queryFn: () => clienteApi.get<PodcastEpisodio[]>("/podcast/historial"),
+    retry: reintentarSiNoEs403,
   });
 }
 

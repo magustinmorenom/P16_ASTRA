@@ -188,29 +188,26 @@ export default function PantallaDescubrir() {
         }}
       >
         <AnimacionEntrada>
-          <Badge variante="info">Biblioteca ASTRA</Badge>
           <Text
             style={{
               color: colores.primario,
-              fontSize: 30,
-              lineHeight: 36,
+              fontSize: 24,
+              lineHeight: 30,
               fontFamily: "Inter_700Bold",
-              marginTop: 14,
+              marginBottom: 6,
             }}
           >
-            Elegi por donde profundizar hoy
+            Explorar
           </Text>
           <Text
             style={{
               color: colores.textoSecundario,
-              fontSize: 15,
-              lineHeight: 22,
-              marginTop: 12,
+              fontSize: 14,
+              lineHeight: 20,
               marginBottom: 22,
             }}
           >
-            En vez de una grilla plana, aca tenes las herramientas agrupadas por
-            intencion para entrar con mas contexto.
+            Tus herramientas cosmicas agrupadas por intencion.
           </Text>
         </AnimacionEntrada>
 

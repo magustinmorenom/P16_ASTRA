@@ -58,6 +58,9 @@ export function Boton({
     <PresionableAnimado
       onPress={onPress}
       disabled={deshabilitado}
+      accessibilityRole="button"
+      accessibilityLabel={typeof children === "string" ? children : undefined}
+      accessibilityState={{ disabled: deshabilitado, busy: cargando }}
       style={[
         {
           flexDirection: "row",

@@ -11,7 +11,6 @@ import { Link } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   CheckCircle,
-  CircleDashed,
   Envelope,
   Eye,
   EyeSlash,
@@ -20,6 +19,8 @@ import {
 } from "phosphor-react-native";
 import { Input } from "@/componentes/ui/input";
 import { Boton } from "@/componentes/ui/boton";
+import { validarContrasenaCompleta, esContrasenaCompletaValida } from "@/lib/utilidades/validacion-contrasena";
+import { RequisitosContrasena } from "@/componentes/feedback/requisito-contrasena";
 import {
   usarConfirmarReset,
   usarSolicitarReset,
@@ -32,36 +33,6 @@ type PasoRecuperacion =
   | "codigo"
   | "nueva-contrasena"
   | "completado";
-
-function Requisito({
-  cumple,
-  texto,
-}: {
-  cumple: boolean;
-  texto: string;
-}) {
-  const { colores } = usarTema();
-  const Icono = cumple ? CheckCircle : CircleDashed;
-
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", marginTop: 6 }}>
-      <Icono
-        size={16}
-        color={cumple ? colores.exito : colores.textoMuted}
-        weight={cumple ? "fill" : "regular"}
-      />
-      <Text
-        style={{
-          marginLeft: 8,
-          color: cumple ? colores.exito : colores.textoMuted,
-          fontSize: 12,
-        }}
-      >
-        {texto}
-      </Text>
-    </View>
-  );
-}
 
 export default function OlvideContrasenaScreen() {
   const insets = useSafeAreaInsets();
@@ -80,25 +51,12 @@ export default function OlvideContrasenaScreen() {
   const [mostrarContrasena, setMostrarContrasena] = useState(false);
   const [error, setError] = useState("");
 
-  const validacionContrasena = useMemo(() => {
-    return {
-      minimo: contrasena.length >= 8,
-      mayuscula: /[A-Z]/.test(contrasena),
-      numero: /\d/.test(contrasena),
-      simbolo: /[!@#$%^&*(),.?":{}|<>\-_=+\[\]\\;'/`~]/.test(contrasena),
-      coincide:
-        confirmacion.length > 0 && contrasena.length > 0
-          ? contrasena === confirmacion
-          : false,
-    };
-  }, [contrasena, confirmacion]);
+  const validacionContrasena = useMemo(
+    () => validarContrasenaCompleta(contrasena, confirmacion),
+    [contrasena, confirmacion]
+  );
 
-  const contrasenaValida =
-    validacionContrasena.minimo &&
-    validacionContrasena.mayuscula &&
-    validacionContrasena.numero &&
-    validacionContrasena.simbolo &&
-    validacionContrasena.coincide;
+  const contrasenaValida = esContrasenaCompletaValida(validacionContrasena);
 
   const enviarEmail = () => {
     setError("");
@@ -280,15 +238,10 @@ export default function OlvideContrasenaScreen() {
             />
 
             {contrasena.length > 0 && (
-              <View style={{ marginBottom: 16 }}>
-                <Requisito cumple={validacionContrasena.minimo} texto="Mínimo 8 caracteres" />
-                <Requisito cumple={validacionContrasena.mayuscula} texto="Al menos una mayúscula" />
-                <Requisito cumple={validacionContrasena.numero} texto="Al menos un número" />
-                <Requisito cumple={validacionContrasena.simbolo} texto="Al menos un símbolo" />
-                {confirmacion.length > 0 && (
-                  <Requisito cumple={validacionContrasena.coincide} texto="Las contraseñas coinciden" />
-                )}
-              </View>
+              <RequisitosContrasena
+                validacion={validacionContrasena}
+                mostrarCoincide={confirmacion.length > 0}
+              />
             )}
 
             <Boton

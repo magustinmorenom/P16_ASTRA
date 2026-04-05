@@ -9,6 +9,7 @@ import {
   CircleHalf,
   CreditCard,
   DownloadSimple,
+  FileText,
   LockKey,
   Moon,
   PencilSimple,
@@ -16,6 +17,7 @@ import {
   Sun,
   Trash,
 } from "phosphor-react-native";
+import * as WebBrowser from "expo-web-browser";
 import { Avatar } from "@/componentes/ui/avatar";
 import { Badge } from "@/componentes/ui/badge";
 import { Boton } from "@/componentes/ui/boton";
@@ -616,6 +618,34 @@ export default function PantallaPerfil() {
           </Boton>
         </View>
       </Tarjeta>
+
+      <PresionableAnimado
+        onPress={() => WebBrowser.openBrowserAsync("https://theastra.xyz/terminos")}
+      >
+        <Tarjeta padding="sm" style={{ marginBottom: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <FileText size={20} color={colores.acento} />
+            <Text style={{ color: colores.primario, marginLeft: 12, flex: 1 }}>
+              Términos de Servicio
+            </Text>
+            <CaretRight size={18} color={colores.textoMuted} />
+          </View>
+        </Tarjeta>
+      </PresionableAnimado>
+
+      <PresionableAnimado
+        onPress={() => WebBrowser.openBrowserAsync("https://theastra.xyz/privacidad")}
+      >
+        <Tarjeta padding="sm" style={{ marginBottom: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <FileText size={20} color={colores.acento} />
+            <Text style={{ color: colores.primario, marginLeft: 12, flex: 1 }}>
+              Política de Privacidad
+            </Text>
+            <CaretRight size={18} color={colores.textoMuted} />
+          </View>
+        </Tarjeta>
+      </PresionableAnimado>
 
       {usuario?.proveedor_auth === "local" && (
         <>

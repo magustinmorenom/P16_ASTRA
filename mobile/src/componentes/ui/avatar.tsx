@@ -28,6 +28,8 @@ export function Avatar({ nombre, tamaño = "md", className }: AvatarProps) {
 
   return (
     <View
+      accessibilityRole="image"
+      accessibilityLabel={`Avatar de ${nombre}`}
       style={{
         width: size,
         height: size,

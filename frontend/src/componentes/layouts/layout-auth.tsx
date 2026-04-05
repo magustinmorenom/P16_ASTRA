@@ -1,36 +1,43 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
-import {
-  IconoAstral,
-  type NombreIconoAstral,
-} from "@/componentes/ui/icono-astral";
-import { Icono } from "@/componentes/ui/icono";
+import { motion, AnimatePresence } from "framer-motion";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 
-const modulos: Array<{
-  icono: NombreIconoAstral;
-  titulo: string;
-  descripcion: string;
-}> = [
-  {
-    icono: "astrologia",
-    titulo: "Carta natal",
-    descripcion: "Planetas, casas y aspectos en un solo mapa legible.",
+/* ── Variantes de animación ── */
+const suave = [0.22, 1, 0.36, 1] as const;
+
+const fadeScale = {
+  hidden: { opacity: 0, scale: 0.96 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: suave } },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (delay: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, delay, ease: suave },
+  }),
+};
+
+const formSlide = {
+  hidden: { opacity: 0, y: 32 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, delay: 0.35, ease: suave },
   },
-  {
-    icono: "personal",
-    titulo: "Diseño Humano",
-    descripcion: "Tipo, autoridad y perfil conectados con tu contexto real.",
-  },
-  {
-    icono: "numerologia",
-    titulo: "Numerología",
-    descripcion: "Ritmos, ciclos y números personales sin ruido administrativo.",
-  },
-];
+};
+
+/* Transición entre páginas auth (login ↔ registro ↔ olvidé) */
+const pageTransition = {
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.35, ease: suave } },
+  exit: { opacity: 0, y: -12, transition: { duration: 0.2, ease: suave } },
+};
 
 export default function LayoutAuth({
   children,
@@ -38,6 +45,7 @@ export default function LayoutAuth({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { autenticado, cargando } = useStoreAuth();
 
   useEffect(() => {
@@ -46,14 +54,13 @@ export default function LayoutAuth({
     }
   }, [autenticado, cargando, router]);
 
-  /* Si ya esta autenticado, no mostrar login/registro */
   if (autenticado) {
     return (
       <div
         className="flex h-[100dvh] items-center justify-center"
-        style={{ background: "var(--shell-fondo)" }}
+        style={{ background: "var(--shell-hero)" }}
       >
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primario border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/40 border-t-white" />
       </div>
     );
   }
@@ -61,129 +68,91 @@ export default function LayoutAuth({
   return (
     <div
       className="relative h-[100dvh] overflow-hidden"
-      style={{ background: "var(--shell-fondo)" }}
+      style={{ background: "var(--shell-hero)" }}
     >
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(circle_at_top_left, var(--shell-glow-1), transparent 26%), radial-gradient(circle_at_top_right, var(--shell-glow-2), transparent 24%), radial-gradient(circle_at_bottom_left, var(--shell-glow-1), transparent 32%)",
-        }}
-      />
-      <div
+      {/* Glows atmosféricos */}
+      <motion.div
         className="absolute left-[-72px] top-12 h-72 w-72 rounded-full blur-3xl"
-        style={{ background: "var(--shell-glow-2)" }}
+        style={{ background: "rgba(179, 136, 255, 0.18)" }}
+        animate={{ opacity: [0.6, 1, 0.6], scale: [1, 1.08, 1] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
       />
-      <div
+      <motion.div
         className="absolute bottom-0 right-[-40px] h-72 w-72 rounded-full blur-3xl"
-        style={{ background: "var(--shell-glow-1)" }}
+        style={{ background: "rgba(124, 77, 255, 0.14)" }}
+        animate={{ opacity: [0.5, 0.9, 0.5], scale: [1, 1.06, 1] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <div className="relative mx-auto grid h-full max-w-[1480px] gap-4 overflow-y-auto px-4 py-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(410px,520px)] lg:overflow-hidden lg:px-6 lg:py-6">
-        <section className="tema-superficie-hero relative hidden h-full overflow-hidden rounded-[36px] p-10 lg:flex lg:flex-col lg:justify-between">
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute left-[-10%] top-[-16%] h-56 w-56 rounded-full blur-3xl" style={{ background: "var(--shell-glow-1)" }} />
-            <div className="absolute bottom-[-16%] right-[-10%] h-64 w-64 rounded-full blur-3xl" style={{ background: "var(--shell-glow-2)" }} />
-            <div className="absolute right-14 top-[72px] h-2 w-2 rounded-full bg-shell-texto-inverso/60" />
-            <div className="absolute left-20 top-28 h-1 w-1 rounded-full bg-shell-texto-inverso/40" />
-            <div className="absolute bottom-24 left-16 h-1.5 w-1.5 rounded-full bg-shell-texto-inverso/40" />
-            <div className="absolute bottom-16 right-20 h-1 w-1 rounded-full bg-shell-texto-inverso/50" />
-          </div>
-
-          <div className="relative z-10 flex items-center justify-between gap-4">
+      <div className="relative mx-auto grid h-full max-w-[1480px] gap-6 overflow-y-auto px-5 py-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(410px,520px)] lg:items-center lg:overflow-hidden lg:px-10 lg:py-8">
+        {/* Pitch — logo + headline sobre fondo ciruela */}
+        <div className="hidden lg:flex lg:h-full lg:flex-col lg:py-2">
+          <motion.div
+            variants={fadeScale}
+            initial="hidden"
+            animate="visible"
+          >
             <Image
               src="/img/logo-astra-blanco.png"
               alt="ASTRA"
-              width={176}
-              height={48}
-              className="h-11 w-auto"
+              width={160}
+              height={44}
+              className="h-10 w-auto"
               priority
             />
-            <span className="rounded-full border border-shell-texto-inverso/12 bg-shell-texto-inverso/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-hero-texto-secundario)]">
-              Acceso ASTRA
-            </span>
-          </div>
+          </motion.div>
 
-          <div className="relative z-10 max-w-xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--shell-hero-texto-tenue)]">
-              Ritual de ingreso
-            </p>
-            <h1 className="mt-5 text-4xl font-semibold tracking-[-0.05em] text-[color:var(--shell-hero-texto)] xl:text-[52px]">
-              Entrá a una experiencia más íntima, precisa y consistente.
-            </h1>
-            <p className="mt-5 max-w-lg text-base leading-7 text-[color:var(--shell-hero-texto-secundario)]">
-              ASTRA reúne tu carta natal, tu Diseño Humano y tu numerología en un
-              solo espacio de lectura continua, sin pantallas que se sientan ajenas
-              al resto del producto.
-            </p>
+          <div className="flex flex-1 items-center">
+            <motion.h1
+              className="max-w-lg text-[44px] font-semibold leading-[1.08] tracking-[-0.04em] text-white xl:text-[54px]"
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={0.2}
+            >
+              Una I.A. que conoce cada rincón de tu mapa cósmico.
+            </motion.h1>
           </div>
+        </div>
 
-          <div className="relative z-10 grid gap-3 xl:grid-cols-3">
-            {modulos.map((item) => (
-              <article
-                key={item.titulo}
-                className="rounded-[26px] border border-shell-texto-inverso/10 bg-shell-texto-inverso/[0.08] p-5 backdrop-blur-xl"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,var(--color-primario),var(--color-acento))] text-white" style={{ boxShadow: "var(--shell-sombra-fuerte)" }}>
-                  <IconoAstral nombre={item.icono} tamaño={22} className="text-white" />
-                </div>
-                <h2 className="mt-5 text-base font-semibold text-[color:var(--shell-hero-texto)]">
-                  {item.titulo}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--shell-hero-texto-secundario)]">
-                  {item.descripcion}
-                </p>
-              </article>
-            ))}
-          </div>
-
-          <div className="relative z-10 rounded-[28px] border border-shell-texto-inverso/10 bg-shell-overlay-suave p-5 backdrop-blur-xl">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-[16px] border border-shell-texto-inverso/10 bg-shell-texto-inverso/10 text-white">
-                <Icono nombre="escudo" tamaño={18} />
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-hero-texto-tenue)]">
-                  Lo que recuperás al volver
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--shell-hero-texto-secundario)]">
-                  Tu dashboard, el historial de lecturas y el contexto personal para
-                  que la experiencia no arranque de cero cada vez que volvés.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
+        {/* Formulario — único contenedor */}
         <main className="flex min-h-full items-center justify-center py-2 lg:h-full lg:py-0">
-          <div className="flex w-full max-w-[520px] flex-col justify-center">
-            <section className="tema-superficie-hero relative mb-5 overflow-hidden rounded-[30px] p-5 text-[color:var(--shell-hero-texto)] lg:hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,var(--shell-overlay-suave),transparent_34%)]" />
-              <div className="relative z-10">
-                <Image
-                  src="/img/logo-astra-blanco.png"
-                  alt="ASTRA"
-                  width={152}
-                  height={40}
-                  className="h-10 w-auto"
-                  priority
-                />
-                <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-hero-texto-tenue)]">
-                  Acceso personal
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--shell-hero-texto-secundario)]">
-                  Tu mapa, tus cálculos y tu historial en una sola sesión coherente
-                  con el resto de ASTRA.
-                </p>
-              </div>
-            </section>
+          <motion.div
+            className="flex w-full max-w-[520px] flex-col justify-center"
+            variants={formSlide}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* Mobile: solo logo */}
+            <div className="mb-6 px-1 lg:hidden">
+              <Image
+                src="/img/logo-astra-blanco.png"
+                alt="ASTRA"
+                width={120}
+                height={32}
+                className="h-8 w-auto"
+                priority
+              />
+            </div>
 
             <section className="tema-superficie-panel-suave relative overflow-hidden rounded-[32px] p-6 sm:p-8 lg:p-9">
               <div className="absolute right-[-44px] top-[-36px] h-32 w-32 rounded-full blur-3xl" style={{ background: "var(--shell-glow-2)" }} />
               <div className="absolute bottom-[-44px] left-[-28px] h-32 w-32 rounded-full blur-3xl" style={{ background: "var(--shell-glow-1)" }} />
-              <div className="relative z-10">{children}</div>
+              <div className="relative z-10">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={pathname}
+                    variants={pageTransition}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                  >
+                    {children}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </section>
-          </div>
+          </motion.div>
         </main>
       </div>
     </div>

@@ -37,7 +37,13 @@ export function HeaderMobile({
       >
         <View style={{ width: 68, justifyContent: "center" }}>
           {mostrarAtras && (
-            <Pressable onPress={() => router.back()} style={{ padding: 4 }}>
+            <Pressable
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel="Volver atrás"
+              hitSlop={8}
+              style={{ padding: 4 }}
+            >
               <ArrowLeft size={24} color={colores.primario} />
             </Pressable>
           )}
@@ -46,6 +52,7 @@ export function HeaderMobile({
         <View style={{ flex: 1, alignItems: "center", paddingHorizontal: 8 }}>
           {titulo ? (
             <Text
+              accessibilityRole="header"
               numberOfLines={1}
               style={{
                 color: colores.primario,

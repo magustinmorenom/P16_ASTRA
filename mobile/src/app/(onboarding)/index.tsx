@@ -16,6 +16,7 @@ import { usarNumerologia } from "@/lib/hooks/usar-numerologia";
 import { usarRetornoSolar } from "@/lib/hooks/usar-retorno-solar";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { usarTema } from "@/lib/hooks/usar-tema";
+import { trackEvento, Eventos } from "@/lib/utilidades/analytics";
 import type { DatosNacimiento } from "@/lib/tipos";
 
 export default function OnboardingScreen() {
@@ -55,6 +56,7 @@ export default function OnboardingScreen() {
         }),
       ]);
 
+      trackEvento(Eventos.ONBOARDING_COMPLETO);
       await useStoreAuth.getState().cargarUsuario();
       queryClient.invalidateQueries({ queryKey: ["calculos", "me"] });
     } catch {

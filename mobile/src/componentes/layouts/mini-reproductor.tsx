@@ -12,6 +12,9 @@ export function MiniReproductor() {
     pistaActual,
     reproduciendo,
     porcentaje,
+    descargandoAudio,
+    progresoDescarga,
+    errorAudio,
     toggleReproduccion,
     manejarCerrar,
   } = usarAudioNativo();
@@ -38,6 +41,8 @@ export function MiniReproductor() {
 
       <Pressable
         onPress={toggleMiniReproductor}
+        accessibilityRole="button"
+        accessibilityLabel={`Reproductor: ${pistaActual.titulo}. Tocar para expandir`}
         style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12 }}
       >
         {/* Cover placeholder */}
@@ -59,30 +64,59 @@ export function MiniReproductor() {
 
         {/* Info */}
         <View style={{ flex: 1, marginRight: 12 }}>
-          <Text
-            numberOfLines={1}
-            style={{ color: colores.primario, fontSize: 14, fontFamily: "Inter_600SemiBold" }}
-          >
-            {pistaActual.titulo}
-          </Text>
-          <Text
-            numberOfLines={1}
-            style={{ color: colores.textoMuted, fontSize: 12 }}
-          >
-            {pistaActual.subtitulo}
-          </Text>
+          {errorAudio ? (
+            <Text
+              numberOfLines={2}
+              style={{ color: "#DC2626", fontSize: 12, fontFamily: "Inter_600SemiBold" }}
+            >
+              {errorAudio}
+            </Text>
+          ) : (
+            <>
+              <Text
+                numberOfLines={1}
+                style={{ color: colores.primario, fontSize: 14, fontFamily: "Inter_600SemiBold" }}
+              >
+                {pistaActual.titulo}
+              </Text>
+              <Text
+                numberOfLines={1}
+                style={{ color: colores.textoMuted, fontSize: 12 }}
+              >
+                {descargandoAudio
+                  ? `Descargando ${progresoDescarga}%...`
+                  : pistaActual.subtitulo}
+              </Text>
+            </>
+          )}
         </View>
 
         {/* Controles */}
-        <Pressable onPress={toggleReproduccion} style={{ marginRight: 12, padding: 4 }}>
-          {reproduciendo ? (
-            <Pause size={24} color={colores.primario} weight="fill" />
-          ) : (
-            <Play size={24} color={colores.primario} weight="fill" />
-          )}
-        </Pressable>
+        {descargandoAudio ? (
+          <View style={{ marginRight: 12, padding: 4, opacity: 0.5 }}>
+            <Play size={24} color={colores.textoMuted} weight="fill" />
+          </View>
+        ) : (
+          <Pressable
+            onPress={toggleReproduccion}
+            accessibilityRole="button"
+            accessibilityLabel={reproduciendo ? "Pausar" : "Reproducir"}
+            style={{ marginRight: 12, padding: 4 }}
+          >
+            {reproduciendo ? (
+              <Pause size={24} color={colores.primario} weight="fill" />
+            ) : (
+              <Play size={24} color={colores.primario} weight="fill" />
+            )}
+          </Pressable>
+        )}
 
-        <Pressable onPress={manejarCerrar} style={{ padding: 4 }}>
+        <Pressable
+          onPress={manejarCerrar}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar reproductor"
+          style={{ padding: 4 }}
+        >
           <X size={20} color={colores.textoMuted} />
         </Pressable>
       </Pressable>

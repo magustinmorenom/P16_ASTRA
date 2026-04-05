@@ -96,6 +96,7 @@ export function ShellAcceso({
             </Text>
 
             <Text
+              accessibilityRole="header"
               style={{
                 color: colores.primario,
                 fontSize: 30,

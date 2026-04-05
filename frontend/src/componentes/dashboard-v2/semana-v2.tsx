@@ -55,7 +55,7 @@ function TooltipDia({ dia, x, y, saliendo }: { dia: DiaSemanalDTO; x: number; y:
           ? "opacity-0 translate-y-1.5 scale-[0.97]"
           : "animate-[tooltip-in_200ms_ease-out_both]"
       }`}
-      style={{ left: x, top: y }}
+      style={{ left: x, top: y, transform: "translateY(-100%)" }}
     >
       <div
         className="w-[220px] rounded-2xl border px-4 py-3.5 backdrop-blur-3xl"
@@ -172,12 +172,15 @@ export function SemanaV2({
     if (fadeTimeout.current) clearTimeout(fadeTimeout.current);
     setSaliendo(false);
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const x = Math.min(
-      Math.max(8, rect.left + rect.width / 2 - 110),
-      window.innerWidth - 228
-    );
-    const y = rect.top - 170;
-    setTooltip({ dia, x, y: Math.max(8, y) });
+    const tooltipW = 220;
+    const gap = 8;
+    // Centrar horizontalmente sobre la card, clampeando dentro del viewport
+    const xIdeal = rect.left + rect.width / 2 - tooltipW / 2;
+    const xMax = document.documentElement.clientWidth - tooltipW - gap;
+    const x = Math.min(Math.max(gap, xIdeal), xMax);
+    // Justo arriba de la card
+    const y = Math.max(gap, rect.top - gap);
+    setTooltip({ dia, x, y });
   }, []);
 
   const ocultarTooltip = useCallback(() => {

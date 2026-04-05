@@ -24,6 +24,7 @@ export interface MomentoClaveDTO {
   icono: string;
   frase: string;
   nivel: "favorable" | "neutro" | "precaucion";
+  accionables?: string[];
 }
 
 export interface AlertaCosmicaDTO {
@@ -75,6 +76,8 @@ export interface DiaSemanalDTO {
   fecha: string;
   clima_estado: string;
   energia: number;
+  claridad: number;
+  intuicion: number;
   frase_corta: string;
   numero_personal: number;
 }
