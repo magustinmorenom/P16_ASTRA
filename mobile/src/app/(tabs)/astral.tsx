@@ -106,26 +106,15 @@ export default function PantallaAstral() {
           )}
         </AnimacionEntrada>
 
-        {/* Rueda Zodiacal */}
-        <AnimacionEntrada retraso={100}>
-          <RuedaZodiacal
-            planetas={natal.planetas}
-            casas={natal.casas}
-            aspectos={natal.aspectos}
-          />
-        </AnimacionEntrada>
-
-        {/* Tríada */}
+        {/* Tríada — Sol, Luna, Ascendente */}
         {sol && luna && (
-          <AnimacionEntrada retraso={200}>
-            <View style={{ marginTop: 16 }}>
-              <SeccionTriada
-                sol={sol}
-                luna={luna}
-                ascendente={natal.ascendente}
-                onSeleccionar={seleccionarTriada}
-              />
-            </View>
+          <AnimacionEntrada retraso={100}>
+            <SeccionTriada
+              sol={sol}
+              luna={luna}
+              ascendente={natal.ascendente}
+              onSeleccionar={seleccionarTriada}
+            />
           </AnimacionEntrada>
         )}
 

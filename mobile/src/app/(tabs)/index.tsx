@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ScrollView, Text, View, Pressable, ActivityIndicator, RefreshControl } from "react-native";
+import Animated, { FadeIn, FadeOut, Easing } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
@@ -546,7 +547,14 @@ export default function DashboardScreen() {
               marginBottom: 22,
             }}
           >
-            <Avatar nombre={usuario?.nombre ?? "U"} tamaño="md" />
+            <Pressable
+              onPress={() => router.push("/(tabs)/perfil")}
+              accessibilityRole="button"
+              accessibilityLabel="Abrir perfil"
+              hitSlop={8}
+            >
+              <Avatar nombre={usuario?.nombre ?? "U"} tamaño="md" />
+            </Pressable>
             <View style={{ marginLeft: 12, flex: 1 }}>
               <Text
                 style={{
@@ -947,6 +955,11 @@ export default function DashboardScreen() {
                   marginBottom: 24,
                 }}
               >
+                <Animated.View
+                  key={verSiguienteSemana ? "siguiente" : "actual"}
+                  entering={FadeIn.duration(400).easing(Easing.out(Easing.quad))}
+                  exiting={FadeOut.duration(200)}
+                >
                 {datos.slice(0, 7).map((dia, idx) => {
                   const esHoy = dia.fecha === hoyStr;
                   const esUltimo = idx === Math.min(datos.length, 7) - 1;
@@ -1009,6 +1022,8 @@ export default function DashboardScreen() {
                     </View>
                   );
                 })}
+
+                </Animated.View>
 
                 <Pressable
                   onPress={() => setVerSiguienteSemana(!verSiguienteSemana)}

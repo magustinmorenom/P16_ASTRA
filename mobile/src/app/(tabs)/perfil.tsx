@@ -547,44 +547,47 @@ export default function PantallaPerfil() {
           Apariencia
         </Text>
         <View style={{ flexDirection: "row", gap: 8 }}>
-          {opcionesTema.map((opcion) => (
-            <PresionableAnimado
-              key={opcion.valor}
-              onPress={() => setPreferencia(opcion.valor)}
-              style={{
-                flex: 1,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6,
-                paddingVertical: 10,
-                borderRadius: 12,
-                backgroundColor:
-                  preferencia === opcion.valor
-                    ? `${colores.acento}1A`
-                    : colores.superficie,
-                borderWidth: 1,
-                borderColor:
-                  preferencia === opcion.valor
-                    ? `${colores.acento}4D`
-                    : colores.borde,
-              }}
-            >
-              {opcion.icono}
-              <Text
-                style={{
-                  color:
-                    preferencia === opcion.valor
-                      ? colores.acento
-                      : colores.textoSecundario,
-                  fontSize: 13,
-                  fontFamily: "Inter_600SemiBold",
-                }}
-              >
-                {opcion.etiqueta}
-              </Text>
-            </PresionableAnimado>
-          ))}
+          {opcionesTema.map((opcion) => {
+            const seleccionado = preferencia === opcion.valor;
+            return (
+              <View key={opcion.valor} style={{ flex: 1 }}>
+                <PresionableAnimado
+                  onPress={() => setPreferencia(opcion.valor)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Tema ${opcion.etiqueta}`}
+                  accessibilityState={{ selected: seleccionado }}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    paddingVertical: 10,
+                    borderRadius: 12,
+                    backgroundColor: seleccionado
+                      ? `${colores.acento}1A`
+                      : colores.superficie,
+                    borderWidth: 1,
+                    borderColor: seleccionado
+                      ? `${colores.acento}4D`
+                      : colores.borde,
+                  }}
+                >
+                  {opcion.icono}
+                  <Text
+                    style={{
+                      color: seleccionado
+                        ? colores.acento
+                        : colores.textoSecundario,
+                      fontSize: 13,
+                      fontFamily: "Inter_600SemiBold",
+                    }}
+                  >
+                    {opcion.etiqueta}
+                  </Text>
+                </PresionableAnimado>
+              </View>
+            );
+          })}
         </View>
       </Tarjeta>
 
