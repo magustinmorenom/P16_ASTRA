@@ -83,7 +83,7 @@ class TestEsquemasPronostico:
                 "frase_sintesis": "Un gran día para emprender.",
                 "energia": 8,
                 "claridad": 7,
-                "conexion": 6,
+                "intuicion": 6,
             },
             "areas": [
                 {
@@ -146,7 +146,7 @@ class TestEsquemasPronostico:
             "frase_sintesis": "Test",
             "energia": 15,  # fuera de rango
             "claridad": 5,
-            "conexion": 5,
+            "intuicion": 5,
         }
         from app.esquemas.pronostico import ClimaCosmicoSchema
         with pytest.raises(Exception):
@@ -244,7 +244,7 @@ class TestPronosticoCache:
         """Si hay cache, no se llama a Claude."""
         datos_cached = json.dumps({
             "clima": {"estado": "soleado", "titulo": "Test", "frase_sintesis": "Test",
-                      "energia": 8, "claridad": 7, "conexion": 6},
+                      "energia": 8, "claridad": 7, "intuicion": 6},
             "areas": [], "momentos": [], "alertas": [],
             "consejo_hd": {"titulo": "Test", "mensaje": "Test", "centro_destacado": "sacral"},
             "luna": {"signo": "Aries", "fase": "Nueva", "significado": "Test"},

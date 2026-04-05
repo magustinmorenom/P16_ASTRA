@@ -262,7 +262,7 @@ export default function PaginaDashboard() {
               luna={pronosticoDiario.luna}
               energia={pronosticoDiario.clima.energia}
               claridad={pronosticoDiario.clima.claridad}
-              fuerza={pronosticoDiario.clima.conexion}
+              intuicion={pronosticoDiario.clima.intuicion ?? (pronosticoDiario.clima as any).conexion ?? 5}
               podcastListo={podcastDiaListo}
               podcastGenerando={podcastDiaGenerando ?? false}
               onReproducirPodcast={() => manejarPlayPodcast("dia")}

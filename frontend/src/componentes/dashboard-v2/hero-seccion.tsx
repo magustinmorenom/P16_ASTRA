@@ -19,7 +19,7 @@ interface HeroSeccionProps {
   luna: LunaInfoDTO;
   energia: number;
   claridad: number;
-  fuerza: number;
+  intuicion: number;
   podcastListo: boolean;
   podcastGenerando: boolean;
   onReproducirPodcast: () => void;
@@ -44,7 +44,7 @@ export function HeroSeccion({
   luna,
   energia,
   claridad,
-  fuerza,
+  intuicion,
   podcastListo,
   podcastGenerando,
   onReproducirPodcast,
@@ -153,7 +153,7 @@ export function HeroSeccion({
         <div className="grid grid-cols-1 gap-2.5 pt-3.5 sm:grid-cols-3 lg:hidden">
           <NumeroDelDia numero={numero} />
           <LunaPosicion luna={luna} />
-          <NivelesEnergia energia={energia} claridad={claridad} fuerza={fuerza} />
+          <NivelesEnergia energia={energia} claridad={claridad} intuicion={intuicion} />
         </div>
 
         <div className="hidden lg:block lg:min-w-0 lg:pl-4">
@@ -162,7 +162,7 @@ export function HeroSeccion({
             luna={luna}
             energia={energia}
             claridad={claridad}
-            fuerza={fuerza}
+            intuicion={intuicion}
           />
         </div>
       </div>

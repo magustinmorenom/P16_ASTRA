@@ -216,8 +216,6 @@ export default function Navbar() {
   const router = useRouter();
   const { usuario, cerrarSesion } = useStoreAuth();
   const {
-    sidebarColapsado,
-    toggleSidebarColapsado,
     pistaActual,
     reproduciendo,
     progresoSegundos,
@@ -460,19 +458,6 @@ export default function Navbar() {
               priority
             />
           </Link>
-
-          <button
-            onClick={toggleSidebarColapsado}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors"
-            style={{
-              borderColor: "var(--shell-borde)",
-              background: "var(--shell-superficie)",
-              color: "var(--shell-texto)",
-            }}
-            aria-label={sidebarColapsado ? "Expandir sidebar" : "Colapsar sidebar"}
-          >
-            <Icono nombre="menu" tamaño={18} />
-          </button>
 
           <div className="hidden min-w-0 xl:flex xl:flex-col">
             <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-acento)]">

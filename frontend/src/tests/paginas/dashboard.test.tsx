@@ -66,7 +66,7 @@ const PRONOSTICO_MOCK = {
     frase_sintesis: "Un gran día para emprender nuevos proyectos.",
     energia: 8,
     claridad: 7,
-    conexion: 6,
+    intuicion: 6,
   },
   areas: [
     {

@@ -65,7 +65,7 @@ export function HeroClima({ clima, luna, numeroPersonal }: HeroClimaProps) {
         <div className="flex flex-col gap-2 mb-4">
           <BarraEnergia etiqueta="Energía" valor={clima.energia} />
           <BarraEnergia etiqueta="Claridad" valor={clima.claridad} />
-          <BarraEnergia etiqueta="Conexión" valor={clima.conexion} />
+          <BarraEnergia etiqueta="Intuición" valor={clima.intuicion ?? (clima as any).conexion ?? 5} />
         </div>
 
         {/* Footer: Luna + Número personal */}

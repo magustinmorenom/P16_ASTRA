@@ -8,7 +8,7 @@ interface ResumenPersonalUnificadoProps {
   luna: LunaInfoDTO;
   energia: number;
   claridad: number;
-  fuerza: number;
+  intuicion: number;
 }
 
 const ESTILO_CONTENEDOR = {
@@ -66,7 +66,7 @@ export function ResumenPersonalUnificado({
   luna,
   energia,
   claridad,
-  fuerza,
+  intuicion,
 }: ResumenPersonalUnificadoProps) {
   return (
     <PanelGlass
@@ -92,7 +92,7 @@ export function ResumenPersonalUnificado({
 
       <div className="grid grid-cols-[54px_minmax(0,1fr)] gap-3 px-4 py-3.5">
         <div className="flex items-start justify-center pt-0.5 text-[color:var(--color-acento)]">
-          <IconoFaseLunar fase={luna.fase} tamaño={24} />
+          <IconoFaseLunar fase={luna.fase} tamaño={48} />
         </div>
         <div className="min-w-0">
           <p className="text-[15px] font-semibold leading-tight text-[color:var(--shell-texto)]">
@@ -107,7 +107,7 @@ export function ResumenPersonalUnificado({
       <div className="border-t border-[var(--shell-borde)]" />
 
       <div className="flex flex-col">
-        <FilaMetrica etiqueta="Intuición" valor={fuerza} icono="wifi" />
+        <FilaMetrica etiqueta="Intuición" valor={intuicion} icono="wifi" />
         <div className="border-t border-[var(--shell-borde)]" />
         <FilaMetrica etiqueta="Claridad" valor={claridad} icono="ojo" />
         <div className="border-t border-[var(--shell-borde)]" />

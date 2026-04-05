@@ -63,6 +63,8 @@ import {
   ShieldCheck,
   Trash,
   CircleHalf,
+  SquaresFour,
+  UserFocus,
   type IconProps as PhosphorIconProps,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utilidades/cn";
@@ -132,6 +134,8 @@ const mapaIconos: Record<string, ComponentType<PhosphorIconProps>> = {
   escudo: ShieldCheck,
   papelera: Trash,
   circuloMitad: CircleHalf,
+  dashboard: SquaresFour,
+  usuarioFoco: UserFocus,
 };
 
 export type NombreIcono = keyof typeof mapaIconos;

@@ -4,7 +4,7 @@ export interface ClimaCosmicoDTO {
   frase_sintesis: string;
   energia: number;
   claridad: number;
-  conexion: number;
+  intuicion: number;
 }
 
 export interface AreaVidaDTO {

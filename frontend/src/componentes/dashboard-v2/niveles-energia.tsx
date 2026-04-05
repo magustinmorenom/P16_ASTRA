@@ -4,7 +4,7 @@ import { Icono, type NombreIcono } from "@/componentes/ui/icono";
 interface NivelesEnergiaProps {
   energia: number;
   claridad: number;
-  fuerza: number;
+  intuicion: number;
   compacto?: boolean;
 }
 
@@ -55,7 +55,7 @@ function BarraSegmentos({ etiqueta, valor, icono }: { etiqueta: string; valor: n
 export function NivelesEnergia({
   energia,
   claridad,
-  fuerza,
+  intuicion,
   compacto = false,
 }: NivelesEnergiaProps) {
   if (compacto) {
@@ -66,7 +66,7 @@ export function NivelesEnergia({
         style={ESTILO_TARJETA_NIVELES}
       >
         {([
-          { etiqueta: "Intuición", valor: fuerza, icono: "wifi" as const },
+          { etiqueta: "Intuición", valor: intuicion, icono: "wifi" as const },
           { etiqueta: "Claridad", valor: claridad, icono: "ojo" as const },
           { etiqueta: "Energía", valor: energia, icono: "rayo" as const },
         ]).map((item) => (
@@ -86,7 +86,7 @@ export function NivelesEnergia({
       className="flex flex-col justify-center gap-2 p-2.5"
       style={ESTILO_TARJETA_NIVELES}
     >
-      <BarraSegmentos etiqueta="Intuición" valor={fuerza} icono="wifi" />
+      <BarraSegmentos etiqueta="Intuición" valor={intuicion} icono="wifi" />
       <BarraSegmentos etiqueta="Claridad" valor={claridad} icono="ojo" />
       <BarraSegmentos etiqueta="Energía" valor={energia} icono="rayo" />
     </PanelGlass>

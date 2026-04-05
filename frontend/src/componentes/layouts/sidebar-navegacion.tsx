@@ -8,6 +8,8 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utilidades/cn";
 import { Icono, type NombreIcono } from "@/componentes/ui/icono";
 import { useStoreUI } from "@/lib/stores/store-ui";
+import { usarTema } from "@/lib/hooks/usar-tema";
+import type { PreferenciaTema } from "@/lib/stores/store-tema";
 import { usarMiPerfil, usarMisCalculos } from "@/lib/hooks";
 import { generarMarkdownPerfil } from "@/lib/utilidades/generar-markdown-perfil";
 
@@ -28,13 +30,13 @@ interface EnlaceProximo {
 }
 
 const enlacesActivos: EnlaceNav[] = [
-  { etiqueta: "Inicio", ruta: "/dashboard", icono: "casa" },
-  { etiqueta: "Podcasts", ruta: "/podcast", icono: "microfono" },
-  { etiqueta: "Carta Astral", ruta: "/carta-natal", icono: "estrella" },
+  { etiqueta: "Mapa Estratégico", ruta: "/dashboard", icono: "dashboard" },
+  { etiqueta: "Recursos Propios", ruta: "/perfil-espiritual", icono: "usuarioFoco" },
+  { etiqueta: "Podcasts Guías", ruta: "/podcast", icono: "microfono" },
+  { etiqueta: "Carta Astral", ruta: "/carta-natal", icono: "planeta" },
   { etiqueta: "Diseño Humano", ruta: "/diseno-humano", icono: "hexagono" },
   { etiqueta: "Numerología", ruta: "/numerologia", icono: "numeral" },
   { etiqueta: "Calendario Cósmico", ruta: "/calendario-cosmico", icono: "calendario" },
-  { etiqueta: "Perfil Espiritual", ruta: "/perfil-espiritual", icono: "loto" },
 ];
 
 const enlacesProximamente: EnlaceProximo[] = [
@@ -51,11 +53,99 @@ const enlacesProximamente: EnlaceProximo[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Ribbon de controles: tema + colapsar
+// ---------------------------------------------------------------------------
+const OPCIONES_TEMA: { valor: PreferenciaTema; icono: NombreIcono; titulo: string }[] = [
+  { valor: "claro", icono: "sol", titulo: "Claro" },
+  { valor: "oscuro", icono: "luna", titulo: "Oscuro" },
+  { valor: "automatico", icono: "circuloMitad", titulo: "Automático" },
+];
+
+function RibbonControles({
+  preferencia,
+  setPreferencia,
+  colapsado,
+  onToggleColapsar,
+}: {
+  preferencia: PreferenciaTema;
+  setPreferencia: (p: PreferenciaTema) => void;
+  colapsado: boolean;
+  onToggleColapsar: (() => void) | undefined;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center border-b transition-all duration-200",
+        colapsado
+          ? "justify-center px-1.5 py-2.5"
+          : "justify-between px-3 py-2"
+      )}
+      style={{ borderColor: "var(--shell-borde)" }}
+    >
+      {/* Selector de tema (solo expandido) */}
+      {!colapsado && (
+        <div
+          className="flex items-center gap-0.5 rounded-lg border p-0.5"
+          style={{
+            borderColor: "var(--shell-borde)",
+            background: "var(--shell-superficie-suave)",
+          }}
+        >
+          {OPCIONES_TEMA.map((opcion) => {
+            const activo = preferencia === opcion.valor;
+            return (
+              <button
+                key={opcion.valor}
+                onClick={() => setPreferencia(opcion.valor)}
+                title={opcion.titulo}
+                className={cn(
+                  "flex h-7 w-7 items-center justify-center rounded-md transition-all duration-200",
+                  activo
+                    ? "text-[color:var(--color-acento)]"
+                    : "text-[color:var(--shell-texto-tenue)] hover:text-[color:var(--shell-texto-secundario)]"
+                )}
+                style={{
+                  background: activo ? "var(--shell-superficie-fuerte)" : undefined,
+                  boxShadow: activo ? "0 1px 3px rgba(0,0,0,0.08)" : undefined,
+                }}
+              >
+                <Icono
+                  nombre={opcion.icono}
+                  tamaño={14}
+                  peso={activo ? "fill" : "regular"}
+                />
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Botón colapsar/expandir (solo desktop) */}
+      {onToggleColapsar && (
+        <button
+          onClick={onToggleColapsar}
+          title={colapsado ? "Expandir panel" : "Colapsar panel"}
+          className="flex h-7 w-7 items-center justify-center rounded-md text-[color:var(--shell-texto-tenue)] transition-all duration-200 hover:text-[color:var(--shell-texto-secundario)]"
+          style={{ background: "var(--shell-superficie-suave)" }}
+        >
+          <Icono
+            nombre={colapsado ? "caretDerecha" : "caretIzquierda"}
+            tamaño={14}
+            peso="regular"
+          />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Componente
 // ---------------------------------------------------------------------------
 export default function SidebarNavegacion() {
   const pathname = usePathname();
-  const { sidebarAbierto, cerrarSidebar, sidebarColapsado } = useStoreUI();
+  const { sidebarAbierto, cerrarSidebar, sidebarColapsado, toggleSidebarColapsado } = useStoreUI();
+  const { preferencia, setPreferencia } = usarTema();
 
   const { data: perfil } = usarMiPerfil();
   const { data: calculos, isLoading: cargandoCalculos } = usarMisCalculos();
@@ -138,6 +228,14 @@ export default function SidebarNavegacion() {
           background: "var(--shell-sidebar)",
         }}
       >
+        {/* Ribbon: tema + colapsar */}
+        <RibbonControles
+          preferencia={preferencia}
+          setPreferencia={setPreferencia}
+          colapsado={colapsado}
+          onToggleColapsar={toggleSidebarColapsado}
+        />
+
         {/* Navegacion */}
         <nav className={cn("pb-2 pt-5", colapsado ? "px-2" : "px-3")}>
           <ul className="flex flex-col gap-1">
@@ -312,6 +410,14 @@ export default function SidebarNavegacion() {
               boxShadow: "var(--shell-sombra-fuerte)",
             }}
           >
+            {/* Ribbon tema mobile */}
+            <RibbonControles
+              preferencia={preferencia}
+              setPreferencia={setPreferencia}
+              colapsado={false}
+              onToggleColapsar={undefined}
+            />
+
             {/* Navegacion mobile (siempre expandida) */}
             <nav className="px-3 pt-4 pb-2">
               <ul className="flex flex-col gap-0.5">

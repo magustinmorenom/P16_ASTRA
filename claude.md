@@ -95,6 +95,7 @@ Base: `/api/v1/`
 
 ## Convenciones para Agentes
 
+- Usar el skill `product-manager` para evaluaciones de usabilidad, decisiones de producto, auditorias UX y priorizacion de features
 - Usar el skill `fullstack-engineer` para tareas de implementación backend/frontend
 - Usar el skill `ui-ciruela` para tareas de diseño visual de interfaces ASTRA
 - `ux-designer` queda como skill generalista legacy y no debe ser la referencia principal del producto
