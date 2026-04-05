@@ -34,12 +34,12 @@ export function Avatar({
     <div
       className={cn(
         "relative shrink-0 rounded-full overflow-hidden",
-        "bg-gradient-to-br from-violet-600 to-violet-800",
+        "bg-gradient-to-br from-violet-500 to-violet-700",
         "flex items-center justify-center font-semibold text-white",
-        "border border-violet-500/30",
         tamaños[tamaño],
         className
       )}
+      style={{ borderColor: "var(--shell-borde-fuerte)" }}
       title={nombre}
     >
       {imagen ? (

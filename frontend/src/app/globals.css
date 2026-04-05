@@ -3,6 +3,8 @@
 /* Smooth scroll global */
 html {
   scroll-behavior: smooth;
+  color-scheme: var(--tema-color-scheme);
+  background: var(--color-fondo);
 }
 
 /* Cursor pointer global para elementos interactivos */
@@ -69,6 +71,54 @@ input[type="radio"] {
   --color-dorado-400: var(--color-dorado-400);
   --color-dorado-500: var(--color-dorado-500);
 
+  /* --- Shell tokens (flat values only, no gradients/shadows) --- */
+  --color-shell-fondo: var(--shell-fondo);
+  --color-shell-fondo-profundo: var(--shell-fondo-profundo);
+  --color-shell-navbar: var(--shell-navbar);
+  --color-shell-tabbar: var(--shell-tabbar);
+  --color-shell-reproductor: var(--shell-reproductor);
+  --color-shell-superficie: var(--shell-superficie);
+  --color-shell-superficie-fuerte: var(--shell-superficie-fuerte);
+  --color-shell-superficie-suave: var(--shell-superficie-suave);
+  --color-shell-borde: var(--shell-borde);
+  --color-shell-borde-fuerte: var(--shell-borde-fuerte);
+  --color-shell-hero-borde: var(--shell-hero-borde);
+  --color-shell-texto: var(--shell-texto);
+  --color-shell-texto-secundario: var(--shell-texto-secundario);
+  --color-shell-texto-tenue: var(--shell-texto-tenue);
+  --color-shell-texto-inverso: var(--shell-texto-inverso);
+  --color-shell-hero-texto: var(--shell-hero-texto);
+  --color-shell-hero-texto-secundario: var(--shell-hero-texto-secundario);
+  --color-shell-hero-texto-tenue: var(--shell-hero-texto-tenue);
+  --color-shell-chip: var(--shell-chip);
+  --color-shell-chip-hover: var(--shell-chip-hover);
+  --color-shell-chip-borde: var(--shell-chip-borde);
+  --color-shell-overlay: var(--shell-overlay);
+  --color-shell-overlay-suave: var(--shell-overlay-suave);
+  --color-shell-glow-1: var(--shell-glow-1);
+  --color-shell-glow-2: var(--shell-glow-2);
+  --color-shell-badge-acento: var(--shell-badge-acento);
+  --color-shell-badge-acento-texto: var(--shell-badge-acento-texto);
+  --color-shell-badge-neutral-fondo: var(--shell-badge-neutral-fondo);
+  --color-shell-badge-neutral-borde: var(--shell-badge-neutral-borde);
+  --color-shell-badge-neutral-texto: var(--shell-badge-neutral-texto);
+  --color-shell-badge-exito-fondo: var(--shell-badge-exito-fondo);
+  --color-shell-badge-exito-borde: var(--shell-badge-exito-borde);
+  --color-shell-badge-exito-texto: var(--shell-badge-exito-texto);
+  --color-shell-badge-error-fondo: var(--shell-badge-error-fondo);
+  --color-shell-badge-error-borde: var(--shell-badge-error-borde);
+  --color-shell-badge-error-texto: var(--shell-badge-error-texto);
+  --color-shell-badge-violeta-fondo: var(--shell-badge-violeta-fondo);
+  --color-shell-badge-violeta-borde: var(--shell-badge-violeta-borde);
+  --color-shell-badge-violeta-texto: var(--shell-badge-violeta-texto);
+
+  /* --- Peligro --- */
+  --color-peligro: var(--color-peligro);
+  --color-peligro-hover: var(--color-peligro-hover);
+  --color-peligro-suave: var(--color-peligro-suave);
+  --color-peligro-texto: var(--color-peligro-texto);
+  --color-peligro-texto-hover: var(--color-peligro-texto-hover);
+
   --font-sans: var(--font-familia-base);
   --font-mono: var(--font-familia-mono);
   --font-display: var(--font-inria), serif;
@@ -78,7 +128,7 @@ input[type="radio"] {
    Base Styles
    ============================================ */
 body {
-  background: var(--color-fondo);
+  background: linear-gradient(180deg, var(--shell-fondo-profundo) 0%, var(--color-fondo) 100%);
   color: var(--color-texto);
   font-family: var(--font-familia-base);
 }
@@ -94,11 +144,11 @@ body {
 .scroll-sutil {
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(124, 77, 255, 0.2) transparent;
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
 
 .scroll-sutil:hover {
-  scrollbar-color: rgba(124, 77, 255, 0.4) transparent;
+  scrollbar-color: var(--scroll-thumb-hover) transparent;
 }
 
 /* --- WebKit (Chrome / Safari / Edge) --- */
@@ -111,19 +161,19 @@ body {
 }
 
 .scroll-sutil::-webkit-scrollbar-thumb {
-  background: rgba(124, 77, 255, 0.2);
+  background: var(--scroll-thumb);
   border-radius: 9999px;
 }
 
 .scroll-sutil:hover::-webkit-scrollbar-thumb {
-  background: rgba(124, 77, 255, 0.4);
+  background: var(--scroll-thumb-hover);
 }
 
 /* --- Global: solo html/body para scroll de pagina --- */
 html,
 body {
   scrollbar-width: thin;
-  scrollbar-color: rgba(124, 77, 255, 0.2) transparent;
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
 
 html::-webkit-scrollbar,
@@ -138,7 +188,7 @@ body::-webkit-scrollbar-track {
 
 html::-webkit-scrollbar-thumb,
 body::-webkit-scrollbar-thumb {
-  background: rgba(124, 77, 255, 0.2);
+  background: var(--scroll-thumb);
   border-radius: 9999px;
 }
 
@@ -146,6 +196,62 @@ body::-webkit-scrollbar-thumb {
 *:focus-visible {
   outline: 2px solid var(--color-primario);
   outline-offset: 2px;
+}
+
+.tema-superficie-panel {
+  background: var(--shell-panel);
+  border: 1px solid var(--shell-borde);
+  box-shadow: var(--shell-sombra-suave);
+  backdrop-filter: blur(24px);
+}
+
+.tema-superficie-panel-suave {
+  background: var(--shell-panel-suave);
+  border: 1px solid var(--shell-borde);
+  box-shadow: var(--shell-sombra-suave);
+  backdrop-filter: blur(18px);
+}
+
+.tema-superficie-hero {
+  background: var(--shell-hero);
+  border: 1px solid var(--shell-hero-borde);
+  box-shadow: var(--shell-sombra-fuerte);
+}
+
+.tema-shell-texto {
+  color: var(--shell-texto);
+}
+
+.tema-shell-secundario {
+  color: var(--shell-texto-secundario);
+}
+
+.tema-shell-tenue {
+  color: var(--shell-texto-tenue);
+}
+
+.tema-hero-titulo {
+  color: var(--shell-hero-texto);
+}
+
+.tema-hero-secundario {
+  color: var(--shell-hero-texto-secundario);
+}
+
+.tema-hero-tenue {
+  color: var(--shell-hero-texto-tenue);
+}
+
+.tema-gradiente-acento {
+  background: var(--shell-gradiente-acento);
+}
+
+.tema-gradiente-acento-suave {
+  background: var(--shell-gradiente-acento-suave);
+}
+
+.tema-gradiente-boton {
+  background: var(--shell-gradiente-boton);
 }
 
 /* ============================================
@@ -471,11 +577,11 @@ body::-webkit-scrollbar-thumb {
 .scroll-sutil-dark {
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(204, 84, 255, 0.2) transparent;
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
 
 .scroll-sutil-dark:hover {
-  scrollbar-color: rgba(204, 84, 255, 0.4) transparent;
+  scrollbar-color: var(--scroll-thumb-hover) transparent;
 }
 
 /* --- WebKit (Chrome / Safari / Edge) --- */
@@ -488,10 +594,10 @@ body::-webkit-scrollbar-thumb {
 }
 
 .scroll-sutil-dark::-webkit-scrollbar-thumb {
-  background: rgba(204, 84, 255, 0.2);
+  background: var(--scroll-thumb);
   border-radius: 9999px;
 }
 
 .scroll-sutil-dark:hover::-webkit-scrollbar-thumb {
-  background: rgba(204, 84, 255, 0.4);
+  background: var(--scroll-thumb-hover);
 }

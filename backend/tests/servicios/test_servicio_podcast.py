@@ -162,18 +162,18 @@ class TestConstruirTitulo:
         """El título del día incluye la fecha formateada."""
         titulo = ServicioPodcast._construir_titulo("dia", date(2026, 3, 23))
         assert "23/03" in titulo
-        assert "Momento Clave" in titulo
+        assert "tránsitos en vos" in titulo
 
     def test_titulo_semana(self):
         """El título de la semana incluye rango de fechas."""
         titulo = ServicioPodcast._construir_titulo("semana", date(2026, 3, 23))
         assert "23/03" in titulo
         assert "29/03" in titulo
-        assert "Semana Cósmica" in titulo
+        assert "Revisemos cómo viene tu semana" in titulo
 
     def test_titulo_mes(self):
         """El título del mes incluye nombre del mes y año."""
         titulo = ServicioPodcast._construir_titulo("mes", date(2026, 3, 1))
         assert "Marzo" in titulo
         assert "2026" in titulo
-        assert "Mes Cósmico" in titulo
+        assert "Ampliá tu horizonte para este mes" in titulo

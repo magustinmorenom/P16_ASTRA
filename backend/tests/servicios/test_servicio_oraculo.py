@@ -297,7 +297,7 @@ class TestConsultar:
         assert mensajes[0]["role"] == "user"
         assert mensajes[1]["role"] == "assistant"
         assert mensajes[2]["content"] == "¿Qué más me decís?"
-        assert llamada.kwargs["max_tokens"] == 220
+        assert llamada.kwargs["max_tokens"] == 500
 
     @pytest.mark.asyncio
     @patch("app.servicios.servicio_oraculo.anthropic")

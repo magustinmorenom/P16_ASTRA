@@ -1,7 +1,7 @@
 import { View, Platform } from "react-native";
 import { Tabs } from "expo-router";
 import { BlurView } from "expo-blur";
-import { House, MoonStars, Compass, Waveform, UserCircle } from "phosphor-react-native";
+import { House, MoonStars, ChatCircleDots, Waveform, UserCircle } from "phosphor-react-native";
 import { MiniReproductor } from "@/componentes/layouts/mini-reproductor";
 import { useStoreUI } from "@/lib/stores/store-ui";
 import { usarTema } from "@/lib/hooks/usar-tema";
@@ -92,11 +92,33 @@ export default function LayoutTabs() {
           }}
         />
         <Tabs.Screen
-          name="descubrir"
+          name="chat"
           options={{
-            title: "Descubrir",
-            tabBarIcon: ({ color, size }) => (
-              <Compass size={size} color={color} weight="fill" />
+            title: "Chat",
+            tabBarIcon: ({ color, focused }) => (
+              <View
+                style={{
+                  width: focused ? 46 : 42,
+                  height: focused ? 46 : 42,
+                  borderRadius: 23,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginTop: -2,
+                  backgroundColor: focused
+                    ? `${colores.acento}22`
+                    : esOscuro
+                      ? "rgba(255,255,255,0.04)"
+                      : "rgba(124,77,255,0.08)",
+                  borderWidth: 1,
+                  borderColor: focused ? `${colores.acento}40` : "transparent",
+                }}
+              >
+                <ChatCircleDots
+                  size={focused ? 22 : 20}
+                  color={focused ? colores.acento : color}
+                  weight="fill"
+                />
+              </View>
             ),
           }}
         />
@@ -116,6 +138,12 @@ export default function LayoutTabs() {
             tabBarIcon: ({ color, size }) => (
               <UserCircle size={size} color={color} weight="fill" />
             ),
+          }}
+        />
+        <Tabs.Screen
+          name="descubrir"
+          options={{
+            href: null,
           }}
         />
       </Tabs>

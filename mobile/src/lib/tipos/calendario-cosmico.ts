@@ -8,11 +8,37 @@ export interface PlanetaCalendario {
   velocidad: number;
 }
 
+export interface AspectoCalendario {
+  planeta_a: string;
+  planeta_b: string;
+  tipo: string;
+  angulo: number;
+  orbe: number;
+}
+
+export interface CambioSignoCalendario {
+  planeta: string;
+  de: string;
+  a: string;
+}
+
+export interface EventosCalendario {
+  cambios_signo: CambioSignoCalendario[];
+  retrogrados_inicio: string[];
+  retrogrados_fin: string[];
+  aspectos_exactos: AspectoCalendario[];
+  fases: string | null;
+}
+
 export interface TransitosDia {
   fecha: string;
   fecha_utc: string;
   dia_juliano: number;
   planetas: PlanetaCalendario[];
+  aspectos: AspectoCalendario[];
+  fase_lunar: string;
+  eventos: EventosCalendario;
+  estado: "pasado" | "presente" | "futuro";
 }
 
 export interface CalendarioRango {

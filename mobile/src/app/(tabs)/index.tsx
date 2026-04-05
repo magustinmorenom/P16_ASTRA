@@ -686,10 +686,10 @@ export default function DashboardScreen() {
                   <View style={{ flexDirection: "row", gap: 10, marginTop: 16 }}>
                     <Boton
                       tamaño="sm"
-                      onPress={() => router.push("/(features)/oraculo" as never)}
+                      onPress={() => router.push("/(tabs)/chat" as never)}
                       icono={<ChatCircleDots size={16} color="white" weight="fill" />}
                     >
-                      Consultar oraculo
+                      Abrir chat
                     </Boton>
                     <Boton
                       tamaño="sm"

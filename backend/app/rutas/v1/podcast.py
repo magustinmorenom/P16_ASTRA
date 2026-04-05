@@ -8,7 +8,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.datos.repositorio_podcast import RepositorioPodcast
+from app.datos.repositorio_podcast import (
+    LIMITE_HISTORIAL_PODCAST,
+    RepositorioPodcast,
+)
 from app.dependencias import obtener_db
 from app.dependencias_auth import obtener_usuario_actual
 from app.dependencias_suscripcion import requiere_plan
@@ -115,10 +118,11 @@ async def obtener_historial(
     usuario: Usuario = Depends(obtener_usuario_actual),
     _plan: None = Depends(requiere_plan("premium")),
     db: AsyncSession = Depends(obtener_db),
-    limite: int = Query(default=10, le=50),
+    limite: int = Query(default=LIMITE_HISTORIAL_PODCAST, le=50),
 ):
     """Obtiene los últimos episodios del usuario."""
     repo = RepositorioPodcast(db)
+    await repo.normalizar_retencion_usuario(usuario.id)
     episodios = await repo.obtener_ultimos_episodios(usuario.id, limite)
     return {
         "exito": True,
@@ -140,6 +144,8 @@ async def generar_podcast(
     """
     hoy = date.today()
     episodio = await ServicioPodcast.generar_episodio(db, usuario.id, hoy, tipo)
+    repo = RepositorioPodcast(db)
+    await repo.normalizar_retencion_usuario(usuario.id)
     return {
         "exito": True,
         "datos": _serializar_episodio(episodio),

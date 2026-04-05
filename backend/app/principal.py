@@ -168,6 +168,7 @@ def _registrar_rutas(app: FastAPI) -> None:
         numerologia,
         oraculo,
         perfil,
+        perfil_espiritual,
         podcast,
         pronostico,
         retorno_solar,
@@ -191,6 +192,7 @@ def _registrar_rutas(app: FastAPI) -> None:
     app.include_router(podcast.router, prefix=prefijo, tags=["Podcasts"])
     app.include_router(pronostico.router, prefix=prefijo, tags=["Pronóstico Cósmico"])
     app.include_router(geo.router, prefix=prefijo)
+    app.include_router(perfil_espiritual.router, prefix=prefijo)
 
     @app.get("/health", tags=["Sistema"])
     async def health_check():

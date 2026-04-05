@@ -1,4 +1,5 @@
-import { View, Text, Pressable } from "react-native";
+import { useEffect, useRef } from "react";
+import { View, Text, Pressable, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Play,
@@ -26,6 +27,7 @@ export function ReproductorCompleto() {
     pistaActual,
     reproduciendo,
     progresoSegundos,
+    segmentoActual,
     volumen,
     silenciado,
     toggleReproduccion,
@@ -35,6 +37,20 @@ export function ReproductorCompleto() {
     manejarCerrar,
   } = usarAudioNativo();
   const { colores } = usarTema();
+  const scrollRef = useRef<ScrollView>(null);
+  const offsetsSegmentos = useRef<Record<number, number>>({});
+  const segmentos = pistaActual?.segmentos ?? [];
+
+  useEffect(() => {
+    if (!segmentos.length) return;
+    const offset = offsetsSegmentos.current[Math.min(segmentoActual, segmentos.length - 1)];
+    if (typeof offset !== "number") return;
+
+    scrollRef.current?.scrollTo({
+      y: Math.max(offset - 120, 0),
+      animated: true,
+    });
+  }, [segmentoActual, segmentos.length]);
 
   if (!pistaActual) return null;
 
@@ -80,34 +96,31 @@ export function ReproductorCompleto() {
         </Pressable>
       </View>
 
-      {/* Cover */}
-      <View style={{ alignItems: "center", justifyContent: "center", flex: 1 }}>
+      <View style={{ alignItems: "center", paddingHorizontal: 32, paddingTop: 8 }}>
         <View
           style={{
-            width: 256,
-            height: 256,
+            width: 188,
+            height: 188,
             borderRadius: 24,
             backgroundColor: colores.acento + "1A",
             borderWidth: 1,
             borderColor: colores.acento + "4D",
             alignItems: "center",
             justifyContent: "center",
-            marginBottom: 32,
+            marginBottom: 24,
           }}
         >
-          <Text style={{ color: colores.acento, fontSize: 64, fontFamily: "Inter_700Bold" }}>
+          <Text style={{ color: colores.acento, fontSize: 56, fontFamily: "Inter_700Bold" }}>
             {pistaActual.tipo === "podcast" ? "P" : "L"}
           </Text>
         </View>
 
-        {/* Titulo */}
         <Text
           style={{
             color: colores.primario,
             fontSize: 20,
             fontFamily: "Inter_700Bold",
             textAlign: "center",
-            paddingHorizontal: 32,
           }}
         >
           {pistaActual.titulo}
@@ -124,9 +137,101 @@ export function ReproductorCompleto() {
         </Text>
       </View>
 
-      {/* Controles */}
-      <View style={{ paddingHorizontal: 24, paddingBottom: insets.bottom + 20 }}>
-        {/* Progress */}
+      {segmentos.length > 0 ? (
+        <View
+          style={{
+            flex: 1,
+            minHeight: 0,
+            marginTop: 24,
+            paddingHorizontal: 24,
+          }}
+        >
+          <Text
+            style={{
+              color: colores.textoSecundario,
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: 1.1,
+              fontFamily: "Inter_600SemiBold",
+            }}
+          >
+            Texto en reproducción
+          </Text>
+          <Text
+            style={{
+              color: colores.textoMuted,
+              fontSize: 12,
+              marginTop: 6,
+              marginBottom: 14,
+            }}
+          >
+            Tocá una línea para saltar a ese momento.
+          </Text>
+
+          <ScrollView
+            ref={scrollRef}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 12 }}
+          >
+            {segmentos.map((segmento, index) => {
+              const activo =
+                index === segmentoActual || (index === 0 && progresoSegundos === 0);
+
+              return (
+                <Pressable
+                  key={`${segmento.inicio_seg}-${index}`}
+                  onPress={() => manejarSeek(segmento.inicio_seg)}
+                  onLayout={(event) => {
+                    offsetsSegmentos.current[index] = event.nativeEvent.layout.y;
+                  }}
+                  style={{
+                    borderRadius: 18,
+                    paddingHorizontal: 16,
+                    paddingVertical: 14,
+                    marginBottom: 10,
+                    backgroundColor: activo ? `${colores.acento}16` : colores.superficie,
+                    borderWidth: 1,
+                    borderColor: activo ? `${colores.acento}42` : colores.borde,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: activo ? colores.primario : colores.textoSecundario,
+                      fontSize: activo ? 20 : 15,
+                      lineHeight: activo ? 28 : 22,
+                      fontFamily: activo ? "Inter_700Bold" : "Inter_400Regular",
+                    }}
+                  >
+                    {segmento.texto}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      ) : (
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: 32,
+          }}
+        >
+          <Text
+            style={{
+              color: colores.textoSecundario,
+              fontSize: 14,
+              lineHeight: 21,
+              textAlign: "center",
+            }}
+          >
+            El texto del episodio se va a mostrar acá cuando el audio tenga segmentos listos.
+          </Text>
+        </View>
+      )}
+
+      <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: insets.bottom + 20 }}>
         <Slider
           minimumValue={0}
           maximumValue={pistaActual.duracionSegundos}

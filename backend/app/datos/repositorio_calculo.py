@@ -86,6 +86,7 @@ class RepositorioCalculo:
         "human-design": "diseno_humano",
         "numerology": "numerologia",
         "solar-return": "retorno_solar",
+        "perfil-espiritual": "perfil_espiritual",
     }
 
     async def obtener_todos_por_perfil(

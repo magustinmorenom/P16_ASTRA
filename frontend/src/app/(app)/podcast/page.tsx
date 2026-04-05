@@ -1,17 +1,23 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
+import { useRouter } from "next/navigation";
 import { Icono } from "@/componentes/ui/icono";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
-import { BloqueoPremium } from "@/componentes/ui/bloqueo-premium";
 import { obtenerBlobAudioPodcast, precargarAudiosPodcast } from "@/lib/hooks/usar-audio";
+import { useStoreAuth } from "@/lib/stores/store-auth";
+import { esPlanPago } from "@/lib/utilidades/planes";
 import {
   usarPodcastHoy,
   usarPodcastHistorial,
   usarGenerarPodcast,
 } from "@/lib/hooks";
 import { useStoreUI, type PistaReproduccion } from "@/lib/stores/store-ui";
+import {
+  COPY_PODCAST_WEB,
+  LIMITE_VISIBLE_HISTORIAL_PODCAST,
+} from "@/lib/utilidades/podcast";
 
 import type { PodcastEpisodio, TipoPodcast } from "@/lib/tipos";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
@@ -39,33 +45,51 @@ async function descargarAudio(episodioId: string, titulo: string) {
 const TIPO_CONFIG: Record<
   TipoPodcast,
   {
-    etiqueta: string;
+    etiquetaCard: string;
+    etiquetaReproductor: string;
+    mensajeCard: string;
     icono: "sol" | "destello" | "luna";
     gradiente: string;
-    desc: string;
   }
 > = {
   dia: {
-    etiqueta: "Tu Día",
+    ...COPY_PODCAST_WEB.dia,
     icono: "sol",
-    gradiente: "from-[#7C4DFF] to-[#B388FF]",
-    desc: "Momento Clave de tu Día",
+    gradiente: "from-violet-500 to-violet-300",
   },
   semana: {
-    etiqueta: "Tu Semana",
+    ...COPY_PODCAST_WEB.semana,
     icono: "destello",
-    gradiente: "from-[#4A2D8C] to-[#B388FF]",
-    desc: "Tu Semana Cósmica",
+    gradiente: "from-violet-800 to-violet-300",
   },
   mes: {
-    etiqueta: "Tu Mes",
+    ...COPY_PODCAST_WEB.mes,
     icono: "luna",
-    gradiente: "from-[#2D1B69] to-[#7C4DFF]",
-    desc: "Tu Mes Cósmico",
+    gradiente: "from-violet-950 to-violet-500",
   },
 };
 
 const TIPOS: TipoPodcast[] = ["dia", "semana", "mes"];
+const ESTILO_BOTON_SHELL = {
+  borderColor: "var(--shell-borde)",
+  background: "var(--shell-superficie)",
+  color: "var(--shell-texto-secundario)",
+} as const;
+const ESTILO_BOTON_SHELL_ACTIVO = {
+  borderColor: "var(--shell-borde-fuerte)",
+  background: "var(--color-primario)",
+  color: "var(--shell-hero-texto)",
+  boxShadow: "var(--shell-sombra-suave)",
+} as const;
+const ESTILO_BADGE_SHELL = {
+  borderColor: "var(--shell-chip-borde)",
+  background: "var(--shell-chip)",
+  color: "var(--color-acento)",
+} as const;
+const ESTILO_ICONO_PODCAST = {
+  borderColor: "var(--shell-chip-borde)",
+  background: "var(--shell-superficie-fuerte)",
+} as const;
 
 function formatearDuracionMinutos(segundos?: number | null) {
   return `${Math.max(1, Math.floor((segundos ?? 0) / 60))} min`;
@@ -79,12 +103,15 @@ function CardEpisodio({
   episodio,
   onGenerar,
   generando,
+  bloqueado,
 }: {
   tipo: TipoPodcast;
   episodio: PodcastEpisodio | undefined;
   onGenerar: () => void;
   generando: boolean;
+  bloqueado: boolean;
 }) {
+  const router = useRouter();
   const { setPistaActual, pistaActual } = useStoreUI();
   const config = TIPO_CONFIG[tipo];
   const enReproduccion = episodio && pistaActual?.id === episodio.id;
@@ -94,7 +121,7 @@ function CardEpisodio({
     const pista: PistaReproduccion = {
       id: episodio.id,
       titulo: episodio.titulo,
-      subtitulo: `Podcast ${config.etiqueta}`,
+      subtitulo: config.etiquetaReproductor,
       tipo: "podcast",
       duracionSegundos: episodio.duracion_segundos ?? 0,
       icono: config.icono,
@@ -111,59 +138,55 @@ function CardEpisodio({
   const duracion = formatearDuracionMinutos(episodio?.duracion_segundos);
 
   return (
-    <div className="group relative h-full overflow-hidden rounded-[28px] border border-white/[0.12] bg-[linear-gradient(180deg,rgba(255,255,255,0.1),rgba(255,255,255,0.04))] p-6 shadow-[0_18px_45px_rgba(8,3,20,0.24)] transition-all duration-300 hover:-translate-y-1 hover:border-[#B388FF]/35 hover:shadow-[0_24px_60px_rgba(18,4,38,0.42)]">
-      <div
-        className={`pointer-events-none absolute inset-x-6 top-0 h-24 bg-gradient-to-r ${config.gradiente} opacity-20 blur-3xl transition-opacity duration-300 group-hover:opacity-30`}
-      />
-
+    <div className="tema-superficie-panel group relative h-full overflow-hidden rounded-[28px] p-6 transition-all duration-300 hover:-translate-y-1">
       <div className="relative flex h-full flex-col gap-6">
         <div className="flex items-start gap-4">
-          <div
-            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${config.gradiente} shadow-[0_12px_30px_rgba(26,10,54,0.35)] ring-1 ring-white/15`}
-          >
-            <Icono
-              nombre={config.icono}
-              tamaño={24}
-              peso="fill"
-              className="text-white/90"
-            />
+          <div className="relative shrink-0">
+            <div
+              className="flex h-14 w-14 items-center justify-center rounded-2xl border text-[color:var(--color-acento)] shadow-[var(--shell-sombra-suave)]"
+              style={ESTILO_ICONO_PODCAST}
+            >
+              <Icono
+                nombre={config.icono}
+                tamaño={24}
+                peso="fill"
+                className="text-[color:var(--color-acento)]"
+              />
+            </div>
+            {bloqueado && (
+              <div className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#D4A234] to-[#F0D68A] shadow-sm">
+                <Icono nombre="corona" tamaño={10} className="text-white" />
+              </div>
+            )}
           </div>
           <div className="min-w-0 flex-1">
-            <span className="mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/[0.08] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
-              {config.etiqueta}
-            </span>
-            <p className="text-lg font-semibold tracking-[-0.02em] text-white">
-              {episodio?.titulo ?? config.desc}
+            <p className="text-lg font-semibold tracking-[-0.02em] text-[color:var(--shell-texto)]">
+              {config.etiquetaCard}
             </p>
-            <p className="mt-1 text-sm leading-6 text-white/62">{config.desc}</p>
+            <p className="mt-1 text-sm text-[color:var(--shell-texto-secundario)]">
+              {config.mensajeCard}
+            </p>
           </div>
         </div>
 
         {estado === "listo" ? (
           <div className="mt-auto flex items-end justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-1.5 font-medium text-white/72">
-                {duracion}
-              </span>
-              <span className="rounded-full border border-[#B388FF]/25 bg-[#7C4DFF]/12 px-3 py-1.5 font-medium text-[#E7D8FF]">
-                Disponible ahora
-              </span>
-            </div>
+            <span className="text-xs text-[color:var(--shell-texto-secundario)]">
+              {duracion} · Listo
+            </span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => descargarAudio(episodio!.id, episodio!.titulo)}
-                className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.08] text-white/76 transition-all hover:border-[#B388FF]/30 hover:bg-white/[0.14] hover:text-white"
+                className="flex h-11 w-11 items-center justify-center rounded-2xl border transition-all hover:text-[color:var(--shell-texto)]"
+                style={ESTILO_BOTON_SHELL}
                 title="Descargar audio"
               >
                 <Icono nombre="descarga" tamaño={16} />
               </button>
               <button
                 onClick={reproducir}
-                className={`flex h-11 w-11 items-center justify-center rounded-2xl border transition-all ${
-                  enReproduccion
-                    ? "border-[#B388FF]/50 bg-[#7C4DFF] text-white shadow-[0_10px_24px_rgba(124,77,255,0.38)]"
-                    : "border-white/10 bg-white/[0.08] text-white/80 hover:border-[#B388FF]/35 hover:bg-[#7C4DFF] hover:text-white"
-                }`}
+                className="flex h-11 w-11 items-center justify-center rounded-2xl border transition-all"
+                style={enReproduccion ? ESTILO_BOTON_SHELL_ACTIVO : ESTILO_BOTON_SHELL}
                 title={enReproduccion ? "Pausar audio" : "Reproducir audio"}
               >
                 <Icono
@@ -176,10 +199,11 @@ function CardEpisodio({
           </div>
         ) : estado === "error" ? (
           <div className="mt-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm font-medium text-[#F2B5B5]">Error al generar el episodio</p>
+            <p className="text-sm font-medium text-[color:var(--color-error)]">Error al generar el episodio</p>
             <button
               onClick={onGenerar}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-[#B388FF]/25 bg-[#7C4DFF]/14 px-4 text-sm font-medium text-[#EBDDFF] transition-all hover:border-[#B388FF]/40 hover:bg-[#7C4DFF]/22"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-medium transition-all"
+              style={ESTILO_BADGE_SHELL}
             >
               <Icono nombre="destello" tamaño={16} peso="fill" />
               Reintentar
@@ -187,25 +211,33 @@ function CardEpisodio({
           </div>
         ) : estaGenerando ? (
           <div className="mt-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-sm text-white/68">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#B388FF] border-t-transparent" />
+            <div className="flex items-center gap-2 text-sm text-[color:var(--shell-texto-secundario)]">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[color:var(--color-acento)] border-t-transparent" />
               <span>
                 {estado === "generando_guion"
                   ? "Escribiendo guión..."
                   : "Generando audio..."}
               </span>
             </div>
-            <div className="inline-flex h-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] px-4 text-sm font-medium text-white/50">
+            <div
+              className="inline-flex h-11 items-center justify-center rounded-2xl border px-4 text-sm font-medium"
+              style={ESTILO_BOTON_SHELL}
+            >
               En preparación
             </div>
           </div>
         ) : (
           <button
-            onClick={onGenerar}
-            className="mt-auto inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-[#B388FF]/25 bg-[#7C4DFF]/14 px-4 text-sm font-medium text-[#EBDDFF] transition-all hover:border-[#B388FF]/40 hover:bg-[#7C4DFF]/22 hover:text-white"
+            onClick={bloqueado ? () => router.push("/suscripcion") : onGenerar}
+            className="mt-auto inline-flex h-11 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-medium transition-all"
+            style={bloqueado ? {
+              borderColor: "var(--shell-borde)",
+              background: "linear-gradient(135deg, #D4A234, #F0D68A)",
+              color: "#fff",
+            } : ESTILO_BADGE_SHELL}
           >
-            <Icono nombre="destello" tamaño={16} peso="fill" />
-            Generar ahora
+            <Icono nombre={bloqueado ? "corona" : "destello"} tamaño={16} peso="fill" />
+            {bloqueado ? "Desbloquear con Premium" : "Generar ahora"}
           </button>
         )}
       </div>
@@ -218,60 +250,72 @@ function CardEpisodio({
 // ---------------------------------------------------------------------------
 export default function PaginaPodcast() {
   const generarMutation = usarGenerarPodcast();
-
-  // Polling rápido si hay algún episodio generándose
-  const hayGenerando = generarMutation.isPending;
+  const [historialExpandido, setHistorialExpandido] = useState(false);
+  const usuario = useStoreAuth((s) => s.usuario);
+  const esPremium = esPlanPago(usuario?.plan_slug);
 
   const { data: episodiosHoy, isLoading: cargando } =
-    usarPodcastHoy(hayGenerando);
+    usarPodcastHoy(generarMutation.isPending);
   const { data: historial, isLoading: cargandoHistorial } =
     usarPodcastHistorial();
   const { setPistaActual, pistaActual } = useStoreUI();
 
   const mapaHoy = new Map((episodiosHoy ?? []).map((ep) => [ep.tipo, ep]));
-  // Activar polling rápido también si hay episodios en proceso
-  const hayEnProceso = (episodiosHoy ?? []).some(
-    (ep) => ep.estado === "generando_guion" || ep.estado === "generando_audio"
-  );
-  usarPodcastHoy(hayEnProceso);
 
   useEffect(() => {
     precargarAudiosPodcast([...(episodiosHoy ?? []), ...(historial ?? [])]);
   }, [episodiosHoy, historial]);
 
+  const historialCompleto = historial ?? [];
+  const puedeExpandirHistorial =
+    historialCompleto.length > LIMITE_VISIBLE_HISTORIAL_PODCAST;
+  const historialVisible = historialExpandido
+    ? historialCompleto
+    : historialCompleto.slice(0, LIMITE_VISIBLE_HISTORIAL_PODCAST);
+
   return (
     <>
       <HeaderMobile titulo="Podcasts" />
-      <div className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top_left,rgba(124,77,255,0.26),transparent_48%)]" />
-        <div className="pointer-events-none absolute right-[-120px] top-20 h-80 w-80 rounded-full bg-[#B388FF]/10 blur-3xl" />
-        <div className="pointer-events-none absolute left-20 top-[420px] h-56 w-56 rounded-full bg-[#7C4DFF]/10 blur-3xl" />
+      <div className="relative overflow-hidden" style={{ background: "var(--shell-fondo)" }}>
+        <div
+          className="pointer-events-none absolute right-[-120px] top-20 h-80 w-80 rounded-full blur-3xl"
+          style={{ background: "var(--shell-glow-2)" }}
+        />
+        <div
+          className="pointer-events-none absolute left-20 top-[420px] h-56 w-56 rounded-full blur-3xl"
+          style={{ background: "var(--shell-glow-1)" }}
+        />
 
         <div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-4 py-8 sm:px-6">
-          <section className="relative overflow-hidden rounded-[24px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.2),transparent_32%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] px-6 py-6 shadow-[0_24px_70px_rgba(8,2,22,0.38)] sm:px-7 sm:py-7">
-            <div className="pointer-events-none absolute -right-12 top-[-72px] h-44 w-44 rounded-full bg-[#B388FF]/18 blur-3xl" />
-            <div className="pointer-events-none absolute bottom-[-64px] left-10 h-36 w-36 rounded-full bg-[#7C4DFF]/16 blur-3xl" />
+          <section className="tema-superficie-panel relative overflow-hidden rounded-[24px] px-6 py-6 sm:px-7 sm:py-7">
+            <div
+              className="pointer-events-none absolute -right-10 top-[-48px] h-28 w-28 rounded-full blur-3xl"
+              style={{ background: "var(--shell-glow-2)" }}
+            />
+            <div
+              className="pointer-events-none absolute bottom-[-48px] left-8 h-24 w-24 rounded-full blur-3xl"
+              style={{ background: "var(--shell-glow-1)" }}
+            />
 
             <div className="relative max-w-2xl">
-              <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.08] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/72">
-                <Icono nombre="microfono" tamaño={14} />
-                Cabina cósmica
-              </span>
               <div className="flex items-start gap-4">
-                <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[22px] bg-gradient-to-br from-[#7C4DFF] to-[#B388FF] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
+                <div
+                  className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-[18px] border sm:flex"
+                  style={ESTILO_ICONO_PODCAST}
+                >
                   <Icono
                     nombre="microfono"
-                    tamaño={30}
+                    tamaño={26}
                     peso="fill"
-                    className="text-white"
+                    className="text-[color:var(--color-acento)]"
                   />
                 </div>
                 <div>
-                  <h1 className="text-[26px] font-semibold tracking-[-0.03em] text-white sm:text-[30px]">
+                  <h1 className="text-[26px] font-semibold tracking-[-0.03em] text-[color:var(--shell-texto)] sm:text-[30px]">
                     Tus Podcasts Cósmicos
                   </h1>
-                  <p className="mt-3 max-w-xl text-[14px] leading-6 text-white/68">
-                    Una cabina clara para activar tu día, tu semana y tu mes sin ruido visual ni pasos de más.
+                  <p className="mt-3 max-w-xl text-[14px] leading-6 text-[color:var(--shell-texto-secundario)]">
+                    Elegí una escucha breve, semanal o mensual con la misma superficie clara que usamos en Carta Astral y dashboard.
                   </p>
                 </div>
               </div>
@@ -279,53 +323,45 @@ export default function PaginaPodcast() {
           </section>
 
           <section className="space-y-4">
-            <div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/46">
-                  Escuchas disponibles
-                </p>
-                <h2 className="mt-2 text-[20px] font-semibold tracking-[-0.02em] text-white">
-                  Elegí el período que querés activar
-                </h2>
-              </div>
-            </div>
+            <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-[color:var(--shell-texto)]">
+              Elegí tu podcast
+            </h2>
 
-            <BloqueoPremium mensaje="Los podcasts cósmicos son exclusivos del plan Premium">
-              {cargando ? (
-                <div className="grid auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {[1, 2, 3].map((i) => (
-                    <Esqueleto
-                      key={i}
-                      className="h-[280px] rounded-[28px] bg-white/[0.06]"
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="grid auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {TIPOS.map((tipo) => (
-                    <CardEpisodio
-                      key={tipo}
-                      tipo={tipo}
-                      episodio={mapaHoy.get(tipo)}
-                      onGenerar={() => generarMutation.mutate(tipo)}
-                      generando={
-                        generarMutation.isPending &&
-                        generarMutation.variables === tipo
-                      }
-                    />
-                  ))}
-                </div>
-              )}
-            </BloqueoPremium>
+            {cargando ? (
+              <div className="grid auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                  <Esqueleto
+                    key={i}
+                    className="h-[280px] rounded-[28px] bg-[var(--shell-superficie)]"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="grid auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {TIPOS.map((tipo) => (
+                  <CardEpisodio
+                    key={tipo}
+                    tipo={tipo}
+                    episodio={mapaHoy.get(tipo)}
+                    onGenerar={() => generarMutation.mutate(tipo)}
+                    generando={
+                      generarMutation.isPending &&
+                      generarMutation.variables === tipo
+                    }
+                    bloqueado={!esPremium}
+                  />
+                ))}
+              </div>
+            )}
           </section>
 
-          <section className="rounded-[24px] border border-white/[0.08] bg-white/[0.04] px-5 py-5 shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl sm:px-6 sm:py-6">
+          <section className="tema-superficie-panel rounded-[24px] px-5 py-5 sm:px-6 sm:py-6">
             <div className="mb-5">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/46">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--shell-texto-tenue)]">
                   Biblioteca reciente
                 </p>
-                <h2 className="mt-2 text-[20px] font-semibold tracking-[-0.02em] text-white">
+                <h2 className="mt-2 text-[20px] font-semibold tracking-[-0.02em] text-[color:var(--shell-texto)]">
                   Historial
                 </h2>
               </div>
@@ -336,27 +372,34 @@ export default function PaginaPodcast() {
                 {[1, 2, 3].map((i) => (
                   <Esqueleto
                     key={i}
-                    className="h-[88px] rounded-2xl bg-white/[0.06]"
+                    className="h-[88px] rounded-2xl bg-[var(--shell-superficie)]"
                   />
                 ))}
               </div>
             ) : !historial || historial.length === 0 ? (
-              <div className="rounded-[24px] border border-dashed border-white/12 bg-black/10 px-6 py-14 text-center text-white/56">
+              <div
+                className="rounded-[24px] border border-dashed px-6 py-14 text-center"
+                style={{
+                  borderColor: "var(--shell-borde)",
+                  background: "var(--shell-superficie)",
+                  color: "var(--shell-texto-secundario)",
+                }}
+              >
                 <Icono
                   nombre="microfono"
                   tamaño={36}
                   className="mx-auto mb-3 opacity-50"
                 />
-                <p className="text-base font-medium text-white/74">
+                <p className="text-base font-medium text-[color:var(--shell-texto)]">
                   Aún no tenés episodios generados
                 </p>
-                <p className="mt-2 text-sm leading-6 text-white/52">
+                <p className="mt-2 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
                   Tu historial va a aparecer acá apenas generes tu primer podcast.
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
-                {historial.map((ep) => {
+                {historialVisible.map((ep) => {
                   const config = TIPO_CONFIG[ep.tipo] ?? TIPO_CONFIG.dia;
                   const enReproduccion = pistaActual?.id === ep.id;
 
@@ -369,7 +412,7 @@ export default function PaginaPodcast() {
                         const pista: PistaReproduccion = {
                           id: ep.id,
                           titulo: ep.titulo,
-                          subtitulo: `Podcast ${config.etiqueta} — ${ep.fecha}`,
+                          subtitulo: `${config.etiquetaReproductor} — ${ep.fecha}`,
                           tipo: "podcast",
                           duracionSegundos: ep.duracion_segundos ?? 0,
                           icono: config.icono,
@@ -385,7 +428,7 @@ export default function PaginaPodcast() {
                           const pista: PistaReproduccion = {
                             id: ep.id,
                             titulo: ep.titulo,
-                            subtitulo: `Podcast ${config.etiqueta} — ${ep.fecha}`,
+                            subtitulo: `${config.etiquetaReproductor} — ${ep.fecha}`,
                             tipo: "podcast",
                             duracionSegundos: ep.duracion_segundos ?? 0,
                             icono: config.icono,
@@ -396,29 +439,38 @@ export default function PaginaPodcast() {
                           setPistaActual(pista);
                         }
                       }}
-                      className={`flex w-full items-center gap-4 rounded-[24px] border px-4 py-4 text-left transition-all duration-200 ${
+                      className="flex w-full items-center gap-4 rounded-[24px] border px-4 py-4 text-left transition-all duration-200"
+                      style={
                         enReproduccion
-                          ? "border-[#B388FF]/35 bg-[#7C4DFF]/14 shadow-[0_12px_24px_rgba(124,77,255,0.16)]"
-                          : "border-white/[0.08] bg-black/10 hover:border-white/15 hover:bg-white/[0.05]"
-                      }`}
+                          ? {
+                              borderColor: "var(--shell-borde-fuerte)",
+                              background: "var(--shell-chip)",
+                              boxShadow: "var(--shell-sombra-suave)",
+                            }
+                          : {
+                              borderColor: "var(--shell-borde)",
+                              background: "var(--shell-superficie)",
+                            }
+                      }
                     >
                       <div
-                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${config.gradiente} shadow-[0_12px_28px_rgba(22,8,40,0.3)]`}
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border shadow-[var(--shell-sombra-suave)]"
+                        style={ESTILO_ICONO_PODCAST}
                       >
                         <Icono
                           nombre={enReproduccion ? "pausar" : "reproducir"}
                           tamaño={18}
                           peso="fill"
-                          className="text-white/88"
+                          className="text-[color:var(--color-acento)]"
                         />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-base font-medium leading-6 text-white">
+                          <p className="text-base font-medium leading-6 text-[color:var(--shell-texto)]">
                             {ep.titulo}
                           </p>
                         </div>
-                        <p className="mt-1 text-sm text-white/56">
+                        <p className="mt-1 text-sm text-[color:var(--shell-texto-secundario)]">
                           {ep.fecha} · {formatearDuracionMinutos(ep.duracion_segundos)}
                         </p>
                       </div>
@@ -427,7 +479,8 @@ export default function PaginaPodcast() {
                           e.stopPropagation();
                           descargarAudio(ep.id, ep.titulo);
                         }}
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-white/70 transition-all hover:border-[#B388FF]/30 hover:bg-white/[0.12] hover:text-white"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition-all hover:text-[color:var(--shell-texto)]"
+                        style={ESTILO_BOTON_SHELL}
                         title="Descargar audio"
                       >
                         <Icono nombre="descarga" tamaño={16} />
@@ -435,6 +488,19 @@ export default function PaginaPodcast() {
                     </div>
                   );
                 })}
+
+                {puedeExpandirHistorial && (
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setHistorialExpandido((estado) => !estado)}
+                      className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all hover:text-[color:var(--shell-texto)]"
+                      style={ESTILO_BOTON_SHELL}
+                    >
+                      {historialExpandido ? "Ver menos" : "Ver más"}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </section>

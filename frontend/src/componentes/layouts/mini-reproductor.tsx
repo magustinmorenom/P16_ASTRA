@@ -10,9 +10,6 @@ function formatearTiempo(segundos: number): string {
   return `${min}:${seg.toString().padStart(2, "0")}`;
 }
 
-// ---------------------------------------------------------------------------
-// Mini Reproductor (barra compacta para mobile)
-// ---------------------------------------------------------------------------
 export default function MiniReproductor() {
   const { miniReproductorExpandido, toggleMiniReproductor } = useStoreUI();
 
@@ -42,7 +39,6 @@ export default function MiniReproductor() {
 
   return (
     <>
-      {/* Audio element */}
       {tieneAudio && (
         <audio
           ref={audioRef}
@@ -54,30 +50,31 @@ export default function MiniReproductor() {
         />
       )}
 
-      {/* ===== Barra compacta ===== */}
       <div
-        className="fixed left-0 right-0 z-40 bg-[#1A1128]"
+        className="fixed left-0 right-0 z-40"
         style={{
           bottom: "calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px))",
+          background: "var(--shell-reproductor)",
+          borderTop: "1px solid var(--shell-borde)",
         }}
       >
-        {/* Barra de progreso superior ultra-fina */}
-        <div className="h-[2px] bg-white/10 relative">
+        <div className="relative h-[2px]" style={{ background: "var(--shell-borde)" }}>
           <div
-            className="absolute left-0 top-0 h-full bg-[#7C4DFF] transition-[width] duration-300"
-            style={{ width: `${porcentaje}%` }}
+            className="absolute left-0 top-0 h-full transition-[width] duration-300"
+            style={{
+              width: `${porcentaje}%`,
+              background: "var(--color-primario)",
+            }}
           />
         </div>
 
-        {/* Contenido del mini player */}
         <div className="flex min-h-[62px] items-center gap-3 px-3 py-2">
-          {/* Cover — tap para expandir */}
           <button
             onClick={toggleMiniReproductor}
-            className="touch-feedback flex items-center gap-3 flex-1 min-w-0"
+            className="touch-feedback flex min-w-0 flex-1 items-center gap-3"
           >
             <div
-              className={`h-10 w-10 shrink-0 rounded-lg bg-gradient-to-br ${pistaActual.gradiente} flex items-center justify-center`}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${pistaActual.gradiente}`}
             >
               <Icono
                 nombre={pistaActual.icono}
@@ -87,66 +84,64 @@ export default function MiniReproductor() {
               />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium leading-tight text-[#F5F0FF]">
+              <p className="text-sm font-medium leading-tight text-[color:var(--shell-texto)]">
                 {pistaActual.titulo}
               </p>
-              <p className="mt-0.5 text-[11px] leading-4 text-[#B388FF]">
+              <p className="mt-0.5 text-[11px] leading-4 text-[color:var(--color-acento)]">
                 {pistaActual.subtitulo}
               </p>
             </div>
           </button>
 
-          {/* Controles */}
           <button
             onClick={toggleReproduccion}
             disabled={mostrandoCarga}
-            className="touch-feedback h-11 w-11 rounded-full bg-white flex items-center justify-center shrink-0"
+            className="touch-feedback flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white"
           >
             {mostrandoCarga ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#1A1128] border-t-transparent" />
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[color:var(--color-violet-950)] border-t-transparent" />
             ) : (
               <Icono
                 nombre={reproduciendo ? "pausar" : "reproducir"}
                 tamaño={18}
                 peso="fill"
-                className="text-[#1A1128]"
+                className="text-[color:var(--color-violet-950)]"
               />
             )}
           </button>
 
           <button
             onClick={manejarCerrar}
-            className="text-[#B388FF]/60 p-1 shrink-0"
+            className="shrink-0 p-1 text-[color:var(--color-acento)]"
           >
             <Icono nombre="x" tamaño={16} />
           </button>
         </div>
       </div>
 
-      {/* ===== Reproductor expandido (full-screen overlay) ===== */}
       {miniReproductorExpandido && (
-        <div className="fixed inset-0 z-[100] bg-[#0F0A1A] flex flex-col animate-slide-up">
-          {/* Safe area top */}
+        <div
+          className="fixed inset-0 z-[100] flex flex-col animate-slide-up"
+          style={{ background: "var(--shell-fondo-profundo)" }}
+        >
           <div style={{ paddingTop: "env(safe-area-inset-top, 0px)" }} />
 
-          {/* Header */}
           <div className="flex items-center justify-between px-5 py-3">
             <button
               onClick={toggleMiniReproductor}
-              className="touch-feedback h-10 w-10 flex items-center justify-center text-white/60"
+              className="touch-feedback flex h-10 w-10 items-center justify-center text-[color:var(--shell-texto-secundario)]"
             >
               <Icono nombre="flechaIzquierda" tamaño={22} />
             </button>
-            <span className="text-xs text-[#B388FF] font-medium uppercase tracking-wider">
+            <span className="text-xs font-medium uppercase tracking-wider text-[color:var(--color-acento)]">
               Reproduciendo
             </span>
-            <div className="w-10" /> {/* spacer */}
+            <div className="w-10" />
           </div>
 
-          {/* Cover grande */}
-          <div className="flex-1 flex items-center justify-center px-12">
+          <div className="flex flex-1 items-center justify-center px-12">
             <div
-              className={`flex aspect-square w-full max-w-[300px] items-center justify-center rounded-[24px] bg-gradient-to-br ${pistaActual.gradiente} shadow-[0_16px_64px_rgba(124,77,255,0.3)]`}
+              className={`flex aspect-square w-full max-w-[300px] items-center justify-center rounded-[24px] bg-gradient-to-br ${pistaActual.gradiente} shadow-[var(--shell-sombra-fuerte)]`}
             >
               <Icono
                 nombre={pistaActual.icono}
@@ -157,100 +152,105 @@ export default function MiniReproductor() {
             </div>
           </div>
 
-          {/* Info */}
-          <div className="px-8 mb-4">
-            <p className="text-[18px] font-semibold leading-tight text-white">
+          <div className="mb-4 px-8">
+            <p className="text-[18px] font-semibold leading-tight text-[color:var(--shell-texto)]">
               {pistaActual.titulo}
             </p>
-            <p className="mt-1 text-sm leading-5 text-[#B388FF]">
+            <p className="mt-1 text-sm leading-5 text-[color:var(--color-acento)]">
               {pistaActual.subtitulo}
             </p>
           </div>
 
-          {/* Barra de progreso */}
-          <div className="px-8 mb-2">
-            <div className="relative h-1.5 rounded-full bg-white/15">
+          <div className="mb-2 px-8">
+            <div className="relative h-1.5 rounded-full" style={{ background: "var(--shell-borde)" }}>
               <div
-                className="absolute left-0 top-0 h-full rounded-full bg-[#7C4DFF]"
-                style={{ width: `${porcentaje}%` }}
+                className="absolute left-0 top-0 h-full rounded-full"
+                style={{
+                  width: `${porcentaje}%`,
+                  background: "var(--color-primario)",
+                }}
               />
               <input
                 type="range"
                 min={0}
                 max={pistaActual.duracionSegundos}
                 value={progresoSegundos}
-                onChange={(e) => manejarSeek(Number(e.target.value))}
-                className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                onChange={(evento) => manejarSeek(Number(evento.target.value))}
+                className="absolute inset-0 w-full cursor-pointer opacity-0"
               />
             </div>
-            <div className="flex justify-between mt-1.5">
-              <span className="text-[11px] text-[#B388FF] tabular-nums">
+            <div className="mt-1.5 flex justify-between">
+              <span className="text-[11px] tabular-nums text-[color:var(--color-acento)]">
                 {formatearTiempo(progresoSegundos)}
               </span>
-              <span className="text-[11px] text-[#B388FF] tabular-nums">
+              <span className="text-[11px] tabular-nums text-[color:var(--color-acento)]">
                 {formatearTiempo(pistaActual.duracionSegundos)}
               </span>
             </div>
           </div>
 
-          {/* Controles grandes */}
           <div className="flex items-center justify-center gap-8 py-6">
-            <button className="text-[#B388FF] hover:text-white transition-colors">
+            <button className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]">
               <Icono nombre="retroceder" tamaño={28} peso="fill" />
             </button>
             <button
               onClick={toggleReproduccion}
               disabled={mostrandoCarga}
-              className="touch-feedback h-16 w-16 rounded-full bg-white flex items-center justify-center"
+              className="touch-feedback flex h-16 w-16 items-center justify-center rounded-full bg-white"
             >
               {mostrandoCarga ? (
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#1A1128] border-t-transparent" />
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-[color:var(--color-violet-950)] border-t-transparent" />
               ) : (
                 <Icono
                   nombre={reproduciendo ? "pausar" : "reproducir"}
                   tamaño={28}
                   peso="fill"
-                  className="text-[#1A1128]"
+                  className="text-[color:var(--color-violet-950)]"
                 />
               )}
             </button>
-            <button className="text-[#B388FF] hover:text-white transition-colors">
+            <button className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]">
               <Icono nombre="avanzar" tamaño={28} peso="fill" />
             </button>
           </div>
 
-          {/* Volumen */}
           <div className="flex items-center gap-3 px-8 pb-4">
             <button
               onClick={toggleSilencio}
-              className="text-[#B388FF] shrink-0"
+              className="shrink-0 text-[color:var(--color-acento)]"
             >
               <Icono
                 nombre={silenciado ? "volumenMudo" : "volumenAlto"}
                 tamaño={18}
               />
             </button>
-            <div className="flex-1 relative h-1 group">
-              <div className="absolute inset-0 rounded-full bg-white/15" />
+            <div className="group relative h-1 flex-1">
               <div
-                className="absolute left-0 top-0 h-full rounded-full bg-[#B388FF]"
-                style={{ width: `${silenciado ? 0 : volumen}%` }}
+                className="absolute inset-0 rounded-full"
+                style={{ background: "var(--shell-borde)" }}
+              />
+              <div
+                className="absolute left-0 top-0 h-full rounded-full"
+                style={{
+                  width: `${silenciado ? 0 : volumen}%`,
+                  background: "var(--color-acento)",
+                }}
               />
               <input
                 type="range"
                 min={0}
                 max={100}
                 value={silenciado ? 0 : volumen}
-                onChange={(e) => setVolumen(Number(e.target.value))}
-                className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                onChange={(evento) => setVolumen(Number(evento.target.value))}
+                className="absolute inset-0 w-full cursor-pointer opacity-0"
               />
             </div>
           </div>
 
-          {/* Safe area bottom */}
           <div style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }} />
         </div>
       )}
     </>
   );
 }
+

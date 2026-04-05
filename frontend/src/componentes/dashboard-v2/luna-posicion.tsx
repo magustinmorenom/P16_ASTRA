@@ -1,30 +1,59 @@
 import { PanelGlass } from "./panel-glass";
+import { IconoFaseLunar } from "@/componentes/ui/icono-fase-lunar";
 import type { LunaInfoDTO } from "@/lib/tipos";
 
 interface LunaPosicionProps {
   luna: LunaInfoDTO;
+  compacto?: boolean;
 }
 
-export function LunaPosicion({ luna }: LunaPosicionProps) {
-  const texto = luna.significado.trim().toLowerCase().startsWith("luna en")
-    ? luna.significado
-    : `Luna en ${luna.signo}. ${luna.significado}`;
+const ESTILO_TARJETA_LUNA = {
+  background: "var(--shell-superficie)",
+  borderColor: "var(--shell-borde)",
+  boxShadow: "none",
+  backdropFilter: "none",
+} as const;
+
+export function LunaPosicion({ luna, compacto = false }: LunaPosicionProps) {
+  if (compacto) {
+    return (
+      <PanelGlass
+        tono="panel"
+        className="flex items-center gap-2.5 px-3 py-2.5"
+        style={ESTILO_TARJETA_LUNA}
+      >
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center text-[color:var(--color-acento)]">
+          <IconoFaseLunar fase={luna.fase} tamaño={20} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold text-[color:var(--shell-texto)]">
+            Luna en {luna.signo}
+          </p>
+          <p className="mt-0.5 text-[11px] leading-4 text-[color:var(--shell-texto-secundario)]">
+            {luna.fase}
+          </p>
+        </div>
+      </PanelGlass>
+    );
+  }
 
   return (
-    <PanelGlass className="flex items-center gap-3 px-3 py-2">
-      {/* Moon icon dorado */}
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 32 32"
-        fill="#B388FF"
-        className="shrink-0"
-      >
-        <path d="M26 18.5A10 10 0 0113.5 6a10 10 0 1012.5 12.5z" />
-      </svg>
-      <p className="text-white/90 text-[14px] font-medium leading-[1.35] flex-1">
-        {texto}
-      </p>
+    <PanelGlass
+      tono="panel"
+      className="flex items-center gap-3 px-3.5 py-3"
+      style={ESTILO_TARJETA_LUNA}
+    >
+      <div className="flex h-[46px] w-[46px] shrink-0 items-center justify-center text-[color:var(--color-acento)]">
+        <IconoFaseLunar fase={luna.fase} tamaño={24} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
+          Luna en {luna.signo}
+        </p>
+        <p className="mt-1 text-[15px] font-semibold leading-tight text-[color:var(--shell-texto)]">
+          {luna.fase}
+        </p>
+      </div>
     </PanelGlass>
   );
 }

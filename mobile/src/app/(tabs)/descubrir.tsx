@@ -266,9 +266,9 @@ export default function PantallaDescubrir() {
             <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
               <Boton
                 tamaño="sm"
-                onPress={() => router.push("/(features)/oraculo" as never)}
+                onPress={() => router.push("/(tabs)/chat" as never)}
               >
-                Abrir oraculo
+                Abrir chat
               </Boton>
               <Boton
                 tamaño="sm"

@@ -71,8 +71,12 @@ export default function BarraNavegacionInferior() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 bg-[#12091F]/95 backdrop-blur-xl border-t border-white/[0.08]"
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      className="fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-xl"
+      style={{
+        background: "var(--shell-tabbar)",
+        borderColor: "var(--shell-borde)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
     >
       <div className="flex items-center justify-around h-[56px]">
         {tabs.map((tab) => {
@@ -83,7 +87,9 @@ export default function BarraNavegacionInferior() {
               href={tab.ruta}
               className={cn(
                 "touch-feedback flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[44px] px-2 rounded-lg transition-colors",
-                activo ? "text-[#B388FF]" : "text-white/40"
+                activo
+                  ? "text-[color:var(--color-acento)]"
+                  : "text-[color:var(--shell-texto-tenue)]"
               )}
             >
               <Icono

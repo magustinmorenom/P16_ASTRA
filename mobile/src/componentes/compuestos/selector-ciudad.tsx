@@ -132,7 +132,7 @@ export function SelectorCiudad({
             maxHeight: 240,
             overflow: "hidden",
             elevation: 8,
-            shadowColor: "#000",
+            shadowColor: colores.borde,
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.15,
             shadowRadius: 8,

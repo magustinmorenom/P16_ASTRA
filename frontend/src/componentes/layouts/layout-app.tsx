@@ -54,7 +54,10 @@ export default function LayoutApp({
 
   /* ======= DESKTOP LAYOUT ======= */
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-[#16011b]">
+    <div
+      className="flex h-screen flex-col overflow-hidden"
+      style={{ background: "var(--shell-fondo-profundo)" }}
+    >
       {/* Navbar — full width */}
       <Navbar />
 
@@ -64,9 +67,10 @@ export default function LayoutApp({
         <main
           className={
             usaRailContextualSeparado
-              ? "min-h-0 min-w-0 flex-1 overflow-hidden bg-[#16011b]"
-              : "min-h-0 min-w-0 flex-1 overflow-y-auto scroll-sutil bg-[#16011b]"
+              ? "min-h-0 min-w-0 flex-1 overflow-hidden"
+              : "min-h-0 min-w-0 flex-1 overflow-y-auto scroll-sutil"
           }
+          style={{ background: "var(--shell-fondo)" }}
         >
           {children}
         </main>

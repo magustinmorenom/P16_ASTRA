@@ -79,42 +79,48 @@ export function DistribucionEnergetica({
   ];
 
   return (
-    <section className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(124,77,255,0.1),rgba(255,255,255,0.03))] px-4 py-4">
+    <section
+      className="rounded-[24px] border px-4 py-4"
+      style={{
+        borderColor: "var(--shell-borde-fuerte)",
+        background: "linear-gradient(180deg, var(--shell-chip), var(--shell-superficie))",
+      }}
+    >
       <button
         type="button"
         onClick={() => onSeleccionar(items[0].seleccion)}
         className={cn(
           "w-full rounded-[18px] px-0 py-0 text-left transition-all duration-200",
           estaActiva(seleccionActiva, items[0].seleccion)
-            ? "text-white"
-            : "text-white/92 hover:text-white",
+            ? "text-[color:var(--shell-texto)]"
+            : "text-[color:var(--shell-texto-secundario)] hover:text-[color:var(--shell-texto)]",
         )}
       >
-        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/42">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
           {items[0].etiqueta}
         </span>
 
-        <p className="mt-2.5 text-[14px] font-semibold tracking-tight text-white sm:text-[15px]">
+        <p className="mt-2.5 text-[14px] font-semibold tracking-tight text-[color:var(--shell-texto)] sm:text-[15px]">
           {items[0].valor}
         </p>
-        <p className="mt-1 text-[11px] text-white/46">
+        <p className="mt-1 text-[11px] text-[color:var(--shell-texto-tenue)]">
           Combustible y activación.
         </p>
       </button>
 
-      <div className="mt-4 grid gap-0 border-t border-white/[0.08] pt-3 sm:grid-cols-2 sm:divide-x sm:divide-white/[0.08]">
+      <div className="mt-4 grid gap-0 border-t pt-3 sm:grid-cols-2 sm:divide-x" style={{ borderColor: "var(--shell-borde)" }}>
         {items.slice(1).map((item, index) => (
           <button
             key={item.clave}
           type="button"
           onClick={() => onSeleccionar(item.seleccion)}
-          className={cn(
-            `group flex flex-col items-start gap-1.5 px-0 py-2 text-left transition-all duration-200 ${
+            className={cn(
+              `group flex flex-col items-start gap-1.5 px-0 py-2 text-left transition-all duration-200 ${
               index === 1 ? "sm:pl-4" : "sm:pr-4"
             }`,
             estaActiva(seleccionActiva, item.seleccion)
-              ? "text-white"
-              : "text-white/84 hover:text-white",
+              ? "text-[color:var(--shell-texto)]"
+              : "text-[color:var(--shell-texto-secundario)] hover:text-[color:var(--shell-texto)]",
           )}
         >
           <div className="flex items-center gap-2">
@@ -122,15 +128,15 @@ export function DistribucionEnergetica({
               className="h-2.5 w-2.5 rounded-full"
               style={{ backgroundColor: item.color }}
             />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/42">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
               {item.etiqueta}
             </span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-[13px] font-semibold tracking-tight text-white">
+            <span className="text-[13px] font-semibold tracking-tight text-[color:var(--shell-texto)]">
               {item.valor}
             </span>
-            <span className="text-[11px] text-white/42">{item.meta}</span>
+            <span className="text-[11px] text-[color:var(--shell-texto-tenue)]">{item.meta}</span>
           </div>
           </button>
         ))}

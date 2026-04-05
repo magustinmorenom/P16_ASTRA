@@ -17,7 +17,7 @@ interface PanelContextualHDProps {
 }
 
 const TARJETA_PANEL =
-  "rounded-[16px] border border-white/10 bg-white/[0.05] backdrop-blur-xl";
+  "rounded-[16px] border backdrop-blur-xl";
 
 export function obtenerClavePanelContextualHD(seleccion: SeleccionContextualHD) {
   switch (seleccion.tipo) {
@@ -71,25 +71,32 @@ export function PanelContextualHD({
   return (
     <div
       className={cn(
-        "flex h-full min-h-0 flex-col text-white",
+        "flex h-full min-h-0 flex-col text-[color:var(--shell-texto)]",
         esMovil &&
-          "rounded-t-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.18),transparent_28%),linear-gradient(135deg,#170d2c_0%,#241148_54%,#34205f_100%)]",
+          "tema-superficie-panel rounded-t-[22px]",
       )}
     >
       {esMovil ? (
-        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4">
+        <div
+          className="flex items-start justify-between gap-4 border-b px-5 py-4"
+          style={{ borderColor: "var(--shell-borde)" }}
+        >
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#D2BAFF]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-acento)]">
               {detalle.sobrelinea}
             </p>
-            <h3 className="mt-2 text-[17px] font-semibold leading-tight text-white">
+            <h3 className="mt-2 text-[17px] font-semibold leading-tight text-[color:var(--shell-texto)]">
               {detalle.titulo}
             </h3>
           </div>
 
           <button
             onClick={onCerrar}
-            className="shrink-0 rounded-full border border-white/10 bg-white/[0.08] p-2 text-white/72 transition-colors hover:bg-white/[0.14] hover:text-white"
+            className="shrink-0 rounded-full border p-2 text-[color:var(--shell-texto-secundario)] transition-colors hover:text-[color:var(--shell-texto)]"
+            style={{
+              borderColor: "var(--shell-borde)",
+              background: "var(--shell-superficie)",
+            }}
             title="Cerrar detalle"
           >
             <Icono nombre="x" tamaño={16} />
@@ -98,23 +105,30 @@ export function PanelContextualHD({
       ) : null}
 
       <div className="flex-1 overflow-y-auto scroll-sutil px-5 py-5">
-        <article className={cn(TARJETA_PANEL, "overflow-hidden")}>
+        <article
+          className={cn(TARJETA_PANEL, "overflow-hidden")}
+          style={{
+            borderColor: "var(--shell-borde)",
+            background: "var(--shell-superficie)",
+            boxShadow: "var(--shell-sombra-suave)",
+          }}
+        >
           <section className="px-4 py-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/62">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-acento)]">
               Qué es
             </p>
-            <p className="mt-2.5 text-[13px] leading-7 text-violet-50/82">
+            <p className="mt-2.5 text-[13px] leading-7 text-[color:var(--shell-texto-secundario)]">
               {detalle.resumen}
             </p>
           </section>
 
-          <div className="border-t border-white/8" />
+          <div className="border-t" style={{ borderColor: "var(--shell-borde)" }} />
 
           <section className="px-4 py-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/62">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-acento)]">
               En vos
             </p>
-            <p className="mt-2.5 text-[13px] leading-7 text-white/84">
+            <p className="mt-2.5 text-[13px] leading-7 text-[color:var(--shell-texto)]">
               {detalle.significadoUsuario}
             </p>
           </section>
