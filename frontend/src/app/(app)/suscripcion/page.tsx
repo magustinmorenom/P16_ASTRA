@@ -13,13 +13,11 @@ import {
   usarCancelarSuscripcion,
   usarPagos,
   usarDetectarPais,
-  usarSincronizarPagos,
   usarVerificarEstado,
 } from "@/lib/hooks";
 import { useStoreUI } from "@/lib/stores/store-ui";
 import { formatearFechaHora, formatearFecha, formatearFechaCorta } from "@/lib/utilidades/formatear-fecha";
 import type { Plan } from "@/lib/tipos";
-import type { RespuestaSincronizar } from "@/lib/hooks/usar-suscripcion";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
 import {
   esPlanPago,
@@ -312,7 +310,6 @@ export default function PaginaSuscripcion() {
   const cancelar = usarCancelarSuscripcion();
   const { data: pagos, isLoading: cargandoPagos } = usarPagos();
   const { data: paisDetectado, isLoading: cargandoPais } = usarDetectarPais();
-  const sincronizarPagos = usarSincronizarPagos();
   const planActualSlug = miSuscripcion?.plan_slug ?? "gratis";
   const etiquetaPlanActual = obtenerEtiquetaPlan(
     miSuscripcion?.plan_slug,
@@ -714,44 +711,13 @@ export default function PaginaSuscripcion() {
             )}
 
           <section className={`${SUPERFICIE_PANEL} mt-6 p-5 lg:p-6`}>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h2 className="text-base font-semibold tracking-tight text-[color:var(--shell-texto)]">
-                  Pagos y comprobantes
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
-                  Estado de cada cobro y acceso directo al PDF cuando existe factura.
-                </p>
-              </div>
-
-              <Boton
-                variante="fantasma"
-                onClick={() => {
-                  sincronizarPagos.mutate(undefined, {
-                    onSuccess: (datos: RespuestaSincronizar) => {
-                      queryClient.invalidateQueries({ queryKey: ["pagos"] });
-                      queryClient.invalidateQueries({ queryKey: ["mi-suscripcion"] });
-                      queryClient.invalidateQueries({ queryKey: ["verificar-estado"] });
-                      if (datos.sincronizados > 0) {
-                        mostrarToast("exito", `Se sincronizaron ${datos.sincronizados} pagos`);
-                      } else if (datos.errores && datos.errores.length > 0) {
-                        mostrarToast("error", datos.errores.join(". "));
-                      } else {
-                        mostrarToast("info", "No se encontraron pagos nuevos");
-                      }
-                    },
-                    onError: () => {
-                      mostrarToast("error", "Error al conectar con MercadoPago");
-                    },
-                  });
-                }}
-                cargando={sincronizarPagos.isPending}
-                className="rounded-full border px-4"
-                style={ESTILO_BOTON_LINEA}
-                icono={<Icono nombre="descarga" tamaño={16} />}
-              >
-                Sincronizar pagos
-              </Boton>
+            <div>
+              <h2 className="text-base font-semibold tracking-tight text-[color:var(--shell-texto)]">
+                Pagos y comprobantes
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
+                Estado de cada cobro y acceso directo al PDF cuando existe factura.
+              </p>
             </div>
 
             {cargandoPagos ? (

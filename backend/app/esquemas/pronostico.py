@@ -33,6 +33,7 @@ class MomentoClaveSchema(BaseModel):
     icono: str
     frase: str
     nivel: str = Field(description="favorable|neutro|precaucion")
+    accionables: list[str] = Field(default_factory=list, description="2-3 acciones concretas para ese bloque")
 
 
 class AlertaCosmicaSchema(BaseModel):
@@ -85,6 +86,8 @@ class DiaSemanalSchema(BaseModel):
     fecha: str
     clima_estado: str
     energia: int = Field(ge=1, le=10)
+    claridad: int = Field(ge=1, le=10, default=5)
+    intuicion: int = Field(ge=1, le=10, default=5)
     frase_corta: str
     numero_personal: int
 

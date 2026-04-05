@@ -23,6 +23,9 @@ interface EstadoUI {
   silenciado: boolean;
   segmentoActual: number;
   miniReproductorExpandido: boolean;
+  descargandoAudio: boolean;
+  progresoDescarga: number; // 0-100
+  errorAudio: string | null;
 
   setPasoOnboarding: (paso: number) => void;
 
@@ -33,6 +36,9 @@ interface EstadoUI {
   toggleSilencio: () => void;
   setSegmentoActual: (idx: number) => void;
   toggleMiniReproductor: () => void;
+  setDescargandoAudio: (v: boolean) => void;
+  setProgresoDescarga: (v: number) => void;
+  setErrorAudio: (v: string | null) => void;
 }
 
 export const useStoreUI = create<EstadoUI>((set) => ({
@@ -45,6 +51,9 @@ export const useStoreUI = create<EstadoUI>((set) => ({
   silenciado: false,
   segmentoActual: 0,
   miniReproductorExpandido: false,
+  descargandoAudio: false,
+  progresoDescarga: 0,
+  errorAudio: null,
 
   setPasoOnboarding: (paso) => set({ pasoOnboarding: paso }),
 
@@ -54,6 +63,9 @@ export const useStoreUI = create<EstadoUI>((set) => ({
       progresoSegundos: 0,
       reproduciendo: !!pista,
       segmentoActual: 0,
+      descargandoAudio: false,
+      progresoDescarga: 0,
+      errorAudio: null,
     }),
   toggleReproduccion: () =>
     set((estado) => ({ reproduciendo: !estado.reproduciendo })),
@@ -66,4 +78,7 @@ export const useStoreUI = create<EstadoUI>((set) => ({
     set((estado) => ({
       miniReproductorExpandido: !estado.miniReproductorExpandido,
     })),
+  setDescargandoAudio: (v) => set({ descargandoAudio: v }),
+  setProgresoDescarga: (v) => set({ progresoDescarga: v }),
+  setErrorAudio: (v) => set({ errorAudio: v }),
 }));

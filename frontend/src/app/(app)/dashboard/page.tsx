@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 
 import { Icono } from "@/componentes/ui/icono";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
@@ -9,6 +9,7 @@ import { precargarAudiosPodcast } from "@/lib/hooks/usar-audio";
 import {
   usarPronosticoDiario,
   usarPronosticoSemanal,
+  usarPronosticoSemanaSiguiente,
   usarPodcastHoy,
   usarGenerarPodcast,
   usarEsMobile,
@@ -22,6 +23,7 @@ import { COPY_PODCAST_WEB } from "@/lib/utilidades/podcast";
 import { HeroSeccion } from "@/componentes/dashboard-v2/hero-seccion";
 import { AreasVidaV2 } from "@/componentes/dashboard-v2/areas-vida-v2";
 import { SemanaV2 } from "@/componentes/dashboard-v2/semana-v2";
+import { GraficaTendencia } from "@/componentes/dashboard-v2/grafica-tendencia";
 
 // ---------------------------------------------------------------------------
 // Config visual de podcasts
@@ -68,6 +70,30 @@ export default function PaginaDashboard() {
 
   const { data: pronosticoSemanal, isLoading: cargandoSemanal } =
     usarPronosticoSemanal();
+
+  // Siguiente semana (para grafica de tendencia 10 dias)
+  const fechaSiguienteSemana = useMemo(() => {
+    const hoy = new Date();
+    const diff = (7 - hoy.getDay() + 1) % 7 || 7;
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() + diff);
+    return lunes.toISOString().split("T")[0];
+  }, []);
+
+  const { data: pronosticoSiguiente } =
+    usarPronosticoSemanaSiguiente(fechaSiguienteSemana);
+
+  const hoyISO = useMemo(() => new Date().toISOString().split("T")[0], []);
+
+  const datosTendencia = useMemo(() => {
+    const todas = [
+      ...(pronosticoSemanal?.semana ?? []),
+      ...(pronosticoSiguiente?.semana ?? []),
+    ];
+    const idxHoy = todas.findIndex((d) => d.fecha === hoyISO);
+    const inicio = Math.max(0, idxHoy);
+    return todas.slice(inicio, inicio + 10);
+  }, [pronosticoSemanal, pronosticoSiguiente, hoyISO]);
 
   const { data: episodiosHoy } = usarPodcastHoy(generarMutation.isPending);
 
@@ -136,6 +162,21 @@ export default function PaginaDashboard() {
     (generarMutation.isPending && generarMutation.variables === "dia") ||
     epDia?.estado === "generando_guion" ||
     epDia?.estado === "generando_audio";
+
+  const [modalLectura, setModalLectura] = useState(false);
+  const modalLecturaRef = useRef<HTMLDivElement>(null);
+
+  const cerrarModalLectura = useCallback((e: MouseEvent) => {
+    if (modalLecturaRef.current && !modalLecturaRef.current.contains(e.target as Node)) {
+      setModalLectura(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!modalLectura) return;
+    document.addEventListener("mousedown", cerrarModalLectura);
+    return () => document.removeEventListener("mousedown", cerrarModalLectura);
+  }, [modalLectura, cerrarModalLectura]);
 
   const podcastSemanaGenerando =
     (generarMutation.isPending && generarMutation.variables === "semana") ||
@@ -268,10 +309,16 @@ export default function PaginaDashboard() {
               onReproducirPodcast={() => manejarPlayPodcast("dia")}
               onGenerarPodcast={() => generarMutation.mutate("dia")}
               onInformarPodcastManana={manejarInfoPodcastManana}
+              onLeerDia={podcastDiaListo ? () => setModalLectura(true) : undefined}
             />
 
             {/* 2. Áreas de Vida */}
             <AreasVidaV2 areas={pronosticoDiario.areas} />
+
+            {/* 3. Tendencia Cósmica — gráfica 10 días */}
+            {datosTendencia.length >= 3 && (
+              <GraficaTendencia datos={datosTendencia} fechaHoy={hoyISO} />
+            )}
           </>
         )}
 
@@ -286,6 +333,52 @@ export default function PaginaDashboard() {
           />
         ) : null}
       </section>
+
+      {/* Modal Lectura del día */}
+      {modalLectura && epDia?.guion_md && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center"
+          style={{ background: "var(--shell-overlay)" }}
+        >
+          <div
+            ref={modalLecturaRef}
+            className="relative mx-4 max-h-[80vh] w-full max-w-[560px] overflow-hidden rounded-[24px] border backdrop-blur-2xl"
+            style={{
+              borderColor: "var(--shell-borde)",
+              background: "var(--shell-panel)",
+              boxShadow: "var(--shell-sombra-fuerte)",
+            }}
+          >
+            <div className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: "var(--shell-borde)" }}>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-acento)]">
+                  Tu lectura del día
+                </p>
+                <h3 className="mt-1 text-[18px] font-semibold text-[color:var(--shell-texto)]">
+                  {epDia.titulo}
+                </h3>
+              </div>
+              <button
+                onClick={() => setModalLectura(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full transition-colors text-[color:var(--shell-texto-tenue)] hover:text-[color:var(--shell-texto)]"
+                style={{ background: "var(--shell-superficie-suave)" }}
+              >
+                <Icono nombre="x" tamaño={18} />
+              </button>
+            </div>
+            <div className="overflow-y-auto px-6 py-5" style={{ maxHeight: "calc(80vh - 80px)" }}>
+              {epDia.guion_md.split("\n\n").map((parrafo, idx) => (
+                <p
+                  key={idx}
+                  className="mb-4 text-[14px] leading-[1.7] text-[color:var(--shell-texto-secundario)] last:mb-0"
+                >
+                  {parrafo}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

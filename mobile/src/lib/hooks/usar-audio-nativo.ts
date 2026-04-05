@@ -17,11 +17,17 @@ export function usarAudioNativo() {
     volumen,
     silenciado,
     segmentoActual,
+    descargandoAudio,
+    progresoDescarga,
+    errorAudio,
     toggleReproduccion,
     setProgreso,
     setVolumen,
     toggleSilencio,
     setSegmentoActual,
+    setDescargandoAudio,
+    setProgresoDescarga,
+    setErrorAudio,
   } = useStoreUI();
 
   const player = useAudioPlayer(null);
@@ -43,6 +49,10 @@ export function usarAudioNativo() {
 
     const cargarAudio = async () => {
       try {
+        setErrorAudio(null);
+        setDescargandoAudio(true);
+        setProgresoDescarga(0);
+
         const token = await SecureStore.getItemAsync("access_token");
         const audioUrl = `${API_BASE_URL}/podcast/audio/${pistaActual.id}`;
         const destino = new ExpoFile(Paths.cache, `podcast_${pistaActual.id}.mp3`);
@@ -52,10 +62,16 @@ export function usarAudioNativo() {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
 
+        setProgresoDescarga(100);
+        setDescargandoAudio(false);
+
         player.replace({ uri: destino.uri });
         player.play();
       } catch {
-        // Error al cargar audio — silenciar
+        setDescargandoAudio(false);
+        setProgresoDescarga(0);
+        setErrorAudio("No se pudo cargar el audio. Verifica tu conexion.");
+        useStoreUI.setState({ reproduciendo: false });
       }
     };
 
@@ -138,6 +154,9 @@ export function usarAudioNativo() {
     silenciado,
     segmentoActual,
     porcentaje,
+    descargandoAudio,
+    progresoDescarga,
+    errorAudio,
     toggleReproduccion,
     setVolumen,
     toggleSilencio,

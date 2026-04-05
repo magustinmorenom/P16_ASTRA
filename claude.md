@@ -15,7 +15,8 @@ IMPORTANTE IDIOMA: TODO LO QUE PROGRAMES DEBE SER EN ESPAÑOL (salvo nombres esp
 | Archivo | Contenido |
 |---------|-----------|
 | `context/ADR-0.md` | Architecture Requirements Document — CosmicEngine v1.0. Define stack, servicios, modelos de datos, endpoints, dependencias y roadmap. |
-| `context/criterio-chatbot.md` | Criterios del chatbot Oráculo ASTRA: reglas de respuesta, fuentes de datos, arquitectura de scoring temporal (astro+numero+eventos), detector de intent, flujo completo. |
+| `context/criterios/criterio-chatbot.md` | Criterios del chatbot Oráculo ASTRA: reglas de respuesta, fuentes de datos, arquitectura de scoring temporal (astro+numero+eventos), detector de intent, flujo completo. |
+| `context/criterios/criterio-niveles.md` | Criterios de cálculo determinista de Energía, Claridad e Intuición: tablas por número personal, modificadores por signo lunar y fase lunar. |
 | `context/resumen-de-cambios.md` | Changelog de sesiones de desarrollo. Cada sesion documentada con fecha, archivos creados/modificados, y explicacion funcional. |
 
 > Cuando se agreguen nuevos archivos a `context/`, los agentes deben leerlos todos antes de actuar.

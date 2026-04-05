@@ -196,6 +196,65 @@ class ServicioPronostico:
         },
     }
 
+    # Tabla de claridad mental por número personal
+    # Números analíticos/mentales (1,7,11) → alta claridad
+    # Números emocionales/receptivos (2,6,9) → claridad moderada
+    # Números de acción/impulso (3,5,8) → claridad media
+    _CLARIDAD_POR_NUMERO = {
+        1: 8, 2: 5, 3: 6, 4: 7, 5: 5, 6: 6, 7: 9, 8: 6, 9: 5, 11: 9, 22: 8, 33: 7,
+    }
+
+    # Tabla de intuición por número personal
+    # Números receptivos/espirituales (2,7,9,11,33) → alta intuición
+    # Números de acción/estructura (1,4,8,22) → intuición moderada
+    _INTUICION_POR_NUMERO = {
+        1: 5, 2: 8, 3: 6, 4: 4, 5: 6, 6: 7, 7: 9, 8: 5, 9: 8, 11: 10, 22: 6, 33: 9,
+    }
+
+    # Modificador de intuición por signo lunar
+    # Signos de agua (alta intuición), fuego (baja), tierra (media), aire (media-alta)
+    _INTUICION_MOD_SIGNO = {
+        "Aries": -1, "Tauro": 0, "Géminis": 0, "Cáncer": 2,
+        "Leo": -1, "Virgo": 0, "Libra": 0, "Escorpio": 2,
+        "Sagitario": 0, "Capricornio": -1, "Acuario": 1, "Piscis": 3,
+    }
+
+    # Modificador de claridad por signo lunar
+    # Signos de aire/tierra (mental claro), agua (nublado), fuego (variable)
+    _CLARIDAD_MOD_SIGNO = {
+        "Aries": 0, "Tauro": 1, "Géminis": 2, "Cáncer": -1,
+        "Leo": 1, "Virgo": 2, "Libra": 1, "Escorpio": -2,
+        "Sagitario": 1, "Capricornio": 1, "Acuario": 1, "Piscis": -2,
+    }
+
+    # Modificador por fase lunar
+    # Luna nueva: más intuición, menos claridad. Luna llena: más claridad, más intuición.
+    _MOD_FASE = {
+        "Luna Nueva": {"intuicion": 1, "claridad": -1},
+        "Creciente": {"intuicion": 0, "claridad": 1},
+        "Cuarto Creciente": {"intuicion": 0, "claridad": 1},
+        "Gibosa Creciente": {"intuicion": 1, "claridad": 0},
+        "Luna Llena": {"intuicion": 2, "claridad": 1},
+        "Gibosa Menguante": {"intuicion": 1, "claridad": 0},
+        "Cuarto Menguante": {"intuicion": 0, "claridad": -1},
+        "Menguante": {"intuicion": 1, "claridad": -1},
+    }
+
+    @classmethod
+    def _calcular_claridad_intuicion(cls, num: int, signo_luna: str, fase_luna: str) -> tuple[int, int]:
+        """Calcula claridad e intuición combinando número personal, signo lunar y fase."""
+        claridad = cls._CLARIDAD_POR_NUMERO.get(num, 5)
+        intuicion = cls._INTUICION_POR_NUMERO.get(num, 5)
+
+        claridad += cls._CLARIDAD_MOD_SIGNO.get(signo_luna, 0)
+        intuicion += cls._INTUICION_MOD_SIGNO.get(signo_luna, 0)
+
+        mod_fase = cls._MOD_FASE.get(fase_luna, {"intuicion": 0, "claridad": 0})
+        claridad += mod_fase["claridad"]
+        intuicion += mod_fase["intuicion"]
+
+        return max(1, min(10, claridad)), max(1, min(10, intuicion))
+
     @classmethod
     def _generar_fallback_diario(
         cls, numero_personal: dict, luna_info: dict
@@ -213,6 +272,8 @@ class ServicioPronostico:
         # Interpretación por signo lunar
         interp = cls._LUNA_EN_SIGNO.get(signo_luna, cls._LUNA_EN_SIGNO["Aries"])
 
+        claridad, intuicion = cls._calcular_claridad_intuicion(num, signo_luna, fase_luna)
+
         return {
             "clima": {
                 "estado": interp["clima"],
@@ -224,8 +285,8 @@ class ServicioPronostico:
                     + f"te invita a {significado_luna.lower() if significado_luna else 'sintonizar con tu intuición'}."
                 ),
                 "energia": energia_base.get(num, 5),
-                "claridad": 5,
-                "intuicion": 5,
+                "claridad": claridad,
+                "intuicion": intuicion,
             },
             "areas": [
                 {"id": "trabajo", "nombre": "Trabajo", "nivel": "neutro", "icono": "briefcase",
@@ -243,11 +304,14 @@ class ServicioPronostico:
             ],
             "momentos": [
                 {"bloque": "manana", "titulo": "Mañana", "icono": "sunrise",
-                 "frase": "Empezá el día con calma", "nivel": "neutro"},
+                 "frase": "Empezá el día con calma", "nivel": "neutro",
+                 "accionables": ["Dedicá los primeros 30 min a planificar", "Evitá revisar redes antes de las 9"]},
                 {"bloque": "tarde", "titulo": "Tarde", "icono": "sun",
-                 "frase": "Buen momento para avanzar tareas", "nivel": "neutro"},
+                 "frase": "Buen momento para avanzar tareas", "nivel": "neutro",
+                 "accionables": ["Enfocate en la tarea más importante entre 14 y 16h", "Salí a caminar 10 min si podés"]},
                 {"bloque": "noche", "titulo": "Noche", "icono": "moon",
-                 "frase": "Descansá y recargá", "nivel": "neutro"},
+                 "frase": "Descansá y recargá", "nivel": "neutro",
+                 "accionables": ["Cerrá pantallas 1h antes de dormir", "Escribí 3 cosas buenas del día"]},
             ],
             "alertas": [],
             "consejo_hd": {
@@ -496,18 +560,22 @@ class ServicioPronostico:
         config = obtener_configuracion()
         if not config.anthropic_api_key:
             # Fallback sin AI
-            return {
-                "semana": [
-                    {
-                        "fecha": d["fecha"],
-                        "clima_estado": "nublado",
-                        "energia": 5,
-                        "frase_corta": f"Número personal {d['numero_personal']} — {d['desc_numero']}",
-                        "numero_personal": d["numero_personal"],
-                    }
-                    for d in dias_info
-                ]
-            }
+            semana_fallback = []
+            for d in dias_info:
+                energia_base = {1: 8, 2: 5, 3: 7, 4: 4, 5: 7, 6: 6, 7: 3, 8: 8, 9: 6, 11: 9, 22: 7, 33: 8}
+                claridad, intuicion = cls._calcular_claridad_intuicion(
+                    d["numero_personal"], d["luna_signo"], d["luna_fase"],
+                )
+                semana_fallback.append({
+                    "fecha": d["fecha"],
+                    "clima_estado": "nublado",
+                    "energia": energia_base.get(d["numero_personal"], 5),
+                    "claridad": claridad,
+                    "intuicion": intuicion,
+                    "frase_corta": f"Número personal {d['numero_personal']} — {d['desc_numero']}",
+                    "numero_personal": d["numero_personal"],
+                })
+            return {"semana": semana_fallback}
 
         resumen_perfil = ServicioOraculo._resumir_perfil(perfil_cosmico)
 
@@ -563,20 +631,34 @@ class ServicioPronostico:
             validado = PronosticoSemanalSchema(**resultado)
             resultado = validado.model_dump()
 
+            # Inyectar claridad/intuición deterministas (no dependen de AI)
+            for dia_resultado, dia_info in zip(resultado["semana"], dias_info):
+                cl, it = cls._calcular_claridad_intuicion(
+                    dia_info["numero_personal"],
+                    dia_info["luna_signo"],
+                    dia_info["luna_fase"],
+                )
+                dia_resultado["claridad"] = cl
+                dia_resultado["intuicion"] = it
+
         except Exception as e:
             logger.error("Error generando pronóstico semanal: %s", e)
-            resultado = {
-                "semana": [
-                    {
-                        "fecha": d["fecha"],
-                        "clima_estado": "nublado",
-                        "energia": 5,
-                        "frase_corta": f"Número personal {d['numero_personal']} — {d['desc_numero']}",
-                        "numero_personal": d["numero_personal"],
-                    }
-                    for d in dias_info
-                ]
-            }
+            energia_base = {1: 8, 2: 5, 3: 7, 4: 4, 5: 7, 6: 6, 7: 3, 8: 8, 9: 6, 11: 9, 22: 7, 33: 8}
+            semana_error = []
+            for d in dias_info:
+                cl, it = cls._calcular_claridad_intuicion(
+                    d["numero_personal"], d["luna_signo"], d["luna_fase"],
+                )
+                semana_error.append({
+                    "fecha": d["fecha"],
+                    "clima_estado": "nublado",
+                    "energia": energia_base.get(d["numero_personal"], 5),
+                    "claridad": cl,
+                    "intuicion": it,
+                    "frase_corta": f"Número personal {d['numero_personal']} — {d['desc_numero']}",
+                    "numero_personal": d["numero_personal"],
+                })
+            resultado = {"semana": semana_error}
 
         # 5. Guardar en cache
         try:

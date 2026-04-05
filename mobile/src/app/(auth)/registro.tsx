@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Link } from "expo-router";
-import { GoogleLogo, Envelope, Lock, User } from "phosphor-react-native";
+import { GoogleLogo, Envelope, Lock, User, Eye, EyeSlash } from "phosphor-react-native";
+import { validarContrasena, esContrasenaValida } from "@/lib/utilidades/validacion-contrasena";
+import { RequisitosContrasena } from "@/componentes/feedback/requisito-contrasena";
 import * as WebBrowser from "expo-web-browser";
 import * as SecureStore from "expo-secure-store";
 import { ShellAcceso } from "@/componentes/layouts/shell-acceso";
@@ -16,15 +18,18 @@ export default function RegistroScreen() {
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [contrasena, setContrasena] = useState("");
+  const [mostrarContrasena, setMostrarContrasena] = useState(false);
   const [error, setError] = useState("");
+
+  const validacion = useMemo(() => validarContrasena(contrasena), [contrasena]);
 
   const registro = usarRegistro();
   const googleAuth = usarGoogleAuthUrl();
 
   const manejarRegistro = () => {
     setError("");
-    if (contrasena.length < 8) {
-      setError("La contraseña debe tener al menos 8 caracteres");
+    if (!esContrasenaValida(validacion)) {
+      setError("La contrasena debe tener al menos 8 caracteres, una mayuscula, un numero y un simbolo");
       return;
     }
     registro.mutate(
@@ -138,14 +143,28 @@ export default function RegistroScreen() {
         icono={<Envelope size={18} color={colores.textoMuted} />}
       />
 
-      <Input
-        etiqueta="Contraseña"
-        placeholder="Mínimo 8 caracteres"
-        value={contrasena}
-        onChangeText={setContrasena}
-        secureTextEntry
-        icono={<Lock size={18} color={colores.textoMuted} />}
-      />
+      <View>
+        <Input
+          etiqueta="Contraseña"
+          placeholder="Mínimo 8 caracteres"
+          value={contrasena}
+          onChangeText={setContrasena}
+          secureTextEntry={!mostrarContrasena}
+          icono={<Lock size={18} color={colores.textoMuted} />}
+        />
+        <Pressable
+          onPress={() => setMostrarContrasena(!mostrarContrasena)}
+          style={{ position: "absolute", right: 16, top: 38 }}
+        >
+          {mostrarContrasena ? (
+            <EyeSlash size={20} color={colores.textoMuted} />
+          ) : (
+            <Eye size={20} color={colores.textoMuted} />
+          )}
+        </Pressable>
+      </View>
+
+      {contrasena.length > 0 && <RequisitosContrasena validacion={validacion} />}
 
       {error ? (
         <View
@@ -189,7 +208,14 @@ export default function RegistroScreen() {
           marginTop: 14,
         }}
       >
-        Cuando termines el registro te vamos a pedir tus datos de nacimiento para calcular tu perfil.
+        Al registrarte aceptas nuestros{" "}
+        <Text style={{ color: colores.acento, textDecorationLine: "underline" }}>
+          Terminos de Servicio
+        </Text>
+        {" "}y{" "}
+        <Text style={{ color: colores.acento, textDecorationLine: "underline" }}>
+          Politica de Privacidad
+        </Text>
       </Text>
     </ShellAcceso>
   );

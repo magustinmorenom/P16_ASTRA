@@ -40,7 +40,8 @@
       "expo-web-browser",
       "expo-splash-screen",
       "expo-font",
-      "expo-asset"
+      "expo-asset",
+      "@sentry/react-native"
     ]
   }
 }

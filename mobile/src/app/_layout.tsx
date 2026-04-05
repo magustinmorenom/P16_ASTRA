@@ -17,6 +17,7 @@ import {
 } from "@expo-google-fonts/inter";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { useStoreTema } from "@/lib/stores/store-tema";
+import { IndicadorOffline } from "@/componentes/feedback/indicador-offline";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -98,6 +99,7 @@ export default function LayoutRaiz() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <StatusBar style={esquemaActivo === "dark" ? "light" : "dark"} />
+          <IndicadorOffline />
           <GuardAuth>
             <Stack
               screenOptions={{

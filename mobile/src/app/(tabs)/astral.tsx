@@ -1,11 +1,12 @@
 import { useState, useCallback } from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
 import { AnimacionEntrada } from "@/componentes/ui/animacion-entrada";
 import { RuedaZodiacal } from "@/componentes/visualizaciones/rueda-zodiacal";
 import { usarMisCalculos } from "@/lib/hooks/usar-mis-calculos";
 import { usarTema } from "@/lib/hooks/usar-tema";
+import { EstadoVacio } from "@/componentes/feedback/estado-vacio";
 import { generarEsencia } from "@/lib/utilidades/interpretaciones-natal";
 
 import { SeccionTriada } from "@/componentes/carta-natal/seccion-triada";
@@ -14,15 +15,24 @@ import { PlanetasNarrativo } from "@/componentes/carta-natal/planeta-narrativo";
 import { AspectosNarrativo } from "@/componentes/carta-natal/aspectos-narrativo";
 import { CasasGrid } from "@/componentes/carta-natal/casas-grid";
 import { SheetDetalle, type SeleccionSheet } from "@/componentes/carta-natal/sheet-detalle";
+import { useRouter } from "expo-router";
 
 import type { Planeta, Aspecto, Casa } from "@/lib/tipos";
 
 export default function PantallaAstral() {
   const insets = useSafeAreaInsets();
-  const { data: calculos, isLoading } = usarMisCalculos();
+  const { data: calculos, isLoading, refetch } = usarMisCalculos();
   const { colores } = usarTema();
+  const router = useRouter();
   const natal = calculos?.natal;
   const [seleccion, setSeleccion] = useState<SeleccionSheet | null>(null);
+  const [refrescando, setRefrescando] = useState(false);
+
+  const manejarRefresh = async () => {
+    setRefrescando(true);
+    await refetch();
+    setRefrescando(false);
+  };
 
   const seleccionarPlaneta = useCallback((p: Planeta) => {
     setSeleccion({ tipo: "planeta", planeta: p });
@@ -57,13 +67,13 @@ export default function PantallaAstral() {
 
   if (!natal) {
     return (
-      <View style={{ flex: 1, backgroundColor: colores.fondo, alignItems: "center", justifyContent: "center", paddingHorizontal: 32, paddingTop: insets.top }}>
-        <Text style={{ color: colores.primario, fontSize: 20, fontFamily: "Inter_700Bold", textAlign: "center" }}>
-          Carta Astral
-        </Text>
-        <Text style={{ color: colores.textoSecundario, textAlign: "center", marginTop: 8 }}>
-          Completá tu perfil para ver tu carta natal
-        </Text>
+      <View style={{ flex: 1, backgroundColor: colores.fondo, paddingTop: insets.top }}>
+        <EstadoVacio
+          icono="moon"
+          titulo="Tu carta astral espera"
+          descripcion="Completa tu perfil de nacimiento para descubrir lo que los astros tienen para vos."
+          accion={{ texto: "Ir a Perfil", onPress: () => router.push("/(tabs)/perfil") }}
+        />
       </View>
     );
   }
@@ -80,6 +90,9 @@ export default function PantallaAstral() {
           paddingBottom: 120,
           paddingHorizontal: 16,
         }}
+        refreshControl={
+          <RefreshControl refreshing={refrescando} onRefresh={manejarRefresh} tintColor={colores.acento} />
+        }
       >
         {/* Título + Esencia */}
         <AnimacionEntrada>

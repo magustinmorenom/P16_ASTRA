@@ -3,6 +3,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -11,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Tarjeta } from "@/componentes/ui/tarjeta";
 import { IconoAstral } from "@/componentes/ui/icono-astral";
+import { EstadoVacio } from "@/componentes/feedback/estado-vacio";
 import { usarTema } from "@/lib/hooks/usar-tema";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { usarEnviarMensaje, usarHistorialChat, usarNuevaConversacion } from "@/lib/hooks";
@@ -70,7 +72,11 @@ export default function PantallaChat() {
   const [limiteAlcanzado, setLimiteAlcanzado] = useState(false);
 
   const esPremium = usuario?.plan_slug === "premium";
+  const inputRef = useRef<TextInput>(null);
+  const [refrescando, setRefrescando] = useState(false);
+
   const historial = usarHistorialChat(true);
+  const { refetch } = historial;
   const enviarMensaje = usarEnviarMensaje();
   const nuevaConversacion = usarNuevaConversacion();
 
@@ -145,6 +151,13 @@ export default function PantallaChat() {
         setHistorialSincronizado(false);
       },
     });
+  };
+
+  const alRefrescar = async () => {
+    setRefrescando(true);
+    setHistorialSincronizado(false);
+    await refetch();
+    setRefrescando(false);
   };
 
   const estadoConsulta = esPremium
@@ -265,6 +278,13 @@ export default function PantallaChat() {
             style={{ flex: 1 }}
             contentContainerStyle={{ paddingBottom: 20 }}
             keyboardShouldPersistTaps="handled"
+            refreshControl={
+              <RefreshControl
+                refreshing={refrescando}
+                onRefresh={alRefrescar}
+                tintColor={colores.acento}
+              />
+            }
           >
             {historial.isLoading && !historialSincronizado ? (
               <Tarjeta>
@@ -273,54 +293,15 @@ export default function PantallaChat() {
                 </Text>
               </Tarjeta>
             ) : mensajes.length === 0 ? (
-              <Tarjeta>
-                <Text
-                  style={{
-                    color: colores.primario,
-                    fontSize: 18,
-                    fontFamily: "Inter_700Bold",
-                  }}
-                >
-                  Hola {usuario?.nombre?.split(" ")[0] ?? "viajero"}
-                </Text>
-                <Text
-                  style={{
-                    color: colores.textoSecundario,
-                    fontSize: 14,
-                    lineHeight: 20,
-                    marginTop: 8,
-                  }}
-                >
-                  Elegí un disparador o escribí tu pregunta. ASTRA ya entra con tu contexto completo.
-                </Text>
-
-                <View style={{ marginTop: 16, gap: 8 }}>
-                  {SUGERENCIAS.map((sugerencia) => (
-                    <Pressable
-                      key={sugerencia}
-                      onPress={() => enviar(sugerencia)}
-                      style={{
-                        borderRadius: 14,
-                        borderWidth: 1,
-                        borderColor: colores.borde,
-                        paddingHorizontal: 12,
-                        paddingVertical: 12,
-                        backgroundColor: colores.superficie,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: colores.primario,
-                          fontSize: 14,
-                          fontFamily: "Inter_500Medium",
-                        }}
-                      >
-                        {sugerencia}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </Tarjeta>
+              <EstadoVacio
+                icono="chat"
+                titulo="Tu oraculo personal"
+                descripcion="Hacele cualquier pregunta sobre tu carta, tu energia del dia o tus transitos. Sabe todo sobre vos."
+                accion={{
+                  texto: "Empezar conversacion",
+                  onPress: () => inputRef.current?.focus(),
+                }}
+              />
             ) : (
               mensajes.map((mensaje, index) => (
                 <BurbujaMensaje
@@ -377,6 +358,7 @@ export default function PantallaChat() {
                 }}
               >
                 <TextInput
+                  ref={inputRef}
                   value={texto}
                   onChangeText={setTexto}
                   placeholder="Escribí tu pregunta..."

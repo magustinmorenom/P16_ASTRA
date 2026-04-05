@@ -1,6 +1,8 @@
-import { ScrollView, Text, View, Pressable, ActivityIndicator } from "react-native";
+import { useState } from "react";
+import { ScrollView, Text, View, Pressable, ActivityIndicator, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   ArrowRight,
@@ -19,6 +21,7 @@ import { Esqueleto } from "@/componentes/ui/esqueleto";
 import { Tarjeta } from "@/componentes/ui/tarjeta";
 import { AnimacionEntrada } from "@/componentes/ui/animacion-entrada";
 import { IconoAstral, IconoSigno } from "@/componentes/ui/icono-astral";
+import { EstadoVacio } from "@/componentes/feedback/estado-vacio";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { useStoreUI, type PistaReproduccion } from "@/lib/stores/store-ui";
 import {
@@ -447,6 +450,8 @@ export default function DashboardScreen() {
   const usuario = useStoreAuth((s) => s.usuario);
   const setPistaActual = useStoreUI((s) => s.setPistaActual);
   const { colores, esOscuro } = usarTema();
+  const queryClient = useQueryClient();
+  const [refrescando, setRefrescando] = useState(false);
 
   const {
     data: pronostico,
@@ -475,6 +480,13 @@ export default function DashboardScreen() {
     setPistaActual(pista);
   };
 
+  const manejarRefresh = async () => {
+    setRefrescando(true);
+    await queryClient.invalidateQueries({ queryKey: ["pronostico"] });
+    await queryClient.invalidateQueries({ queryKey: ["podcast"] });
+    setRefrescando(false);
+  };
+
   return (
     <FondoCosmico intensidad="hero">
       <ScrollView
@@ -484,6 +496,14 @@ export default function DashboardScreen() {
           paddingBottom: 124,
           paddingHorizontal: 16,
         }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refrescando}
+            onRefresh={manejarRefresh}
+            tintColor={colores.acento}
+            colors={[colores.acento]}
+          />
+        }
       >
         <AnimacionEntrada>
           <View
@@ -560,41 +580,12 @@ export default function DashboardScreen() {
                 </View>
               </View>
             ) : errorPronostico || !pronostico ? (
-              <View style={{ marginTop: 14 }}>
-                <Text
-                  style={{
-                    color: colores.primario,
-                    fontSize: 26,
-                    lineHeight: 32,
-                    fontFamily: "Inter_700Bold",
-                  }}
-                >
-                  No pudimos leer tu clima de hoy
-                </Text>
-                <Text
-                  style={{
-                    color: colores.textoSecundario,
-                    fontSize: 14,
-                    marginTop: 12,
-                    lineHeight: 21,
-                  }}
-                >
-                  Probá de nuevo. Si el error persiste, revisá tus datos natales desde
-                  perfil.
-                </Text>
-                <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
-                  <Boton tamaño="sm" onPress={() => refetch()}>
-                    Reintentar
-                  </Boton>
-                  <Boton
-                    tamaño="sm"
-                    variante="secundario"
-                    onPress={() => router.push("/(tabs)/perfil" as never)}
-                  >
-                    Ir a perfil
-                  </Boton>
-                </View>
-              </View>
+              <EstadoVacio
+                icono="cloud-slash"
+                titulo="Los astros se escondieron"
+                descripcion="No pudimos conectar con el cielo. Verifica tu conexion y volve a intentar."
+                accion={{ texto: "Reintentar", onPress: () => refetch() }}
+              />
             ) : (
               <>
                 <Text
