@@ -31,16 +31,45 @@ import { PlanetasNarrativo } from "@/componentes/carta-natal/planetas-narrativo"
 import { SeccionTriada } from "@/componentes/carta-natal/seccion-triada";
 
 const FONDO_PAGINA =
-  "relative min-h-full bg-[#16011B] lg:h-full lg:min-h-0 lg:overflow-hidden";
+  "relative min-h-full lg:h-full lg:min-h-0 lg:overflow-hidden";
+const ESTILO_FONDO_PAGINA = {
+  background: "var(--shell-fondo)",
+} as const;
+const ESTILO_PANEL_INTERNO = {
+  borderColor: "var(--shell-borde)",
+  background: "var(--shell-superficie-suave)",
+} as const;
+const ESTILO_CHIP = {
+  borderColor: "var(--shell-chip-borde)",
+  background: "var(--shell-chip)",
+  color: "var(--shell-texto-secundario)",
+} as const;
+const ESTILO_BOTON_CIERRE = {
+  borderColor: "var(--shell-borde)",
+  background: "var(--shell-superficie)",
+  color: "var(--shell-texto-secundario)",
+} as const;
 
 type VistaExplorador = "planetas" | "aspectos" | "casas";
 
 function CapasFondo() {
   return (
     <>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,77,255,0.24),transparent_26%),radial-gradient(circle_at_top_right,rgba(179,136,255,0.16),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(76,35,140,0.18),transparent_30%)]" />
-      <div className="absolute right-[-80px] top-0 h-72 w-72 rounded-full bg-[#B388FF]/14 blur-3xl" />
-      <div className="absolute left-[-40px] top-1/3 h-64 w-64 rounded-full bg-[#7C4DFF]/12 blur-3xl" />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle_at_top_left, var(--shell-glow-1), transparent 26%), radial-gradient(circle_at_top_right, var(--shell-glow-2), transparent 22%), radial-gradient(circle_at_bottom_left, var(--shell-glow-1), transparent 30%)",
+        }}
+      />
+      <div
+        className="absolute right-[-80px] top-0 h-72 w-72 rounded-full blur-3xl"
+        style={{ background: "var(--shell-glow-2)" }}
+      />
+      <div
+        className="absolute left-[-40px] top-1/3 h-64 w-64 rounded-full blur-3xl"
+        style={{ background: "var(--shell-glow-1)" }}
+      />
     </>
   );
 }
@@ -80,7 +109,10 @@ function ModalRuedaAstral({
   if (!abierta || !datos) return null;
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#11091f]/72 px-4 backdrop-blur-md">
+    <div
+      className="fixed inset-0 z-[120] flex items-center justify-center px-4 backdrop-blur-md"
+      style={{ background: "var(--shell-overlay)" }}
+    >
       <button
         type="button"
         aria-label="Cerrar rueda natal"
@@ -89,15 +121,18 @@ function ModalRuedaAstral({
       />
 
       <div
-        className="relative z-10 w-full max-w-[980px] overflow-hidden rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.16),transparent_28%),linear-gradient(135deg,#170d2c_0%,#241148_54%,#34205f_100%)] shadow-[0_30px_100px_rgba(10,4,25,0.48)]"
+        className="tema-superficie-panel relative z-10 w-full max-w-[980px] overflow-hidden rounded-[32px]"
         onClick={(evento) => evento.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-3 lg:px-6">
+        <div
+          className="flex items-center justify-between gap-4 border-b px-5 py-3 lg:px-6"
+          style={{ borderColor: "var(--shell-borde)" }}
+        >
           <div>
-            <p className={`${ETIQUETA_CARTA} text-violet-200/70`}>
+            <p className={`${ETIQUETA_CARTA} text-[color:var(--color-acento)]`}>
               Rueda natal
             </p>
-            <h2 className="mt-1 text-[20px] font-semibold tracking-tight text-white">
+            <h2 className="mt-1 text-[20px] font-semibold tracking-tight text-[color:var(--shell-texto)]">
               Mapa completo de la carta
             </h2>
           </div>
@@ -105,19 +140,25 @@ function ModalRuedaAstral({
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-full border border-white/10 bg-white/[0.08] p-2 text-violet-100/75 transition-colors hover:bg-white/[0.14] hover:text-white"
+            className="rounded-full border p-2 transition-colors hover:text-[color:var(--shell-texto)]"
+            style={ESTILO_BOTON_CIERRE}
           >
             <Icono nombre="x" tamaño={18} />
           </button>
         </div>
 
-        <div className="flex items-center justify-center p-3 lg:p-4" style={{ height: "80vh" }}>
+        <div className="p-3 lg:p-4">
+          <div
+            className="tema-superficie-panel-suave flex items-center justify-center rounded-[28px] p-3 lg:p-4"
+            style={{ height: "80vh" }}
+          >
           <RuedaZodiacal
             planetas={datos.planetas}
             casas={datos.casas}
             aspectos={datos.aspectos}
             className="mx-auto h-full w-auto max-w-full aspect-square"
           />
+          </div>
         </div>
       </div>
     </div>
@@ -190,23 +231,25 @@ export default function PaginaCartaNatal() {
     return (
       <>
         <HeaderMobile titulo="Carta Astral" mostrarAtras />
-        <div className={FONDO_PAGINA}>
+        <div className={FONDO_PAGINA} style={ESTILO_FONDO_PAGINA}>
           <CapasFondo />
 
           <section className="relative z-10 flex h-full flex-col gap-6 overflow-y-auto scroll-sutil p-5 lg:p-[28px_32px]">
             <div className={`${SUPERFICIE_OSCURA_CARTA} p-6 lg:p-8`}>
-              <div className="absolute -right-14 top-8 h-36 w-36 rounded-full bg-[#B388FF]/18 blur-3xl" />
+              <div
+                className="absolute -right-14 top-8 h-36 w-36 rounded-full blur-3xl"
+                style={{ background: "var(--shell-glow-2)" }}
+              />
               <div className="relative z-10">
-                <p className={`${ETIQUETA_CARTA} text-violet-200/75`}>Carta astral</p>
-                <div className="mt-4 flex items-start gap-4">
-                  <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#B388FF] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
+                <div className="flex items-start gap-4">
+                  <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-violet-500 via-violet-400 to-violet-300 shadow-[var(--shell-sombra-fuerte)] sm:flex">
                     <IconoAstral nombre="astrologia" tamaño={30} className="text-white" />
                   </div>
                   <div>
-                    <h1 className="text-[26px] font-semibold tracking-tight text-white lg:text-[32px]">
+                    <h1 className="text-[26px] font-semibold tracking-tight text-[color:var(--shell-texto)] lg:text-[32px]">
                       Carta Astral
                     </h1>
-                    <p className="mt-3 max-w-3xl text-[14px] leading-relaxed text-violet-100/72">
+                    <p className="mt-3 max-w-3xl text-[14px] leading-relaxed text-[color:var(--shell-texto-secundario)]">
                       Estamos preparando la lectura base de tu carta para mostrarla
                       con una jerarquía más sobria y útil.
                     </p>
@@ -224,8 +267,8 @@ export default function PaginaCartaNatal() {
             </div>
 
             <div className={`${SUPERFICIE_CLARA_CARTA} flex items-center justify-center gap-3 px-5 py-4`}>
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#7C4DFF] border-t-transparent" />
-              <p className="text-[13px] text-white/62">Cargando tu carta natal...</p>
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primario border-t-transparent" />
+              <p className="text-[13px] text-[color:var(--shell-texto-secundario)]">Cargando tu carta natal...</p>
             </div>
           </section>
         </div>
@@ -237,52 +280,46 @@ export default function PaginaCartaNatal() {
     return (
       <>
         <HeaderMobile titulo="Carta Astral" mostrarAtras />
-        <div className={FONDO_PAGINA}>
+        <div className={FONDO_PAGINA} style={ESTILO_FONDO_PAGINA}>
           <CapasFondo />
 
           <section className="relative z-10 flex h-full flex-col gap-6 overflow-y-auto scroll-sutil p-5 lg:p-[28px_32px]">
             <div className={`${SUPERFICIE_OSCURA_CARTA} p-6 lg:p-8`}>
-              <div className="absolute -right-16 top-0 h-44 w-44 rounded-full bg-[#B388FF]/18 blur-3xl" />
-              <div className="absolute -left-10 bottom-0 h-36 w-36 rounded-full bg-[#7C4DFF]/16 blur-3xl" />
+              <div
+                className="absolute -right-16 top-0 h-44 w-44 rounded-full blur-3xl"
+                style={{ background: "var(--shell-glow-2)" }}
+              />
+              <div
+                className="absolute -left-10 bottom-0 h-36 w-36 rounded-full blur-3xl"
+                style={{ background: "var(--shell-glow-1)" }}
+              />
 
               <div className="relative z-10 grid gap-6 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
                 <div>
-                  <p className={`${ETIQUETA_CARTA} text-violet-200/75`}>
-                    Lectura natal
-                  </p>
-                  <div className="mt-4 flex items-start gap-4">
-                    <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#7C4DFF] via-[#9C6DFF] to-[#B388FF] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
+                  <div className="flex items-start gap-4">
+                    <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-violet-500 via-violet-400 to-violet-300 shadow-[var(--shell-sombra-fuerte)] sm:flex">
                       <IconoAstral nombre="astrologia" tamaño={30} className="text-white" />
                     </div>
                     <div>
-                      <h1 className="text-[24px] font-semibold tracking-tight text-white lg:text-[28px]">
+                      <h1 className="text-[24px] font-semibold tracking-tight text-[color:var(--shell-texto)] lg:text-[28px]">
                         Calculá tu carta
                       </h1>
-                      <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-violet-100/68">
+                      <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-[color:var(--shell-texto-secundario)]">
                         Ingresá tus datos y abrí una lectura base compacta: tríada,
                         pulso, planetas, aspectos y casas; la rueda queda sólo como apoyo.
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {["Tríada", "Pulso", "Planetas", "Rueda a pedido"].map((item) => (
-                      <span
-                        key={item}
-                        className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-1.5 text-[11px] font-medium text-white/72"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
+                  {/* Chips estáticos eliminados — info ya en la descripción */}
                 </div>
 
                 <div className={`${SUPERFICIE_CLARA_CARTA} p-4 lg:p-5`}>
-                  <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-5">
-                    <p className={`${ETIQUETA_CARTA} text-violet-200/72`}>
+                  <div className="rounded-[24px] border p-5" style={ESTILO_PANEL_INTERNO}>
+                    <p className={`${ETIQUETA_CARTA} text-[color:var(--color-acento)]`}>
                       Datos de nacimiento
                     </p>
-                    <p className="mt-2 text-sm leading-relaxed text-white/62">
+                    <p className="mt-2 text-sm leading-relaxed text-[color:var(--shell-texto-secundario)]">
                       Ingresá tus datos para generar la carta completa y abrir la
                       lectura contextual de planetas, aspectos y casas.
                     </p>
@@ -296,8 +333,8 @@ export default function PaginaCartaNatal() {
                   </div>
 
                   {mutacion.isError && (
-                    <div className="mt-4 rounded-2xl border border-red-200/70 bg-red-50/90 px-4 py-3">
-                      <p className="text-[13px] text-red-600">
+                    <div className="mt-4 rounded-2xl border border-error/20 bg-error/10 px-4 py-3">
+                      <p className="text-[13px] text-error">
                         {mutacion.error?.message || "Error al calcular la carta natal."}
                       </p>
                     </div>
@@ -325,10 +362,22 @@ export default function PaginaCartaNatal() {
   ];
 
   const contenidoPrincipal = (
-    <div className="relative min-h-full overflow-hidden bg-[#16011b]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_top_left,rgba(124,77,255,0.24),transparent_44%)]" />
-      <div className="pointer-events-none absolute right-[-120px] top-24 h-72 w-72 rounded-full bg-[#B388FF]/10 blur-3xl" />
-      <div className="pointer-events-none absolute left-10 top-[640px] h-64 w-64 rounded-full bg-[#7C4DFF]/10 blur-3xl" />
+    <div className="relative min-h-full overflow-hidden" style={ESTILO_FONDO_PAGINA}>
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-80"
+        style={{
+          background:
+            "radial-gradient(circle_at_top_left, var(--shell-glow-1), transparent 44%)",
+        }}
+      />
+      <div
+        className="pointer-events-none absolute right-[-120px] top-24 h-72 w-72 rounded-full blur-3xl"
+        style={{ background: "var(--shell-glow-2)" }}
+      />
+      <div
+        className="pointer-events-none absolute left-10 top-[640px] h-64 w-64 rounded-full blur-3xl"
+        style={{ background: "var(--shell-glow-1)" }}
+      />
 
       <div className="relative mx-auto flex max-w-5xl flex-col gap-5 px-5 py-6 pb-24 lg:px-7 lg:pb-6">
         <HeroCarta
@@ -356,7 +405,13 @@ export default function PaginaCartaNatal() {
         </section>
 
         <section className={`${SUPERFICIE_CLARA_CARTA} p-3.5 sm:p-4`}>
-          <div className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.03] p-1">
+          <div
+            className="inline-flex rounded-full border p-1"
+            style={{
+              borderColor: "var(--shell-borde)",
+              background: "var(--shell-superficie-suave)",
+            }}
+          >
             {vistasExplorador.map((vista) => (
               <button
                 key={vista.clave}
@@ -364,8 +419,8 @@ export default function PaginaCartaNatal() {
                 onClick={() => setVistaExplorador(vista.clave)}
                 className={`rounded-full px-3 py-1.5 text-[11px] font-medium transition-all ${
                   vistaExplorador === vista.clave
-                    ? "bg-[#7C4DFF]/18 text-[#D9C2FF]"
-                    : "text-white/48 hover:text-white/72"
+                    ? "bg-[var(--shell-chip-hover)] text-[color:var(--shell-texto)]"
+                    : "text-[color:var(--shell-texto-secundario)] hover:text-[color:var(--shell-texto)]"
                 }`}
               >
                 {vista.etiqueta}
@@ -403,7 +458,7 @@ export default function PaginaCartaNatal() {
   return (
     <>
       <HeaderMobile titulo="Carta Astral" mostrarAtras />
-      <div className={FONDO_PAGINA}>
+      <div className={FONDO_PAGINA} style={ESTILO_FONDO_PAGINA}>
         <CapasFondo />
 
         <div className="relative z-10 flex min-h-full flex-col lg:h-full lg:min-h-0 lg:flex-row lg:overflow-hidden">
@@ -417,11 +472,12 @@ export default function PaginaCartaNatal() {
                 type="button"
                 aria-label="Cerrar panel contextual"
                 onClick={cerrarSeleccion}
-                className="fixed inset-0 z-40 bg-[#140c27]/45 backdrop-blur-[2px] lg:hidden"
+                className="fixed inset-0 z-40 backdrop-blur-[2px] lg:hidden"
+                style={{ background: "var(--shell-overlay-suave)" }}
               />
-              <div className="fixed inset-x-3 bottom-3 z-50 max-h-[72vh] overflow-hidden rounded-[28px] border border-white/12 bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.18),transparent_28%),linear-gradient(135deg,#170d2c_0%,#241148_54%,#34205f_100%)] shadow-[0_28px_90px_rgba(15,8,34,0.42)] lg:hidden">
+              <div className="tema-superficie-panel fixed inset-x-3 bottom-3 z-50 max-h-[72vh] overflow-hidden rounded-[28px] lg:hidden">
                 <div className="flex justify-center py-2">
-                  <div className="h-1 w-14 rounded-full bg-white/18" />
+                  <div className="h-1 w-14 rounded-full" style={{ background: "var(--shell-borde-fuerte)" }} />
                 </div>
                 <div
                   className="max-h-[calc(72vh-20px)] overflow-y-auto scroll-sutil"

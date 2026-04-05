@@ -30,6 +30,20 @@ interface PanelContextualNumerologiaProps {
   modo?: "desktop" | "mobile";
 }
 
+const ESTILO_PANEL = {
+  borderColor: "var(--shell-borde)",
+  background: "var(--shell-superficie)",
+  boxShadow: "var(--shell-sombra-suave)",
+} as const;
+const ESTILO_PANEL_SUAVE = {
+  borderColor: "var(--shell-borde)",
+  background: "var(--shell-superficie-suave)",
+} as const;
+const ESTILO_PANEL_ACENTO = {
+  borderColor: "var(--shell-borde-fuerte)",
+  background: "var(--shell-chip)",
+} as const;
+
 function obtenerEdad(fechaNacimiento: string) {
   const hoy = new Date();
   const nacimiento = new Date(fechaNacimiento);
@@ -56,34 +70,30 @@ export function PanelContextualNumerologia({
           <VistaDetalle
             detalle={detalle}
             onCerrar={onCerrar}
+            modo={modo}
           />
         ) : (
-          <VistaDefault datos={datos} modo={modo} />
+          <VistaDefault datos={datos} />
         )}
       </div>
 
       {detalle?.formula && (
         <div className={cn(
           "border-t",
-          modo === "desktop" ? "border-white/[0.08]" : "border-white/10",
+          "border-[var(--shell-borde)]",
         )}>
           <button
             onClick={() => setMostrarTecnico((actual) => !actual)}
             className={cn(
               "flex w-full items-center justify-between px-5 py-3 text-[11px] font-medium uppercase tracking-[0.18em] transition-colors",
-              modo === "desktop"
-                ? "text-white/44 hover:bg-white/[0.04]"
-                : "text-white/50 hover:bg-white/[0.04]",
+              "text-[color:var(--shell-texto-tenue)] hover:bg-[var(--shell-superficie-suave)]",
             )}
           >
             <span>Dato técnico</span>
             <Icono nombre={mostrarTecnico ? "caretUp" : "caretDown"} tamaño={14} />
           </button>
           {mostrarTecnico && (
-            <div className={cn(
-              "px-5 pb-5 text-[13px] leading-6",
-              modo === "desktop" ? "text-white/62" : "text-white/72",
-            )}>
+            <div className="px-5 pb-5 text-[13px] leading-6 text-[color:var(--shell-texto-secundario)]">
               {detalle.formula}
             </div>
           )}
@@ -95,10 +105,8 @@ export function PanelContextualNumerologia({
 
 function VistaDefault({
   datos,
-  modo,
 }: {
   datos: Numerologia;
-  modo: "desktop" | "mobile";
 }) {
   const edadActual = obtenerEdad(datos.fecha_nacimiento);
   const senderoNatal = datos.camino_de_vida;
@@ -119,17 +127,14 @@ function VistaDefault({
 
   return (
     <div className="p-5">
-      <div className="rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-5 shadow-[0_18px_40px_rgba(8,2,22,0.24)]">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/48">
+      <div className="rounded-[24px] border p-5" style={ESTILO_PANEL}>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-acento)]">
           Lectura contextual
         </p>
-        <h3 className="mt-3 text-[18px] font-semibold tracking-[-0.03em] text-white">
+        <h3 className="mt-3 text-[18px] font-semibold tracking-[-0.03em] text-[color:var(--shell-texto)]">
           Seleccioná un número
         </h3>
-        <p className={cn(
-          "mt-3 text-[13px] leading-6",
-          modo === "desktop" ? "text-white/62" : "text-white/72",
-        )}>
+        <p className="mt-3 text-[13px] leading-6 text-[color:var(--shell-texto-secundario)]">
           Abrí sendero, esencia, ritmo o etapa y el panel te devuelve definición breve y lectura puntual.
         </p>
       </div>
@@ -150,12 +155,12 @@ function VistaDefault({
           valor={diaPersonal?.numero ?? "—"}
           descripcion={diaPersonal?.descripcion ?? "Sin lectura disponible todavía."}
         />
-        <div className="rounded-[20px] border border-white/[0.08] bg-white/[0.04] px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/44">
+        <div className="rounded-[20px] border px-4 py-3" style={ESTILO_PANEL_SUAVE}>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
             Etapa activa
           </p>
-          <p className="mt-1 text-[13px] leading-6 text-white/60">
-            <span className="font-medium text-white">{etapaActiva?.nombre ?? "Tramo actual"}</span>
+          <p className="mt-1 text-[13px] leading-6 text-[color:var(--shell-texto-secundario)]">
+            <span className="font-medium text-[color:var(--shell-texto)]">{etapaActiva?.nombre ?? "Tramo actual"}</span>
             {" · "}
           {etapaActiva
             ? `Estás transitando el número ${etapaActiva.numero} entre los ${etapaActiva.edad_inicio} y ${etapaActiva.edad_fin ?? "∞"} años.`
@@ -170,86 +175,91 @@ function VistaDefault({
 function VistaDetalle({
   detalle,
   onCerrar,
+  modo,
 }: {
   detalle: DetalleNumerologia;
   onCerrar?: () => void;
+  modo: "desktop" | "mobile";
 }) {
   return (
     <div className="p-5">
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/48">
-            {detalle.categoria}
-          </p>
-          <h3 className="mt-2 text-[18px] font-semibold tracking-[-0.03em] text-white">
-            {detalle.titulo}
-          </h3>
-          {detalle.subtitulo && (
-            <p className="mt-2 text-[13px] leading-6 text-white/62">
-              {detalle.subtitulo}
+      {modo === "mobile" && (
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-acento)]">
+              {detalle.categoria}
             </p>
+            <h3 className="mt-2 text-[18px] font-semibold tracking-[-0.03em] text-[color:var(--shell-texto)]">
+              {detalle.titulo}
+            </h3>
+            {detalle.subtitulo && (
+              <p className="mt-2 text-[13px] leading-6 text-[color:var(--shell-texto-secundario)]">
+                {detalle.subtitulo}
+              </p>
+            )}
+          </div>
+          {onCerrar && (
+            <button
+              onClick={onCerrar}
+              className="flex h-9 w-9 items-center justify-center rounded-full border text-[color:var(--shell-texto-secundario)] transition-colors hover:text-[color:var(--shell-texto)]"
+              style={ESTILO_PANEL_SUAVE}
+            >
+              <Icono nombre="x" tamaño={16} />
+            </button>
           )}
         </div>
-        {onCerrar && (
-          <button
-            onClick={onCerrar}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/70 transition-colors hover:text-white"
-          >
-            <Icono nombre="x" tamaño={16} />
-          </button>
-        )}
-      </div>
+      )}
 
-      <div className="rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-5 shadow-[0_18px_40px_rgba(8,2,22,0.22)]">
+      <div className="rounded-[24px] border p-5" style={ESTILO_PANEL}>
         <div className="flex items-center gap-4">
           <div>
             <p className={cn(
               "text-[36px] font-semibold leading-none",
-              detalle.esMaestro ? "text-[#F0D68A]" : "text-[#D9C2FF]",
+              detalle.esMaestro ? "text-[#D4A234]" : "text-[color:var(--color-acento)]",
             )}>
               {detalle.numero}
             </p>
-            <p className="mt-2 text-[14px] font-medium text-white/82">
+            <p className="mt-2 text-[14px] font-medium text-[color:var(--shell-texto)]">
               {detalle.descripcion}
             </p>
           </div>
         </div>
         {detalle.esMaestro ? (
-          <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#F0D68A]">
+          <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#D4A234]">
             Número maestro
           </p>
         ) : null}
       </div>
 
-      <div className="mt-5 rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/48">
+      <div className="mt-5 rounded-[24px] border p-4" style={ESTILO_PANEL_SUAVE}>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
           Qué es
         </p>
-        <p className="mt-3 text-[14px] leading-7 text-white/72">
+        <p className="mt-3 text-[14px] leading-7 text-[color:var(--shell-texto-secundario)]">
           {detalle.queEs}
         </p>
       </div>
 
-      <div className="mt-4 rounded-[24px] border border-[#B388FF]/12 bg-[#7C4DFF]/10 p-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#D9C2FF]">
+      <div className="mt-4 rounded-[24px] border p-4" style={ESTILO_PANEL_ACENTO}>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-acento)]">
           Qué significa para vos
         </p>
-        <p className="mt-3 text-[14px] leading-7 text-white/82">
+        <p className="mt-3 text-[14px] leading-7 text-[color:var(--shell-texto)]">
           {detalle.significadoPersonal}
         </p>
         {detalle.descripcion_larga && (
-          <p className="mt-3 text-[13px] leading-6 text-white/62">
+          <p className="mt-3 text-[13px] leading-6 text-[color:var(--shell-texto-secundario)]">
             {detalle.descripcion_larga}
           </p>
         )}
       </div>
 
       {detalle.extra && (
-        <div className="mt-4 rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/48">
+        <div className="mt-4 rounded-[24px] border p-4" style={ESTILO_PANEL_SUAVE}>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
             Lectura puntual
           </p>
-          <p className="mt-3 text-[14px] leading-7 text-white/72">
+          <p className="mt-3 text-[14px] leading-7 text-[color:var(--shell-texto-secundario)]">
             {detalle.extra}
           </p>
         </div>
@@ -268,17 +278,17 @@ function ResumenLinea({
   descripcion: string;
 }) {
   return (
-    <div className="rounded-[20px] border border-white/[0.08] bg-white/[0.04] px-4 py-3">
+    <div className="rounded-[20px] border px-4 py-3" style={ESTILO_PANEL_SUAVE}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/44">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
             {etiqueta}
           </p>
-          <p className="mt-1 text-[13px] text-white/60">
+          <p className="mt-1 text-[13px] text-[color:var(--shell-texto-secundario)]">
             {descripcion}
           </p>
         </div>
-        <span className="text-[28px] font-semibold tracking-[-0.03em] text-[#D9C2FF]">
+        <span className="text-[28px] font-semibold tracking-[-0.03em] text-[color:var(--color-acento)]">
           {valor}
         </span>
       </div>

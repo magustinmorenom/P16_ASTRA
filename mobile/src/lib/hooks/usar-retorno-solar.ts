@@ -10,13 +10,12 @@ interface ParamsRetornoSolar {
 
 export function usarRetornoSolar() {
   return useMutation({
-    mutationFn: async ({ datosNacimiento, anio, perfilId }: ParamsRetornoSolar) => {
+    mutationFn: ({ datosNacimiento, anio, perfilId }: ParamsRetornoSolar) => {
       const query = perfilId ? `?perfil_id=${perfilId}` : "";
-      const { data } = await clienteApi.post<{ datos: RetornoSolar }>(
+      return clienteApi.post<RetornoSolar>(
         `/solar-return/${anio}${query}`,
         datosNacimiento
       );
-      return data.datos;
     },
   });
 }

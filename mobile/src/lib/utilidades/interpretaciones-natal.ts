@@ -18,7 +18,7 @@ export const SIMBOLOS_ASPECTO: Record<string, string> = {
 };
 
 export const BADGE_ASPECTO: Record<string, { bg: string; text: string; label: string }> = {
-  conjuncion: { bg: "bg-amber-100", text: "text-amber-700", label: "Conjunción" },
+  conjuncion: { bg: "bg-violet-100", text: "text-violet-700", label: "Conjunción" },
   trigono: { bg: "bg-green-100", text: "text-green-700", label: "Trígono" },
   sextil: { bg: "bg-sky-100", text: "text-sky-700", label: "Sextil" },
   cuadratura: { bg: "bg-red-100", text: "text-red-600", label: "Cuadratura" },
@@ -29,7 +29,7 @@ export const DIGNIDAD_BADGE: Record<string, { bg: string; text: string }> = {
   domicilio: { bg: "bg-green-100", text: "text-green-700" },
   exaltacion: { bg: "bg-emerald-100", text: "text-emerald-700" },
   detrimento: { bg: "bg-red-100", text: "text-red-600" },
-  caida: { bg: "bg-orange-100", text: "text-orange-700" },
+  caida: { bg: "bg-rose-100", text: "text-rose-700" },
   peregrino: { bg: "bg-gray-100", text: "text-gray-600" },
 };
 
@@ -65,7 +65,7 @@ export const COLORES_ELEMENTO: Record<string, string> = {
 };
 
 export const COLORES_MODALIDAD: Record<string, string> = {
-  Cardinal: "#7C4DFF", Fijo: "#26C6DA", Mutable: "#FFA726",
+  Cardinal: "#7C4DFF", Fijo: "#26C6DA", Mutable: "#B388FF",
 };
 
 // ---------------------------------------------------------------------------

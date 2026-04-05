@@ -26,11 +26,22 @@ export function ProveedorAuth({ children }: PropiedadesProveedorAuth) {
 
   if (cargando) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center"
+        style={{ background: "var(--shell-overlay)" }}
+      >
         <div className="flex flex-col items-center gap-4">
           {/* Spinner animado */}
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/20 border-t-white" />
-          <p className="text-sm text-white/60">Cargando...</p>
+          <div
+            className="h-10 w-10 animate-spin rounded-full border-4 border-t-transparent"
+            style={{
+              borderColor: "var(--shell-borde)",
+              borderTopColor: "transparent",
+            }}
+          />
+          <p className="text-sm" style={{ color: "var(--shell-texto-secundario)" }}>
+            Cargando...
+          </p>
         </div>
       </div>
     );

@@ -7,10 +7,7 @@ const INTERVALO_REFRESCO = 600_000;
 export function usarTransitos() {
   return useQuery({
     queryKey: ["transitos"],
-    queryFn: async () => {
-      const { data } = await clienteApi.get<{ datos: Transitos }>("/transits");
-      return data.datos;
-    },
+    queryFn: () => clienteApi.get<Transitos>("/transits"),
     refetchInterval: INTERVALO_REFRESCO,
   });
 }

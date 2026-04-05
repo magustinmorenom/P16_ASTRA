@@ -137,9 +137,26 @@ async def enviar_mensaje(
     # Obtener contexto cósmico
     perfil_cosmico = await _obtener_contexto_cosmico(db, usuario.id)
 
-    # Obtener tránsitos actuales
+    # Obtener tránsitos actuales + próximos 3 días
     try:
+        from datetime import date, timedelta
+        hoy = date.today()
         transitos = ServicioTransitos.obtener_transitos_actuales()
+        # Agregar tránsitos de los próximos 3 días para responder sobre "mañana", "lunes", etc.
+        proximos_dias = []
+        for i in range(1, 4):
+            fecha_futura = (hoy + timedelta(days=i)).isoformat()
+            try:
+                t = await ServicioTransitos.obtener_transitos_fecha_persistido(fecha_futura, db)
+                proximos_dias.append({
+                    "fecha": fecha_futura,
+                    "planetas": t.get("planetas", []),
+                    "fase_lunar": t.get("fase_lunar", ""),
+                })
+            except Exception:
+                pass
+        if proximos_dias:
+            transitos["proximos_dias"] = proximos_dias
     except Exception:
         transitos = None
 
@@ -168,7 +185,7 @@ async def enviar_mensaje(
         operacion="chat_oraculo",
         tokens_entrada=tokens_in,
         tokens_salida=tokens_out,
-        modelo=_cfg.anthropic_modelo,
+        modelo=_cfg.oraculo_modelo,
     )
 
     # Guardar mensaje del usuario

@@ -1,14 +1,28 @@
-import { type ReactNode } from "react";
+import { type CSSProperties, type ReactNode } from "react";
 
 interface PanelGlassProps {
   children: ReactNode;
   className?: string;
+  tono?: "panel" | "hero";
+  style?: CSSProperties;
 }
 
-export function PanelGlass({ children, className = "" }: PanelGlassProps) {
+export function PanelGlass({
+  children,
+  className = "",
+  tono = "panel",
+  style,
+}: PanelGlassProps) {
+  const esHero = tono === "hero";
+
   return (
     <div
-      className={`rounded-xl backdrop-blur-[21px] bg-white/[0.07] border border-white/[0.12] ${className}`}
+      className={`rounded-xl border backdrop-blur-[21px] ${className}`}
+      style={{
+        background: esHero ? "var(--shell-hero-superficie)" : "var(--shell-superficie)",
+        borderColor: esHero ? "var(--shell-hero-superficie-fuerte)" : "var(--shell-borde)",
+        ...style,
+      }}
     >
       {children}
     </div>

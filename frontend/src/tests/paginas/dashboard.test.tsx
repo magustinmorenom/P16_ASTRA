@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { renderConProveedores } from "../utilidades";
 
 // Mocks de Next.js
@@ -9,8 +9,11 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("next/image", () => ({
   default: (props: Record<string, unknown>) => {
-    const { priority, ...rest } = props;
-    return <img {...rest} />;
+    const rest = { ...props };
+    delete rest.priority;
+    const alt = typeof rest.alt === "string" ? rest.alt : "";
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img alt={alt} {...rest} />;
   },
 }));
 
@@ -21,6 +24,7 @@ const mockUsarPodcastHoy = vi.fn();
 const mockUsarGenerarPodcast = vi.fn();
 const mockUsarEsMobile = vi.fn();
 const mockPrecargarAudiosPodcast = vi.fn();
+const mockMostrarToast = vi.fn();
 
 vi.mock("@/lib/hooks", () => ({
   usarPronosticoDiario: () => mockUsarPronosticoDiario(),
@@ -39,8 +43,17 @@ vi.mock("@/lib/stores/store-auth", () => ({
   useStoreAuth: () => ({ usuario: { nombre: "Test User" }, autenticado: true }),
 }));
 
+const estadoStoreUI = {
+  pistaActual: null,
+  reproduciendo: false,
+  setPistaActual: vi.fn(),
+  toggleReproduccion: vi.fn(),
+  mostrarToast: mockMostrarToast,
+};
+
 vi.mock("@/lib/stores/store-ui", () => ({
-  useStoreUI: () => ({ pistaActual: null, reproduciendo: false, setPista: vi.fn(), setReproduciendo: vi.fn() }),
+  useStoreUI: (selector?: (estado: typeof estadoStoreUI) => unknown) =>
+    selector ? selector(estadoStoreUI) : estadoStoreUI,
 }));
 
 import PaginaDashboard from "@/app/(app)/dashboard/page";
@@ -53,7 +66,7 @@ const PRONOSTICO_MOCK = {
     frase_sintesis: "Un gran día para emprender nuevos proyectos.",
     energia: 8,
     claridad: 7,
-    conexion: 6,
+    intuicion: 6,
   },
   areas: [
     {
@@ -201,5 +214,77 @@ describe("PaginaDashboard", () => {
 
     expect(screen.getByText(/seguí con lo importante/i)).toBeInTheDocument();
     expect(screen.getByText(/Tu audio del día todavía no fue generado/i)).toBeInTheDocument();
+    expect(screen.getByText("Mañana")).toBeInTheDocument();
+    expect(screen.getByText("Tarde")).toBeInTheDocument();
+    expect(screen.getByText("Noche")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Generar audio de hoy/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Audio de mañana/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/Número del día/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Luna en Sagitario/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Intuición/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Energía/i).length).toBeGreaterThan(0);
+  });
+
+  it("muestra 'Escuchar ahora' cuando el podcast del día está listo", () => {
+    mockUsarPronosticoDiario.mockReturnValue({
+      data: PRONOSTICO_MOCK,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUsarPodcastHoy.mockReturnValue({
+      data: [
+        {
+          id: "ep-dia-1",
+          tipo: "dia",
+          estado: "listo",
+          titulo: "Audio listo",
+          duracion_segundos: 120,
+          url_audio: "https://audio.local/ep-dia-1.mp3",
+          segmentos: [],
+        },
+      ],
+      isLoading: false,
+    });
+
+    renderConProveedores(<PaginaDashboard />);
+
+    expect(screen.getByRole("button", { name: /Escuchar ahora/i })).toBeInTheDocument();
+  });
+
+  it("muestra 'Generando audio' cuando el podcast del día está en proceso", () => {
+    mockUsarPronosticoDiario.mockReturnValue({
+      data: PRONOSTICO_MOCK,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUsarGenerarPodcast.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: true,
+      variables: "dia",
+    });
+
+    renderConProveedores(<PaginaDashboard />);
+
+    expect(screen.getByRole("button", { name: /Generando audio/i })).toBeInTheDocument();
+  });
+
+  it("muestra feedback informativo al interactuar con el CTA de mañana", () => {
+    mockUsarPronosticoDiario.mockReturnValue({
+      data: PRONOSTICO_MOCK,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    renderConProveedores(<PaginaDashboard />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Audio de mañana/i }));
+
+    expect(mockMostrarToast).toHaveBeenCalledWith(
+      "info",
+      "El audio de mañana se habilita cuando comienza el próximo día."
+    );
   });
 });

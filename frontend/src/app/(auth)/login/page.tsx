@@ -10,6 +10,38 @@ import { Icono } from "@/componentes/ui/icono";
 import { usarLogin, usarGoogleAuthUrl } from "@/lib/hooks";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 
+const CLASE_INPUT_ACCESO =
+  "h-12 rounded-[20px] border-[color:var(--shell-borde)] bg-[color:var(--shell-superficie)] text-[color:var(--shell-texto)] placeholder:text-[color:var(--shell-texto-tenue)] focus:border-[color:var(--shell-borde-fuerte)] focus:bg-[color:var(--shell-superficie-fuerte)] focus:ring-[color:var(--shell-overlay-suave)]";
+
+function LogoGoogleColor() {
+  return (
+    <svg
+      aria-hidden="true"
+      width="18"
+      height="18"
+      viewBox="0 0 48 48"
+      className="shrink-0"
+    >
+      <path
+        fill="#FFC107"
+        d="M43.6 20.5H42V20H24v8h11.3C34.3 31.1 29.6 36 24 36c-6.6 0-12-5.4-12-12S17.4 12 24 12c3 0 5.8 1.1 7.9 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5Z"
+      />
+      <path
+        fill="#FF3D00"
+        d="M6.3 14.7 12.9 19.5C14.7 15.1 19 12 24 12c3 0 5.8 1.1 7.9 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7Z"
+      />
+      <path
+        fill="#4CAF50"
+        d="M24 44c5.2 0 10-2 13.5-5.2l-6.2-5.1C29.1 35.3 26.7 36 24 36c-5.6 0-10.3-3.7-11.8-8.8l-6.5 5C9 39.3 15.9 44 24 44Z"
+      />
+      <path
+        fill="#1976D2"
+        d="M43.6 20.5H42V20H24v8h11.3c-.5 1.6-1.4 3-2.6 4.1-.1.1-.2.2-.4.3l6.2 5.1C38.1 37.8 44 33 44 24c0-1.3-.1-2.4-.4-3.5Z"
+      />
+    </svg>
+  );
+}
+
 export default function PaginaLogin() {
   const router = useRouter();
   const login = usarLogin();
@@ -44,64 +76,61 @@ export default function PaginaLogin() {
   const error = login.error?.message || googleAuth.error?.message || null;
 
   return (
-    <div className="flex flex-col gap-8">
-      {/* Encabezado */}
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-texto">
-          Bienvenido de vuelta
+    <div className="flex flex-col gap-5">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-[-0.04em] text-[color:var(--shell-texto)] sm:text-[34px]">
+          Entrá a tu espacio cósmico
         </h1>
-        <p className="mt-2 text-texto-secundario">
-          Inicia sesion en tu cuenta
-        </p>
       </div>
 
-      {/* Boton Google */}
       <Boton
         variante="secundario"
         tamaño="lg"
-        icono={<Icono nombre="google" tamaño={20} />}
+        icono={<LogoGoogleColor />}
         onClick={manejarGoogle}
         cargando={googleAuth.isPending}
-        className="w-full"
+        className="h-12 w-full rounded-[20px] border-[color:var(--shell-borde)] bg-[color:var(--shell-superficie-fuerte)] text-[color:var(--shell-texto)] shadow-none hover:bg-[color:var(--shell-superficie)]"
       >
         Continuar con Google
       </Boton>
 
-      {/* Separador */}
       <div className="flex items-center gap-4">
-        <div className="h-px flex-1 bg-borde" />
-        <span className="text-sm text-texto-terciario">o</span>
-        <div className="h-px flex-1 bg-borde" />
+        <div className="h-px flex-1 bg-[color:var(--shell-borde)]" />
+        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
+          o con email
+        </span>
+        <div className="h-px flex-1 bg-[color:var(--shell-borde)]" />
       </div>
 
-      {/* Formulario */}
       <form onSubmit={manejarEnvio} className="flex flex-col gap-4">
         <Input
-          etiqueta="Correo electronico"
+          etiqueta="Correo electrónico"
           type="email"
           placeholder="tu@correo.com"
           icono={<Icono nombre="email" tamaño={18} />}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className={CLASE_INPUT_ACCESO}
           required
         />
 
         <div className="relative">
           <Input
-            etiqueta="Contrasena"
+            etiqueta="Contraseña"
             type={mostrarContrasena ? "text" : "password"}
-            placeholder="Tu contrasena"
+            placeholder="Tu contraseña"
             icono={<Icono nombre="candado" tamaño={18} />}
             value={contrasena}
             onChange={(e) => setContrasena(e.target.value)}
+            className={CLASE_INPUT_ACCESO}
             required
           />
           <button
             type="button"
             onClick={() => setMostrarContrasena(!mostrarContrasena)}
-            className="absolute right-3 top-[38px] text-texto-terciario hover:text-texto-secundario transition-colors"
+            className="absolute right-4 top-[40px] text-[color:var(--shell-texto-tenue)] transition-colors hover:text-[color:var(--shell-texto-secundario)]"
             tabIndex={-1}
-            aria-label={mostrarContrasena ? "Ocultar contrasena" : "Mostrar contrasena"}
+            aria-label={mostrarContrasena ? "Ocultar contraseña" : "Mostrar contraseña"}
           >
             <Icono
               nombre={mostrarContrasena ? "ojoOculto" : "ojo"}
@@ -113,16 +142,23 @@ export default function PaginaLogin() {
         <div className="flex justify-end -mt-1">
           <Link
             href="/olvide-contrasena"
-            className="text-sm text-primario hover:text-primario-hover transition-colors"
+            className="text-sm font-medium text-[color:var(--color-acento)] transition-colors hover:opacity-80"
           >
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
 
-        {/* Mensaje de error */}
         {error && (
-          <div className="rounded-lg bg-error/10 border border-error/20 px-4 py-3">
-            <p className="text-sm text-error">{error}</p>
+          <div
+            className="rounded-[20px] border px-4 py-3"
+            style={{
+              borderColor: "var(--shell-badge-error-borde)",
+              background: "var(--shell-badge-error-fondo)",
+            }}
+          >
+            <p className="text-sm leading-6 text-[color:var(--shell-badge-error-texto)]">
+              {error}
+            </p>
           </div>
         )}
 
@@ -131,18 +167,20 @@ export default function PaginaLogin() {
           variante="primario"
           tamaño="lg"
           cargando={login.isPending}
-          className="w-full mt-2"
+          className="mt-2 h-12 w-full rounded-[20px] border-0 shadow-[var(--shell-sombra-suave)] hover:brightness-[1.03]"
+          style={{
+            background: "var(--shell-gradiente-boton)",
+          }}
         >
-          Iniciar sesion
+          Iniciar sesión
         </Boton>
       </form>
 
-      {/* Enlace a registro */}
-      <p className="text-center text-sm text-texto-secundario">
-        ¿No tienes cuenta?{" "}
+      <p className="pt-1 text-center text-sm text-[color:var(--shell-texto-secundario)]">
+        ¿No tenés cuenta?{" "}
         <Link
           href="/registro"
-          className="text-primario hover:text-primario-hover font-medium transition-colors"
+          className="font-semibold text-[color:var(--color-acento)] transition-colors hover:opacity-80"
         >
           Crear cuenta
         </Link>

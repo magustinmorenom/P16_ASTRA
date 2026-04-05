@@ -21,7 +21,10 @@ export default function LayoutMobile({
     : "calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px))";
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#12091F]">
+    <div
+      className="flex h-[100dvh] flex-col"
+      style={{ background: "var(--shell-fondo-profundo)" }}
+    >
       {/* Contenido principal — cada pagina incluye su propio HeaderMobile */}
       <main
         className="flex-1 mobile-scroll animate-fade-in"

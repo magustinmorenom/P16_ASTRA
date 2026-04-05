@@ -9,7 +9,20 @@ export function usarPodcastHoy(refetchRapido = false) {
   return useQuery({
     queryKey: ["podcast", "hoy"],
     queryFn: () => clienteApi.get<PodcastEpisodio[]>("/podcast/hoy"),
-    refetchInterval: refetchRapido ? 5_000 : 60_000,
+    refetchInterval: (query) => {
+      const episodios = query.state.data as PodcastEpisodio[] | undefined;
+      const hayEnProceso = (episodios ?? []).some(
+        (episodio) =>
+          episodio.estado === "generando_guion" ||
+          episodio.estado === "generando_audio",
+      );
+
+      if (refetchRapido || hayEnProceso) {
+        return 5_000;
+      }
+
+      return 60_000;
+    },
   });
 }
 

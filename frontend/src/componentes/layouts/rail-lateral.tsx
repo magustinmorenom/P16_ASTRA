@@ -20,7 +20,7 @@ interface RailLateralProps {
 }
 
 const ESTILO_BASE =
-  "flex flex-col text-white backdrop-blur-2xl bg-[#1A1128]/76 border-l border-white/10 shadow-[-8px_0_32px_rgba(124,77,255,0.08)]";
+  "flex flex-col border-l backdrop-blur-2xl text-[color:var(--shell-texto)]";
 
 function CabeceraRail({
   etiqueta,
@@ -29,16 +29,19 @@ function CabeceraRail({
   onCerrar,
 }: Pick<RailLateralProps, "etiqueta" | "titulo" | "subtitulo" | "onCerrar">) {
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-white/8 px-5 py-4">
+    <div
+      className="flex items-start justify-between gap-3 border-b px-5 py-4"
+      style={{ borderColor: "var(--shell-borde)" }}
+    >
       <div className="min-w-0">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#B388FF]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-acento)]">
           {etiqueta}
         </p>
-        <p className="mt-1 text-[18px] font-semibold tracking-tight text-[#F5F0FF]">
+        <p className="mt-1 text-[18px] font-semibold tracking-tight text-[color:var(--shell-texto)]">
           {titulo}
         </p>
         {subtitulo ? (
-          <p className="mt-1 text-[12px] leading-relaxed text-[#F5F0FF]/62">
+          <p className="mt-1 text-[12px] leading-relaxed text-[color:var(--shell-texto-secundario)]">
             {subtitulo}
           </p>
         ) : null}
@@ -48,7 +51,7 @@ function CabeceraRail({
         <button
           type="button"
           onClick={onCerrar}
-          className="mt-0.5 shrink-0 text-[#B388FF]/60 transition-colors hover:text-[#F5F0FF]"
+          className="mt-0.5 shrink-0 text-[color:var(--shell-texto-tenue)] transition-colors hover:text-[color:var(--shell-texto)]"
           title="Cerrar panel"
         >
           <Icono nombre="x" tamaño={18} />
@@ -153,9 +156,10 @@ export function RailLateral({
         <div
           onClick={onCerrar}
           className={cn(
-            "pointer-events-auto absolute inset-0 bg-black/20 transition-opacity duration-350",
+            "pointer-events-auto absolute inset-0 transition-opacity duration-350",
             montado ? "opacity-100" : "opacity-0",
           )}
+          style={{ background: "var(--shell-overlay-suave)" }}
         />
 
         <aside
@@ -165,6 +169,11 @@ export function RailLateral({
             montado ? "translate-x-0 opacity-100" : "translate-x-full opacity-0",
             className,
           )}
+          style={{
+            borderColor: "var(--shell-borde)",
+            background: "var(--shell-panel)",
+            boxShadow: "var(--shell-sombra-fuerte)",
+          }}
         >
           {cuerpo}
         </aside>
@@ -173,7 +182,14 @@ export function RailLateral({
   }
 
   return (
-    <aside className={cn("hidden h-full min-h-0 shrink-0 lg:flex lg:w-[352px] xl:w-[372px]", ESTILO_BASE, className)}>
+    <aside
+      className={cn("hidden h-full min-h-0 shrink-0 lg:flex lg:w-[352px] xl:w-[372px]", ESTILO_BASE, className)}
+      style={{
+        borderColor: "var(--shell-borde)",
+        background: "var(--shell-panel)",
+        boxShadow: "var(--shell-sombra-suave)",
+      }}
+    >
       {cuerpo}
     </aside>
   );

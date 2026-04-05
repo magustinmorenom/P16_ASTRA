@@ -19,28 +19,42 @@ export function CasasGrid({ casas, onSeleccionar }: CasasGridProps) {
             <button
               key={casa.numero}
               onClick={() => onSeleccionar(casa)}
-              className={`rounded-[20px] border px-3 py-3 text-left transition-all duration-200 ${
+              className="rounded-[20px] border px-3 py-3 text-left transition-all duration-200 hover:-translate-y-0.5"
+              style={
                 esAngular
-                  ? "border-[#B388FF]/24 bg-[#7C4DFF]/10 shadow-[0_18px_42px_rgba(77,29,149,0.14)]"
-                  : "border-white/10 bg-white/[0.05] hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.08]"
-              }`}
+                  ? {
+                      borderColor: "var(--shell-borde-fuerte)",
+                      background: "var(--shell-chip)",
+                      boxShadow: "var(--shell-sombra-suave)",
+                    }
+                  : {
+                      borderColor: "var(--shell-borde)",
+                      background: "var(--shell-superficie)",
+                    }
+              }
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className={`text-[10px] font-semibold ${esAngular ? "text-[#D9C2FF]" : "text-white/46"}`}>
+                  <p className={`text-[10px] font-semibold ${esAngular ? "text-[color:var(--color-acento)]" : "text-[color:var(--shell-texto-tenue)]"}`}>
                     Casa {ROMANO[casa.numero]}
                   </p>
-                  <p className="mt-2 text-[14px] font-semibold tracking-tight text-white">
+                  <p className="mt-2 text-[14px] font-semibold tracking-tight text-[color:var(--shell-texto)]">
                     {casa.signo}
                   </p>
                 </div>
 
-                <div className="rounded-[14px] border border-white/10 bg-white/[0.08] p-2">
+                <div
+                  className="rounded-[14px] border p-2"
+                  style={{
+                    borderColor: "var(--shell-chip-borde)",
+                    background: "var(--shell-superficie-suave)",
+                  }}
+                >
                   <IconoSigno signo={casa.signo} tamaño={16} className="text-[#B388FF]" />
                 </div>
               </div>
 
-              <p className="mt-3 text-[11px] text-white/54">
+              <p className="mt-3 text-[11px] text-[color:var(--shell-texto-tenue)]">
                 {Math.floor(casa.grado_en_signo)}° · {esAngular ? "Angular" : "Casa derivada"}
               </p>
             </button>

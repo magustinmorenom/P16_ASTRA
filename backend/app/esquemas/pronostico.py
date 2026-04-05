@@ -11,7 +11,7 @@ class ClimaCosmicoSchema(BaseModel):
     frase_sintesis: str
     energia: int = Field(ge=1, le=10)
     claridad: int = Field(ge=1, le=10)
-    conexion: int = Field(ge=1, le=10)
+    intuicion: int = Field(ge=1, le=10)
 
 
 class AreaVidaSchema(BaseModel):

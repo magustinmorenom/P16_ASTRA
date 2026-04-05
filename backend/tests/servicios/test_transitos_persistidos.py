@@ -29,9 +29,18 @@ def _crear_transito_mock(fecha: date, estado: str = "futuro") -> TransitoDiario:
     t.id = uuid.uuid4()
     t.fecha = fecha
     t.dia_juliano = 2460000.0
-    t.planetas = [{"nombre": "Sol", "longitud": 10.0, "signo": "Aries"}]
+    t.planetas = [{
+        "nombre": "Sol",
+        "longitud": 10.0,
+        "signo": "Aries",
+        "retrogrado": False,
+        "velocidad": 1.0,
+        "latitud": 0.0,
+        "grado_en_signo": 10.0,
+    }]
     t.aspectos = []
     t.fase_lunar = "Luna Nueva"
+    t.eventos = None
     t.estado = estado
     return t
 
@@ -332,7 +341,7 @@ class TestServicioTransitosPersistido:
         sesion = AsyncMock()
         with patch("app.datos.repositorio_transito.RepositorioTransito") as MockRepo:
             mock_repo = MockRepo.return_value
-            mock_repo.obtener_por_fecha = AsyncMock(return_value=transito_mock)
+            mock_repo.obtener_por_fecha = AsyncMock(side_effect=[transito_mock, None])
 
             resultado = await ServicioTransitos.obtener_transitos_fecha_persistido(
                 "2025-06-15", sesion
@@ -340,6 +349,8 @@ class TestServicioTransitosPersistido:
 
         assert resultado["fecha"] == "2025-06-15"
         assert resultado["planetas"] == transito_mock.planetas
+        assert "eventos" in resultado
+        assert resultado["estado"] == "futuro"
 
     @pytest.mark.anyio
     async def test_obtener_fecha_fallback_calculo(self):
@@ -359,3 +370,47 @@ class TestServicioTransitosPersistido:
         assert resultado["fecha"] == "2025-06-15"
         assert len(resultado["planetas"]) == 11
         mock_repo.crear_lote.assert_called_once()
+
+    @pytest.mark.anyio
+    async def test_obtener_rango_incluye_eventos_y_estado(self):
+        """El rango persistido debe exponer eventos y estado por cada día."""
+        from app.servicios.servicio_transitos import ServicioTransitos
+
+        sesion = AsyncMock()
+        dia_1 = _crear_transito_mock(date(2025, 6, 15), "presente")
+        dia_1.eventos = {
+            "cambios_signo": [],
+            "retrogrados_inicio": ["Mercurio"],
+            "retrogrados_fin": [],
+            "aspectos_exactos": [],
+            "fases": "Luna Nueva",
+        }
+        dia_2 = _crear_transito_mock(date(2025, 6, 16), "futuro")
+        dia_2.planetas = [{
+            "nombre": "Sol",
+            "longitud": 12.0,
+            "signo": "Aries",
+            "retrogrado": False,
+            "velocidad": 1.0,
+            "latitud": 0.0,
+            "grado_en_signo": 12.0,
+        }]
+        dia_2.fase_lunar = "Creciente"
+
+        with patch("app.datos.repositorio_transito.RepositorioTransito") as MockRepo:
+            mock_repo = MockRepo.return_value
+            mock_repo.obtener_rango = AsyncMock(return_value=[dia_1, dia_2])
+            mock_repo.obtener_por_fecha = AsyncMock(return_value=dia_1)
+            mock_repo.crear_lote = AsyncMock(return_value=0)
+
+            resultado = await ServicioTransitos.obtener_transitos_rango_persistido(
+                "2025-06-15",
+                "2025-06-16",
+                sesion,
+            )
+
+        assert resultado["fecha_inicio"] == "2025-06-15"
+        assert len(resultado["dias"]) == 2
+        assert resultado["dias"][0]["eventos"]["retrogrados_inicio"] == ["Mercurio"]
+        assert resultado["dias"][0]["estado"] == "presente"
+        assert "eventos" in resultado["dias"][1]

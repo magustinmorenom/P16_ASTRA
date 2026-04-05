@@ -1,17 +1,20 @@
 import { useState } from "react";
-import { View, Text, ScrollView, Pressable, Alert } from "react-native";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  SignOut,
   CaretRight,
-  LockKey,
-  CreditCard,
-  PencilSimple,
-  Sun,
-  Moon,
   CircleHalf,
+  CreditCard,
+  DownloadSimple,
+  LockKey,
+  Moon,
+  PencilSimple,
+  SignOut,
+  Sun,
+  Trash,
 } from "phosphor-react-native";
 import { Avatar } from "@/componentes/ui/avatar";
 import { Badge } from "@/componentes/ui/badge";
@@ -21,75 +24,147 @@ import { Tarjeta } from "@/componentes/ui/tarjeta";
 import { Separador } from "@/componentes/ui/separador";
 import { PresionableAnimado } from "@/componentes/ui/presionable-animado";
 import { AnimacionEntrada } from "@/componentes/ui/animacion-entrada";
+import { FormularioNacimiento } from "@/componentes/compuestos/formulario-nacimiento";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { usarMiPerfil, usarActualizarPerfil } from "@/lib/hooks/usar-perfil";
-import { usarLogout, usarCambiarContrasena } from "@/lib/hooks/usar-auth";
+import {
+  usarCambiarContrasena,
+  usarEliminarCuenta,
+  usarLogout,
+} from "@/lib/hooks/usar-auth";
 import { usarCartaNatal } from "@/lib/hooks/usar-carta-natal";
 import { usarDisenoHumano } from "@/lib/hooks/usar-diseno-humano";
 import { usarNumerologia } from "@/lib/hooks/usar-numerologia";
 import { usarRetornoSolar } from "@/lib/hooks/usar-retorno-solar";
 import { usarTema } from "@/lib/hooks/usar-tema";
-import { formatearFecha, formatearHora } from "@/lib/utilidades/formatear-fecha";
+import { descargarYAbrirDocumentoProtegido } from "@/lib/utilidades/descargar-documento";
+import {
+  formatearFecha,
+  formatearFechaHora,
+  formatearHora,
+} from "@/lib/utilidades/formatear-fecha";
+import type { DatosNacimiento } from "@/lib/tipos";
 import type { PreferenciaTema } from "@/lib/stores/store-tema";
 
 export default function PantallaPerfil() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const usuario = useStoreAuth((s) => s.usuario);
+  const usuario = useStoreAuth((state) => state.usuario);
   const { data: perfil } = usarMiPerfil();
   const actualizarPerfil = usarActualizarPerfil();
   const logout = usarLogout();
   const cambiarContrasena = usarCambiarContrasena();
+  const eliminarCuenta = usarEliminarCuenta();
   const cartaNatal = usarCartaNatal();
   const disenoHumano = usarDisenoHumano();
   const numerologia = usarNumerologia();
   const retornoSolar = usarRetornoSolar();
   const { colores, preferencia, setPreferencia } = usarTema();
 
-  const [editando, setEditando] = useState(false);
-  const [nombre, setNombre] = useState("");
+  const [editandoNacimiento, setEditandoNacimiento] = useState(false);
+  const [mensajeNacimiento, setMensajeNacimiento] = useState<{
+    tipo: "exito" | "error";
+    texto: string;
+  } | null>(null);
+  const [recalculandoNacimiento, setRecalculandoNacimiento] = useState(false);
   const [seccionAbierta, setSeccionAbierta] = useState<string | null>(null);
   const [contrasenaActual, setContrasenaActual] = useState("");
   const [contrasenaNueva, setContrasenaNueva] = useState("");
+  const [contrasenaEliminar, setContrasenaEliminar] = useState("");
+  const [descargandoPerfil, setDescargandoPerfil] = useState(false);
 
-  const iniciarEdicion = () => {
-    setNombre(perfil?.nombre ?? "");
-    setEditando(true);
+  const iniciarEdicionNacimiento = () => {
+    setMensajeNacimiento(null);
+    setEditandoNacimiento(true);
   };
 
-  const guardarEdicion = async () => {
-    if (!nombre.trim() || !perfil) return;
-    const resp = await actualizarPerfil.mutateAsync({ nombre: nombre.trim() });
-    setEditando(false);
+  const cancelarEdicionNacimiento = () => {
+    setEditandoNacimiento(false);
+    setMensajeNacimiento(null);
+  };
 
-    if (resp.datos_nacimiento_cambiaron) {
-      const datos = {
-        nombre: perfil.nombre,
-        fecha_nacimiento: perfil.fecha_nacimiento,
-        hora_nacimiento: perfil.hora_nacimiento.slice(0, 5),
-        ciudad_nacimiento: perfil.ciudad_nacimiento,
-        pais_nacimiento: perfil.pais_nacimiento,
-      };
-      await Promise.all([
-        cartaNatal.mutateAsync({ datos, perfilId: perfil.id }),
-        disenoHumano.mutateAsync({ datos, perfilId: perfil.id }),
-        numerologia.mutateAsync({
-          datos: { nombre: datos.nombre, fecha_nacimiento: datos.fecha_nacimiento },
-          perfilId: perfil.id,
-        }),
-        retornoSolar.mutateAsync({
-          datosNacimiento: datos,
-          anio: new Date().getFullYear(),
-          perfilId: perfil.id,
-        }),
-      ]);
-      queryClient.invalidateQueries({ queryKey: ["calculos", "me"] });
+  const guardarEdicionNacimiento = async (datos: DatosNacimiento) => {
+    try {
+      setMensajeNacimiento(null);
+
+      const respuesta = await actualizarPerfil.mutateAsync({
+        nombre: datos.nombre.trim(),
+        fecha_nacimiento: datos.fecha_nacimiento,
+        hora_nacimiento: datos.hora_nacimiento,
+        ciudad_nacimiento: datos.ciudad_nacimiento.trim(),
+        pais_nacimiento: datos.pais_nacimiento.trim(),
+      });
+
+      if (respuesta.datos_nacimiento_cambiaron) {
+        setRecalculandoNacimiento(true);
+        setMensajeNacimiento({
+          tipo: "exito",
+          texto: "Guardamos tus datos. Ahora estamos regenerando tus cartas.",
+        });
+
+        const resultados = await Promise.allSettled([
+          cartaNatal.mutateAsync({ datos, perfilId: respuesta.id }),
+          disenoHumano.mutateAsync({ datos, perfilId: respuesta.id }),
+          numerologia.mutateAsync({
+            datos: {
+              nombre: datos.nombre,
+              fecha_nacimiento: datos.fecha_nacimiento,
+            },
+            perfilId: respuesta.id,
+          }),
+          retornoSolar.mutateAsync({
+            datosNacimiento: datos,
+            anio: new Date().getFullYear(),
+            perfilId: respuesta.id,
+          }),
+        ]);
+
+        queryClient.invalidateQueries({ queryKey: ["calculos", "me"] });
+        queryClient.invalidateQueries({ queryKey: ["pronostico"] });
+        queryClient.invalidateQueries({ queryKey: ["podcast"] });
+        queryClient.invalidateQueries({ queryKey: ["chat", "historial"] });
+
+        const huboErrores = resultados.some(
+          (resultado) => resultado.status === "rejected",
+        );
+
+        setMensajeNacimiento(
+          huboErrores
+            ? {
+                tipo: "error",
+                texto:
+                  "Tus datos se actualizaron, pero algunas cartas no se pudieron regenerar. Abrí cada módulo para reintentar.",
+              }
+            : {
+                tipo: "exito",
+                texto: "Perfil y cartas actualizados correctamente.",
+              },
+        );
+      } else {
+        setMensajeNacimiento({
+          tipo: "exito",
+          texto: "Perfil actualizado correctamente.",
+        });
+      }
+
+      setEditandoNacimiento(false);
+    } catch (error) {
+      setMensajeNacimiento({
+        tipo: "error",
+        texto:
+          error instanceof Error
+            ? error.message
+            : "No se pudo actualizar tu perfil.",
+      });
+    } finally {
+      setRecalculandoNacimiento(false);
     }
   };
 
   const manejarCambioContrasena = async () => {
     if (!contrasenaActual || contrasenaNueva.length < 8) return;
+
     try {
       await cambiarContrasena.mutateAsync({
         contrasena_actual: contrasenaActual,
@@ -98,9 +173,58 @@ export default function PantallaPerfil() {
       setContrasenaActual("");
       setContrasenaNueva("");
       setSeccionAbierta(null);
-      Alert.alert("Listo", "Contraseña actualizada");
-    } catch {
-      Alert.alert("Error", "No se pudo cambiar la contraseña");
+      Alert.alert("Listo", "Contraseña actualizada correctamente.");
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "No se pudo cambiar la contraseña.",
+      );
+    }
+  };
+
+  const manejarDescargaPerfil = async () => {
+    if (!perfil) return;
+
+    try {
+      setDescargandoPerfil(true);
+      const nombreSeguro =
+        perfil.nombre.trim().toLowerCase().replace(/\s+/g, "_") || "usuario";
+      await descargarYAbrirDocumentoProtegido(
+        "/profile/me/pdf",
+        `perfil_cosmico_${nombreSeguro}.pdf`,
+      );
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "No se pudo abrir el PDF del perfil.",
+      );
+    } finally {
+      setDescargandoPerfil(false);
+    }
+  };
+
+  const manejarEliminarCuenta = async () => {
+    try {
+      const tokenRefresco =
+        (await SecureStore.getItemAsync("refresh_token")) ?? "";
+      if (!tokenRefresco) {
+        throw new Error("No se encontró la sesión actual.");
+      }
+
+      await eliminarCuenta.mutateAsync({
+        contrasena:
+          usuario?.proveedor_auth === "local" ? contrasenaEliminar : undefined,
+        token_refresco: tokenRefresco,
+      });
+
+      await useStoreAuth.getState().cerrarSesion();
+      setContrasenaEliminar("");
+      Alert.alert("Cuenta eliminada", "Tu cuenta fue desactivada correctamente.");
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "No se pudo eliminar la cuenta.",
+      );
     }
   };
 
@@ -112,11 +236,67 @@ export default function PantallaPerfil() {
   };
 
   const esPremium = usuario?.plan_slug === "premium";
+  const proveedor =
+    usuario?.proveedor_auth === "google" ? "Google" : "Email y contraseña";
 
-  const opcionesTema: { valor: PreferenciaTema; icono: React.ReactNode; etiqueta: string }[] = [
-    { valor: "claro", icono: <Sun size={20} color={preferencia === "claro" ? colores.acento : colores.textoMuted} weight="fill" />, etiqueta: "Claro" },
-    { valor: "oscuro", icono: <Moon size={20} color={preferencia === "oscuro" ? colores.acento : colores.textoMuted} weight="fill" />, etiqueta: "Oscuro" },
-    { valor: "automatico", icono: <CircleHalf size={20} color={preferencia === "automatico" ? colores.acento : colores.textoMuted} weight="fill" />, etiqueta: "Auto" },
+  const opcionesTema: {
+    valor: PreferenciaTema;
+    icono: React.ReactNode;
+    etiqueta: string;
+  }[] = [
+    {
+      valor: "claro",
+      icono: (
+        <Sun
+          size={20}
+          color={preferencia === "claro" ? colores.acento : colores.textoMuted}
+          weight="fill"
+        />
+      ),
+      etiqueta: "Claro",
+    },
+    {
+      valor: "oscuro",
+      icono: (
+        <Moon
+          size={20}
+          color={preferencia === "oscuro" ? colores.acento : colores.textoMuted}
+          weight="fill"
+        />
+      ),
+      etiqueta: "Oscuro",
+    },
+    {
+      valor: "automatico",
+      icono: (
+        <CircleHalf
+          size={20}
+          color={
+            preferencia === "automatico" ? colores.acento : colores.textoMuted
+          }
+          weight="fill"
+        />
+      ),
+      etiqueta: "Auto",
+    },
+  ];
+
+  const datosCuenta = [
+    { label: "Proveedor", valor: proveedor },
+    {
+      label: "Estado",
+      valor: usuario?.suscripcion_estado ?? "Sin suscripción",
+    },
+    {
+      label: "Miembro desde",
+      valor: usuario?.creado_en ? formatearFechaHora(usuario.creado_en) : "Sin registro",
+    },
+    {
+      label: "Último acceso",
+      valor: usuario?.ultimo_acceso
+        ? formatearFechaHora(usuario.ultimo_acceso)
+        : "Sin registro",
+    },
   ];
 
   return (
@@ -129,75 +309,212 @@ export default function PantallaPerfil() {
       }}
     >
       <AnimacionEntrada>
-        <Text style={{ color: colores.primario, fontSize: 24, fontFamily: "Inter_700Bold", marginBottom: 24 }}>
+        <Text
+          style={{
+            color: colores.primario,
+            fontSize: 24,
+            fontFamily: "Inter_700Bold",
+            marginBottom: 24,
+          }}
+        >
           Mi Perfil
         </Text>
       </AnimacionEntrada>
 
-      {/* Info usuario */}
       <AnimacionEntrada retraso={100}>
         <Tarjeta style={{ marginBottom: 16 }}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <Avatar nombre={usuario?.nombre ?? "U"} tamaño="lg" />
             <View style={{ marginLeft: 16, flex: 1 }}>
-              <Text style={{ color: colores.primario, fontFamily: "Inter_700Bold", fontSize: 18 }}>
+              <Text
+                style={{
+                  color: colores.primario,
+                  fontFamily: "Inter_700Bold",
+                  fontSize: 18,
+                }}
+              >
                 {usuario?.nombre}
               </Text>
               <Text style={{ color: colores.textoSecundario, fontSize: 14 }}>
                 {usuario?.email}
               </Text>
-              <View style={{ marginTop: 4 }}>
+              <View style={{ marginTop: 8, flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
                 <Badge variante={esPremium ? "info" : "default"}>
-                  {esPremium ? "Premium" : "Gratis"}
+                  {usuario?.plan_nombre ?? (esPremium ? "Premium" : "Gratis")}
                 </Badge>
+                <Badge variante="default">{proveedor}</Badge>
               </View>
             </View>
+          </View>
+
+          <View style={{ gap: 8, marginTop: 16 }}>
+            {datosCuenta.map((item) => (
+              <View
+                key={item.label}
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: colores.textoSecundario, fontSize: 13 }}>
+                  {item.label}
+                </Text>
+                <Text
+                  style={{
+                    color: colores.primario,
+                    fontSize: 13,
+                    maxWidth: "58%",
+                    textAlign: "right",
+                  }}
+                >
+                  {item.valor}
+                </Text>
+              </View>
+            ))}
           </View>
         </Tarjeta>
       </AnimacionEntrada>
 
-      {/* Datos de nacimiento */}
       {perfil && (
-        <AnimacionEntrada retraso={200}>
+        <AnimacionEntrada retraso={180}>
           <Tarjeta style={{ marginBottom: 16 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <Text style={{ color: colores.primario, fontFamily: "Inter_600SemiBold" }}>
-                Datos de nacimiento
-              </Text>
-              {!editando && (
-                <Pressable onPress={iniciarEdicion}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 12,
+              }}
+            >
+              <View>
+                <Text
+                  style={{
+                    color: colores.primario,
+                    fontFamily: "Inter_600SemiBold",
+                  }}
+                >
+                  Datos de nacimiento
+                </Text>
+                <Text
+                  style={{
+                    color: colores.textoSecundario,
+                    fontSize: 13,
+                    marginTop: 4,
+                  }}
+                >
+                  Editá tu perfil cósmico y recalculá las cartas desde mobile.
+                </Text>
+              </View>
+              {!editandoNacimiento && (
+                <Pressable onPress={iniciarEdicionNacimiento}>
                   <PencilSimple size={18} color={colores.acento} />
                 </Pressable>
               )}
             </View>
 
-            {editando ? (
+            {mensajeNacimiento ? (
+              <View
+                style={{
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor:
+                    mensajeNacimiento.tipo === "exito"
+                      ? `${colores.exito}4D`
+                      : `${colores.error}4D`,
+                  backgroundColor:
+                    mensajeNacimiento.tipo === "exito"
+                      ? `${colores.exito}14`
+                      : `${colores.error}14`,
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                  marginBottom: 14,
+                }}
+              >
+                <Text
+                  style={{
+                    color:
+                      mensajeNacimiento.tipo === "exito"
+                        ? colores.exito
+                        : colores.error,
+                    fontSize: 13,
+                    lineHeight: 18,
+                  }}
+                >
+                  {mensajeNacimiento.texto}
+                </Text>
+              </View>
+            ) : null}
+
+            {editandoNacimiento ? (
               <View>
-                <Input
-                  etiqueta="Nombre"
-                  value={nombre}
-                  onChangeText={setNombre}
+                <FormularioNacimiento
+                  onEnviar={guardarEdicionNacimiento}
+                  cargando={actualizarPerfil.isPending || recalculandoNacimiento}
+                  textoBoton={
+                    recalculandoNacimiento
+                      ? "Recalculando cartas..."
+                      : "Guardar cambios"
+                  }
+                  valoresIniciales={{
+                    nombre: perfil.nombre,
+                    fecha_nacimiento: perfil.fecha_nacimiento,
+                    hora_nacimiento: perfil.hora_nacimiento.slice(0, 5),
+                    ciudad_nacimiento: perfil.ciudad_nacimiento,
+                    pais_nacimiento: perfil.pais_nacimiento,
+                    latitud: perfil.latitud ?? undefined,
+                    longitud: perfil.longitud ?? undefined,
+                    zona_horaria: perfil.zona_horaria ?? undefined,
+                  }}
                 />
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <Boton onPress={guardarEdicion} cargando={actualizarPerfil.isPending}>
-                    Guardar
-                  </Boton>
-                  <Boton variante="fantasma" onPress={() => setEditando(false)}>
-                    Cancelar
-                  </Boton>
-                </View>
+
+                <Boton
+                  variante="fantasma"
+                  onPress={cancelarEdicionNacimiento}
+                  disabled={actualizarPerfil.isPending || recalculandoNacimiento}
+                >
+                  Cancelar
+                </Boton>
               </View>
             ) : (
-              <View style={{ gap: 8 }}>
+              <View style={{ gap: 10 }}>
                 {[
                   { label: "Nombre", valor: perfil.nombre },
-                  { label: "Nacimiento", valor: formatearFecha(perfil.fecha_nacimiento) },
+                  {
+                    label: "Nacimiento",
+                    valor: formatearFecha(perfil.fecha_nacimiento),
+                  },
                   { label: "Hora", valor: formatearHora(perfil.hora_nacimiento) },
-                  { label: "Lugar", valor: `${perfil.ciudad_nacimiento}, ${perfil.pais_nacimiento}` },
+                  {
+                    label: "Lugar",
+                    valor: `${perfil.ciudad_nacimiento}, ${perfil.pais_nacimiento}`,
+                  },
+                  {
+                    label: "Zona horaria",
+                    valor: perfil.zona_horaria ?? "Sin resolver",
+                  },
                 ].map((item) => (
-                  <View key={item.label} style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                    <Text style={{ color: colores.textoSecundario, fontSize: 14 }}>{item.label}</Text>
-                    <Text style={{ color: colores.primario, fontSize: 14 }}>{item.valor}</Text>
+                  <View
+                    key={item.label}
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      gap: 16,
+                    }}
+                  >
+                    <Text style={{ color: colores.textoSecundario, fontSize: 14 }}>
+                      {item.label}
+                    </Text>
+                    <Text
+                      style={{
+                        color: colores.primario,
+                        fontSize: 14,
+                        flex: 1,
+                        textAlign: "right",
+                      }}
+                    >
+                      {item.valor}
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -206,14 +523,25 @@ export default function PantallaPerfil() {
         </AnimacionEntrada>
       )}
 
-      {/* Configuración */}
-      <Text style={{ color: colores.primario, fontFamily: "Inter_600SemiBold", fontSize: 18, marginBottom: 12 }}>
+      <Text
+        style={{
+          color: colores.primario,
+          fontFamily: "Inter_600SemiBold",
+          fontSize: 18,
+          marginBottom: 12,
+        }}
+      >
         Configuración
       </Text>
 
-      {/* Selector de tema */}
       <Tarjeta style={{ marginBottom: 8 }}>
-        <Text style={{ color: colores.primario, fontFamily: "Inter_600SemiBold", marginBottom: 12 }}>
+        <Text
+          style={{
+            color: colores.primario,
+            fontFamily: "Inter_600SemiBold",
+            marginBottom: 12,
+          }}
+        >
           Apariencia
         </Text>
         <View style={{ flexDirection: "row", gap: 8 }}>
@@ -231,12 +559,12 @@ export default function PantallaPerfil() {
                 borderRadius: 12,
                 backgroundColor:
                   preferencia === opcion.valor
-                    ? colores.acento + "1A"
+                    ? `${colores.acento}1A`
                     : colores.superficie,
                 borderWidth: 1,
                 borderColor:
                   preferencia === opcion.valor
-                    ? colores.acento + "4D"
+                    ? `${colores.acento}4D`
                     : colores.borde,
               }}
             >
@@ -258,29 +586,54 @@ export default function PantallaPerfil() {
         </View>
       </Tarjeta>
 
-      {/* Suscripción */}
-      <PresionableAnimado onPress={() => router.push("/(features)/suscripcion" as never)}>
+      <PresionableAnimado
+        onPress={() => router.push("/(features)/suscripcion" as never)}
+      >
         <Tarjeta padding="sm" style={{ marginBottom: 8 }}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <CreditCard size={20} color={colores.acento} />
-            <Text style={{ color: colores.primario, marginLeft: 12, flex: 1 }}>Suscripción</Text>
+            <Text style={{ color: colores.primario, marginLeft: 12, flex: 1 }}>
+              Suscripción
+            </Text>
             <CaretRight size={18} color={colores.textoMuted} />
           </View>
         </Tarjeta>
       </PresionableAnimado>
 
-      {/* Cambiar contraseña */}
+      <Tarjeta padding="sm" style={{ marginBottom: 8 }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <DownloadSimple size={20} color={colores.acento} />
+          <Text style={{ color: colores.primario, marginLeft: 12, flex: 1 }}>
+            Perfil en PDF
+          </Text>
+          <Boton
+            variante="fantasma"
+            tamaño="sm"
+            onPress={manejarDescargaPerfil}
+            cargando={descargandoPerfil}
+          >
+            Abrir
+          </Boton>
+        </View>
+      </Tarjeta>
+
       {usuario?.proveedor_auth === "local" && (
         <>
           <PresionableAnimado
             onPress={() =>
-              setSeccionAbierta(seccionAbierta === "contrasena" ? null : "contrasena")
+              setSeccionAbierta(
+                seccionAbierta === "contrasena" ? null : "contrasena",
+              )
             }
           >
             <Tarjeta padding="sm" style={{ marginBottom: 8 }}>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <LockKey size={20} color={colores.acento} />
-                <Text style={{ color: colores.primario, marginLeft: 12, flex: 1 }}>Cambiar contraseña</Text>
+                <Text
+                  style={{ color: colores.primario, marginLeft: 12, flex: 1 }}
+                >
+                  Cambiar contraseña
+                </Text>
                 <CaretRight size={18} color={colores.textoMuted} />
               </View>
             </Tarjeta>
@@ -312,14 +665,64 @@ export default function PantallaPerfil() {
         </>
       )}
 
+      <PresionableAnimado
+        onPress={() =>
+          setSeccionAbierta(seccionAbierta === "eliminar" ? null : "eliminar")
+        }
+      >
+        <Tarjeta padding="sm" style={{ marginBottom: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Trash size={20} color={colores.error} />
+            <Text style={{ color: colores.error, marginLeft: 12, flex: 1 }}>
+              Eliminar cuenta
+            </Text>
+            <CaretRight size={18} color={colores.textoMuted} />
+          </View>
+        </Tarjeta>
+      </PresionableAnimado>
+
+      {seccionAbierta === "eliminar" && (
+        <Tarjeta style={{ marginBottom: 8 }}>
+          <Text
+            style={{
+              color: colores.textoSecundario,
+              fontSize: 13,
+              marginBottom: 12,
+            }}
+          >
+            Esta acción desactiva tu cuenta, revoca tu sesión y cancela cualquier
+            suscripción activa.
+          </Text>
+          {usuario?.proveedor_auth === "local" && (
+            <Input
+              etiqueta="Confirmá tu contraseña"
+              value={contrasenaEliminar}
+              onChangeText={setContrasenaEliminar}
+              secureTextEntry
+            />
+          )}
+          <Boton
+            variante="fantasma"
+            onPress={manejarEliminarCuenta}
+            cargando={eliminarCuenta.isPending}
+            disabled={
+              usuario?.proveedor_auth === "local" && !contrasenaEliminar.trim()
+            }
+          >
+            Eliminar definitivamente
+          </Boton>
+        </Tarjeta>
+      )}
+
       <Separador />
 
-      {/* Cerrar sesión */}
       <PresionableAnimado onPress={manejarLogout}>
         <Tarjeta padding="sm">
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <SignOut size={20} color={colores.error} />
-            <Text style={{ color: colores.error, marginLeft: 12 }}>Cerrar sesión</Text>
+            <Text style={{ color: colores.error, marginLeft: 12 }}>
+              Cerrar sesión
+            </Text>
           </View>
         </Tarjeta>
       </PresionableAnimado>

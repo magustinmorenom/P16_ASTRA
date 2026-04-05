@@ -40,7 +40,7 @@ export function SeccionTriada({ sol, luna, ascendente, onSeleccionar }: SeccionT
   ];
 
   return (
-    <section className="divide-y divide-white/[0.06]">
+    <section className="divide-y divide-[var(--shell-borde)]">
       {items.map(({ config, signo, grado, casa }, idx) => {
           const elemento = ELEMENTO_SIGNO[signo] || "";
           return (
@@ -49,7 +49,7 @@ export function SeccionTriada({ sol, luna, ascendente, onSeleccionar }: SeccionT
               onClick={() => onSeleccionar(config.key)}
               className={`group flex w-full items-center gap-3 px-3 py-3 text-left transition-all duration-200 ${
                 idx === 0 ? "" : ""
-              } hover:bg-white/[0.04]`}
+              } hover:bg-[var(--shell-superficie-suave)]`}
             >
               <div
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[16px] bg-gradient-to-br ${config.gradiente} text-white shadow-[0_12px_30px_rgba(26,10,54,0.32)] ring-1 ring-white/15`}
@@ -58,24 +58,24 @@ export function SeccionTriada({ sol, luna, ascendente, onSeleccionar }: SeccionT
               </div>
 
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/66">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
                   {config.sublabel}
                 </p>
                 <div className="mt-1 flex items-center gap-2">
-                  <span className="text-[14px] font-semibold tracking-tight text-white">
+                  <span className="text-[14px] font-semibold tracking-tight text-[color:var(--shell-texto)]">
                     {config.label}
                   </span>
-                  <span className="text-[13px] text-white/30">·</span>
-                  <span className="text-[14px] font-medium text-white/82">
+                  <span className="text-[13px] text-[color:var(--shell-texto-tenue)]">·</span>
+                  <span className="text-[14px] font-medium text-[color:var(--shell-texto-secundario)]">
                     {signo}
                   </span>
                 </div>
-                <p className="mt-1.5 text-[11px] text-white/52">
+                <p className="mt-1.5 text-[11px] text-[color:var(--shell-texto-tenue)]">
                   {grado.toFixed(1)}°{casa ? ` · Casa ${ROMANO[casa]}` : ""} · {elemento}
                 </p>
               </div>
 
-              <span className="text-white/26 transition-colors group-hover:text-white/52">
+              <span className="text-[color:var(--shell-texto-tenue)] transition-colors group-hover:text-[color:var(--shell-texto-secundario)]">
                 <span className="text-base">›</span>
               </span>
             </button>

@@ -24,25 +24,40 @@ import {
 import type { Activacion, Canal, DatosNacimiento, DisenoHumano } from "@/lib/tipos";
 
 const PANEL_CLARO =
-  "rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(245,238,255,0.9))] shadow-[0_24px_70px_rgba(20,8,42,0.16)] backdrop-blur-xl";
+  "tema-superficie-panel rounded-[22px]";
 
 const PANEL_OSCURO =
-  "relative overflow-hidden rounded-[26px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.2),transparent_32%),linear-gradient(135deg,rgba(45,27,105,0.98),rgba(28,6,39,0.98))] shadow-[0_28px_90px_rgba(8,2,22,0.38)]";
+  "tema-superficie-panel relative overflow-hidden rounded-[26px]";
 
 const FONDO_PAGINA_HD =
-  "relative min-h-full bg-[#16011B] lg:h-full lg:min-h-0 lg:overflow-hidden";
+  "relative min-h-full lg:h-full lg:min-h-0 lg:overflow-hidden";
 
 const PANEL_SECUNDARIO =
-  "rounded-[20px] border border-white/[0.08] bg-white/[0.05] shadow-[0_18px_50px_rgba(8,3,20,0.2)] backdrop-blur-xl";
+  "tema-superficie-panel-suave rounded-[20px]";
 
 const PANEL_EXPLORACION_HD =
-  "relative overflow-hidden rounded-[20px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(24,6,35,0.98),rgba(24,6,35,0.98))] shadow-[0_22px_60px_rgba(8,3,20,0.24)]";
+  "tema-superficie-panel relative overflow-hidden rounded-[20px]";
 
 const BOTON_BODYGRAPH_VIOLETA =
-  "inline-flex items-center gap-2 rounded-full border border-[#B388FF]/55 bg-gradient-to-r from-[#6C2BFF]/62 via-[#7C4DFF]/52 to-[#B388FF]/38 px-4 py-2 text-[12px] font-semibold text-white transition-all hover:border-[#D9C2FF]/70 hover:from-[#7C4DFF]/78 hover:via-[#8F63FF]/68 hover:to-[#B388FF]/48 hover:shadow-[0_10px_28px_rgba(124,77,255,0.32)]";
+  "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[12px] font-semibold transition-colors hover:text-[color:var(--shell-texto)]";
 
-const LISTA_EXPLORACION_HD =
-  "divide-y divide-white/[0.06]";
+const LISTA_EXPLORACION_HD = "divide-y";
+const ESTILO_FONDO_HD = {
+  background: "var(--shell-fondo)",
+} as const;
+const ESTILO_PANEL_HD = {
+  borderColor: "var(--shell-borde)",
+  background: "var(--shell-superficie)",
+} as const;
+const ESTILO_PANEL_HD_SUAVE = {
+  borderColor: "var(--shell-borde)",
+  background: "var(--shell-superficie-suave)",
+} as const;
+const ESTILO_BOTON_BODYGRAPH = {
+  borderColor: "var(--shell-chip-borde)",
+  background: "var(--shell-chip)",
+  color: "var(--shell-texto)",
+} as const;
 
 type ModoExploracion = "centros" | "canales" | "activaciones";
 
@@ -66,9 +81,21 @@ function capitalizarEtiqueta(valor: string) {
 function CapasFondoHD() {
   return (
     <>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,77,255,0.24),transparent_26%),radial-gradient(circle_at_top_right,rgba(179,136,255,0.16),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(76,35,140,0.16),transparent_30%)]" />
-      <div className="absolute right-[-80px] top-0 h-72 w-72 rounded-full bg-[#B388FF]/14 blur-3xl" />
-      <div className="absolute left-[-40px] top-1/3 h-64 w-64 rounded-full bg-[#7C4DFF]/12 blur-3xl" />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle_at_top_left, var(--shell-glow-1), transparent 26%), radial-gradient(circle_at_top_right, var(--shell-glow-2), transparent 22%), radial-gradient(circle_at_bottom_left, var(--shell-glow-1), transparent 30%)",
+        }}
+      />
+      <div
+        className="absolute right-[-80px] top-0 h-72 w-72 rounded-full blur-3xl"
+        style={{ background: "var(--shell-glow-2)" }}
+      />
+      <div
+        className="absolute left-[-40px] top-1/3 h-64 w-64 rounded-full blur-3xl"
+        style={{ background: "var(--shell-glow-1)" }}
+      />
     </>
   );
 }
@@ -88,17 +115,16 @@ function TarjetaAtributo({
     <button
       onClick={onClick}
       className={cn(
-        "group w-full bg-white/[0.03] px-4 py-4 text-left transition-all duration-200",
-        activa
-          ? "bg-[linear-gradient(135deg,rgba(124,77,255,0.18),rgba(179,136,255,0.08))]"
-          : "hover:bg-white/[0.06]",
+        "group w-full px-4 py-4 text-left transition-all duration-200",
+        !activa && "hover:bg-[var(--shell-superficie-suave)]",
       )}
+      style={activa ? { background: "var(--shell-chip)" } : undefined}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/62">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
         {etiqueta}
       </p>
       <div className="mt-2 flex items-center justify-between gap-4">
-        <p className="min-w-0 text-[14px] font-semibold leading-tight text-white">
+        <p className="min-w-0 text-[14px] font-semibold leading-tight text-[color:var(--shell-texto)]">
           {valor}
         </p>
         <Icono
@@ -106,7 +132,9 @@ function TarjetaAtributo({
           tamaño={14}
           className={cn(
             "shrink-0 transition-transform duration-200",
-            activa ? "text-[#D9C2FF]" : "text-[#B388FF]/72 group-hover:translate-x-0.5",
+            activa
+              ? "text-[color:var(--shell-badge-violeta-texto)]"
+              : "text-[color:var(--shell-texto-tenue)] group-hover:translate-x-0.5",
           )}
         />
       </div>
@@ -131,12 +159,13 @@ function BotonModo({
       className={cn(
         "inline-flex items-center gap-2 border-b pb-2 text-[12px] font-medium transition-all",
         activo
-          ? "border-[#B388FF]/70 text-white"
-          : "border-transparent text-violet-100/56 hover:text-white/82",
+          ? "text-[color:var(--shell-texto)]"
+          : "border-transparent text-[color:var(--shell-texto-secundario)] hover:text-[color:var(--shell-texto)]",
       )}
+      style={activo ? { borderBottomColor: "var(--color-acento)" } : undefined}
     >
       <span>{titulo}</span>
-      <span className="text-[11px] text-white/38">{contador}</span>
+      <span className="text-[11px] text-[color:var(--shell-texto-tenue)]">{contador}</span>
     </button>
   );
 }
@@ -159,15 +188,21 @@ function ItemCentro({
       onClick={onClick}
       className={cn(
         "group flex w-full items-center justify-between gap-3 border-l-2 px-4 py-3 text-left transition-all duration-200",
-        activo
-          ? "border-l-[#B388FF] bg-white/[0.06]"
-          : "border-l-transparent hover:bg-white/[0.04]",
+        !activo && "border-l-transparent hover:bg-[var(--shell-superficie-suave)]",
       )}
+      style={
+        activo
+          ? {
+              borderLeftColor: "var(--color-acento)",
+              background: "var(--shell-chip)",
+            }
+          : undefined
+      }
     >
       <div className="min-w-0">
-        <p className="text-[14px] font-semibold text-white">{nombre}</p>
+        <p className="text-[14px] font-semibold text-[color:var(--shell-texto)]">{nombre}</p>
       </div>
-      <span className="shrink-0 text-[11px] font-medium uppercase tracking-[0.14em] text-violet-100/52">
+      <span className="shrink-0 text-[11px] font-medium uppercase tracking-[0.14em] text-[color:var(--shell-texto-tenue)]">
         {meta.etiqueta}
       </span>
     </button>
@@ -188,19 +223,25 @@ function ItemCanal({
       onClick={onClick}
       className={cn(
         "group w-full border-l-2 px-4 py-3 text-left transition-all duration-200",
-        activo
-          ? "border-l-[#B388FF] bg-white/[0.06]"
-          : "border-l-transparent hover:bg-white/[0.04]",
+        !activo && "border-l-transparent hover:bg-[var(--shell-superficie-suave)]",
       )}
+      style={
+        activo
+          ? {
+              borderLeftColor: "var(--color-acento)",
+              background: "var(--shell-chip)",
+            }
+          : undefined
+      }
     >
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[14px] font-semibold leading-5 text-white">{canal.nombre}</p>
-          <p className="mt-1 text-[12px] text-violet-100/52">
+          <p className="text-[14px] font-semibold leading-5 text-[color:var(--shell-texto)]">{canal.nombre}</p>
+          <p className="mt-1 text-[12px] text-[color:var(--shell-texto-secundario)]">
             {capitalizarEtiqueta(canal.centros[0])} · {capitalizarEtiqueta(canal.centros[1])}
           </p>
         </div>
-        <span className="shrink-0 text-[12px] font-medium text-violet-100/62">
+        <span className="shrink-0 text-[12px] font-medium text-[color:var(--shell-texto-secundario)]">
           {canal.puertas[0]}–{canal.puertas[1]}
         </span>
       </div>
@@ -224,16 +265,22 @@ function ItemActivacion({
       onClick={onClick}
       className={cn(
         "group w-full border-l-2 px-4 py-2.5 text-left transition-all duration-200",
-        activo
-          ? "border-l-[#B388FF] bg-white/[0.06]"
-          : "border-l-transparent hover:bg-white/[0.04]",
+        !activo && "border-l-transparent hover:bg-[var(--shell-superficie-suave)]",
       )}
+      style={
+        activo
+          ? {
+              borderLeftColor: "var(--color-acento)",
+              background: "var(--shell-chip)",
+            }
+          : undefined
+      }
     >
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[13px] font-semibold leading-5 text-white">
+        <p className="text-[13px] font-semibold leading-5 text-[color:var(--shell-texto)]">
           {activacion.planeta}
         </p>
-        <span className="shrink-0 text-right text-[11px] font-medium text-violet-100/54">
+        <span className="shrink-0 text-right text-[11px] font-medium text-[color:var(--shell-texto-secundario)]">
           P{activacion.puerta} · L{activacion.linea} · C{activacion.color} ·{" "}
           {origen === "consciente" ? "Conc." : "Inconc."}
         </span>
@@ -257,18 +304,17 @@ function TarjetaCruz({
     <button
       onClick={onClick}
       className={cn(
-        "flex w-full items-center justify-between gap-4 bg-white/[0.03] px-4 py-3 text-left transition-all",
-        activo
-          ? "bg-[linear-gradient(135deg,rgba(124,77,255,0.16),rgba(179,136,255,0.06))]"
-          : "hover:bg-white/[0.06]",
+        "flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-all",
+        !activo && "hover:bg-[var(--shell-superficie-suave)]",
       )}
+      style={activo ? { background: "var(--shell-chip)" } : undefined}
     >
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200/62">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
           {etiqueta}
         </p>
       </div>
-      <p className="shrink-0 text-[15px] font-semibold text-white">
+      <p className="shrink-0 text-[15px] font-semibold text-[color:var(--shell-texto)]">
         {puerta ?? "—"}
       </p>
     </button>
@@ -277,8 +323,11 @@ function TarjetaCruz({
 
 function ListaVacia({ texto }: { texto: string }) {
   return (
-    <div className="rounded-[18px] border border-dashed border-white/14 bg-white/[0.03] px-4 py-8 text-center">
-      <p className="text-[14px] text-violet-100/62">{texto}</p>
+    <div
+      className="rounded-[18px] border border-dashed px-4 py-8 text-center"
+      style={ESTILO_PANEL_HD_SUAVE}
+    >
+      <p className="text-[14px] text-[color:var(--shell-texto-secundario)]">{texto}</p>
     </div>
   );
 }
@@ -294,24 +343,30 @@ function HeroDisenoHumano({
 
   return (
     <section className={cn(PANEL_OSCURO, "p-6 lg:p-7")}>
-      <div className="absolute -right-16 top-8 h-44 w-44 rounded-full bg-[#B388FF]/16 blur-3xl" />
-      <div className="absolute left-12 top-14 h-24 w-24 rounded-full bg-[#7C4DFF]/12 blur-3xl" />
+      <div
+        className="absolute -right-16 top-8 h-44 w-44 rounded-full blur-3xl"
+        style={{ background: "var(--shell-glow-2)" }}
+      />
+      <div
+        className="absolute left-12 top-14 h-24 w-24 rounded-full blur-3xl"
+        style={{ background: "var(--shell-glow-1)" }}
+      />
 
       <div className="relative z-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-200/72">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-acento)]">
           Diseño Humano
         </p>
 
         <div className="mt-4 flex items-start gap-4">
-          <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,rgba(124,77,255,0.48),rgba(179,136,255,0.22))] text-white shadow-[0_16px_40px_rgba(20,8,42,0.3)] sm:flex">
+          <div className="tema-gradiente-acento-suave hidden h-16 w-16 shrink-0 items-center justify-center rounded-[18px] text-white shadow-[var(--shell-sombra-fuerte)] sm:flex">
             <IconoAstral nombre="personal" tamaño={30} className="text-white" />
           </div>
 
           <div className="min-w-0">
-            <h1 className="text-[22px] font-semibold tracking-tight text-white lg:text-[24px]">
+            <h1 className="text-[22px] font-semibold tracking-tight text-[color:var(--shell-texto)] lg:text-[24px]">
               Diseño Humano
             </h1>
-            <p className="mt-3 max-w-3xl text-[12px] leading-relaxed text-violet-100/56">
+            <p className="mt-3 max-w-3xl text-[12px] leading-relaxed text-[color:var(--shell-texto-secundario)]">
               {lineaTecnica}
             </p>
           </div>
@@ -322,6 +377,7 @@ function HeroDisenoHumano({
             type="button"
             onClick={onAbrirBodyGraph}
             className={BOTON_BODYGRAPH_VIOLETA}
+            style={ESTILO_BOTON_BODYGRAPH}
           >
             <Icono nombre="ojo" tamaño={16} peso="fill" />
             Ver Body Graph
@@ -347,7 +403,7 @@ function SeccionPilaresHD({
 }) {
   return (
     <section className={cn(PANEL_SECUNDARIO, "mt-6 overflow-hidden p-0")}>
-      <div className="grid gap-px bg-white/[0.08] md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-px md:grid-cols-2 xl:grid-cols-4" style={{ background: "var(--shell-borde)" }}>
         {atributos.map((atributo) => (
           <TarjetaAtributo
             key={atributo.etiqueta}
@@ -383,7 +439,10 @@ function SeccionExploracionHD({
     <section className={cn(PANEL_EXPLORACION_HD, "mt-6 p-5 lg:p-6")}>
 
       <div className="relative z-10">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/8 pb-3">
+        <div
+          className="flex flex-wrap items-center justify-between gap-4 border-b pb-3"
+          style={{ borderColor: "var(--shell-borde)" }}
+        >
           <div className="flex flex-wrap gap-4">
             <BotonModo
               activo={modoExploracion === "centros"}
@@ -408,6 +467,7 @@ function SeccionExploracionHD({
           <button
             onClick={onAbrirBodyGraph}
             className={BOTON_BODYGRAPH_VIOLETA}
+            style={ESTILO_BOTON_BODYGRAPH}
           >
             <Icono nombre="ojo" tamaño={16} peso="fill" />
             Body Graph
@@ -435,7 +495,7 @@ function SeccionCruzHD({
 }) {
   return (
     <section className={cn(PANEL_SECUNDARIO, "mt-6 overflow-hidden p-0")}>
-      <div className="grid gap-px bg-white/[0.08] sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-px sm:grid-cols-2 xl:grid-cols-4" style={{ background: "var(--shell-borde)" }}>
         {cruzItems.map((item) => (
           <TarjetaCruz
             key={item.etiqueta}
@@ -469,7 +529,10 @@ function ModalBodyGraph({
   if (!abierta || !datos) return null;
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#11091f]/72 px-4 backdrop-blur-md">
+    <div
+      className="fixed inset-0 z-[120] flex items-center justify-center px-4 backdrop-blur-md"
+      style={{ background: "var(--shell-overlay)" }}
+    >
       <button
         type="button"
         aria-label="Cerrar Body Graph"
@@ -478,15 +541,18 @@ function ModalBodyGraph({
       />
 
       <div
-        className="relative z-10 w-full max-w-[1180px] overflow-hidden rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.16),transparent_28%),linear-gradient(135deg,#170d2c_0%,#241148_54%,#34205f_100%)] shadow-[0_30px_100px_rgba(10,4,25,0.48)]"
+        className="tema-superficie-panel relative z-10 w-full max-w-[1180px] overflow-hidden rounded-[24px]"
         onClick={(evento) => evento.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4 lg:px-6">
+        <div
+          className="flex items-start justify-between gap-4 border-b px-5 py-4 lg:px-6"
+          style={{ borderColor: "var(--shell-borde)" }}
+        >
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-200/72">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-acento)]">
               Body Graph
             </p>
-            <h2 className="mt-2 text-[18px] font-semibold tracking-tight text-white">
+            <h2 className="mt-2 text-[18px] font-semibold tracking-tight text-[color:var(--shell-texto)]">
               Mapa del diseño
             </h2>
           </div>
@@ -494,14 +560,17 @@ function ModalBodyGraph({
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-full border border-white/10 bg-white/[0.08] p-2 text-violet-100/75 transition-colors hover:bg-white/[0.14] hover:text-white"
+            className="rounded-full border p-2 text-[color:var(--shell-texto-secundario)] transition-colors hover:text-[color:var(--shell-texto)]"
+            style={ESTILO_PANEL_HD}
           >
             <Icono nombre="x" tamaño={18} />
           </button>
         </div>
 
         <div className="max-h-[82vh] overflow-y-auto p-4 lg:p-6">
-          <div className="mx-auto flex max-w-[900px] items-center justify-center rounded-[20px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.08),transparent_30%),linear-gradient(180deg,rgba(13,7,27,0.96),rgba(22,10,37,0.92))] p-6 lg:p-10">
+          <div
+            className="tema-superficie-panel-suave mx-auto flex max-w-[900px] items-center justify-center rounded-[20px] p-6 lg:p-10"
+          >
             <BodyGraph datos={datos} className="min-h-[700px]" />
           </div>
         </div>
@@ -552,20 +621,23 @@ export default function PaginaDisenoHumano() {
     return (
       <>
         <HeaderMobile titulo="Diseño Humano" mostrarAtras />
-        <div className={FONDO_PAGINA_HD}>
+        <div className={FONDO_PAGINA_HD} style={ESTILO_FONDO_HD}>
           <CapasFondoHD />
 
           <section className="relative z-10 flex h-full flex-col gap-6 overflow-y-auto scroll-sutil p-5 lg:p-[28px_32px]">
             <div className={cn(PANEL_OSCURO, "p-6 lg:p-8")}>
-              <div className="absolute -right-14 top-10 h-36 w-36 rounded-full bg-[#B388FF]/18 blur-3xl" />
+              <div
+                className="absolute -right-14 top-10 h-36 w-36 rounded-full blur-3xl"
+                style={{ background: "var(--shell-glow-2)" }}
+              />
               <div className="relative z-10">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-200/72">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-acento)]">
                   Diseño Humano
                 </p>
-                <h1 className="mt-3 text-[24px] font-semibold tracking-tight text-white lg:text-[28px]">
+                <h1 className="mt-3 text-[24px] font-semibold tracking-tight text-[color:var(--shell-texto)] lg:text-[28px]">
                   Preparando tu lectura
                 </h1>
-                <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-violet-100/62">
+                <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-[color:var(--shell-texto-secundario)]">
                   Cargando tipo, autoridad, centros y activaciones.
                 </p>
               </div>
@@ -580,8 +652,8 @@ export default function PaginaDisenoHumano() {
             </div>
 
             <div className={cn(PANEL_CLARO, "flex items-center justify-center gap-3 px-5 py-4")}>
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#7C4DFF] border-t-transparent" />
-              <p className="text-[13px] text-[#5D546B]">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+              <p className="text-[13px] text-[color:var(--shell-texto-secundario)]">
                 Cargando tu Diseño Humano…
               </p>
             </div>
@@ -595,33 +667,39 @@ export default function PaginaDisenoHumano() {
     return (
       <>
         <HeaderMobile titulo="Diseño Humano" mostrarAtras />
-        <div className={FONDO_PAGINA_HD}>
+        <div className={FONDO_PAGINA_HD} style={ESTILO_FONDO_HD}>
           <CapasFondoHD />
 
           <section className="relative z-10 flex h-full flex-col gap-6 overflow-y-auto scroll-sutil p-5 lg:p-[28px_32px]">
             <div className={cn(PANEL_OSCURO, "p-6 lg:p-8")}>
-              <div className="absolute -right-16 top-0 h-44 w-44 rounded-full bg-[#B388FF]/18 blur-3xl" />
-              <div className="absolute -left-10 bottom-0 h-36 w-36 rounded-full bg-[#7C4DFF]/16 blur-3xl" />
+              <div
+                className="absolute -right-16 top-0 h-44 w-44 rounded-full blur-3xl"
+                style={{ background: "var(--shell-glow-2)" }}
+              />
+              <div
+                className="absolute -left-10 bottom-0 h-36 w-36 rounded-full blur-3xl"
+                style={{ background: "var(--shell-glow-1)" }}
+              />
 
               <div className="relative z-10 grid gap-6 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-200/75">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-acento)]">
                     Diseño Humano
                   </p>
-                  <h1 className="mt-3 text-[26px] font-semibold tracking-tight text-white lg:text-[30px]">
+                  <h1 className="mt-3 text-[26px] font-semibold tracking-tight text-[color:var(--shell-texto)] lg:text-[30px]">
                     Calculá tu diseño
                   </h1>
-                  <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-violet-100/68">
+                  <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-[color:var(--shell-texto-secundario)]">
                     Ingresá tus datos para abrir tipo, autoridad, perfil, centros, canales y activaciones en una lectura compacta.
                   </p>
                 </div>
 
-                <div className="rounded-[22px] border border-white/10 bg-white/[0.06] p-4 backdrop-blur-xl lg:p-5">
-                  <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7C4DFF]">
+                <div className={cn(PANEL_CLARO, "p-4 lg:p-5")}>
+                  <div className="rounded-[18px] border p-5" style={ESTILO_PANEL_HD_SUAVE}>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-acento)]">
                       Datos de nacimiento
                     </p>
-                    <p className="mt-2 text-[13px] leading-relaxed text-violet-100/62">
+                    <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--shell-texto-secundario)]">
                       Abrí tu lectura completa desde acá.
                     </p>
 
@@ -634,8 +712,8 @@ export default function PaginaDisenoHumano() {
                   </div>
 
                   {mutacion.isError && (
-                    <div className="mt-4 rounded-2xl border border-red-200/70 bg-red-50/90 px-4 py-3">
-                      <p className="text-[13px] text-red-600">
+                    <div className="mt-4 rounded-2xl border px-4 py-3" style={{ borderColor: "var(--shell-badge-error-borde)", background: "var(--shell-badge-error-fondo)" }}>
+                      <p className="text-[13px] text-[color:var(--shell-badge-error-texto)]">
                         {mutacion.error?.message ||
                           "Error al calcular el Diseño Humano."}
                       </p>
@@ -706,7 +784,7 @@ export default function PaginaDisenoHumano() {
   const exploracionActual = (() => {
     if (modoExploracion === "centros") {
       return (
-        <div className={cn(LISTA_EXPLORACION_HD, "divide-y divide-white/[0.06]")}>
+        <div className={cn(LISTA_EXPLORACION_HD, "divide-y divide-[var(--shell-borde)]")}>
           {centrosEntries.map(([clave, estado]) => (
             <ItemCentro
               key={clave}
@@ -726,7 +804,7 @@ export default function PaginaDisenoHumano() {
       }
 
       return (
-        <div className={cn(LISTA_EXPLORACION_HD, "divide-y divide-white/[0.06]")}>
+        <div className={cn(LISTA_EXPLORACION_HD, "divide-y divide-[var(--shell-borde)]")}>
           {canales.map((canal) => (
             <ItemCanal
               key={crearIdCanal(canal)}
@@ -744,7 +822,7 @@ export default function PaginaDisenoHumano() {
     }
 
     return (
-      <div className={cn(LISTA_EXPLORACION_HD, "divide-y divide-white/[0.06]")}>
+      <div className={cn(LISTA_EXPLORACION_HD, "divide-y divide-[var(--shell-borde)]")}>
         {activacionesConscientes.map((activacion) => (
           <ItemActivacion
             key={`consciente-${activacion.planeta}-${activacion.puerta}-${activacion.linea}`}
@@ -782,7 +860,7 @@ export default function PaginaDisenoHumano() {
   return (
     <>
       <HeaderMobile titulo="Diseño Humano" mostrarAtras />
-      <div className={FONDO_PAGINA_HD}>
+      <div className={FONDO_PAGINA_HD} style={ESTILO_FONDO_HD}>
         <CapasFondoHD />
 
         <div className="relative z-10 flex min-h-full flex-col lg:h-full lg:min-h-0 lg:flex-row lg:overflow-hidden">
@@ -821,7 +899,8 @@ export default function PaginaDisenoHumano() {
             <div className="fixed inset-0 z-50 flex items-end lg:hidden">
               <button
                 onClick={cerrarSeleccion}
-                className="absolute inset-0 bg-[#05020B]/52 backdrop-blur-[1px]"
+                className="absolute inset-0 backdrop-blur-[1px]"
+                style={{ background: "var(--shell-overlay-suave)" }}
                 aria-label="Cerrar detalle"
               />
               <div className="relative z-10 max-h-[85vh] w-full overflow-hidden rounded-t-[22px]">

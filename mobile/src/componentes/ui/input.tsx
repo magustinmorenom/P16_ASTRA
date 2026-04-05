@@ -21,9 +21,9 @@ export const Input = forwardRef<TextInput, InputProps>(
               color: colores.textoSecundario,
               fontSize: 11,
               fontFamily: "Inter_500Medium",
-              marginBottom: 6,
+              marginBottom: 8,
               textTransform: "uppercase",
-              letterSpacing: 1,
+              letterSpacing: 0.8,
             }}
           >
             {etiqueta}
@@ -33,11 +33,12 @@ export const Input = forwardRef<TextInput, InputProps>(
           style={{
             flexDirection: "row",
             alignItems: "center",
-            backgroundColor: colores.superficie,
+            backgroundColor: colores.superficieHover,
             borderWidth: 1,
-            borderColor: colores.borde,
-            borderRadius: 12,
+            borderColor: error ? `${colores.error}66` : colores.vidrioBorde,
+            borderRadius: 14,
             paddingHorizontal: 16,
+            minHeight: 56,
           }}
         >
           {icono && <View style={{ marginRight: 8 }}>{icono}</View>}
@@ -50,7 +51,7 @@ export const Input = forwardRef<TextInput, InputProps>(
                 color: colores.primario,
                 fontSize: 16,
                 fontFamily: "Inter_400Regular",
-                paddingVertical: 12,
+                paddingVertical: 14,
               },
               style,
             ]}

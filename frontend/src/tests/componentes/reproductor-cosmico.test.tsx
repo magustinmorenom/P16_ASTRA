@@ -16,8 +16,8 @@ const AUDIO_BASE = {
   cargandoAudio: false,
   pistaActual: {
     id: "ep-1",
-    titulo: "Momento Clave de tu Día",
-    subtitulo: "Podcast Tu Día",
+    titulo: "Cómo influyen hoy los tránsitos en vos",
+    subtitulo: "Podcast del día",
     tipo: "podcast" as const,
     duracionSegundos: 180,
     icono: "sol" as const,

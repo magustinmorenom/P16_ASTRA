@@ -8,6 +8,54 @@ import { usarEnviarMensaje, usarHistorialChat, usarNuevaConversacion } from "@/l
 import type { MensajeChat } from "@/lib/tipos";
 
 // ─────────────────────────────────────────────────────────────
+// Renderizado de markdown inline (negrita, cursiva, subrayado)
+// ─────────────────────────────────────────────────────────────
+function renderizarTexto(texto: string): React.ReactNode[] {
+  // Orden: **negrita**, *cursiva*, __subrayado__
+  const partes: React.ReactNode[] = [];
+  const regex = /(\*\*(.+?)\*\*)|(\*(.+?)\*)|(__(.+?)__)/g;
+  let ultimo = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+
+  while ((match = regex.exec(texto)) !== null) {
+    // Texto previo sin formato
+    if (match.index > ultimo) {
+      partes.push(texto.slice(ultimo, match.index));
+    }
+
+    if (match[1]) {
+      // **negrita**
+      partes.push(<strong key={key++} className="font-semibold">{match[2]}</strong>);
+    } else if (match[3]) {
+      // *cursiva*
+      partes.push(<em key={key++} className="italic">{match[4]}</em>);
+    } else if (match[5]) {
+      // __subrayado__
+      partes.push(<span key={key++} className="underline decoration-violet-400/60 underline-offset-2">{match[6]}</span>);
+    }
+    ultimo = match.index + match[0].length;
+  }
+
+  // Texto restante
+  if (ultimo < texto.length) {
+    partes.push(texto.slice(ultimo));
+  }
+
+  return partes.length > 0 ? partes : [texto];
+}
+
+function renderizarContenido(contenido: string): React.ReactNode {
+  // Separar por saltos de línea y renderizar markdown inline en cada línea
+  return contenido.split("\n").map((linea, i, arr) => (
+    <span key={i}>
+      {renderizarTexto(linea)}
+      {i < arr.length - 1 && <br />}
+    </span>
+  ));
+}
+
+// ─────────────────────────────────────────────────────────────
 // Sugerencias rápidas para el primer mensaje
 // ─────────────────────────────────────────────────────────────
 const SUGERENCIAS = [
@@ -26,9 +74,9 @@ function IndicadorEscribiendo() {
       <div
         className="px-4 py-3 rounded-2xl rounded-bl-sm flex gap-1.5 items-center"
         style={{
-          background: "rgba(255,255,255,0.5)",
+          background: "var(--shell-superficie-fuerte)",
           backdropFilter: "blur(12px)",
-          border: "1px solid rgba(255,255,255,0.45)",
+          border: "1px solid var(--shell-borde)",
         }}
       >
         {[0, 1, 2].map((i) => (
@@ -70,17 +118,17 @@ function BurbujaMensaje({ msg }: { msg: MensajeChat }) {
                 background:
                   "linear-gradient(135deg, var(--color-violet-600), var(--color-violet-500))",
                 border: "1px solid var(--color-violet-400)",
-                boxShadow: "0 3px 14px rgba(124,77,255,0.18)",
+                boxShadow: "var(--shell-sombra-suave)",
               }
             : {
-                background: "rgba(255,255,255,0.5)",
+                background: "var(--shell-superficie-fuerte)",
                 backdropFilter: "blur(12px)",
-                border: "1px solid rgba(255,255,255,0.45)",
-                boxShadow: "0 2px 10px rgba(124,77,255,0.04)",
+                border: "1px solid var(--shell-borde)",
+                boxShadow: "var(--shell-sombra-suave)",
               }
         }
       >
-        {msg.contenido}
+        {esUsuario ? msg.contenido : renderizarContenido(msg.contenido)}
       </div>
     </div>
   );
@@ -243,7 +291,7 @@ export default function ChatWidget() {
           onClick={() => setAbierto(false)}
           className="fixed inset-0 z-[9998] animate-fade-in"
           style={{
-            background: "rgba(15,10,30,0.18)",
+            background: "var(--shell-overlay-suave)",
           }}
         />
       )}
@@ -271,11 +319,10 @@ export default function ChatWidget() {
             maxWidth: esMobile ? "100%" : 400,
             marginLeft: "auto",
             borderRadius: 22,
-            background: "rgba(255,255,255,0.55)",
+            background: "var(--shell-superficie-fuerte)",
             backdropFilter: "blur(32px) saturate(190%)",
-            border: "1px solid rgba(255,255,255,0.45)",
-            boxShadow:
-              "0 -4px 60px rgba(124,77,255,0.07), 0 8px 40px rgba(124,77,255,0.11), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.65)",
+            border: "1px solid var(--shell-borde)",
+            boxShadow: "var(--shell-sombra-fuerte)",
             maxHeight: "78vh",
           }}
         >
@@ -284,31 +331,31 @@ export default function ChatWidget() {
             className="absolute inset-0 pointer-events-none z-0"
             style={{
               background: `
-                radial-gradient(ellipse at 20% 0%, rgba(124,77,255,0.07) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 100%, rgba(124,77,255,0.05) 0%, transparent 50%)
+                radial-gradient(ellipse at 20% 0%, var(--shell-glow-1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, var(--shell-glow-2) 0%, transparent 50%)
               `,
             }}
           />
 
           {/* ── Header ── */}
-          <div className="relative z-10 flex items-center justify-between px-4 py-3 border-b border-violet-100/30 shrink-0">
+          <div className="relative z-10 flex items-center justify-between px-4 py-3 border-b border-shell-borde shrink-0">
             <div className="flex items-center gap-3">
               <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-white relative"
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-shell-hero-texto relative"
                 style={{
                   background:
                     "linear-gradient(135deg, var(--color-violet-700), var(--color-violet-500))",
-                  boxShadow: "0 2px 12px rgba(124,77,255,0.18)",
+                  boxShadow: "var(--shell-sombra-suave)",
                 }}
               >
                 <Icono nombre="destello" tamaño={16} peso="fill" />
                 <div
-                  className="absolute -inset-0.5 rounded-[14px] border border-violet-300/25 animate-chat-breathe"
+                  className="absolute -inset-0.5 rounded-[14px] border border-shell-borde-fuerte animate-chat-breathe"
                 />
               </div>
               <div>
                 <div className="font-semibold text-[15px] text-texto tracking-tight">
-                  Oráculo
+                  Astra A.I.
                 </div>
                 <div className="text-[10.5px] text-primario font-medium flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-primario animate-chat-soft-pulse" />
@@ -320,7 +367,7 @@ export default function ChatWidget() {
               {mensajes.length > 0 && (
                 <button
                   onClick={iniciarNueva}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-texto-secundario hover:text-primario hover:bg-violet-50/50 transition-all"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-texto-secundario hover:text-primario hover:bg-shell-superficie-suave transition-all"
                   title="Nueva conversación"
                 >
                   <Icono nombre="avion" tamaño={14} />
@@ -328,7 +375,7 @@ export default function ChatWidget() {
               )}
               <button
                 onClick={() => setAbierto(false)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-texto-secundario hover:text-primario hover:bg-violet-50/50 transition-all hover:rotate-90"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-texto-secundario hover:text-primario hover:bg-shell-superficie-suave transition-all hover:rotate-90"
                 style={{ transition: "all 0.3s ease" }}
               >
                 <Icono nombre="x" tamaño={14} />
@@ -350,9 +397,9 @@ export default function ChatWidget() {
                   <div
                     className="max-w-[85%] px-4 py-2.5 rounded-2xl rounded-bl-sm text-[13px] leading-relaxed text-texto"
                     style={{
-                      background: "rgba(255,255,255,0.5)",
+                      background: "var(--shell-superficie-fuerte)",
                       backdropFilter: "blur(12px)",
-                      border: "1px solid rgba(255,255,255,0.45)",
+                      border: "1px solid var(--shell-borde)",
                     }}
                   >
                     Hola {nombre}. Soy tu oráculo personal. Conozco tu carta
@@ -379,9 +426,9 @@ export default function ChatWidget() {
                   onClick={() => enviarSugerencia(s.mensaje)}
                   className="px-3 py-1.5 rounded-full text-[11.5px] font-medium text-primario transition-all hover:-translate-y-0.5"
                   style={{
-                    background: "rgba(255,255,255,0.4)",
+                    background: "var(--shell-superficie)",
                     backdropFilter: "blur(8px)",
-                    border: "1px solid var(--color-violet-200)",
+                    border: "1px solid var(--shell-borde)",
                   }}
                 >
                   {s.etiqueta}
@@ -412,13 +459,13 @@ export default function ChatWidget() {
           )}
 
           {/* ── Input ── */}
-          <div className="flex items-center gap-2 px-3 py-2.5 border-t border-violet-100/20 shrink-0 relative z-10">
+          <div className="flex items-center gap-2 px-3 py-2.5 border-t border-shell-borde shrink-0 relative z-10">
             <div
               className="flex-1 rounded-2xl transition-all"
               style={{
-                background: "rgba(255,255,255,0.45)",
+                background: "var(--shell-superficie)",
                 backdropFilter: "blur(8px)",
-                border: "1px solid var(--color-violet-100)",
+                border: "1px solid var(--shell-borde)",
               }}
             >
               <input
@@ -438,11 +485,11 @@ export default function ChatWidget() {
               style={{
                 background: input.trim()
                   ? "linear-gradient(135deg, var(--color-violet-600), var(--color-violet-500))"
-                  : "rgba(255,255,255,0.35)",
-                border: "1px solid var(--color-violet-200)",
-                color: input.trim() ? "#fff" : "var(--color-violet-300)",
+                  : "var(--shell-superficie)",
+                border: "1px solid var(--shell-borde)",
+                color: input.trim() ? "var(--shell-hero-texto)" : "var(--color-violet-300)",
                 boxShadow: input.trim()
-                  ? "0 3px 16px rgba(124,77,255,0.22)"
+                  ? "var(--shell-sombra-suave)"
                   : "none",
                 transform: input.trim() ? "scale(1.02)" : "scale(1)",
                 cursor: input.trim() ? "pointer" : "default",
@@ -457,7 +504,7 @@ export default function ChatWidget() {
       {/* ── FAB (Floating Action Button) ── */}
       <button
         onClick={() => setAbierto((v) => !v)}
-        className="fixed z-[10000] flex items-center justify-center text-white transition-all group"
+        className="fixed z-[10000] flex items-center justify-center text-shell-hero-texto transition-all group"
         style={{
           bottom: 20,
           right: 20,
@@ -467,8 +514,7 @@ export default function ChatWidget() {
           background:
             "linear-gradient(135deg, var(--color-violet-700), var(--color-violet-500))",
           backdropFilter: "blur(12px)",
-          boxShadow:
-            "0 5px 22px rgba(124,77,255,0.28), 0 0 35px rgba(124,77,255,0.07), inset 0 1px 0 rgba(255,255,255,0.12)",
+          boxShadow: "var(--shell-sombra-fuerte)",
           opacity: abierto ? 0 : 1,
           transform: abierto
             ? "scale(0.3) rotate(180deg)"
@@ -482,14 +528,14 @@ export default function ChatWidget() {
         {!abierto && (
           <>
             <div
-              className="absolute rounded-[22px] border border-violet-400/30"
+              className="absolute rounded-[22px] border border-shell-borde-fuerte"
               style={{
                 inset: -5,
                 animation: "chat-pulse-ring 2.5s ease-out infinite",
               }}
             />
             <div
-              className="absolute rounded-[28px] border border-violet-300/18"
+              className="absolute rounded-[28px] border border-shell-borde"
               style={{
                 inset: -11,
                 animation: "chat-pulse-ring 2.5s ease-out 0.5s infinite",
@@ -502,7 +548,7 @@ export default function ChatWidget() {
           className="absolute inset-0 rounded-[18px] pointer-events-none"
           style={{
             background:
-              "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18), transparent 55%)",
+              "radial-gradient(circle at 30% 30%, var(--shell-glow-2), transparent 55%)",
           }}
         />
         <Icono

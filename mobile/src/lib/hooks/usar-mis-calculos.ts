@@ -5,12 +5,7 @@ import type { CalculosPerfil } from "@/lib/tipos";
 export function usarMisCalculos() {
   return useQuery({
     queryKey: ["calculos", "me"],
-    queryFn: async () => {
-      const { data } = await clienteApi.get<{ datos: CalculosPerfil }>(
-        "/profile/me/calculos"
-      );
-      return data.datos;
-    },
+    queryFn: () => clienteApi.get<CalculosPerfil>("/profile/me/calculos"),
     staleTime: 10 * 60 * 1000,
   });
 }

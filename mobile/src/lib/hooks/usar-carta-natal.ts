@@ -9,13 +9,9 @@ interface OpcionesCartaNatal {
 
 export function usarCartaNatal() {
   return useMutation({
-    mutationFn: async ({ datos, perfilId }: OpcionesCartaNatal) => {
+    mutationFn: ({ datos, perfilId }: OpcionesCartaNatal) => {
       const query = perfilId ? `?perfil_id=${perfilId}` : "";
-      const { data } = await clienteApi.post<{ datos: CartaNatal }>(
-        `/natal${query}`,
-        datos
-      );
-      return data.datos;
+      return clienteApi.post<CartaNatal>(`/natal${query}`, datos);
     },
   });
 }

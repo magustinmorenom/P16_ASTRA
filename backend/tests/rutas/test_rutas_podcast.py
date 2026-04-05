@@ -40,7 +40,7 @@ def _crear_episodio(
     usuario_id=None,
     estado="listo",
     momento="dia",
-    titulo="Momento Clave de tu Día — 23/03",
+    titulo="Cómo influyen hoy los tránsitos en vos — 23/03",
     guion="Texto del guión.",
     duracion=120.0,
     url_audio="podcasts/u/2026-03-23/dia.mp3",
@@ -261,9 +261,11 @@ class TestPodcastGenerar:
             patch("app.dependencias_suscripcion.RepositorioSuscripcion") as MockRepoSus,
             patch("app.dependencias_suscripcion.RepositorioPlan") as MockRepoPlan,
             patch("app.rutas.v1.podcast.ServicioPodcast") as MockServicio,
+            patch("app.rutas.v1.podcast.RepositorioPodcast") as MockRepo,
         ):
             _setup_premium(MockRepoUser, MockRepoSus, MockRepoPlan, usuario_test)
             MockServicio.generar_episodio = AsyncMock(return_value=ep)
+            MockRepo.return_value.normalizar_retencion_usuario = AsyncMock(return_value=0)
 
             async with AsyncClient(
                 transport=ASGITransport(app=app_test),
@@ -278,6 +280,9 @@ class TestPodcastGenerar:
             assert datos["exito"] is True
             assert datos["datos"]["estado"] == "listo"
             assert datos["datos"]["titulo"] == ep.titulo
+            MockRepo.return_value.normalizar_retencion_usuario.assert_awaited_once_with(
+                usuario_test.id
+            )
 
 
 # ── GET /podcast/audio/{id} ───────────────────────────────────
@@ -399,6 +404,7 @@ class TestPodcastHistorial:
             _setup_premium(MockRepoUser, MockRepoSus, MockRepoPlan, usuario_test)
 
             mock_repo = MockRepo.return_value
+            mock_repo.normalizar_retencion_usuario = AsyncMock(return_value=1)
             mock_repo.obtener_ultimos_episodios = AsyncMock(return_value=[ep1, ep2])
 
             async with AsyncClient(
@@ -410,3 +416,6 @@ class TestPodcastHistorial:
             assert resp.status_code == 200
             datos = resp.json()
             assert len(datos["datos"]) == 2
+            mock_repo.normalizar_retencion_usuario.assert_awaited_once_with(
+                usuario_test.id
+            )

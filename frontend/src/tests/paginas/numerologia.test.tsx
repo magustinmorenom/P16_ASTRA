@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { renderConProveedores } from "../utilidades";
 
 vi.mock("next/navigation", () => ({
@@ -145,5 +145,21 @@ describe("PaginaNumerologia", () => {
 
     expect(screen.queryByPlaceholderText("Nombre completo")).not.toBeInTheDocument();
     expect(screen.getAllByText("Seleccioná un número").length).toBeGreaterThan(0);
+  });
+
+  it("no duplica la cabecera del detalle en el panel lateral", () => {
+    mockUsarMisCalculos.mockReturnValue({
+      data: { natal: null, diseno_humano: null, numerologia: NUMEROLOGIA_MOCK, retorno_solar: null },
+      isLoading: false,
+    });
+
+    renderConProveedores(<PaginaNumerologia />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: /Sendero Natal/i })[0]);
+
+    expect(screen.getAllByText("Sendero Natal")).toHaveLength(2);
+    expect(
+      screen.getAllByText("La ruta central que abrís con tu fecha de nacimiento."),
+    ).toHaveLength(2);
   });
 });

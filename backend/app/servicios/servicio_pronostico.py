@@ -225,7 +225,7 @@ class ServicioPronostico:
                 ),
                 "energia": energia_base.get(num, 5),
                 "claridad": 5,
-                "conexion": 5,
+                "intuicion": 5,
             },
             "areas": [
                 {"id": "trabajo", "nombre": "Trabajo", "nivel": "neutro", "icono": "briefcase",

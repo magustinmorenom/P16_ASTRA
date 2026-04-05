@@ -25,7 +25,7 @@ Cruzá las tres disciplinas para generar un pronóstico holístico. No se trata 
 
 - **Energía**: Vitalidad general. Alta si hay tránsitos favorables a planetas personales + número activo (1,3,5,8). Baja si hay cuadraturas + número introspectivo (4,7).
 - **Claridad**: Mental. Alta si Mercurio bien aspectado + día 1 o 7. Baja si Mercurio retrógrado o afligido.
-- **Conexión**: Emocional/social. Alta si Venus/Luna favorables + día 2 o 6. Baja si Luna tensa.
+- **Intuición**: Percepción sutil y conexión interna. Alta si Luna/Neptuno bien aspectados + número receptivo (2,7,9). Baja si Luna tensa o Neptuno afligido.
 
 ### Áreas de vida
 
@@ -75,7 +75,7 @@ Respondé ÚNICAMENTE con un JSON válido. Sin texto antes ni después. Sin mark
     "frase_sintesis": "string — 1-2 oraciones que resuman el día cruzando las 3 disciplinas",
     "energia": 1-10,
     "claridad": 1-10,
-    "conexion": 1-10
+    "intuicion": 1-10
   },
   "areas": [
     {

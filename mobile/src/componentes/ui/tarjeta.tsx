@@ -30,55 +30,85 @@ export function Tarjeta({
 
   const borderColor =
     variante === "violeta"
-      ? colores.secundario + "4D" // /30
+      ? `${colores.secundario}33`
       : variante === "dorado"
-      ? colores.advertencia + "4D"
+      ? `${colores.advertencia}33`
       : variante === "acento"
-      ? colores.acento + "4D"
+      ? `${colores.acento}33`
       : colores.borde;
 
-  const baseStyle: ViewStyle = {
+  const envolturaStyle: ViewStyle = {
     borderRadius: 16,
-    padding: paddingValues[padding],
     borderWidth: 1,
     borderColor,
-    overflow: "hidden",
     ...style,
   };
 
-  // Glass effect para iOS
+  const fondoBase =
+    variante === "default"
+      ? esOscuro
+        ? "rgba(255,255,255,0.04)"
+        : "rgba(255,255,255,0.82)"
+      : variante === "violeta"
+      ? esOscuro
+        ? "rgba(124,77,255,0.12)"
+        : "rgba(124,77,255,0.08)"
+      : variante === "dorado"
+      ? esOscuro
+        ? "rgba(217,107,131,0.12)"
+        : "rgba(217,107,131,0.08)"
+      : esOscuro
+      ? "rgba(192,132,252,0.12)"
+      : "rgba(124,77,255,0.08)";
+
+  const contenidoStyle: ViewStyle = {
+    borderRadius: 15,
+    overflow: "hidden",
+  };
+
   if (vidrio && Platform.OS === "ios") {
     const tinteBg =
       variante === "default"
-        ? colores.vidrioOverlay
+        ? esOscuro
+          ? "rgba(255,255,255,0.04)"
+          : "rgba(255,255,255,0.58)"
         : variante === "violeta"
-        ? (esOscuro ? "rgba(167, 139, 250, 0.08)" : "rgba(124, 77, 255, 0.06)")
+        ? esOscuro
+          ? "rgba(167, 139, 250, 0.08)"
+          : "rgba(124, 77, 255, 0.06)"
         : variante === "dorado"
-        ? (esOscuro ? "rgba(251, 191, 36, 0.08)" : "rgba(217, 119, 6, 0.06)")
-        : (esOscuro ? "rgba(192, 132, 252, 0.08)" : "rgba(124, 77, 255, 0.06)");
+        ? esOscuro
+          ? "rgba(243, 154, 169, 0.08)"
+          : "rgba(217, 107, 131, 0.06)"
+        : esOscuro
+        ? "rgba(192, 132, 252, 0.08)"
+        : "rgba(124, 77, 255, 0.06)";
 
     return (
-      <BlurView
-        intensity={30}
-        tint={esOscuro ? "dark" : "light"}
-        style={baseStyle}
-      >
-        <View style={{ backgroundColor: tinteBg, margin: -16, padding: paddingValues[padding] }}>
-          {children}
-        </View>
-      </BlurView>
+      <View style={envolturaStyle}>
+        <BlurView
+          intensity={26}
+          tint={esOscuro ? "dark" : "light"}
+          style={contenidoStyle}
+        >
+          <View style={{ backgroundColor: tinteBg, padding: paddingValues[padding] }}>
+            {children}
+          </View>
+        </BlurView>
+      </View>
     );
   }
 
-  // Fallback sólido (Android + vidrio=false)
-  const bgColor =
-    variante === "default"
-      ? colores.fondoSecundario
-      : colores.superficie;
-
   return (
-    <View style={[baseStyle, { backgroundColor: bgColor }]}>
-      {children}
+    <View style={envolturaStyle}>
+      <View
+        style={[
+          contenidoStyle,
+          { backgroundColor: fondoBase, padding: paddingValues[padding] },
+        ]}
+      >
+        {children}
+      </View>
     </View>
   );
 }

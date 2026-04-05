@@ -132,6 +132,50 @@ const NOMBRES_MES_CORTO = [
   "", "Ene", "Feb", "Mar", "Abr", "May", "Jun",
   "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
 ];
+const FONDO_NUMEROLOGIA =
+  "relative min-h-full lg:h-full lg:min-h-0 lg:overflow-hidden";
+const SUPERFICIE_HERO_NUMEROLOGIA =
+  "tema-superficie-panel relative overflow-hidden rounded-[24px]";
+const SUPERFICIE_PANEL_NUMEROLOGIA =
+  "tema-superficie-panel rounded-[24px]";
+const ESTILO_FONDO_NUMEROLOGIA = {
+  background: "var(--shell-fondo)",
+} as const;
+const ESTILO_PANEL_NUMEROLOGIA = {
+  borderColor: "var(--shell-borde)",
+  background: "var(--shell-superficie)",
+} as const;
+const ESTILO_PANEL_NUMEROLOGIA_SUAVE = {
+  borderColor: "var(--shell-borde)",
+  background: "var(--shell-superficie-suave)",
+} as const;
+const ESTILO_BADGE_VIOLETA = {
+  borderColor: "var(--shell-badge-violeta-borde)",
+  background: "var(--shell-badge-violeta-fondo)",
+  color: "var(--shell-badge-violeta-texto)",
+} as const;
+
+function FondoNumerologia() {
+  return (
+    <>
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle_at_top_left, var(--shell-glow-1), transparent 28%), radial-gradient(circle_at_top_right, var(--shell-glow-2), transparent 24%)",
+        }}
+      />
+      <div
+        className="pointer-events-none absolute right-[-120px] top-24 h-72 w-72 rounded-full blur-3xl"
+        style={{ background: "var(--shell-glow-2)" }}
+      />
+      <div
+        className="pointer-events-none absolute left-10 top-[640px] h-64 w-64 rounded-full blur-3xl"
+        style={{ background: "var(--shell-glow-1)" }}
+      />
+    </>
+  );
+}
 
 function calcularEdad(fechaNacimiento: string): number {
   const hoy = new Date();
@@ -407,17 +451,17 @@ export default function PaginaNumerologia() {
     return (
       <>
         <HeaderMobile titulo="Numerología" mostrarAtras />
-        <section className="relative flex-1 overflow-y-auto scroll-sutil bg-[#16011b]">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top_left,rgba(124,77,255,0.24),transparent_44%)]" />
+        <section className={`${FONDO_NUMEROLOGIA} flex-1 overflow-y-auto scroll-sutil`} style={ESTILO_FONDO_NUMEROLOGIA}>
+          <FondoNumerologia />
           <div className="relative mx-auto max-w-6xl px-5 py-8 lg:px-7">
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_420px]">
-              <Esqueleto className="h-[280px] rounded-[32px] bg-white/[0.06]" />
-              <Esqueleto className="h-[280px] rounded-[32px] bg-white/[0.06]" />
+              <Esqueleto className="h-[280px] rounded-[32px] bg-[var(--shell-superficie)]" />
+              <Esqueleto className="h-[280px] rounded-[32px] bg-[var(--shell-superficie)]" />
             </div>
             <div className="mt-8 space-y-6">
-              <Esqueleto className="h-[220px] rounded-[32px] bg-white/[0.06]" />
-              <Esqueleto className="h-[300px] rounded-[32px] bg-white/[0.06]" />
-              <Esqueleto className="h-[260px] rounded-[32px] bg-white/[0.06]" />
+              <Esqueleto className="h-[220px] rounded-[32px] bg-[var(--shell-superficie)]" />
+              <Esqueleto className="h-[300px] rounded-[32px] bg-[var(--shell-superficie)]" />
+              <Esqueleto className="h-[260px] rounded-[32px] bg-[var(--shell-superficie)]" />
             </div>
           </div>
         </section>
@@ -429,42 +473,53 @@ export default function PaginaNumerologia() {
     return (
       <>
         <HeaderMobile titulo="Numerología" mostrarAtras />
-        <section className="relative flex-1 overflow-y-auto scroll-sutil bg-[#16011b]">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_top_left,rgba(124,77,255,0.24),transparent_44%)]" />
-          <div className="pointer-events-none absolute right-[-120px] top-24 h-72 w-72 rounded-full bg-[#B388FF]/10 blur-3xl" />
+        <section className={`${FONDO_NUMEROLOGIA} flex-1 overflow-y-auto scroll-sutil`} style={ESTILO_FONDO_NUMEROLOGIA}>
+          <FondoNumerologia />
 
           <div className="relative mx-auto max-w-6xl px-5 py-8 lg:px-7">
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_420px]">
-              <section className="rounded-[24px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.18),transparent_30%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] px-6 py-6 shadow-[0_24px_70px_rgba(8,2,22,0.38)] sm:px-7 sm:py-7">
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.08] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/72">
+              <section className={`${SUPERFICIE_HERO_NUMEROLOGIA} px-6 py-6 sm:px-7 sm:py-7`}>
+                <div
+                  className="absolute -right-16 top-0 h-40 w-40 rounded-full blur-3xl"
+                  style={{ background: "var(--shell-glow-2)" }}
+                />
+                <div
+                  className="absolute -left-8 bottom-0 h-32 w-32 rounded-full blur-3xl"
+                  style={{ background: "var(--shell-glow-1)" }}
+                />
+
+                <span
+                  className="relative z-10 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em]"
+                  style={ESTILO_BADGE_VIOLETA}
+                >
                   <IconoAstral nombre="numerologia" tamaño={14} className="text-current" />
                   Lectura numerológica
                 </span>
 
-                <div className="mt-5 flex items-start gap-4">
-                  <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-gradient-to-br from-[#7C4DFF] to-[#B388FF] shadow-[0_18px_40px_rgba(34,12,72,0.45)] sm:flex">
+                <div className="relative z-10 mt-5 flex items-start gap-4">
+                  <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-gradient-to-br from-violet-500 to-violet-300 shadow-[var(--shell-sombra-fuerte)] sm:flex">
                     <IconoAstral nombre="numerologia" tamaño={30} className="text-white" />
                   </div>
                   <div>
-                    <h1 className="text-[24px] font-semibold tracking-[-0.03em] text-white sm:text-[28px]">
+                    <h1 className="text-[24px] font-semibold tracking-[-0.03em] text-[color:var(--shell-texto)] sm:text-[28px]">
                       Una lectura compacta de tu estructura y tu ritmo.
                     </h1>
-                    <p className="mt-3 max-w-xl text-[14px] leading-6 text-white/68">
+                    <p className="mt-3 max-w-xl text-[14px] leading-6 text-[color:var(--shell-texto-secundario)]">
                       Calculá núcleo, ritmo y etapas en una sola lectura y abrí detalle solo donde realmente lo necesites.
                     </p>
                   </div>
                 </div>
               </section>
 
-              <section className="rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-6 shadow-[0_18px_40px_rgba(8,3,20,0.22)] backdrop-blur-xl">
+              <section className={`${SUPERFICIE_PANEL_NUMEROLOGIA} p-6`}>
                 <div className="mb-5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-acento)]">
                     Carta base
                   </p>
-                  <h2 className="mt-2 text-[20px] font-semibold tracking-[-0.03em] text-white">
+                  <h2 className="mt-2 text-[20px] font-semibold tracking-[-0.03em] text-[color:var(--shell-texto)]">
                     Calculá tu lectura
                   </h2>
-                  <p className="mt-2 text-[14px] leading-6 text-white/62">
+                  <p className="mt-2 text-[14px] leading-6 text-[color:var(--shell-texto-secundario)]">
                     Nombre, fecha y sistema. El resto lo abre el panel contextual.
                   </p>
                 </div>
@@ -488,7 +543,7 @@ export default function PaginaNumerologia() {
                     required
                   />
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[13px] font-medium text-white/50">
+                    <label className="text-[13px] font-medium text-[color:var(--shell-texto-secundario)]">
                       Sistema de cálculo
                     </label>
                     <div className="flex gap-3">
@@ -500,9 +555,14 @@ export default function PaginaNumerologia() {
                           className={cn(
                             "flex-1 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors",
                             sistema === valor
-                              ? "border-[#7C4DFF] bg-[#7C4DFF]/15 text-[#D9C2FF]"
-                              : "border-white/10 bg-white/[0.04] text-white/56 hover:border-white/20",
+                              ? "text-[color:var(--shell-badge-violeta-texto)]"
+                              : "text-[color:var(--shell-texto-secundario)] hover:text-[color:var(--shell-texto)]",
                           )}
+                          style={
+                            sistema === valor
+                              ? ESTILO_BADGE_VIOLETA
+                              : ESTILO_PANEL_NUMEROLOGIA_SUAVE
+                          }
                         >
                           {valor === "pitagorico" ? "Pitagórico" : "Caldeo"}
                         </button>
@@ -523,8 +583,8 @@ export default function PaginaNumerologia() {
                 </form>
 
                 {mutacion.isError && (
-                  <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3">
-                    <p className="text-[14px] text-red-300">
+                  <div className="mt-4 rounded-2xl border border-error/20 bg-error/10 px-4 py-3">
+                    <p className="text-[14px] text-error">
                       {mutacion.error?.message ?? "Error al calcular la numerología."}
                     </p>
                   </div>
@@ -606,44 +666,49 @@ export default function PaginaNumerologia() {
   ];
 
   const contenidoPrincipal = (
-    <div className="relative min-h-full overflow-hidden bg-[#16011b]">
-      {/* background orbs */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_top_left,rgba(124,77,255,0.24),transparent_44%)]" />
-      <div className="pointer-events-none absolute right-[-120px] top-24 h-72 w-72 rounded-full bg-[#B388FF]/10 blur-3xl" />
-      <div className="pointer-events-none absolute left-10 top-[640px] h-64 w-64 rounded-full bg-[#7C4DFF]/10 blur-3xl" />
+    <div className="relative min-h-full overflow-hidden" style={ESTILO_FONDO_NUMEROLOGIA}>
+      <FondoNumerologia />
 
       <div className="relative mx-auto flex max-w-5xl flex-col gap-5 px-5 py-6 pb-24 lg:px-7 lg:pb-6">
-        {/* Hero compacto */}
-        <section className="rounded-[24px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.16),transparent_28%),linear-gradient(135deg,rgba(45,27,105,0.96),rgba(22,1,27,0.98))] px-5 py-4 shadow-[0_18px_50px_rgba(8,2,22,0.32)] sm:px-6 sm:py-5">
-          <div className="flex items-start gap-3">
-            <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#7C4DFF] to-[#B388FF] shadow-[0_14px_32px_rgba(34,12,72,0.36)] sm:flex">
+        <section className={`${SUPERFICIE_HERO_NUMEROLOGIA} px-5 py-4 sm:px-6 sm:py-5`}>
+          <div
+            className="absolute -right-10 top-0 h-32 w-32 rounded-full blur-3xl"
+            style={{ background: "var(--shell-glow-2)" }}
+          />
+          <div
+            className="absolute left-0 top-12 h-20 w-20 rounded-full blur-3xl"
+            style={{ background: "var(--shell-glow-1)" }}
+          />
+
+          <div className="relative z-10 flex items-start gap-3">
+            <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-violet-500 to-violet-300 shadow-[var(--shell-sombra-fuerte)] sm:flex">
               <IconoAstral nombre="numerologia" tamaño={24} className="text-white" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/46">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-acento)]">
                 Carta numerológica
               </p>
-              <h1 className="mt-2 text-[22px] font-semibold tracking-[-0.04em] text-white sm:text-[24px]">
+              <h1 className="mt-2 text-[22px] font-semibold tracking-[-0.04em] text-[color:var(--shell-texto)] sm:text-[24px]">
                 {construirTituloHero(datosActuales)}
               </h1>
-              <p className="mt-3 text-[12px] leading-5 text-violet-100/60">
+              <p className="mt-3 text-[12px] leading-5 text-[color:var(--shell-texto-secundario)]">
                 {datosActuales.sistema === "pitagorico" ? "Sistema pitagórico" : "Sistema caldeo"}
                 {numerosMaestros.length > 0 ? ` · Maestros ${numerosMaestros.join(", ")}` : ""}
               </p>
             </div>
           </div>
 
-          <p className="mt-3 max-w-3xl text-[13px] leading-6 text-white/58">
+          <p className="relative z-10 mt-3 max-w-3xl text-[13px] leading-6 text-[color:var(--shell-texto-secundario)]">
             Tocá cualquier número para abrir su lectura completa en el panel derecho.
           </p>
         </section>
 
         {/* ── Núcleo ── */}
         <section>
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--shell-texto-tenue)]">
             Núcleo
           </p>
-          <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03]">
+          <div className="overflow-hidden rounded-2xl border" style={ESTILO_PANEL_NUMEROLOGIA}>
             {nucleoDatos.map(({ clave, dato }, idx) => {
               const meta = META_NUMERO[clave];
               const maestro = NUMEROS_MAESTROS.includes(dato.numero);
@@ -655,17 +720,24 @@ export default function PaginaNumerologia() {
                   onClick={() => abrirNumero(clave, dato)}
                   className={cn(
                     "group flex w-full items-center gap-3 border-l-2 px-4 py-3 text-left transition-all duration-200",
-                    idx > 0 && "border-t border-t-white/[0.06]",
-                    seleccionado
-                      ? "border-l-[#B388FF] bg-white/[0.06]"
-                      : "border-l-transparent hover:bg-white/[0.04]",
+                    idx > 0 && "border-t",
+                    !seleccionado && "border-l-transparent hover:bg-[var(--shell-superficie-suave)]",
                   )}
-                  style={{ animationDelay: `${idx * 40}ms` }}
+                  style={{
+                    animationDelay: `${idx * 40}ms`,
+                    ...(idx > 0 ? { borderTopColor: "var(--shell-borde)" } : {}),
+                    ...(seleccionado
+                      ? {
+                          borderLeftColor: "var(--color-acento)",
+                          background: "var(--shell-chip)",
+                        }
+                      : {}),
+                  }}
                 >
                   <span
                     className={cn(
                       "shrink-0 text-[28px] font-semibold leading-none tracking-[-0.04em]",
-                      maestro ? "text-[#F0D68A]" : "text-[#D9C2FF]",
+                      maestro ? "text-dorado-500" : "text-[color:var(--color-acento)]",
                     )}
                     style={{ minWidth: "2.2rem", textAlign: "center" }}
                   >
@@ -673,10 +745,10 @@ export default function PaginaNumerologia() {
                   </span>
 
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[14px] font-semibold text-white">
+                    <span className="block text-[14px] font-semibold text-[color:var(--shell-texto)]">
                       {meta.titulo}
                     </span>
-                    <span className="block text-[13px] leading-5 text-white/60">
+                    <span className="block text-[13px] leading-5 text-[color:var(--shell-texto-secundario)]">
                       {meta.subtitulo}
                     </span>
                   </span>
@@ -684,7 +756,7 @@ export default function PaginaNumerologia() {
                   <Icono
                     nombre="caretDerecha"
                     tamaño={14}
-                    className="shrink-0 text-white/30 transition-colors group-hover:text-white/60"
+                    className="shrink-0 text-[color:var(--shell-texto-tenue)] transition-colors group-hover:text-[color:var(--shell-texto)]"
                   />
                 </button>
               );
@@ -694,13 +766,13 @@ export default function PaginaNumerologia() {
 
         {/* ── Ritmo actual ── */}
         <section>
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--shell-texto-tenue)]">
             Ritmo actual
           </p>
 
           {/* 3-cell console */}
-          <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03]">
-            <div className="grid grid-cols-3 divide-x divide-white/[0.08]">
+          <div className="overflow-hidden rounded-2xl border" style={ESTILO_PANEL_NUMEROLOGIA}>
+            <div className="grid grid-cols-3 divide-x divide-[var(--shell-borde)]">
               {celdasRitmo.map(({ clave, dato, etiqueta, destacada }) => {
                 const seleccionado = detalleClave === clave;
 
@@ -710,23 +782,28 @@ export default function PaginaNumerologia() {
                     onClick={() => abrirNumero(clave, dato)}
                     className={cn(
                       "group relative flex flex-col items-center gap-1.5 py-4 px-2 transition-all duration-200",
-                      seleccionado
-                        ? "bg-white/[0.06]"
-                        : "hover:bg-white/[0.04]",
+                      !seleccionado && "hover:bg-[var(--shell-superficie-suave)]",
                     )}
+                    style={seleccionado ? { background: "var(--shell-chip)" } : undefined}
                   >
                     {destacada && (
-                      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(124,77,255,0.12),transparent_70%)]" />
+                      <div
+                        className="pointer-events-none absolute inset-0"
+                        style={{
+                          background:
+                            "radial-gradient(circle_at_center, var(--shell-glow-1), transparent 70%)",
+                        }}
+                      />
                     )}
                     <span
                       className={cn(
-                        "relative font-semibold tracking-[-0.04em] text-[#D9C2FF] leading-none",
+                        "relative font-semibold tracking-[-0.04em] text-[color:var(--color-acento)] leading-none",
                         destacada ? "text-[36px]" : "text-[26px]",
                       )}
                     >
                       {dato.numero}
                     </span>
-                    <span className="relative text-[12px] font-semibold text-white/70">
+                    <span className="relative text-[12px] font-semibold text-[color:var(--shell-texto-secundario)]">
                       {etiqueta}
                     </span>
                   </button>
@@ -737,10 +814,10 @@ export default function PaginaNumerologia() {
 
           {/* Expandable months bar */}
           {mesesPersonales.length > 0 && (
-            <div className="mt-2 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03]">
+            <div className="mt-2 overflow-hidden rounded-2xl border" style={ESTILO_PANEL_NUMEROLOGIA}>
               <button
                 onClick={() => setMesesExpandido((v) => !v)}
-                className="flex w-full items-center justify-between px-4 py-2.5 text-[12px] font-medium text-white/50 transition-colors hover:text-white/70"
+                className="flex w-full items-center justify-between px-4 py-2.5 text-[12px] font-medium text-[color:var(--shell-texto-secundario)] transition-colors hover:text-[color:var(--shell-texto)]"
               >
                 <span>Ver 12 meses</span>
                 <Icono
@@ -751,7 +828,7 @@ export default function PaginaNumerologia() {
               </button>
 
               {mesesExpandido && (
-                <div className="border-t border-white/[0.06] px-3 py-3">
+                <div className="border-t px-3 py-3" style={{ borderColor: "var(--shell-borde)" }}>
                   <div className="flex gap-1.5 overflow-x-auto scroll-sutil sm:grid sm:grid-cols-6 sm:overflow-x-visible lg:grid-cols-12">
                     {mesesPersonales.map((item) => {
                       const esActual = item.mes === mesActual;
@@ -763,23 +840,28 @@ export default function PaginaNumerologia() {
                           onClick={() => abrirMes(item)}
                           className={cn(
                             "flex min-w-[52px] flex-col items-center rounded-xl border px-2 py-2 transition-all duration-150",
-                            seleccionado
-                              ? "border-[#B388FF]/40 bg-[#7C4DFF]/14"
-                              : esActual
-                                ? "border-[#B388FF]/24 bg-white/[0.06]"
-                                : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05]",
+                            !seleccionado && !esActual && "hover:bg-[var(--shell-superficie-suave)]",
                           )}
+                          style={
+                            seleccionado
+                              ? ESTILO_BADGE_VIOLETA
+                              : esActual
+                                ? ESTILO_PANEL_NUMEROLOGIA
+                                : ESTILO_PANEL_NUMEROLOGIA_SUAVE
+                          }
                         >
-                          <span className="flex items-center gap-1 text-[11px] font-medium uppercase text-white/50">
+                          <span className="flex items-center gap-1 text-[11px] font-medium uppercase text-[color:var(--shell-texto-secundario)]">
                             {esActual && (
-                              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#B388FF]" />
+                              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--color-acento)]" />
                             )}
                             {NOMBRES_MES_CORTO[item.mes] || item.nombre_mes.slice(0, 3)}
                           </span>
                           <span
                             className={cn(
                               "mt-0.5 text-[16px] font-semibold leading-none",
-                              esActual ? "text-[#D9C2FF]" : "text-white/70",
+                              esActual || seleccionado
+                                ? "text-[color:var(--color-acento)]"
+                                : "text-[color:var(--shell-texto)]",
                             )}
                           >
                             {item.numero}
@@ -796,16 +878,19 @@ export default function PaginaNumerologia() {
 
         {/* ── Etapas ── */}
         <section>
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--shell-texto-tenue)]">
             Etapas
           </p>
 
           {etapasDeVida.length > 0 ? (
-            <div className="overflow-x-auto scroll-sutil rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-5 sm:px-6">
+            <div className="overflow-x-auto scroll-sutil rounded-2xl border px-4 py-5 sm:px-6" style={ESTILO_PANEL_NUMEROLOGIA}>
               {/* Timeline line + nodes */}
               <div className="relative flex items-start justify-between" style={{ minWidth: `${Math.max(etapasDeVida.length * 100, 280)}px` }}>
                 {/* Connecting line background */}
-                <div className="pointer-events-none absolute left-0 right-0 top-[18px] h-px bg-white/[0.12]" />
+                <div
+                  className="pointer-events-none absolute left-0 right-0 top-[18px] h-px"
+                  style={{ background: "var(--shell-borde)" }}
+                />
 
                 {/* Active segment overlay */}
                 {(() => {
@@ -816,8 +901,11 @@ export default function PaginaNumerologia() {
                   const pct = (indiceActiva / Math.max(etapasDeVida.length - 1, 1)) * 100;
                   return (
                     <div
-                      className="pointer-events-none absolute left-0 top-[18px] h-px bg-[#B388FF]/40"
-                      style={{ width: `${pct}%` }}
+                      className="pointer-events-none absolute left-0 top-[18px] h-px"
+                      style={{
+                        background: "var(--shell-badge-violeta-borde)",
+                        width: `${pct}%`,
+                      }}
                     />
                   );
                 })()}
@@ -845,40 +933,56 @@ export default function PaginaNumerologia() {
                       <div
                         className={cn(
                           "relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 text-[17px] font-semibold transition-all duration-200",
-                          activa
-                            ? "border-[#B388FF] bg-[#2a1548] text-[#D9C2FF] ring-2 ring-[#B388FF]/30"
-                            : pasada
-                              ? "border-white/[0.12] bg-[#1c0f2e] text-white/50"
-                              : "border-white/[0.12] bg-[#1c0f2e] text-white/60",
-                          maestro && !activa && "border-[#F0D68A]/40",
-                          seleccionado && "ring-2 ring-[#B388FF]/40",
-                          "group-hover:border-[#B388FF]/50",
+                          "group-hover:border-[color:var(--color-acento)]",
                         )}
+                        style={{
+                          borderColor: activa
+                            ? "var(--shell-badge-violeta-borde)"
+                            : maestro && !activa
+                              ? "rgba(212, 162, 52, 0.35)"
+                              : "var(--shell-borde)",
+                          background: activa
+                            ? "var(--shell-chip)"
+                            : pasada
+                              ? "var(--shell-superficie-suave)"
+                              : "var(--shell-superficie)",
+                          color: activa
+                            ? "var(--shell-badge-violeta-texto)"
+                            : pasada
+                              ? "var(--shell-texto-tenue)"
+                              : "var(--shell-texto-secundario)",
+                          boxShadow: activa || seleccionado
+                            ? "var(--shell-sombra-suave)"
+                            : undefined,
+                        }}
                       >
-                        <span className={cn(maestro ? "text-[#F0D68A]" : "")}>
+                        <span className={cn(maestro ? "text-dorado-500" : "")}>
                           {etapa.numero}
                         </span>
                       </div>
 
                       {/* "Ahora" chip */}
                       {activa && (
-                        <span className="rounded-full bg-[#7C4DFF]/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#B388FF]">
+                        <span
+                          className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em]"
+                          style={ESTILO_BADGE_VIOLETA}
+                        >
                           Ahora
                         </span>
                       )}
 
                       {/* Name */}
-                      <span className="text-[12px] font-semibold text-white/80">
+                      <span className="text-[12px] font-semibold text-[color:var(--shell-texto)]">
                         {etapa.nombre || `Pináculo ${indice + 1}`}
                       </span>
 
                       {/* Age range */}
-                      <span className="text-[10px] text-white/40">
+                      <span className="text-[10px] text-[color:var(--shell-texto-tenue)]">
                         {etapa.edad_inicio}–{etapa.edad_fin ?? "∞"} años
                       </span>
 
                       {primerFrase ? (
-                        <span className="mt-0.5 max-w-[130px] text-center text-[11px] leading-4 text-white/36">
+                        <span className="mt-0.5 max-w-[130px] text-center text-[11px] leading-4 text-[color:var(--shell-texto-tenue)]">
                           {primerFrase}.
                         </span>
                       ) : null}
@@ -888,8 +992,8 @@ export default function PaginaNumerologia() {
               </div>
             </div>
           ) : (
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4">
-              <p className="text-[13px] text-white/50">
+            <div className="rounded-2xl border px-4 py-4" style={ESTILO_PANEL_NUMEROLOGIA}>
+              <p className="text-[13px] text-[color:var(--shell-texto-secundario)]">
                 Etapas no disponibles. Recalculá la numerología para generar los pináculos.
               </p>
             </div>
@@ -905,7 +1009,8 @@ export default function PaginaNumerologia() {
   const subtituloPanel = detalle?.subtitulo;
 
   return (
-    <div className="relative min-h-full bg-[#16011B] lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <div className={FONDO_NUMEROLOGIA} style={ESTILO_FONDO_NUMEROLOGIA}>
+      <FondoNumerologia />
       <HeaderMobile titulo="Numerología" mostrarAtras />
 
       <div className="relative z-10 flex min-h-full flex-col lg:h-full lg:min-h-0 lg:flex-row lg:overflow-hidden">
@@ -939,12 +1044,16 @@ export default function PaginaNumerologia() {
         <div className="fixed inset-0 z-50 flex flex-col justify-end lg:hidden">
           <button
             onClick={cerrarDetalleMovil}
-            className="absolute inset-0 bg-black/45"
+            className="absolute inset-0"
+            style={{ background: "var(--shell-overlay-suave)" }}
             aria-label="Cerrar detalle"
           />
-          <div className="relative max-h-[82vh] overflow-y-auto rounded-t-[28px] border-t border-white/10 bg-[linear-gradient(180deg,#1C0627_0%,#140019_100%)] shadow-[0_-18px_40px_rgba(8,3,20,0.42)]">
-            <div className="sticky top-0 z-10 flex justify-center rounded-t-[28px] bg-[linear-gradient(180deg,#1C0627_0%,#140019_100%)] pt-3 pb-2">
-              <div className="h-1 w-10 rounded-full bg-white/18" />
+          <div className="tema-superficie-panel relative max-h-[82vh] overflow-y-auto rounded-t-[28px] border-t">
+            <div
+              className="sticky top-0 z-10 flex justify-center rounded-t-[28px] pt-3 pb-2"
+              style={{ background: "var(--shell-superficie-fuerte)" }}
+            >
+              <div className="h-1 w-10 rounded-full" style={{ background: "var(--shell-borde-fuerte)" }} />
             </div>
             <PanelContextualNumerologia
               detalle={detalle}

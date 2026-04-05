@@ -9,6 +9,7 @@ import { MomentosDia } from "./momentos-dia";
 import { NumeroDelDia } from "./numero-del-dia";
 import { LunaPosicion } from "./luna-posicion";
 import { NivelesEnergia } from "./niveles-energia";
+import { ResumenPersonalUnificado } from "./resumen-personal-unificado";
 
 interface HeroSeccionProps {
   fecha: Date;
@@ -18,11 +19,12 @@ interface HeroSeccionProps {
   luna: LunaInfoDTO;
   energia: number;
   claridad: number;
-  fuerza: number;
+  intuicion: number;
   podcastListo: boolean;
   podcastGenerando: boolean;
   onReproducirPodcast: () => void;
   onGenerarPodcast: () => void;
+  onInformarPodcastManana: () => void;
 }
 
 const DIAS_CORTOS = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"] as const;
@@ -42,53 +44,86 @@ export function HeroSeccion({
   luna,
   energia,
   claridad,
-  fuerza,
+  intuicion,
   podcastListo,
   podcastGenerando,
   onReproducirPodcast,
   onGenerarPodcast,
+  onInformarPodcastManana,
 }: HeroSeccionProps) {
   const estadoPodcast = podcastGenerando
     ? "Preparando el audio del día"
     : podcastListo
       ? "Tu audio del día ya está listo"
       : "Tu audio del día todavía no fue generado";
+  const estiloPanelResumen = {
+    background: "var(--shell-superficie-fuerte)",
+    borderColor: "var(--shell-borde)",
+    boxShadow: "var(--shell-sombra-suave)",
+    backdropFilter: "none",
+  } as const;
+  const estiloBotonPrincipal = {
+    borderColor: "var(--shell-borde-fuerte)",
+    background: "var(--shell-gradiente-acento-suave)",
+    color: "var(--shell-texto)",
+    boxShadow: "none",
+  } as const;
+  const estiloIconoBotonPrincipal = {
+    borderColor: "var(--shell-borde-fuerte)",
+    background: "var(--shell-superficie)",
+  } as const;
+  const estiloBotonSecundario = {
+    borderColor: "var(--shell-borde)",
+    background: "var(--shell-superficie-suave)",
+    color: "var(--shell-texto-secundario)",
+    boxShadow: "none",
+  } as const;
 
   return (
-    <div className="rounded-[20px] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(179,136,255,0.16),transparent_28%),linear-gradient(180deg,#2a1742_0%,#180923_100%)] shadow-[0_24px_64px_rgba(8,2,22,0.34)]">
-      <div className="flex flex-col gap-0 lg:grid lg:grid-cols-[minmax(240px,1.2fr)_minmax(250px,1fr)_minmax(290px,1.08fr)]">
-        <div className="border-b border-white/[0.06] p-4 lg:border-b-0 lg:border-r lg:p-5">
-          <div className="flex flex-col gap-6 pb-2">
+    <section
+      className="tema-superficie-panel relative overflow-visible rounded-[24px] px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6"
+      style={estiloPanelResumen}
+    >
+      <div className="relative z-10 grid grid-cols-1 gap-0 lg:grid-cols-[minmax(240px,1.12fr)_minmax(220px,0.92fr)_minmax(280px,1fr)] lg:items-stretch">
+        <div
+          className="border-b pb-4 lg:flex lg:h-full lg:flex-col lg:border-b-0 lg:border-r lg:pb-0 lg:pr-5"
+          style={{ borderColor: "var(--shell-borde)" }}
+        >
+          <div className="flex h-full flex-col gap-5">
             <div className="flex items-start gap-4">
               <TarjetaFecha fecha={fecha} />
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-200/58">
-                  Centro diario
-                </p>
-                <p className="mt-2 text-[18px] font-semibold leading-tight text-white">
+                <p className="break-words text-[18px] font-semibold tracking-[-0.03em] leading-tight text-[color:var(--shell-texto)] lg:text-[20px]">
                   {nombreUsuario}, seguí con lo importante.
                 </p>
-                <p className="mt-2 text-[13px] leading-6 text-white/62">
+                <p className="mt-2 text-[13px] leading-6 text-[color:var(--shell-texto-secundario)] lg:mt-3">
                   {estadoPodcast}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 pb-1">
+            <div className="mt-auto flex flex-col items-start gap-2.5 pb-0.5 lg:pt-2">
               <button
                 onClick={podcastListo ? onReproducirPodcast : onGenerarPodcast}
                 disabled={podcastGenerando}
-                className="flex items-center gap-2 rounded-full border border-[#B388FF]/18 bg-[#7C4DFF]/14 px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-[#7C4DFF]/18 disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex min-h-[38px] max-w-full items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+                style={estiloBotonPrincipal}
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.08]">
+                <span
+                  className="flex h-6 w-6 items-center justify-center rounded-full border"
+                  style={estiloIconoBotonPrincipal}
+                >
                   {podcastGenerando ? (
-                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/80 border-t-transparent" />
+                    <div
+                      className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-t-transparent"
+                      style={{ borderColor: "var(--color-acento)" }}
+                    />
                   ) : (
                     <Icono
                       nombre={podcastListo ? "reproducir" : "destello"}
                       tamaño={12}
                       peso="fill"
-                      className="text-white"
+                      className="text-[color:var(--color-acento)]"
                     />
                   )}
                 </span>
@@ -96,27 +131,41 @@ export function HeroSeccion({
               </button>
 
               <button
-                onClick={onGenerarPodcast}
+                onClick={onInformarPodcastManana}
                 disabled={podcastGenerando}
-                className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-[12px] font-medium text-white/74 transition-colors hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex min-h-[38px] max-w-full items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors hover:text-[color:var(--shell-texto)] disabled:cursor-not-allowed disabled:opacity-70"
+                style={estiloBotonSecundario}
               >
-                <Icono nombre="destello" tamaño={14} peso="fill" />
-                <span>Generar audio para mañana · {obtenerFechaManana(fecha)}</span>
+                <Icono nombre="destello" tamaño={13} peso="fill" />
+                <span>Audio de mañana · {obtenerFechaManana(fecha)}</span>
               </button>
             </div>
           </div>
         </div>
 
-        <div className="flex border-b border-white/[0.06] p-3 lg:border-b-0 lg:border-r lg:p-4 lg:pb-5">
-          <MomentosDia momentos={momentos} />
+        <div
+          className="min-w-0 border-b py-3.5 lg:flex lg:h-full lg:border-b-0 lg:border-r lg:px-4 lg:py-0 lg:pl-4 lg:pr-4"
+          style={{ borderColor: "var(--shell-borde)" }}
+        >
+          <MomentosDia momentos={momentos} expandido />
         </div>
 
-        <div className="flex flex-row justify-center gap-2 overflow-x-auto p-3 lg:flex-col lg:justify-start lg:gap-2.5 lg:p-4 lg:pb-5">
+        <div className="grid grid-cols-1 gap-2.5 pt-3.5 sm:grid-cols-3 lg:hidden">
           <NumeroDelDia numero={numero} />
           <LunaPosicion luna={luna} />
-          <NivelesEnergia energia={energia} claridad={claridad} fuerza={fuerza} />
+          <NivelesEnergia energia={energia} claridad={claridad} intuicion={intuicion} />
+        </div>
+
+        <div className="hidden lg:block lg:min-w-0 lg:pl-4">
+          <ResumenPersonalUnificado
+            numero={numero}
+            luna={luna}
+            energia={energia}
+            claridad={claridad}
+            intuicion={intuicion}
+          />
         </div>
       </div>
-    </div>
+    </section>
   );
 }

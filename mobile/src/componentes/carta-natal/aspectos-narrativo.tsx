@@ -8,13 +8,16 @@ import {
 } from "@/lib/utilidades/interpretaciones-natal";
 import type { Aspecto } from "@/lib/tipos";
 
-const COLORES_TIPO: Record<string, { bg: string; text: string }> = {
-  conjuncion: { bg: "#FFF8E1", text: "#F57F17" },
-  trigono: { bg: "#E8F5E9", text: "#2E7D32" },
-  sextil: { bg: "#E1F5FE", text: "#0277BD" },
-  cuadratura: { bg: "#FFEBEE", text: "#C62828" },
-  oposicion: { bg: "#F3E5F5", text: "#6A1B9A" },
-};
+function obtenerColoresTipo(colores: ReturnType<typeof usarTema>["colores"]) {
+  const base: Record<string, { bg: string; text: string }> = {
+    conjuncion: { bg: colores.acento + "18", text: colores.acento },
+    trigono: { bg: "#34d39920", text: "#34d399" },
+    sextil: { bg: "#60a5fa20", text: "#60a5fa" },
+    cuadratura: { bg: colores.error + "20", text: colores.error },
+    oposicion: { bg: "#c084fc20", text: "#c084fc" },
+  };
+  return base;
+}
 
 interface AspectosNarrativoProps {
   aspectos: Aspecto[];
@@ -31,7 +34,8 @@ export function AspectosNarrativo({ aspectos, onSeleccionar }: AspectosNarrativo
         Aspectos Planetarios
       </Text>
       {grupos.map((grupo) => {
-        const estilo = COLORES_TIPO[grupo.tipo] || { bg: colores.fondoSecundario, text: colores.textoSecundario };
+        const coloresTipo = obtenerColoresTipo(colores);
+        const estilo = coloresTipo[grupo.tipo] || { bg: colores.fondoSecundario, text: colores.textoSecundario };
         return (
           <View key={grupo.tipo} style={{ marginBottom: 14 }}>
             {/* Encabezado */}

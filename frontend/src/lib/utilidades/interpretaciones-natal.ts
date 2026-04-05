@@ -18,19 +18,54 @@ export const SIMBOLOS_ASPECTO: Record<string, string> = {
 };
 
 export const BADGE_ASPECTO: Record<string, { bg: string; text: string; label: string }> = {
-  conjuncion: { bg: "bg-[#7C4DFF]/16", text: "text-[#E4D5FF]", label: "Conjunción" },
-  trigono: { bg: "bg-emerald-500/16", text: "text-emerald-200", label: "Trígono" },
-  sextil: { bg: "bg-sky-500/16", text: "text-sky-200", label: "Sextil" },
-  cuadratura: { bg: "bg-rose-500/16", text: "text-rose-200", label: "Cuadratura" },
-  oposicion: { bg: "bg-violet-500/16", text: "text-violet-200", label: "Oposición" },
+  conjuncion: {
+    bg: "border-[var(--shell-badge-violeta-borde)] bg-[var(--shell-badge-violeta-fondo)]",
+    text: "text-[color:var(--shell-badge-violeta-texto)]",
+    label: "Conjunción",
+  },
+  trigono: {
+    bg: "border-[var(--shell-badge-exito-borde)] bg-[var(--shell-badge-exito-fondo)]",
+    text: "text-[color:var(--shell-badge-exito-texto)]",
+    label: "Trígono",
+  },
+  sextil: {
+    bg: "border-[var(--shell-chip-borde)] bg-[var(--shell-superficie-suave)]",
+    text: "text-[color:var(--color-info)]",
+    label: "Sextil",
+  },
+  cuadratura: {
+    bg: "border-[var(--shell-badge-error-borde)] bg-[var(--shell-badge-error-fondo)]",
+    text: "text-[color:var(--shell-badge-error-texto)]",
+    label: "Cuadratura",
+  },
+  oposicion: {
+    bg: "border-[var(--shell-badge-violeta-borde)] bg-[var(--shell-badge-violeta-fondo)]",
+    text: "text-[color:var(--shell-badge-violeta-texto)]",
+    label: "Oposición",
+  },
 };
 
 export const DIGNIDAD_BADGE: Record<string, { bg: string; text: string }> = {
-  domicilio: { bg: "bg-emerald-500/16", text: "text-emerald-200" },
-  exaltacion: { bg: "bg-cyan-500/16", text: "text-cyan-200" },
-  detrimento: { bg: "bg-red-500/16", text: "text-red-200" },
-  caida: { bg: "bg-rose-500/16", text: "text-rose-200" },
-  peregrino: { bg: "bg-white/10", text: "text-white/72" },
+  domicilio: {
+    bg: "border-[var(--shell-badge-exito-borde)] bg-[var(--shell-badge-exito-fondo)]",
+    text: "text-[color:var(--shell-badge-exito-texto)]",
+  },
+  exaltacion: {
+    bg: "border-[var(--shell-chip-borde)] bg-[var(--shell-superficie-suave)]",
+    text: "text-[color:var(--color-info)]",
+  },
+  detrimento: {
+    bg: "border-[var(--shell-badge-error-borde)] bg-[var(--shell-badge-error-fondo)]",
+    text: "text-[color:var(--shell-badge-error-texto)]",
+  },
+  caida: {
+    bg: "border-[var(--shell-badge-error-borde)] bg-[var(--shell-badge-error-fondo)]",
+    text: "text-[color:var(--shell-badge-error-texto)]",
+  },
+  peregrino: {
+    bg: "border-[var(--shell-badge-neutral-borde)] bg-[var(--shell-badge-neutral-fondo)]",
+    text: "text-[color:var(--shell-badge-neutral-texto)]",
+  },
 };
 
 // ---------------------------------------------------------------------------

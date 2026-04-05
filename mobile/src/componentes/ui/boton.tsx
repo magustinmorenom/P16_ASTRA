@@ -49,6 +49,8 @@ export function Boton({
 
   const borderStyle: ViewStyle =
     variante === "secundario"
+      ? { borderWidth: 1, borderColor: colores.vidrioBorde }
+      : variante === "fantasma"
       ? { borderWidth: 1, borderColor: colores.borde }
       : {};
 
@@ -61,7 +63,12 @@ export function Boton({
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: bgColor,
+          backgroundColor:
+            variante === "secundario"
+              ? colores.superficieHover
+              : variante === "fantasma"
+              ? "transparent"
+              : bgColor,
           opacity: deshabilitado ? 0.5 : 1,
           ...tamañoPadding[tamaño],
           ...borderStyle,
@@ -70,7 +77,10 @@ export function Boton({
       ]}
     >
       {cargando ? (
-        <ActivityIndicator size="small" color={colores.primario} />
+        <ActivityIndicator
+          size="small"
+          color={variante === "primario" ? "#FFFFFF" : colores.primario}
+        />
       ) : (
         <>
           {icono}
@@ -80,6 +90,7 @@ export function Boton({
               color: variante === "primario" ? "#FFFFFF" : colores.primario,
               fontSize: textoTamaño[tamaño],
               marginLeft: icono ? 8 : 0,
+              letterSpacing: 0.1,
             }}
           >
             {children}

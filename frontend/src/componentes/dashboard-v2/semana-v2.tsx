@@ -33,9 +33,9 @@ const CLIMA_LABEL: Record<string, string> = {
 };
 
 const CLIMA_COLOR: Record<string, string> = {
-  favorable: "bg-emerald-400",
-  neutro: "bg-violet-400",
-  desafiante: "bg-red-400",
+  favorable: "var(--shell-badge-exito-texto)",
+  neutro: "var(--shell-badge-violeta-texto)",
+  desafiante: "var(--shell-badge-error-texto)",
 };
 
 interface TooltipState {
@@ -57,29 +57,39 @@ function TooltipDia({ dia, x, y, saliendo }: { dia: DiaSemanalDTO; x: number; y:
       }`}
       style={{ left: x, top: y }}
     >
-      <div className="backdrop-blur-3xl bg-[#1A1128]/88 border border-white/15 rounded-2xl px-4 py-3.5 shadow-[0_8px_40px_rgba(124,77,255,0.2),0_0_1px_rgba(255,255,255,0.1)] w-[220px]">
+      <div
+        className="w-[220px] rounded-2xl border px-4 py-3.5 backdrop-blur-3xl"
+        style={{
+          background: "var(--shell-panel)",
+          borderColor: "var(--shell-borde)",
+          boxShadow: "var(--shell-sombra-fuerte)",
+        }}
+      >
         <div className="flex items-center gap-2 mb-2.5">
-          <span className="text-[#f8f6ff] font-[family-name:var(--font-inria)] text-[20px] font-bold leading-none">
+          <span className="font-[family-name:var(--font-inria)] text-[20px] font-bold leading-none text-[color:var(--shell-texto)]">
             {diaSem} {diaMes}
           </span>
-          <span className={`h-[7px] w-[7px] rounded-full ${CLIMA_COLOR[dia.clima_estado] ?? "bg-violet-400"}`} />
-          <span className="text-white/50 text-[11px] font-medium">
+          <span
+            className="h-[7px] w-[7px] rounded-full"
+            style={{ background: CLIMA_COLOR[dia.clima_estado] ?? "var(--color-acento)" }}
+          />
+          <span className="text-[11px] font-medium text-[color:var(--shell-texto-tenue)]">
             {CLIMA_LABEL[dia.clima_estado] ?? dia.clima_estado}
           </span>
         </div>
-        <p className="text-white/90 text-[13px] leading-[1.4] mb-3">
+        <p className="mb-3 text-[13px] leading-[1.4] text-[color:var(--shell-texto-secundario)]">
           {dia.frase_corta}
         </p>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
-            <Icono nombre="rayo" tamaño={12} peso="fill" className="text-[#B388FF]" />
-            <span className="text-white/60 text-[11px]">Energía</span>
-            <span className="text-white text-[11px] font-semibold">{dia.energia}/10</span>
+            <Icono nombre="rayo" tamaño={12} peso="fill" className="text-[color:var(--color-acento)]" />
+            <span className="text-[11px] text-[color:var(--shell-texto-tenue)]">Energía</span>
+            <span className="text-[11px] font-semibold text-[color:var(--shell-texto)]">{dia.energia}/10</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Icono nombre="destello" tamaño={12} peso="fill" className="text-[#D4A234]" />
-            <span className="text-white/60 text-[11px]">Nº</span>
-            <span className="text-white text-[11px] font-semibold">{dia.numero_personal}</span>
+            <Icono nombre="destello" tamaño={12} peso="fill" className="text-[color:var(--color-acento)]" />
+            <span className="text-[11px] text-[color:var(--shell-texto-tenue)]">Nº</span>
+            <span className="text-[11px] font-semibold text-[color:var(--shell-texto)]">{dia.numero_personal}</span>
           </div>
         </div>
       </div>
@@ -94,8 +104,11 @@ function EsqueletoSemana() {
       {Array.from({ length: 7 }, (_, i) => (
         <div
           key={i}
-          className="w-[160px] min-w-[160px] h-[80px] rounded-xl bg-white/[0.05] animate-pulse"
-          style={{ animationDelay: `${i * 80}ms` }}
+          className="h-[80px] w-[160px] min-w-[160px] animate-pulse rounded-xl"
+          style={{
+            animationDelay: `${i * 80}ms`,
+            background: "var(--shell-superficie)",
+          }}
         />
       ))}
     </div>
@@ -199,11 +212,18 @@ export function SemanaV2({
 
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-white text-[24px] font-normal transition-opacity duration-200">
+      <h2 className="text-[24px] font-normal transition-opacity duration-200 text-[color:var(--shell-texto)]">
         {verSiguiente ? "Tu siguiente semana..." : "Tu semana..."}
       </h2>
 
-      <div className="rounded-[18px] overflow-hidden border border-white/[0.08] bg-[#160d23] p-2.5 flex flex-col gap-2.5 shadow-[0_18px_48px_rgba(8,2,22,0.28)]">
+      <div
+        className="flex flex-col gap-2.5 overflow-hidden rounded-[18px] border p-2.5"
+        style={{
+          borderColor: "var(--shell-borde)",
+          background: "var(--shell-panel)",
+          boxShadow: "var(--shell-sombra-suave)",
+        }}
+      >
         {/* Day cards row — con animación de transición */}
         {mostrarEsqueleto ? (
           <EsqueletoSemana />
@@ -234,26 +254,45 @@ export function SemanaV2({
                   style={{ animationDelay: `${idx * 50}ms` }}
                 >
                   <PanelGlass
-                    className={`relative flex items-start gap-2.5 p-2.5 w-[160px] min-w-[160px] shrink-0 transition-all duration-200 group-hover:bg-white/[0.12] group-hover:border-white/20 ${
-                      hoy ? "ring-1 ring-[#B388FF]/40 border-[#B388FF]/25 bg-white/[0.08]" : ""
-                    }`}
+                    className="relative flex w-[160px] min-w-[160px] shrink-0 items-start gap-2.5 p-2.5 transition-all duration-200 group-hover:-translate-y-0.5"
+                    style={
+                      hoy
+                        ? {
+                            background: "var(--shell-chip)",
+                            borderColor: "var(--shell-borde-fuerte)",
+                            boxShadow: "var(--shell-sombra-suave)",
+                          }
+                        : undefined
+                    }
                   >
                     {hoy && (
-                      <span className="absolute -top-1.5 -right-1.5 rounded-full bg-emerald-500/90 px-1.5 py-[1px] text-[8px] font-bold uppercase tracking-wider text-white shadow-[0_2px_6px_rgba(16,185,129,0.4)]">
-                        Hoy
-                      </span>
+                      <span
+                        className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full shadow-[0_0_6px_var(--shell-glow-1)]"
+                        style={{ background: "var(--color-acento)" }}
+                      />
                     )}
-                    <div className={`rounded-lg backdrop-blur-[21px] border px-2 py-1.5 flex flex-col items-center justify-center gap-0.5 shrink-0 min-w-[40px] ${
-                      hoy ? "bg-[#B388FF]/15 border-[#B388FF]/25" : "bg-white/[0.07] border-white/[0.12]"
-                    }`}>
-                      <span className="text-white/90 text-[12px] font-medium text-center leading-tight">
+                    <div
+                      className="flex min-w-[40px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border px-2 py-1.5 backdrop-blur-[21px]"
+                      style={
+                        hoy
+                          ? {
+                              background: "var(--shell-chip)",
+                              borderColor: "var(--shell-borde-fuerte)",
+                            }
+                          : {
+                              background: "var(--shell-superficie-suave)",
+                              borderColor: "var(--shell-borde)",
+                            }
+                      }
+                    >
+                      <span className="text-[12px] font-medium leading-tight text-[color:var(--shell-texto-secundario)]">
                         {diaSem}
                       </span>
-                      <span className="text-[#f8f6ff] font-[family-name:var(--font-inria)] text-[22px] leading-none">
+                      <span className="font-[family-name:var(--font-inria)] text-[22px] leading-none text-[color:var(--shell-texto)]">
                         {diaMes}
                       </span>
                     </div>
-                    <p className="text-white/90 text-[13px] leading-[1.4] flex-1 line-clamp-3">
+                    <p className="flex-1 line-clamp-3 text-[13px] leading-[1.4] text-[color:var(--shell-texto-secundario)]">
                       {dia.frase_corta}
                     </p>
                   </PanelGlass>
@@ -265,7 +304,7 @@ export function SemanaV2({
         )}
 
         {/* Divider */}
-        <div className="h-px bg-white/15" />
+        <div className="h-px" style={{ background: "var(--shell-borde)" }} />
 
         {/* Acciones */}
         <div className="flex gap-2.5">
@@ -275,17 +314,29 @@ export function SemanaV2({
             className={`flex-1 rounded-2xl overflow-hidden relative transition-opacity duration-200 ${
               !podcastHabilitado ? "opacity-50" : ""
             }`}
+            style={{
+              borderColor: "var(--shell-borde-fuerte)",
+              borderWidth: 1,
+              background: "var(--shell-gradiente-acento-suave)",
+              boxShadow: "none",
+            }}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0f0826] via-[#1a0e3e] to-[#2d1b69]" />
             <div className="relative flex items-center gap-2 px-4 py-2.5">
-              <span className="h-[33px] w-[36px] rounded-xl bg-white/10 border border-white/[0.08] flex items-center justify-center shrink-0">
+              <span
+                className="h-[33px] w-[36px] rounded-xl flex items-center justify-center shrink-0"
+                style={{
+                  background: "var(--shell-superficie)",
+                  borderColor: "var(--shell-borde-fuerte)",
+                  borderWidth: 1,
+                }}
+              >
                 {generandoPodcast ? (
-                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-[color:var(--color-acento)] border-t-transparent" />
                 ) : (
-                  <Icono nombre="destello" tamaño={16} peso="fill" className="text-white" />
+                  <Icono nombre="destello" tamaño={16} peso="fill" className="text-[color:var(--color-acento)]" />
                 )}
               </span>
-              <span className="text-[#f8f6ff]/60 text-[11px] font-medium tracking-[2px] text-center uppercase flex-1">
+              <span className="text-[color:var(--shell-texto)] text-[11px] font-medium tracking-[2px] text-center uppercase flex-1">
                 {verSiguiente && !podcastHabilitado
                   ? "El sábado se habilita este podcast"
                   : `Genera podcast de tu semana ${rangoTexto}`}
@@ -295,14 +346,18 @@ export function SemanaV2({
 
           <button
             onClick={alternarSemana}
-            className="rounded-2xl bg-black/20 flex items-center gap-2 px-5 py-2.5 shrink-0 transition-colors hover:bg-black/30"
+            className="flex shrink-0 items-center gap-2 rounded-2xl px-5 py-2.5 transition-colors"
+            style={{
+              background: "var(--shell-superficie)",
+              color: "var(--shell-texto)",
+            }}
           >
             <Icono
               nombre="flecha"
               tamaño={14}
-              className={`text-white transition-transform duration-200 ${verSiguiente ? "rotate-180" : ""}`}
+              className={`transition-transform duration-200 ${verSiguiente ? "rotate-180" : ""}`}
             />
-            <span className="text-white text-[14px]">
+            <span className="text-[14px]">
               {verSiguiente ? "Volver a esta semana" : "Ver mi siguiente semana"}
             </span>
           </button>
