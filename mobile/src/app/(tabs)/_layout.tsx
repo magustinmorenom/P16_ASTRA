@@ -92,14 +92,18 @@ export default function LayoutTabs() {
             tabBarIcon: ({ color }) => <MoonStars size={22} color={color} weight="fill" />,
           }}
         />
-        {/* Spacer central para el FAB */}
+
+        {/* Spacer central — ocupa columna para que el FAB quede centrado */}
         <Tabs.Screen
           name="chat"
           options={{
-            href: null,
-            tabBarItemStyle: { display: "none" },
+            title: " ",
+            tabBarIcon: () => <View style={{ width: 28, height: 28 }} />,
+            tabBarLabel: () => null,
           }}
+          listeners={{ tabPress: (e) => { e.preventDefault(); abrirChat(); } }}
         />
+
         <Tabs.Screen
           name="descubrir"
           options={{
@@ -108,15 +112,17 @@ export default function LayoutTabs() {
           }}
         />
         <Tabs.Screen
-          name="perfil"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
           name="podcast"
           options={{
             title: "Podcast",
             tabBarIcon: ({ color }) => <Microphone size={22} color={color} weight="fill" />,
           }}
+        />
+
+        {/* Perfil oculto del tab bar */}
+        <Tabs.Screen
+          name="perfil"
+          options={{ href: null }}
         />
       </Tabs>
 
@@ -128,7 +134,7 @@ export default function LayoutTabs() {
         <LinearGradient colors={["transparent", `${violeta}B0`]} style={{ flex: 1 }} />
       </View>
 
-      {/* FAB Chat */}
+      {/* FAB Chat — centrado sobre el spacer del tab bar */}
       <Pressable
         onPress={abrirChat}
         accessibilityRole="button"
