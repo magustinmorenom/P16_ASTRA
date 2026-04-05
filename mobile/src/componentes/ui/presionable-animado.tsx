@@ -14,6 +14,10 @@ interface PresionableAnimadoProps extends Omit<PressableProps, "style"> {
   duracion?: number;
   sinHaptico?: boolean;
   style?: StyleProp<ViewStyle>;
+  accessibilityRole?: PressableProps["accessibilityRole"];
+  accessibilityLabel?: string;
+  accessibilityState?: PressableProps["accessibilityState"];
+  accessibilityHint?: string;
 }
 
 export function PresionableAnimado({

@@ -11,6 +11,9 @@ export default function LayoutOnboarding() {
         contentStyle: { backgroundColor: colores.fondo },
         animation: "slide_from_right",
       }}
-    />
+    >
+      <Stack.Screen name="bienvenida" />
+      <Stack.Screen name="index" />
+    </Stack>
   );
 }

@@ -41,6 +41,8 @@ export function MiniReproductor() {
 
       <Pressable
         onPress={toggleMiniReproductor}
+        accessibilityRole="button"
+        accessibilityLabel={`Reproductor: ${pistaActual.titulo}. Tocar para expandir`}
         style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12 }}
       >
         {/* Cover placeholder */}
@@ -95,7 +97,12 @@ export function MiniReproductor() {
             <Play size={24} color={colores.textoMuted} weight="fill" />
           </View>
         ) : (
-          <Pressable onPress={toggleReproduccion} style={{ marginRight: 12, padding: 4 }}>
+          <Pressable
+            onPress={toggleReproduccion}
+            accessibilityRole="button"
+            accessibilityLabel={reproduciendo ? "Pausar" : "Reproducir"}
+            style={{ marginRight: 12, padding: 4 }}
+          >
             {reproduciendo ? (
               <Pause size={24} color={colores.primario} weight="fill" />
             ) : (
@@ -104,7 +111,12 @@ export function MiniReproductor() {
           </Pressable>
         )}
 
-        <Pressable onPress={manejarCerrar} style={{ padding: 4 }}>
+        <Pressable
+          onPress={manejarCerrar}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar reproductor"
+          style={{ padding: 4 }}
+        >
           <X size={20} color={colores.textoMuted} />
         </Pressable>
       </Pressable>

@@ -5,12 +5,21 @@ import { Badge } from "@/componentes/ui/badge";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
 import { AnimacionEntrada } from "@/componentes/ui/animacion-entrada";
 import { IconoSigno } from "@/componentes/ui/icono-astral";
+import { EstadoTimeout } from "@/componentes/feedback/estado-timeout";
 import { usarTransitos } from "@/lib/hooks/usar-transitos";
 import { usarTema } from "@/lib/hooks/usar-tema";
 
 export default function TransitosScreen() {
-  const { data: transitos, isLoading } = usarTransitos();
+  const { data: transitos, isLoading, error, refetch } = usarTransitos();
   const { colores } = usarTema();
+
+  const esqueletoTransitos = (
+    <View style={{ gap: 12, paddingTop: 16 }}>
+      {Array.from({ length: 10 }).map((_, i) => (
+        <Esqueleto key={i} style={{ height: 64, borderRadius: 12 }} />
+      ))}
+    </View>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colores.fondo }}>
@@ -21,13 +30,12 @@ export default function TransitosScreen() {
             Actualizado: {new Date(transitos.fecha_utc).toLocaleTimeString()}
           </Text>
         )}
-        {isLoading ? (
-          <View style={{ gap: 12 }}>
-            {Array.from({ length: 10 }).map((_, i) => (
-              <Esqueleto key={i} style={{ height: 64, borderRadius: 12 }} />
-            ))}
-          </View>
-        ) : (
+        <EstadoTimeout
+          cargando={isLoading}
+          error={error}
+          onReintentar={() => refetch()}
+          esqueleto={esqueletoTransitos}
+        >
           <AnimacionEntrada>
             <View style={{ gap: 12 }}>
               {transitos?.planetas.map((p) => (
@@ -47,7 +55,7 @@ export default function TransitosScreen() {
               ))}
             </View>
           </AnimacionEntrada>
-        )}
+        </EstadoTimeout>
       </ScrollView>
     </View>
   );

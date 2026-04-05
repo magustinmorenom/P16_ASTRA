@@ -12,6 +12,7 @@ import { Boton } from "@/componentes/ui/boton";
 import { usarRegistro, usarGoogleAuthUrl } from "@/lib/hooks";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { usarTema } from "@/lib/hooks/usar-tema";
+import { trackEvento, Eventos } from "@/lib/utilidades/analytics";
 
 export default function RegistroScreen() {
   const { colores } = usarTema();
@@ -35,6 +36,7 @@ export default function RegistroScreen() {
     registro.mutate(
       { nombre: nombre.trim(), email: email.trim(), contrasena },
       {
+        onSuccess: () => trackEvento(Eventos.REGISTRO, { metodo: "email" }),
         onError: (err: unknown) => {
           setError(err instanceof Error ? err.message : "Error al registrar");
         },
@@ -154,6 +156,9 @@ export default function RegistroScreen() {
         />
         <Pressable
           onPress={() => setMostrarContrasena(!mostrarContrasena)}
+          accessibilityRole="button"
+          accessibilityLabel={mostrarContrasena ? "Ocultar contraseña" : "Mostrar contraseña"}
+          hitSlop={8}
           style={{ position: "absolute", right: 16, top: 38 }}
         >
           {mostrarContrasena ? (
@@ -168,6 +173,8 @@ export default function RegistroScreen() {
 
       {error ? (
         <View
+          accessibilityRole="alert"
+          accessibilityLiveRegion="assertive"
           style={{
             borderRadius: 14,
             borderWidth: 1,
@@ -208,13 +215,21 @@ export default function RegistroScreen() {
           marginTop: 14,
         }}
       >
-        Al registrarte aceptas nuestros{" "}
-        <Text style={{ color: colores.acento, textDecorationLine: "underline" }}>
-          Terminos de Servicio
+        Al registrarte aceptás nuestros{" "}
+        <Text
+          accessibilityRole="link"
+          onPress={() => WebBrowser.openBrowserAsync("https://theastra.xyz/terminos")}
+          style={{ color: colores.acento, textDecorationLine: "underline" }}
+        >
+          Términos de Servicio
         </Text>
         {" "}y{" "}
-        <Text style={{ color: colores.acento, textDecorationLine: "underline" }}>
-          Politica de Privacidad
+        <Text
+          accessibilityRole="link"
+          onPress={() => WebBrowser.openBrowserAsync("https://theastra.xyz/privacidad")}
+          style={{ color: colores.acento, textDecorationLine: "underline" }}
+        >
+          Política de Privacidad
         </Text>
       </Text>
     </ShellAcceso>

@@ -45,6 +45,8 @@ export const Input = forwardRef<TextInput, InputProps>(
           <TextInput
             ref={ref}
             placeholderTextColor={colores.textoMuted}
+            accessibilityLabel={etiqueta ?? props.placeholder}
+            accessibilityState={{ disabled: props.editable === false }}
             style={[
               {
                 flex: 1,
@@ -60,6 +62,8 @@ export const Input = forwardRef<TextInput, InputProps>(
         </View>
         {error && (
           <Text
+            accessibilityRole="alert"
+            accessibilityLiveRegion="polite"
             style={{
               color: colores.error,
               fontSize: 12,

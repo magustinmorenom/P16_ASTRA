@@ -31,6 +31,8 @@ import {
   usarPronosticoSemanal,
 } from "@/lib/hooks";
 import { usarTema } from "@/lib/hooks/usar-tema";
+import { usarReview } from "@/lib/hooks/usar-review";
+import { trackPantalla, trackEvento, Eventos } from "@/lib/utilidades/analytics";
 import type {
   AreaVidaDTO,
   MomentoClaveDTO,
@@ -462,6 +464,12 @@ export default function DashboardScreen() {
   const { data: pronosticoSemanal, isLoading: cargandoSemanal } = usarPronosticoSemanal();
   const { data: episodios } = usarPodcastHoy();
   const generarPodcast = usarGenerarPodcast();
+
+  // Solicitar review después de 5 sesiones
+  usarReview();
+
+  // Analytics
+  trackPantalla("dashboard");
 
   const esPremium = usuario?.plan_slug === "premium";
 

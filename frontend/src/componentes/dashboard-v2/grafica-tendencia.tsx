@@ -2,41 +2,25 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { PanelGlass } from "./panel-glass";
-import { Icono, type NombreIcono } from "@/componentes/ui/icono";
 import type { DiaSemanalDTO } from "@/lib/tipos";
 
 /* ─── Constantes de layout SVG ─── */
 
 const VB_W = 600;
-const VB_H = 240;
+const VB_H = 276;
 const PAD_L = 24;
 const PAD_R = 4;
 const PAD_T = 16;
-const PAD_B = 36;
+const PAD_B = 72;
 const CHART_W = VB_W - PAD_L - PAD_R;
 const CHART_H = VB_H - PAD_T - PAD_B;
 
 const Y_MIN = 1;
 const Y_MAX = 10;
 
+const LINE_COLOR = "#7C4DFF";
+
 const DIAS_SEMANA = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"] as const;
-
-/* ─── Lineas: config ─── */
-
-interface ConfigLinea {
-  clave: "energia" | "claridad" | "intuicion";
-  etiqueta: string;
-  icono: NombreIcono;
-  color: string;
-  ancho: number;
-  dash?: string;
-}
-
-const LINEAS: ConfigLinea[] = [
-  { clave: "energia", etiqueta: "Energía", icono: "rayo", color: "var(--color-acento)", ancho: 2.5 },
-  { clave: "claridad", etiqueta: "Claridad", icono: "ojo", color: "var(--shell-badge-violeta-texto)", ancho: 2 },
-  { clave: "intuicion", etiqueta: "Intuición", icono: "wifi", color: "var(--shell-badge-exito-texto)", ancho: 2, dash: "6 3" },
-];
 
 /* ─── Helpers de coordenadas ─── */
 
@@ -62,7 +46,7 @@ function generarPathSuave(puntos: [number, number][]): string {
   const n = puntos.length;
   const m: number[] = new Array(n - 1);
   const dx: number[] = new Array(n - 1);
-  
+
   for (let i = 0; i < n - 1; i++) {
     dx[i] = puntos[i + 1][0] - puntos[i][0];
     const dy = puntos[i + 1][1] - puntos[i][1];
@@ -75,9 +59,8 @@ function generarPathSuave(puntos: [number, number][]): string {
 
   for (let i = 1; i < n - 1; i++) {
     if (m[i - 1] * m[i] <= 0) {
-      t[i] = 0; // Extremo local: tangente horizontal
+      t[i] = 0;
     } else {
-      // Media armónica para asegurar la monotonicidad
       t[i] = 2 / (1 / m[i - 1] + 1 / m[i]);
     }
   }
@@ -116,13 +99,11 @@ function LineaAnimada({
   d,
   color,
   ancho,
-  dash,
   delay,
 }: {
   d: string;
   color: string;
   ancho: number;
-  dash?: string;
   delay: number;
 }) {
   const ref = useRef<SVGPathElement>(null);
@@ -143,20 +124,12 @@ function LineaAnimada({
       strokeWidth={ancho}
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeDasharray={dash || (longitud > 0 ? `${longitud}` : undefined)}
-      strokeDashoffset={dash ? undefined : (longitud > 0 ? `${longitud}` : undefined)}
+      strokeDasharray={longitud > 0 ? `${longitud}` : undefined}
+      strokeDashoffset={longitud > 0 ? `${longitud}` : undefined}
       style={
-        !dash && longitud > 0
-          ? {
-              animation: `dibujarLinea 1s ease-out ${delay}ms forwards`,
-            }
-          : dash && longitud > 0
-            ? {
-                strokeDasharray: dash,
-                opacity: 0,
-                animation: `aparecerLinea 0.4s ease-out ${delay}ms forwards`,
-              }
-            : undefined
+        longitud > 0
+          ? { animation: `dibujarLinea 1s ease-out ${delay}ms forwards` }
+          : undefined
       }
     />
   );
@@ -178,56 +151,58 @@ export function GraficaTendencia({ datos, fechaHoy }: GraficaTendenciaProps) {
     [datos, fechaHoy],
   );
 
-  /* Precalcular puntos por linea */
-  const puntosPorLinea = useMemo(() => {
-    const resultado: Record<string, [number, number][]> = {};
-    for (const linea of LINEAS) {
-      // Filtrar puntos válidos o usar un valor por defecto si no existen
-      const puntos = datos.map((d, i) => {
-        const val = d[linea.clave] !== undefined && d[linea.clave] !== null ? d[linea.clave] : 5; // Fallback a 5 si falta
-        return [mapX(i, total), mapY(val)] as [number, number];
-      });
-      resultado[linea.clave] = puntos;
-    }
-    return resultado;
+  /* Precalcular puntos de energía */
+  const puntos = useMemo(() => {
+    return datos.map((d, i) => {
+      const val = d.energia !== undefined && d.energia !== null ? d.energia : 5;
+      return [mapX(i, total), mapY(val)] as [number, number];
+    });
   }, [datos, total]);
-
-  /* Gridlines Y — valores 2, 4, 6, 8, 10 */
-  const gridY = [2, 4, 6, 8, 10];
 
   /* Ancho de columna para hit areas */
   const anchoCol = total > 1 ? CHART_W / (total - 1) : CHART_W;
 
   if (datos.length < 2) return null;
 
-  return (
-    <div className="flex w-full flex-col gap-3">
-      <h2 className="text-[20px] font-medium text-[color:var(--shell-texto)] tracking-[-0.01em]">
-        Tendencia cósmica
-      </h2>
+  const pathD = generarPathSuave(puntos);
+  const bottomY = PAD_T + CHART_H;
+  const areaD = `${pathD} L ${puntos[puntos.length - 1][0]},${bottomY} L ${puntos[0][0]},${bottomY} Z`;
 
+  return (
+    <div className="flex w-full flex-col gap-3 items-start">
       <PanelGlass
         tono="panel"
-        className="flex flex-col gap-0 overflow-hidden rounded-[24px] border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl shadow-[0_18px_40px_rgba(8,3,20,0.22)] py-4"
+        className="flex w-full flex-col gap-0 overflow-hidden rounded-[24px] border border-[var(--shell-borde)] bg-[var(--shell-fondo)]/60 backdrop-blur-xl shadow-[0_18px_40px_rgba(8,3,20,0.10)] py-4"
       >
         {/* Keyframes inline para animacion de dibujo */}
         <style>{`
           @keyframes dibujarLinea {
             to { stroke-dashoffset: 0; }
           }
-          @keyframes aparecerLinea {
-            to { opacity: 1; }
-          }
         `}</style>
 
         <svg
           viewBox={`0 0 ${VB_W} ${VB_H}`}
           className="w-full"
-          style={{ maxHeight: 260, width: "100%" }}
+          preserveAspectRatio="xMinYMid meet"
+          style={{ maxHeight: 300, width: "100%" }}
           role="img"
-          aria-label="Gráfica de tendencia cósmica de 10 días"
+          aria-label="Gráfica de tendencia de energía"
         >
-          {/* ── Gridlines Y Simplificadas (Ruido Visual Bajo) ── */}
+          {/* ── Defs ── */}
+          <defs>
+            <linearGradient id="gradEnergia" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={LINE_COLOR} stopOpacity="0.18" />
+              <stop offset="100%" stopColor={LINE_COLOR} stopOpacity="0.0" />
+            </linearGradient>
+            <linearGradient id="gradHoy" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-acento)" stopOpacity="0.0" />
+              <stop offset="50%" stopColor="var(--color-acento)" stopOpacity="0.08" />
+              <stop offset="100%" stopColor="var(--color-acento)" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
+
+          {/* ── Gridlines Y ── */}
           {[2, 5, 8].map((v) => (
             <g key={v}>
               <line
@@ -236,7 +211,7 @@ export function GraficaTendencia({ datos, fechaHoy }: GraficaTendenciaProps) {
                 x2={VB_W - PAD_R}
                 y2={mapY(v)}
                 stroke="currentColor"
-                className="text-white/[0.05]"
+                className="text-[color:var(--shell-texto-tenue)] opacity-20"
                 strokeWidth={1}
               />
               <text
@@ -254,16 +229,9 @@ export function GraficaTendencia({ datos, fechaHoy }: GraficaTendenciaProps) {
             </g>
           ))}
 
-          {/* ── Linea vertical HOY Elegante ── */}
+          {/* ── Linea vertical HOY ── */}
           {indiceHoy >= 0 && (
             <g>
-              <defs>
-                <linearGradient id="gradHoy" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--color-acento)" stopOpacity="0.0" />
-                  <stop offset="50%" stopColor="var(--color-acento)" stopOpacity="0.08" />
-                  <stop offset="100%" stopColor="var(--color-acento)" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
               <rect
                 x={mapX(indiceHoy, total) - anchoCol / 2 + 4}
                 y={PAD_T}
@@ -285,84 +253,55 @@ export function GraficaTendencia({ datos, fechaHoy }: GraficaTendenciaProps) {
             </g>
           )}
 
-          {/* ── Curvas ── */}
-          {LINEAS.map((linea, idx) => {
-            const pts = puntosPorLinea[linea.clave];
-            if (!pts || pts.length < 2) return null;
-            const d = generarPathSuave(pts);
-            return (
-              <LineaAnimada
-                key={linea.clave}
-                d={d}
-                color={linea.color}
-                ancho={linea.ancho}
-                dash={linea.dash}
-                delay={idx * 200}
+          {/* ── Area bajo curva ── */}
+          <path d={areaD} fill="url(#gradEnergia)" />
+
+          {/* ── Curva ── */}
+          <LineaAnimada d={pathD} color={LINE_COLOR} ancho={2.5} delay={0} />
+
+          {/* ── Circulo en HOY ── */}
+          {indiceHoy >= 0 && puntos[indiceHoy] && (
+            <g>
+              <circle
+                cx={puntos[indiceHoy][0]}
+                cy={puntos[indiceHoy][1]}
+                r={7}
+                fill={LINE_COLOR}
+                opacity={0.15}
               />
-            );
-          })}
+              <circle
+                cx={puntos[indiceHoy][0]}
+                cy={puntos[indiceHoy][1]}
+                r={3.5}
+                fill={LINE_COLOR}
+                stroke="var(--shell-fondo)"
+                strokeWidth={2}
+              />
+            </g>
+          )}
 
-          {/* ── Circulos en HOY Premium ── */}
-          {indiceHoy >= 0 &&
-            LINEAS.map((linea) => {
-              const pts = puntosPorLinea[linea.clave];
-              if (!pts?.[indiceHoy]) return null;
-              const [cx, cy] = pts[indiceHoy];
-              return (
-                <g key={`hoy-${linea.clave}`}>
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={7}
-                    fill={linea.color}
-                    opacity={0.15}
-                  />
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={3.5}
-                    fill={linea.color}
-                    stroke="#1C0627" // Ciruela base
-                    strokeWidth={2}
-                  />
-                </g>
-              );
-            })}
-
-          {/* ── Circulos hover Glassy ── */}
-          {indiceFoco !== null &&
-            indiceFoco !== indiceHoy &&
-            LINEAS.map((linea) => {
-              const pts = puntosPorLinea[linea.clave];
-              if (!pts?.[indiceFoco]) return null;
-              const [cx, cy] = pts[indiceFoco];
-              return (
-                <circle
-                  key={`foco-${linea.clave}`}
-                  cx={cx}
-                  cy={cy}
-                  r={3.5}
-                  fill={linea.color}
-                  stroke="#1C0627"
-                  strokeWidth={1.5}
-                  className="transition-all duration-200"
-                />
-              );
-            })}
-
-          {/* ── Tooltip vertical en hover ── */}
-          {indiceFoco !== null && indiceFoco !== indiceHoy && (
-            <g className="transition-opacity duration-150">
+          {/* ── Circulo hover ── */}
+          {indiceFoco !== null && indiceFoco !== indiceHoy && puntos[indiceFoco] && (
+            <>
               <line
                 x1={mapX(indiceFoco, total)}
                 y1={PAD_T}
                 x2={mapX(indiceFoco, total)}
                 y2={PAD_T + CHART_H}
-                stroke="white"
+                stroke="var(--shell-texto-tenue)"
                 strokeWidth={1}
-                opacity={0.1}
+                opacity={0.3}
               />
-            </g>
+              <circle
+                cx={puntos[indiceFoco][0]}
+                cy={puntos[indiceFoco][1]}
+                r={3.5}
+                fill={LINE_COLOR}
+                stroke="var(--shell-fondo)"
+                strokeWidth={1.5}
+                className="transition-all duration-200"
+              />
+            </>
           )}
 
           {/* ── Labels X ── */}
@@ -380,7 +319,7 @@ export function GraficaTendencia({ datos, fechaHoy }: GraficaTendenciaProps) {
                     esHoy
                       ? "var(--color-acento)"
                       : esFoco
-                        ? "white"
+                        ? "var(--shell-texto)"
                         : "var(--shell-texto-tenue)"
                   }
                   fontSize={esHoy ? 11 : 10}
@@ -397,7 +336,7 @@ export function GraficaTendencia({ datos, fechaHoy }: GraficaTendenciaProps) {
                   textAnchor="middle"
                   fill={
                     esHoy
-                      ? "white"
+                      ? "var(--shell-texto)"
                       : "var(--shell-texto-tenue)"
                   }
                   fontSize={11}
@@ -430,69 +369,22 @@ export function GraficaTendencia({ datos, fechaHoy }: GraficaTendenciaProps) {
           ))}
         </svg>
 
-        {/* ── Area Inferior: Tooltip dinámico y Leyenda ── */}
-        <div className="relative mt-2 flex h-[38px] items-center justify-center">
-          {/* Leyenda base (se desvanece si hay hover) */}
-          <div 
-            className={`absolute flex items-center gap-6 transition-all duration-300 ${
-              indiceFoco !== null ? "opacity-0 scale-95 pointer-events-none" : "opacity-100 scale-100"
-            }`}
-          >
-            {LINEAS.map((linea) => (
-              <div key={linea.clave} className="flex items-center gap-2">
-                <span style={{ color: linea.color }}>
-                  <Icono nombre={linea.icono} tamaño={14} peso="fill" className="text-current drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
-                </span>
-                <span className="text-[12px] font-medium text-white/50 tracking-wide">
-                  {linea.etiqueta}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Tooltip Hover Glassmorphism */}
-          <div
-            className={`absolute flex items-center justify-center gap-5 px-5 py-2 rounded-full bg-white/[0.06] border border-white/[0.1] backdrop-blur-md shadow-lg transition-all duration-300 ${
-              indiceFoco !== null
-                ? "opacity-100 scale-100 translate-y-0"
-                : "opacity-0 scale-95 translate-y-2 pointer-events-none"
-            }`}
-          >
-            {indiceFoco !== null && datos[indiceFoco] && (
-              <>
-                <div className="flex items-center pr-3 border-r border-white/10">
-                  <span className="text-[12px] font-semibold text-white/90">
-                    {obtenerDiaSemana(datos[indiceFoco].fecha)} {obtenerDiaMes(datos[indiceFoco].fecha)}
-                  </span>
-                  {indiceFoco === indiceHoy && (
-                    <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-[color:var(--color-acento)] bg-[var(--color-acento)]/10 px-2 py-0.5 rounded-md">
-                      Hoy
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-4">
-                  {LINEAS.map((linea) => {
-                    const valor = datos[indiceFoco][linea.clave];
-                    return (
-                      <span key={linea.clave} className="flex items-center gap-1.5">
-                        <span
-                          className="inline-block h-2 w-2 rounded-full shadow-[0_0_8px_currentColor]"
-                          style={{ background: linea.color, color: linea.color }}
-                        />
-                        <span className="text-[12px] text-white/50">
-                          {linea.etiqueta.slice(0, 3)}
-                        </span>
-                        <span className="text-[13px] font-bold text-white">
-                          {valor !== undefined && valor !== null ? valor : "-"}
-                        </span>
-                      </span>
-                    );
-                  })}
-                </div>
-              </>
+        {/* ── Tooltip hover ── */}
+        {indiceFoco !== null && datos[indiceFoco] && (
+          <div className="flex items-center gap-3 px-5 py-1.5 transition-opacity duration-200">
+            <span className="text-[12px] font-semibold text-[color:var(--shell-texto)]">
+              {obtenerDiaSemana(datos[indiceFoco].fecha)} {obtenerDiaMes(datos[indiceFoco].fecha)}
+            </span>
+            {indiceFoco === indiceHoy && (
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--color-acento)] bg-[var(--color-acento)]/10 px-2 py-0.5 rounded-md">
+                Hoy
+              </span>
             )}
+            <span className="text-[13px] font-bold" style={{ color: LINE_COLOR }}>
+              {datos[indiceFoco].energia}
+            </span>
           </div>
-        </div>
+        )}
       </PanelGlass>
     </div>
   );

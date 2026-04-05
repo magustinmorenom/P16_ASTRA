@@ -10,6 +10,7 @@ import { Boton } from "@/componentes/ui/boton";
 import { usarLogin, usarGoogleAuthUrl } from "@/lib/hooks";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { usarTema } from "@/lib/hooks/usar-tema";
+import { trackEvento, Eventos } from "@/lib/utilidades/analytics";
 
 export default function LoginScreen() {
   const { colores } = usarTema();
@@ -26,6 +27,7 @@ export default function LoginScreen() {
     login.mutate(
       { email: email.trim(), contrasena },
       {
+        onSuccess: () => trackEvento(Eventos.LOGIN, { metodo: "email" }),
         onError: (err: unknown) => {
           setError(err instanceof Error ? err.message : "Error al iniciar sesión");
         },
@@ -153,6 +155,9 @@ export default function LoginScreen() {
         />
         <Pressable
           onPress={() => setMostrarContrasena(!mostrarContrasena)}
+          accessibilityRole="button"
+          accessibilityLabel={mostrarContrasena ? "Ocultar contraseña" : "Mostrar contraseña"}
+          hitSlop={8}
           style={{ position: "absolute", right: 16, top: 38 }}
         >
           {mostrarContrasena ? (
@@ -165,6 +170,8 @@ export default function LoginScreen() {
 
       {error ? (
         <View
+          accessibilityRole="alert"
+          accessibilityLiveRegion="assertive"
           style={{
             borderRadius: 14,
             borderWidth: 1,

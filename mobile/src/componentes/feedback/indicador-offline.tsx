@@ -40,6 +40,9 @@ export function IndicadorOffline() {
 
   return (
     <View
+      accessibilityRole="alert"
+      accessibilityLiveRegion="assertive"
+      accessibilityLabel="Sin conexión a internet"
       style={{
         position: "absolute",
         top: insets.top,

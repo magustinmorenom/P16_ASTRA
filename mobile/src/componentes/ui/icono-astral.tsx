@@ -49,6 +49,8 @@ export function IconoAstral({ nombre, tamaño = 24, style }: IconoAstralProps) {
   return (
     <Image
       source={fuente}
+      accessibilityRole="image"
+      accessibilityLabel={nombre}
       style={[{ width: tamaño, height: tamaño, tintColor: colores.acento }, style]}
       resizeMode="contain"
     />
@@ -69,6 +71,8 @@ export function IconoSigno({ signo, tamaño = 24, style }: IconoSignoProps) {
   return (
     <Image
       source={fuente}
+      accessibilityRole="image"
+      accessibilityLabel={`Signo ${signo}`}
       style={[{ width: tamaño, height: tamaño, tintColor: colores.acento }, style]}
       resizeMode="contain"
     />

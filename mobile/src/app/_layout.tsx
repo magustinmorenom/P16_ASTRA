@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as SplashScreen from "expo-splash-screen";
+import * as Sentry from "@sentry/react-native";
 import {
   useFonts,
   Inter_400Regular,
@@ -18,6 +19,15 @@ import {
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { useStoreTema } from "@/lib/stores/store-tema";
 import { IndicadorOffline } from "@/componentes/feedback/indicador-offline";
+import { usarNotificaciones } from "@/lib/hooks/usar-notificaciones";
+import { usarVersionCheck } from "@/lib/hooks/usar-version-check";
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? "",
+  enabled: !__DEV__,
+  tracesSampleRate: 0.2,
+  sendDefaultPii: false,
+});
 
 SplashScreen.preventAutoHideAsync();
 
@@ -36,6 +46,12 @@ function GuardAuth({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [listo, setListo] = useState(false);
 
+  // Registrar push notifications cuando el usuario está autenticado
+  usarNotificaciones();
+
+  // Verificar si hay actualización requerida
+  usarVersionCheck();
+
   useEffect(() => {
     useStoreAuth.getState().cargarUsuario().finally(() => setListo(true));
   }, []);
@@ -49,7 +65,7 @@ function GuardAuth({ children }: { children: React.ReactNode }) {
     if (!autenticado && !enAuth) {
       router.replace("/(auth)/login");
     } else if (autenticado && !usuario?.tiene_perfil && !enOnboarding) {
-      router.replace("/(onboarding)");
+      router.replace("/(onboarding)/bienvenida");
     } else if (autenticado && usuario?.tiene_perfil && (enAuth || enOnboarding)) {
       router.replace("/(tabs)");
     }
@@ -64,7 +80,7 @@ function GuardAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export default function LayoutRaiz() {
+function LayoutRaiz() {
   const [fuentesCargadas] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -114,3 +130,5 @@ export default function LayoutRaiz() {
     </GestureHandlerRootView>
   );
 }
+
+export default Sentry.wrap(LayoutRaiz);

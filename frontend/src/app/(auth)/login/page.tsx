@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 import { Boton } from "@/componentes/ui/boton";
 import { Input } from "@/componentes/ui/input";
@@ -12,6 +13,18 @@ import { useStoreAuth } from "@/lib/stores/store-auth";
 
 const CLASE_INPUT_ACCESO =
   "h-12 rounded-[20px] border-[color:var(--shell-borde)] bg-[color:var(--shell-superficie)] text-[color:var(--shell-texto)] placeholder:text-[color:var(--shell-texto-tenue)] focus:border-[color:var(--shell-borde-fuerte)] focus:bg-[color:var(--shell-superficie-fuerte)] focus:ring-[color:var(--shell-overlay-suave)]";
+
+/* ── Stagger de campos ── */
+const suave = [0.22, 1, 0.36, 1] as const;
+
+const contenedor = {
+  animate: { transition: { staggerChildren: 0.07 } },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.35, ease: suave } },
+};
 
 function LogoGoogleColor() {
   return (
@@ -76,45 +89,61 @@ export default function PaginaLogin() {
   const error = login.error?.message || googleAuth.error?.message || null;
 
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-[-0.04em] text-[color:var(--shell-texto)] sm:text-[34px]">
-          Entrá a tu espacio cósmico
-        </h1>
-      </div>
-
-      <Boton
-        variante="secundario"
-        tamaño="lg"
-        icono={<LogoGoogleColor />}
-        onClick={manejarGoogle}
-        cargando={googleAuth.isPending}
-        className="h-12 w-full rounded-[20px] border-[color:var(--shell-borde)] bg-[color:var(--shell-superficie-fuerte)] text-[color:var(--shell-texto)] shadow-none hover:bg-[color:var(--shell-superficie)]"
+    <motion.div
+      className="flex flex-col gap-5"
+      variants={contenedor}
+      initial="hidden"
+      animate="animate"
+    >
+      <motion.h1
+        className="text-2xl font-semibold tracking-[-0.03em] text-[color:var(--shell-texto)]"
+        variants={item}
       >
-        Continuar con Google
-      </Boton>
+        Iniciá sesión
+      </motion.h1>
 
-      <div className="flex items-center gap-4">
+      <motion.div variants={item}>
+        <Boton
+          variante="secundario"
+          tamaño="lg"
+          icono={<LogoGoogleColor />}
+          onClick={manejarGoogle}
+          cargando={googleAuth.isPending}
+          className="h-12 w-full rounded-[20px] border-[color:var(--shell-borde)] bg-[color:var(--shell-superficie-fuerte)] text-[color:var(--shell-texto)] shadow-none hover:bg-[color:var(--shell-superficie)]"
+        >
+          Continuar con Google
+        </Boton>
+      </motion.div>
+
+      <motion.div className="flex items-center gap-4" variants={item}>
         <div className="h-px flex-1 bg-[color:var(--shell-borde)]" />
         <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
           o con email
         </span>
         <div className="h-px flex-1 bg-[color:var(--shell-borde)]" />
-      </div>
+      </motion.div>
 
-      <form onSubmit={manejarEnvio} className="flex flex-col gap-4">
-        <Input
-          etiqueta="Correo electrónico"
-          type="email"
-          placeholder="tu@correo.com"
-          icono={<Icono nombre="email" tamaño={18} />}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={CLASE_INPUT_ACCESO}
-          required
-        />
+      <motion.form
+        onSubmit={manejarEnvio}
+        className="flex flex-col gap-4"
+        variants={contenedor}
+        initial="hidden"
+        animate="animate"
+      >
+        <motion.div variants={item}>
+          <Input
+            etiqueta="Correo electrónico"
+            type="email"
+            placeholder="tu@correo.com"
+            icono={<Icono nombre="email" tamaño={18} />}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={CLASE_INPUT_ACCESO}
+            required
+          />
+        </motion.div>
 
-        <div className="relative">
+        <motion.div className="relative" variants={item}>
           <Input
             etiqueta="Contraseña"
             type={mostrarContrasena ? "text" : "password"}
@@ -137,46 +166,54 @@ export default function PaginaLogin() {
               tamaño={18}
             />
           </button>
-        </div>
+        </motion.div>
 
-        <div className="flex justify-end -mt-1">
+        <motion.div className="flex justify-end -mt-1" variants={item}>
           <Link
             href="/olvide-contrasena"
             className="text-sm font-medium text-[color:var(--color-acento)] transition-colors hover:opacity-80"
           >
             ¿Olvidaste tu contraseña?
           </Link>
-        </div>
+        </motion.div>
 
         {error && (
-          <div
+          <motion.div
             className="rounded-[20px] border px-4 py-3"
             style={{
               borderColor: "var(--shell-badge-error-borde)",
               background: "var(--shell-badge-error-fondo)",
             }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            transition={{ duration: 0.25 }}
           >
             <p className="text-sm leading-6 text-[color:var(--shell-badge-error-texto)]">
               {error}
             </p>
-          </div>
+          </motion.div>
         )}
 
-        <Boton
-          type="submit"
-          variante="primario"
-          tamaño="lg"
-          cargando={login.isPending}
-          className="mt-2 h-12 w-full rounded-[20px] border-0 shadow-[var(--shell-sombra-suave)] hover:brightness-[1.03]"
-          style={{
-            background: "var(--shell-gradiente-boton)",
-          }}
-        >
-          Iniciar sesión
-        </Boton>
-      </form>
+        <motion.div variants={item}>
+          <Boton
+            type="submit"
+            variante="primario"
+            tamaño="lg"
+            cargando={login.isPending}
+            className="mt-2 h-12 w-full rounded-[20px] border-0 shadow-[var(--shell-sombra-suave)] hover:brightness-[1.03]"
+            style={{
+              background: "var(--shell-gradiente-boton)",
+            }}
+          >
+            Iniciar sesión
+          </Boton>
+        </motion.div>
+      </motion.form>
 
-      <p className="pt-1 text-center text-sm text-[color:var(--shell-texto-secundario)]">
+      <motion.p
+        className="pt-1 text-center text-sm text-[color:var(--shell-texto-secundario)]"
+        variants={item}
+      >
         ¿No tenés cuenta?{" "}
         <Link
           href="/registro"
@@ -184,7 +221,7 @@ export default function PaginaLogin() {
         >
           Crear cuenta
         </Link>
-      </p>
-    </div>
+      </motion.p>
+    </motion.div>
   );
 }
