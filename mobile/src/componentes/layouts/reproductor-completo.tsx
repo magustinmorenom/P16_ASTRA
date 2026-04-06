@@ -1,11 +1,13 @@
 import { useEffect, useRef } from "react";
-import { View, Text, Pressable, ScrollView } from "react-native";
+import { View, Text, Pressable, ScrollView, Platform } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Play,
   Pause,
-  X,
   CaretDown,
+  SkipBack,
+  SkipForward,
   SpeakerHigh,
   SpeakerSlash,
 } from "phosphor-react-native";
@@ -39,23 +41,28 @@ export function ReproductorCompleto() {
     manejarSeek,
     manejarCerrar,
   } = usarAudioNativo();
-  const { colores } = usarTema();
+  const { colores, esOscuro } = usarTema();
   const scrollRef = useRef<ScrollView>(null);
   const offsetsSegmentos = useRef<Record<number, number>>({});
   const segmentos = pistaActual?.segmentos ?? [];
 
+  // Auto-scroll lyrics al segmento activo
   useEffect(() => {
     if (!segmentos.length) return;
-    const offset = offsetsSegmentos.current[Math.min(segmentoActual, segmentos.length - 1)];
+    const idx = Math.min(segmentoActual, segmentos.length - 1);
+    const offset = offsetsSegmentos.current[idx];
     if (typeof offset !== "number") return;
 
     scrollRef.current?.scrollTo({
-      y: Math.max(offset - 120, 0),
+      y: Math.max(offset - 160, 0),
       animated: true,
     });
   }, [segmentoActual, segmentos.length]);
 
   if (!pistaActual) return null;
+
+  const duracion = pistaActual.duracionSegundos || 1;
+  const porcentaje = (progresoSegundos / duracion) * 100;
 
   return (
     <View
@@ -65,299 +72,296 @@ export function ReproductorCompleto() {
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: colores.fondo,
         zIndex: 50,
-        paddingTop: insets.top,
       }}
     >
-      {/* Header */}
+      {/* Fondo gradiente ciruela */}
+      <LinearGradient
+        colors={
+          esOscuro
+            ? ["#1a1128", "#120e20", "#0a0816"]
+            : ["#2D1B69", "#1a1128", "#0f0a1e"]
+        }
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+      />
+
+      {/* Header mínimo */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          paddingHorizontal: 16,
-          paddingVertical: 12,
+          paddingHorizontal: 20,
+          paddingTop: insets.top + 8,
+          paddingBottom: 8,
         }}
       >
-        <Pressable onPress={toggleMiniReproductor} style={{ padding: 8 }}>
-          <CaretDown size={24} color={colores.primario} />
+        <Pressable
+          onPress={toggleMiniReproductor}
+          accessibilityRole="button"
+          accessibilityLabel="Minimizar reproductor"
+          hitSlop={12}
+          style={{ padding: 4 }}
+        >
+          <CaretDown size={24} color="rgba(255,255,255,0.7)" />
         </Pressable>
+
         <Text
           style={{
-            color: colores.textoSecundario,
+            color: "rgba(255,255,255,0.5)",
             fontSize: 11,
+            fontFamily: "Inter_600SemiBold",
             textTransform: "uppercase",
-            letterSpacing: 1.5,
-            fontFamily: "Inter_500Medium",
-          }}
-        >
-          Reproduciendo
-        </Text>
-        <Pressable onPress={manejarCerrar} style={{ padding: 8 }}>
-          <X size={20} color={colores.textoMuted} />
-        </Pressable>
-      </View>
-
-      <View style={{ alignItems: "center", paddingHorizontal: 32, paddingTop: 8 }}>
-        <View
-          style={{
-            width: 188,
-            height: 188,
-            borderRadius: 24,
-            backgroundColor: colores.acento + "1A",
-            borderWidth: 1,
-            borderColor: colores.acento + "4D",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: 24,
-          }}
-        >
-          <Text style={{ color: colores.acento, fontSize: 56, fontFamily: "Inter_700Bold" }}>
-            {pistaActual.tipo === "podcast" ? "P" : "L"}
-          </Text>
-        </View>
-
-        <Text
-          style={{
-            color: colores.primario,
-            fontSize: 20,
-            fontFamily: "Inter_700Bold",
-            textAlign: "center",
-          }}
-        >
-          {pistaActual.titulo}
-        </Text>
-        <Text
-          style={{
-            color: colores.textoSecundario,
-            fontSize: 14,
-            marginTop: 4,
-            fontFamily: "Inter_400Regular",
+            letterSpacing: 1.8,
           }}
         >
           {pistaActual.subtitulo}
         </Text>
 
-        {errorAudio && (
-          <View
-            style={{
-              marginTop: 12,
-              backgroundColor: `${colores.error}18`,
-              borderRadius: 10,
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              borderWidth: 1,
-              borderColor: `${colores.error}40`,
-            }}
-          >
-            <Text style={{ color: colores.error, fontSize: 13, textAlign: "center" }}>
-              {errorAudio}
-            </Text>
-          </View>
-        )}
-
-        {descargandoAudio && (
-          <View style={{ marginTop: 12, alignItems: "center" }}>
-            <Text
-              style={{
-                color: colores.acento,
-                fontSize: 13,
-                fontFamily: "Inter_600SemiBold",
-              }}
-            >
-              Descargando {progresoDescarga}%...
-            </Text>
-            <View
-              style={{
-                width: 160,
-                height: 3,
-                borderRadius: 2,
-                backgroundColor: colores.borde,
-                marginTop: 6,
-              }}
-            >
-              <View
-                style={{
-                  width: `${progresoDescarga}%`,
-                  height: 3,
-                  borderRadius: 2,
-                  backgroundColor: colores.acento,
-                }}
-              />
-            </View>
-          </View>
-        )}
+        <View style={{ width: 32 }} />
       </View>
 
+      {/* Lyrics — zona principal */}
       {segmentos.length > 0 ? (
-        <View
-          style={{
-            flex: 1,
-            minHeight: 0,
-            marginTop: 24,
+        <ScrollView
+          ref={scrollRef}
+          style={{ flex: 1 }}
+          contentContainerStyle={{
             paddingHorizontal: 24,
+            paddingTop: 40,
+            paddingBottom: 40,
           }}
+          showsVerticalScrollIndicator={false}
         >
-          <Text
-            style={{
-              color: colores.textoSecundario,
-              fontSize: 11,
-              textTransform: "uppercase",
-              letterSpacing: 1.1,
-              fontFamily: "Inter_600SemiBold",
-            }}
-          >
-            Texto en reproducción
-          </Text>
-          <Text
-            style={{
-              color: colores.textoMuted,
-              fontSize: 12,
-              marginTop: 6,
-              marginBottom: 14,
-            }}
-          >
-            Tocá una línea para saltar a ese momento.
-          </Text>
+          {segmentos.map((segmento, index) => {
+            const activo =
+              index === segmentoActual || (index === 0 && progresoSegundos === 0);
+            const pasado = index < segmentoActual;
 
-          <ScrollView
-            ref={scrollRef}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 12 }}
-          >
-            {segmentos.map((segmento, index) => {
-              const activo =
-                index === segmentoActual || (index === 0 && progresoSegundos === 0);
-
-              return (
-                <Pressable
-                  key={`${segmento.inicio_seg}-${index}`}
-                  onPress={() => manejarSeek(segmento.inicio_seg)}
-                  onLayout={(event) => {
-                    offsetsSegmentos.current[index] = event.nativeEvent.layout.y;
-                  }}
+            return (
+              <Pressable
+                key={`${segmento.inicio_seg}-${index}`}
+                onPress={() => manejarSeek(segmento.inicio_seg)}
+                onLayout={(event) => {
+                  offsetsSegmentos.current[index] = event.nativeEvent.layout.y;
+                }}
+                style={{ marginBottom: 16 }}
+              >
+                <Text
                   style={{
-                    borderRadius: 18,
-                    paddingHorizontal: 16,
-                    paddingVertical: 14,
-                    marginBottom: 10,
-                    backgroundColor: activo ? `${colores.acento}16` : colores.superficie,
-                    borderWidth: 1,
-                    borderColor: activo ? `${colores.acento}42` : colores.borde,
+                    color: activo
+                      ? "#FFFFFF"
+                      : pasado
+                      ? "rgba(255,255,255,0.25)"
+                      : "rgba(255,255,255,0.4)",
+                    fontSize: activo ? 24 : 18,
+                    lineHeight: activo ? 34 : 26,
+                    fontFamily: activo ? "Inter_700Bold" : "Inter_500Medium",
                   }}
                 >
-                  <Text
-                    style={{
-                      color: activo ? colores.primario : colores.textoSecundario,
-                      fontSize: activo ? 20 : 15,
-                      lineHeight: activo ? 28 : 22,
-                      fontFamily: activo ? "Inter_700Bold" : "Inter_400Regular",
-                    }}
-                  >
-                    {segmento.texto}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
+                  {segmento.texto}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
       ) : (
         <View
           style={{
             flex: 1,
             alignItems: "center",
             justifyContent: "center",
-            paddingHorizontal: 32,
+            paddingHorizontal: 40,
           }}
         >
+          {/* Cover placeholder cuando no hay lyrics */}
+          <View
+            style={{
+              width: 200,
+              height: 200,
+              borderRadius: 20,
+              backgroundColor: "rgba(124,77,255,0.15)",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 32,
+            }}
+          >
+            <Text style={{ color: "#7C4DFF", fontSize: 64, fontFamily: "Inter_700Bold" }}>
+              {pistaActual.tipo === "podcast" ? "P" : "L"}
+            </Text>
+          </View>
           <Text
             style={{
-              color: colores.textoSecundario,
-              fontSize: 14,
-              lineHeight: 21,
+              color: "#FFFFFF",
+              fontSize: 22,
+              fontFamily: "Inter_700Bold",
               textAlign: "center",
             }}
           >
-            El texto del episodio se va a mostrar acá cuando el audio tenga segmentos listos.
+            {pistaActual.titulo}
           </Text>
+          {errorAudio && (
+            <Text
+              style={{
+                color: "#f87171",
+                fontSize: 13,
+                textAlign: "center",
+                marginTop: 12,
+              }}
+            >
+              {errorAudio}
+            </Text>
+          )}
+          {descargandoAudio && (
+            <Text
+              style={{
+                color: "#c084fc",
+                fontSize: 13,
+                fontFamily: "Inter_600SemiBold",
+                marginTop: 12,
+              }}
+            >
+              Descargando {progresoDescarga}%
+            </Text>
+          )}
         </View>
       )}
 
-      <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: insets.bottom + 20 }}>
+      {/* Controles — bottom section */}
+      <View
+        style={{
+          paddingHorizontal: 24,
+          paddingBottom: insets.bottom + 16,
+        }}
+      >
+        {/* Título del episodio */}
+        <Text
+          numberOfLines={1}
+          style={{
+            color: "#FFFFFF",
+            fontSize: 16,
+            fontFamily: "Inter_700Bold",
+            marginBottom: 4,
+          }}
+        >
+          {pistaActual.titulo}
+        </Text>
+        <Text
+          style={{
+            color: "rgba(255,255,255,0.5)",
+            fontSize: 12,
+            fontFamily: "Inter_400Regular",
+            marginBottom: 16,
+          }}
+        >
+          ASTRA
+        </Text>
+
+        {/* Progress bar */}
         <Slider
           minimumValue={0}
-          maximumValue={pistaActual.duracionSegundos}
+          maximumValue={duracion}
           value={progresoSegundos}
           onSlidingComplete={manejarSeek}
-          minimumTrackTintColor={colores.acento}
-          maximumTrackTintColor={colores.borde}
-          thumbTintColor={colores.acento}
+          minimumTrackTintColor="#FFFFFF"
+          maximumTrackTintColor="rgba(255,255,255,0.2)"
+          thumbTintColor="#FFFFFF"
+          style={{ height: 20 }}
         />
         <View
           style={{
             flexDirection: "row",
             justifyContent: "space-between",
-            marginTop: 4,
-            marginBottom: 24,
+            marginTop: 2,
+            marginBottom: 20,
           }}
         >
-          <Text style={{ color: colores.textoMuted, fontSize: 11 }}>
+          <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: "Inter_500Medium" }}>
             {formatearTiempo(progresoSegundos)}
           </Text>
-          <Text style={{ color: colores.textoMuted, fontSize: 11 }}>
-            {formatearTiempo(pistaActual.duracionSegundos)}
+          <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: "Inter_500Medium" }}>
+            -{formatearTiempo(Math.max(duracion - progresoSegundos, 0))}
           </Text>
         </View>
 
-        {/* Play/Pause */}
+        {/* Play controls */}
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            marginBottom: 24,
+            gap: 32,
+            marginBottom: 20,
           }}
         >
+          {/* Skip back */}
+          <Pressable
+            onPress={() => manejarSeek(Math.max(progresoSegundos - 15, 0))}
+            accessibilityRole="button"
+            accessibilityLabel="Retroceder 15 segundos"
+            hitSlop={12}
+          >
+            <SkipBack size={28} color="rgba(255,255,255,0.7)" weight="fill" />
+          </Pressable>
+
+          {/* Play/Pause — botón principal */}
           <Pressable
             onPress={toggleReproduccion}
             disabled={descargandoAudio}
+            accessibilityRole="button"
+            accessibilityLabel={reproduciendo ? "Pausar" : "Reproducir"}
             style={{
-              backgroundColor: descargandoAudio ? colores.borde : colores.acento,
-              borderRadius: 32,
               width: 64,
               height: 64,
+              borderRadius: 32,
+              backgroundColor: "#FFFFFF",
               alignItems: "center",
               justifyContent: "center",
-              opacity: descargandoAudio ? 0.5 : 1,
+              opacity: descargandoAudio ? 0.4 : 1,
             }}
           >
             {reproduciendo ? (
-              <Pause size={32} color="white" weight="fill" />
+              <Pause size={28} color="#1a1128" weight="fill" />
             ) : (
-              <Play size={32} color="white" weight="fill" />
+              <Play size={28} color="#1a1128" weight="fill" style={{ marginLeft: 3 }} />
             )}
+          </Pressable>
+
+          {/* Skip forward */}
+          <Pressable
+            onPress={() => manejarSeek(Math.min(progresoSegundos + 15, duracion))}
+            accessibilityRole="button"
+            accessibilityLabel="Avanzar 15 segundos"
+            hitSlop={12}
+          >
+            <SkipForward size={28} color="rgba(255,255,255,0.7)" weight="fill" />
           </Pressable>
         </View>
 
-        {/* Volumen */}
+        {/* Volume */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Pressable onPress={toggleSilencio} style={{ marginRight: 12 }}>
+          <Pressable
+            onPress={toggleSilencio}
+            accessibilityRole="button"
+            accessibilityLabel={silenciado ? "Activar sonido" : "Silenciar"}
+            hitSlop={8}
+            style={{ marginRight: 10 }}
+          >
             {silenciado ? (
-              <SpeakerSlash size={20} color={colores.textoMuted} />
+              <SpeakerSlash size={18} color="rgba(255,255,255,0.4)" />
             ) : (
-              <SpeakerHigh size={20} color={colores.textoSecundario} />
+              <SpeakerHigh size={18} color="rgba(255,255,255,0.5)" />
             )}
           </Pressable>
           <Slider
-            style={{ flex: 1 }}
+            style={{ flex: 1, height: 20 }}
             minimumValue={0}
             maximumValue={100}
             value={volumen}
             onValueChange={(v) => setVolumen(Math.round(v))}
-            minimumTrackTintColor={colores.secundario}
-            maximumTrackTintColor={colores.borde}
-            thumbTintColor={colores.secundario}
+            minimumTrackTintColor="rgba(255,255,255,0.7)"
+            maximumTrackTintColor="rgba(255,255,255,0.15)"
+            thumbTintColor="#FFFFFF"
           />
         </View>
       </View>

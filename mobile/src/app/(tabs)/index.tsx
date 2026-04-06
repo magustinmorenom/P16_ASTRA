@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ScrollView, Text, View, Pressable, ActivityIndicator, RefreshControl } from "react-native";
+import { useState, useCallback } from "react";
+import { ScrollView, Text, View, Pressable, ActivityIndicator, RefreshControl, Modal } from "react-native";
 import Animated, { FadeIn, FadeOut, Easing } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -17,8 +17,10 @@ import {
   Play,
   Rocket,
   Sun,
+  BookOpenText,
   SunHorizon,
   WarningCircle,
+  X,
 } from "phosphor-react-native";
 import { FondoCosmico } from "@/componentes/layouts/fondo-cosmico";
 import { Avatar } from "@/componentes/ui/avatar";
@@ -475,6 +477,7 @@ export default function DashboardScreen() {
   const { colores, esOscuro } = usarTema();
   const queryClient = useQueryClient();
   const [refrescando, setRefrescando] = useState(false);
+  const [guionVisible, setGuionVisible] = useState<string | null>(null);
   const [verSiguienteSemana, setVerSiguienteSemana] = useState(false);
 
   const {
@@ -657,97 +660,135 @@ export default function DashboardScreen() {
                   />
                 </View>
 
-                {/* CTA Podcast del día — violeta realzado */}
+                {/* CTA Podcast del día — escuchar + leer */}
                 {(() => {
                   const epHoy = episodios?.find((e) => e.tipo === "dia");
                   const listoParaReproducir = epHoy?.estado === "listo";
                   const generandoEp = epHoy?.estado === "generando_guion" || epHoy?.estado === "generando_audio";
 
                   return (
-                    <Pressable
-                      onPress={() => {
-                        if (listoParaReproducir && epHoy) {
-                          reproducirPodcast(epHoy);
-                        } else if (!generandoEp) {
-                          generarPodcast.mutate("dia");
-                        }
-                      }}
-                      disabled={generandoEp}
+                    <View
                       style={{
                         marginTop: 18,
-                        paddingVertical: 14,
-                        paddingHorizontal: 16,
                         borderRadius: 16,
-                        flexDirection: "row",
-                        alignItems: "center",
                         backgroundColor: esOscuro
                           ? "rgba(124,77,255,0.18)"
                           : "rgba(124,77,255,0.1)",
                         borderWidth: 1,
                         borderColor: `${colores.acento}40`,
+                        overflow: "hidden",
                       }}
-                      accessibilityRole="button"
-                      accessibilityLabel={listoParaReproducir ? "Reproducir podcast de hoy" : "Generar podcast de hoy"}
                     >
-                      <View
+                      {/* Fila principal — reproducir/generar */}
+                      <Pressable
+                        onPress={() => {
+                          if (listoParaReproducir && epHoy) {
+                            reproducirPodcast(epHoy);
+                          } else if (!generandoEp) {
+                            generarPodcast.mutate("dia");
+                          }
+                        }}
+                        disabled={generandoEp}
+                        accessibilityRole="button"
+                        accessibilityLabel={listoParaReproducir ? "Reproducir podcast de hoy" : "Generar podcast de hoy"}
                         style={{
-                          width: 42,
-                          height: 42,
-                          borderRadius: 21,
-                          backgroundColor: colores.acento,
+                          paddingVertical: 14,
+                          paddingHorizontal: 16,
+                          flexDirection: "row",
                           alignItems: "center",
-                          justifyContent: "center",
                         }}
                       >
-                        {generandoEp ? (
-                          <ActivityIndicator size="small" color="white" />
-                        ) : (
-                          <Play size={18} color="white" weight="fill" />
-                        )}
-                      </View>
-                      <View style={{ marginLeft: 12, flex: 1 }}>
-                        <View style={{ flexDirection: "row", alignItems: "center" }}>
-                          {listoParaReproducir && (
-                            <View
-                              style={{
-                                width: 8,
-                                height: 8,
-                                borderRadius: 4,
-                                backgroundColor: colores.exito,
-                                marginRight: 8,
-                              }}
-                            />
+                        <View
+                          style={{
+                            width: 42,
+                            height: 42,
+                            borderRadius: 21,
+                            backgroundColor: colores.acento,
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {generandoEp ? (
+                            <ActivityIndicator size="small" color="white" />
+                          ) : (
+                            <Play size={18} color="white" weight="fill" />
                           )}
+                        </View>
+                        <View style={{ marginLeft: 12, flex: 1 }}>
+                          <View style={{ flexDirection: "row", alignItems: "center" }}>
+                            {listoParaReproducir && (
+                              <View
+                                style={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: 4,
+                                  backgroundColor: colores.exito,
+                                  marginRight: 8,
+                                }}
+                              />
+                            )}
+                            <Text
+                              style={{
+                                color: colores.primario,
+                                fontSize: 15,
+                                fontFamily: "Inter_700Bold",
+                              }}
+                            >
+                              {listoParaReproducir
+                                ? "Escuchá tu podcast de hoy"
+                                : generandoEp
+                                ? "Preparando tu podcast..."
+                                : "Generar podcast de hoy"}
+                            </Text>
+                          </View>
                           <Text
                             style={{
-                              color: colores.primario,
-                              fontSize: 15,
-                              fontFamily: "Inter_700Bold",
+                              color: colores.textoSecundario,
+                              fontSize: 12,
+                              marginTop: 3,
                             }}
                           >
                             {listoParaReproducir
-                              ? "Escuchá tu podcast de hoy"
-                              : generandoEp
-                              ? "Preparando tu podcast..."
-                              : "Generar podcast de hoy"}
+                              ? epHoy?.titulo ?? "Tu resumen cósmico diario"
+                              : "Tu pronóstico narrado en audio"}
                           </Text>
                         </View>
-                        <Text
+                        {!generandoEp && (
+                          <ArrowRight size={18} color={colores.acento} />
+                        )}
+                      </Pressable>
+
+                      {/* Botón leer — solo si el episodio está listo */}
+                      {listoParaReproducir && epHoy?.guion_md ? (
+                        <Pressable
+                          onPress={() => setGuionVisible(epHoy.guion_md)}
+                          accessibilityRole="button"
+                          accessibilityLabel="Leer el guión del podcast"
                           style={{
-                            color: colores.textoSecundario,
-                            fontSize: 12,
-                            marginTop: 3,
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            paddingVertical: 11,
+                            borderTopWidth: 1,
+                            borderTopColor: esOscuro
+                              ? "rgba(255,255,255,0.06)"
+                              : "rgba(124,77,255,0.1)",
                           }}
                         >
-                          {listoParaReproducir
-                            ? epHoy?.titulo ?? "Tu resumen cósmico diario"
-                            : "Tu pronóstico narrado en audio"}
-                        </Text>
-                      </View>
-                      {!generandoEp && (
-                        <ArrowRight size={18} color={colores.acento} />
-                      )}
-                    </Pressable>
+                          <BookOpenText size={16} color={colores.acento} weight="fill" />
+                          <Text
+                            style={{
+                              color: colores.acento,
+                              fontSize: 13,
+                              fontFamily: "Inter_600SemiBold",
+                              marginLeft: 6,
+                            }}
+                          >
+                            Leer el resumen
+                          </Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
                   );
                 })()}
               </>

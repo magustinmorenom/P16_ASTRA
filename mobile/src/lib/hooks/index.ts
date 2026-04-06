@@ -50,6 +50,12 @@ export {
   usarHistorialChat,
   usarEnviarMensaje,
   usarNuevaConversacion,
+  usarConversaciones,
+  usarCambiarConversacion,
+  usarRenombrarConversacion,
+  usarAnclarConversacion,
+  usarArchivarConversacion,
+  usarEliminarConversacion,
 } from "./usar-chat";
 
 export { usarBuscarCiudad } from "./usar-geocodificacion";

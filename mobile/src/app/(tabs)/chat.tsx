@@ -31,13 +31,15 @@ function BurbujaMensaje({ mensaje }: { mensaje: MensajeChat }) {
   return (
     <View
       style={{
-        alignItems: esUsuario ? "flex-end" : "flex-start",
+        flexDirection: "row",
+        justifyContent: esUsuario ? "flex-end" : "flex-start",
         marginBottom: 10,
       }}
     >
       <View
         style={{
           maxWidth: "86%",
+          flexShrink: 1,
           borderRadius: 18,
           paddingHorizontal: 14,
           paddingVertical: 12,

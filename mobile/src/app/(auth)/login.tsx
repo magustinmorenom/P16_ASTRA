@@ -1,12 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
-  Dimensions,
   Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from "react-native";
@@ -14,12 +12,6 @@ import Animated, {
   Easing,
   FadeIn,
   FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withTiming,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
@@ -37,112 +29,8 @@ import { trackEvento, Eventos } from "@/lib/utilidades/analytics";
 
 const logo = require("../../../assets/logo-astra.png");
 
-const { width: ANCHO_PANTALLA, height: ALTO_PANTALLA } = Dimensions.get("window");
-
-/* ── Orbe cósmico flotante ──────────────────────────────── */
-function OrbeCosmica({
-  tamaño,
-  color,
-  x,
-  y,
-  delay,
-  duracion,
-}: {
-  tamaño: number;
-  color: string;
-  x: number;
-  y: number;
-  delay: number;
-  duracion: number;
-}) {
-  const translateY = useSharedValue(0);
-  const translateX = useSharedValue(0);
-  const escala = useSharedValue(0.85);
-  const opacidad = useSharedValue(0);
-
-  useEffect(() => {
-    // Fade in suave
-    opacidad.value = withDelay(
-      delay,
-      withTiming(1, { duration: 1200, easing: Easing.out(Easing.quad) })
-    );
-    // Flotación vertical
-    translateY.value = withDelay(
-      delay,
-      withRepeat(
-        withSequence(
-          withTiming(-18, { duration: duracion, easing: Easing.inOut(Easing.quad) }),
-          withTiming(18, { duration: duracion, easing: Easing.inOut(Easing.quad) })
-        ),
-        -1,
-        true
-      )
-    );
-    // Flotación horizontal sutil
-    translateX.value = withDelay(
-      delay,
-      withRepeat(
-        withSequence(
-          withTiming(10, { duration: duracion * 1.3, easing: Easing.inOut(Easing.quad) }),
-          withTiming(-10, { duration: duracion * 1.3, easing: Easing.inOut(Easing.quad) })
-        ),
-        -1,
-        true
-      )
-    );
-    // Pulso de escala
-    escala.value = withDelay(
-      delay,
-      withRepeat(
-        withSequence(
-          withTiming(1.1, { duration: duracion * 1.5, easing: Easing.inOut(Easing.quad) }),
-          withTiming(0.85, { duration: duracion * 1.5, easing: Easing.inOut(Easing.quad) })
-        ),
-        -1,
-        true
-      )
-    );
-  }, []);
-
-  const estiloAnimado = useAnimatedStyle(() => ({
-    opacity: opacidad.value,
-    transform: [
-      { translateY: translateY.value },
-      { translateX: translateX.value },
-      { scale: escala.value },
-    ],
-  }));
-
-  return (
-    <Animated.View
-      style={[
-        {
-          position: "absolute",
-          left: x,
-          top: y,
-          width: tamaño,
-          height: tamaño,
-          borderRadius: tamaño / 2,
-        },
-        estiloAnimado,
-      ]}
-    >
-      <LinearGradient
-        colors={[color, "transparent"]}
-        style={{
-          width: tamaño,
-          height: tamaño,
-          borderRadius: tamaño / 2,
-        }}
-        start={{ x: 0.5, y: 0.5 }}
-        end={{ x: 1, y: 1 }}
-      />
-    </Animated.View>
-  );
-}
-
 export default function LoginScreen() {
-  const { colores, esOscuro } = usarTema();
+  const { colores } = usarTema();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [contrasena, setContrasena] = useState("");
@@ -188,35 +76,13 @@ export default function LoginScreen() {
     }
   };
 
-  /* Colores de las orbes según tema */
-  const orbes = esOscuro
-    ? [
-        { tamaño: 220, color: "rgba(124, 77, 255, 0.18)", x: -60, y: ALTO_PANTALLA * 0.08, delay: 0, duracion: 4000 },
-        { tamaño: 160, color: "rgba(192, 132, 252, 0.14)", x: ANCHO_PANTALLA - 80, y: ALTO_PANTALLA * 0.22, delay: 600, duracion: 5000 },
-        { tamaño: 120, color: "rgba(167, 139, 250, 0.12)", x: ANCHO_PANTALLA * 0.3, y: ALTO_PANTALLA * 0.65, delay: 1200, duracion: 4500 },
-        { tamaño: 90, color: "rgba(212, 162, 52, 0.08)", x: ANCHO_PANTALLA * 0.6, y: ALTO_PANTALLA * 0.78, delay: 800, duracion: 5500 },
-      ]
-    : [
-        { tamaño: 220, color: "rgba(124, 77, 255, 0.10)", x: -60, y: ALTO_PANTALLA * 0.08, delay: 0, duracion: 4000 },
-        { tamaño: 160, color: "rgba(124, 77, 255, 0.08)", x: ANCHO_PANTALLA - 80, y: ALTO_PANTALLA * 0.22, delay: 600, duracion: 5000 },
-        { tamaño: 120, color: "rgba(124, 77, 255, 0.06)", x: ANCHO_PANTALLA * 0.3, y: ALTO_PANTALLA * 0.65, delay: 1200, duracion: 4500 },
-        { tamaño: 90, color: "rgba(212, 162, 52, 0.05)", x: ANCHO_PANTALLA * 0.6, y: ALTO_PANTALLA * 0.78, delay: 800, duracion: 5500 },
-      ];
-
   return (
-    <View style={{ flex: 1, backgroundColor: colores.fondo }}>
-      {/* Gradiente de fondo */}
+    <View style={{ flex: 1 }}>
+      {/* Fondo ciruela — igual que desktop --shell-hero */}
       <LinearGradient
-        colors={colores.gradienteHero as unknown as [string, string, ...string[]]}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
+        colors={["#1a1128", "#0f0a1e", "#0a0816"]}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
       />
-
-      {/* Orbes cósmicas flotantes */}
-      {orbes.map((orbe, i) => (
-        <OrbeCosmica key={i} {...orbe} />
-      ))}
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -232,31 +98,14 @@ export default function LoginScreen() {
           }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Logo — centrado horizontal y vertical, emergiendo de la nada */}
+          {/* Logo blanco */}
           <Animated.View
             entering={FadeIn.duration(1400).easing(Easing.out(Easing.quad))}
-            style={{ alignItems: "center", justifyContent: "center", marginBottom: 52 }}
+            style={{ alignItems: "center", marginBottom: 48 }}
           >
-            {/* Halo detrás del logo */}
-            <Animated.View
-              entering={FadeIn.delay(200).duration(1800).easing(Easing.out(Easing.quad))}
-              style={{
-                position: "absolute",
-                width: 180,
-                height: 180,
-                borderRadius: 90,
-                backgroundColor: esOscuro
-                  ? "rgba(124, 77, 255, 0.08)"
-                  : "rgba(124, 77, 255, 0.06)",
-              }}
-            />
             <Image
               source={logo}
-              style={{
-                width: 160,
-                height: 48,
-                tintColor: colores.primario,
-              }}
+              style={{ width: 140, height: 42 }}
               resizeMode="contain"
               accessibilityRole="image"
               accessibilityLabel="Logo ASTRA"
@@ -264,7 +113,7 @@ export default function LoginScreen() {
             <Animated.Text
               entering={FadeIn.delay(700).duration(900).easing(Easing.out(Easing.quad))}
               style={{
-                color: colores.textoMuted,
+                color: "rgba(255,255,255,0.5)",
                 fontSize: 14,
                 fontFamily: "Inter_400Regular",
                 marginTop: 14,
@@ -279,10 +128,10 @@ export default function LoginScreen() {
           <Animated.View
             entering={FadeInDown.delay(900).duration(700).easing(Easing.out(Easing.cubic)).withInitialValues({ transform: [{ translateY: 16 }], opacity: 0 })}
             style={{
-              backgroundColor: colores.vidrioFondo,
-              borderRadius: 20,
+              backgroundColor: "rgba(255,255,255,0.06)",
+              borderRadius: 24,
               borderWidth: 1,
-              borderColor: colores.vidrioBorde,
+              borderColor: "rgba(255,255,255,0.1)",
               paddingHorizontal: 20,
               paddingTop: 24,
               paddingBottom: 20,
@@ -295,7 +144,7 @@ export default function LoginScreen() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
-              icono={<Envelope size={18} color={colores.textoMuted} />}
+              icono={<Envelope size={18} color="rgba(255,255,255,0.4)" />}
             />
 
             <View>
@@ -305,7 +154,7 @@ export default function LoginScreen() {
                 value={contrasena}
                 onChangeText={setContrasena}
                 secureTextEntry={!mostrarContrasena}
-                icono={<Lock size={18} color={colores.textoMuted} />}
+                icono={<Lock size={18} color="rgba(255,255,255,0.4)" />}
               />
               <Pressable
                 onPress={() => setMostrarContrasena(!mostrarContrasena)}
@@ -315,9 +164,9 @@ export default function LoginScreen() {
                 style={{ position: "absolute", right: 16, top: 38 }}
               >
                 {mostrarContrasena ? (
-                  <EyeSlash size={20} color={colores.textoMuted} />
+                  <EyeSlash size={20} color="rgba(255,255,255,0.4)" />
                 ) : (
-                  <Eye size={20} color={colores.textoMuted} />
+                  <Eye size={20} color="rgba(255,255,255,0.4)" />
                 )}
               </Pressable>
             </View>
@@ -329,7 +178,7 @@ export default function LoginScreen() {
                 accessibilityLiveRegion="assertive"
                 style={{
                   borderRadius: 12,
-                  backgroundColor: `${colores.error}14`,
+                  backgroundColor: "rgba(248,113,113,0.12)",
                   paddingHorizontal: 14,
                   paddingVertical: 10,
                   marginBottom: 16,
@@ -337,7 +186,7 @@ export default function LoginScreen() {
               >
                 <Text
                   style={{
-                    color: colores.error,
+                    color: "#f87171",
                     fontSize: 13,
                     lineHeight: 19,
                     textAlign: "center",
@@ -357,37 +206,32 @@ export default function LoginScreen() {
             </Boton>
 
             {/* Separador */}
-            <Animated.View
-              entering={FadeIn.delay(1300).duration(600).easing(Easing.out(Easing.quad))}
-              style={{ flexDirection: "row", alignItems: "center", marginVertical: 20 }}
-            >
-              <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colores.borde }} />
+            <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 20 }}>
+              <View style={{ flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.08)" }} />
               <Text
                 style={{
-                  color: colores.textoMuted,
-                  fontSize: 12,
-                  fontFamily: "Inter_500Medium",
+                  color: "rgba(255,255,255,0.35)",
+                  fontSize: 11,
+                  fontFamily: "Inter_600SemiBold",
                   marginHorizontal: 16,
+                  textTransform: "uppercase",
+                  letterSpacing: 1.5,
                 }}
               >
                 o
               </Text>
-              <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colores.borde }} />
-            </Animated.View>
+              <View style={{ flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.08)" }} />
+            </View>
 
             {/* Google */}
-            <Animated.View
-              entering={FadeInDown.delay(1500).duration(600).easing(Easing.out(Easing.cubic)).withInitialValues({ transform: [{ translateY: 12 }], opacity: 0 })}
+            <Boton
+              variante="secundario"
+              onPress={manejarGoogle}
+              cargando={googleAuth.isPending}
+              icono={<IconoGoogle tamaño={18} />}
             >
-              <Boton
-                variante="secundario"
-                onPress={manejarGoogle}
-                cargando={googleAuth.isPending}
-                icono={<IconoGoogle tamaño={18} />}
-              >
-                Continuar con Google
-              </Boton>
-            </Animated.View>
+              Continuar con Google
+            </Boton>
           </Animated.View>
 
           {/* Links */}
@@ -403,7 +247,7 @@ export default function LoginScreen() {
               >
                 <Text
                   style={{
-                    color: colores.textoSecundario,
+                    color: "rgba(255,255,255,0.45)",
                     fontSize: 13,
                     fontFamily: "Inter_500Medium",
                   }}
@@ -414,14 +258,14 @@ export default function LoginScreen() {
             </Link>
 
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Text style={{ color: colores.textoMuted, fontSize: 14 }}>
+              <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>
                 ¿No tenés cuenta?{" "}
               </Text>
               <Link href="/(auth)/registro" asChild>
                 <Pressable accessibilityRole="link" hitSlop={8}>
                   <Text
                     style={{
-                      color: colores.acento,
+                      color: "#c084fc",
                       fontSize: 14,
                       fontFamily: "Inter_600SemiBold",
                     }}

@@ -107,4 +107,6 @@ export type {
   RespuestaChat,
   HistorialChat,
   NuevaConversacion,
+  ConversacionResumen,
+  CambiarConversacionRespuesta,
 } from "./chat";

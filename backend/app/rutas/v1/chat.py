@@ -3,7 +3,7 @@
 import uuid
 from datetime import date, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -251,3 +251,127 @@ async def nueva_conversacion(
             "conversacion_id": str(conversacion.id),
         },
     }
+
+
+@router.get("/conversaciones")
+async def listar_conversaciones(
+    usuario: Usuario = Depends(obtener_usuario_actual),
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+):
+    """Lista las conversaciones web del usuario con preview del primer mensaje."""
+    repo = RepositorioConversacion(db)
+    conversaciones = await repo.listar_conversaciones_web(usuario.id)
+
+    resultado = []
+    for c in conversaciones:
+        mensajes = c.mensajes or []
+        # Primer mensaje del usuario como preview
+        preview = ""
+        for m in mensajes:
+            if m.get("rol") == "user":
+                preview = m.get("contenido", "")[:80]
+                break
+        if not preview and mensajes:
+            preview = mensajes[0].get("contenido", "")[:80]
+
+        resultado.append({
+            "id": str(c.id),
+            "preview": preview,
+            "titulo": c.titulo,
+            "total_mensajes": len(mensajes),
+            "activa": c.activa,
+            "anclada": c.anclada,
+            "archivada": c.archivada,
+            "creado_en": c.creado_en.isoformat() if c.creado_en else None,
+        })
+
+    return {"exito": True, "datos": resultado}
+
+
+@router.post("/cambiar/{conversacion_id}")
+async def cambiar_conversacion(
+    conversacion_id: uuid.UUID,
+    usuario: Usuario = Depends(obtener_usuario_actual),
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+):
+    """Cambia a una conversación existente (la activa)."""
+    repo = RepositorioConversacion(db)
+    conversacion = await repo.cambiar_conversacion_web(
+        usuario.id, conversacion_id
+    )
+    if not conversacion:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+
+    mensajes = await repo.obtener_historial(conversacion.id, limite=50)
+
+    return {
+        "exito": True,
+        "datos": {
+            "conversacion_id": str(conversacion.id),
+            "mensajes": mensajes,
+        },
+    }
+
+
+# ── Gestión de conversaciones ────────────────────────────────
+
+
+class RenombrarRequest(BaseModel):
+    titulo: str = Field(..., min_length=1, max_length=120)
+
+
+@router.put("/{conversacion_id}/renombrar")
+async def renombrar_conversacion(
+    conversacion_id: uuid.UUID,
+    datos: RenombrarRequest,
+    usuario: Usuario = Depends(obtener_usuario_actual),
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+):
+    """Cambia el título de una conversación."""
+    repo = RepositorioConversacion(db)
+    conv = await repo.renombrar(usuario.id, conversacion_id, datos.titulo)
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    return {"exito": True, "datos": {"id": str(conv.id), "titulo": conv.titulo}}
+
+
+@router.post("/{conversacion_id}/anclar")
+async def anclar_conversacion(
+    conversacion_id: uuid.UUID,
+    usuario: Usuario = Depends(obtener_usuario_actual),
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+):
+    """Ancla o desancla una conversación."""
+    repo = RepositorioConversacion(db)
+    conv = await repo.alternar_anclada(usuario.id, conversacion_id)
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    return {"exito": True, "datos": {"id": str(conv.id), "anclada": conv.anclada}}
+
+
+@router.post("/{conversacion_id}/archivar")
+async def archivar_conversacion(
+    conversacion_id: uuid.UUID,
+    usuario: Usuario = Depends(obtener_usuario_actual),
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+):
+    """Archiva una conversación (la oculta de la lista)."""
+    repo = RepositorioConversacion(db)
+    conv = await repo.archivar(usuario.id, conversacion_id)
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    return {"exito": True, "datos": {"id": str(conv.id), "archivada": True}}
+
+
+@router.delete("/{conversacion_id}")
+async def eliminar_conversacion(
+    conversacion_id: uuid.UUID,
+    usuario: Usuario = Depends(obtener_usuario_actual),
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+):
+    """Elimina permanentemente una conversación."""
+    repo = RepositorioConversacion(db)
+    eliminada = await repo.eliminar(usuario.id, conversacion_id)
+    if not eliminada:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    return {"exito": True, "datos": {"eliminada": True}}
