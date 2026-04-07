@@ -1,6 +1,6 @@
 import { View, Text, Pressable, Platform } from "react-native";
 import { BlurView } from "expo-blur";
-import { Play, Pause, X } from "phosphor-react-native";
+import { Play, Pause, X, Microphone } from "phosphor-react-native";
 import { useStoreUI } from "@/lib/stores/store-ui";
 import { usarAudioNativo } from "@/lib/hooks/usar-audio-nativo";
 import { usarTema } from "@/lib/hooks/usar-tema";
@@ -28,6 +28,11 @@ export function MiniReproductor() {
     return <ReproductorCompleto {...audioContext} />;
   }
 
+  const fondoSolido = esOscuro ? "#0d0818" : "#2D1B69";
+  const fondoGlass = esOscuro
+    ? "rgba(20, 12, 36, 0.95)"
+    : "rgba(45, 27, 105, 0.95)";
+
   const contenido = (
     <>
       {/* Progress bar */}
@@ -47,7 +52,7 @@ export function MiniReproductor() {
         accessibilityLabel={`Reproductor: ${pistaActual.titulo}. Tocar para expandir`}
         style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12 }}
       >
-        {/* Cover placeholder */}
+        {/* Cover icon */}
         <View
           style={{
             width: 40,
@@ -59,9 +64,7 @@ export function MiniReproductor() {
             marginRight: 12,
           }}
         >
-          <Text style={{ color: "#FFFFFF", fontSize: 12, fontFamily: "Inter_700Bold" }}>
-            {pistaActual.tipo === "podcast" ? "P" : "L"}
-          </Text>
+          <Microphone size={20} color="#FFFFFF" weight="fill" />
         </View>
 
         {/* Info */}
@@ -69,7 +72,7 @@ export function MiniReproductor() {
           {errorAudio ? (
             <Text
               numberOfLines={2}
-              style={{ color: "#DC2626", fontSize: 12, fontFamily: "Inter_600SemiBold" }}
+              style={{ color: "#f87171", fontSize: 12, fontFamily: "Inter_600SemiBold" }}
             >
               {errorAudio}
             </Text>
@@ -140,7 +143,7 @@ export function MiniReproductor() {
           borderTopColor: "rgba(255,255,255,0.05)",
         }}
       >
-        <View style={{ backgroundColor: "rgba(20, 12, 36, 0.95)" }}>
+        <View style={{ backgroundColor: fondoGlass }}>
           {contenido}
         </View>
       </BlurView>
@@ -154,7 +157,7 @@ export function MiniReproductor() {
         bottom: 80,
         left: 0,
         right: 0,
-        backgroundColor: "#0d0818",
+        backgroundColor: fondoSolido,
         borderTopWidth: 1,
         borderTopColor: "rgba(255,255,255,0.05)",
       }}

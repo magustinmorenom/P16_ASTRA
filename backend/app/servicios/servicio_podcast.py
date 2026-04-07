@@ -187,10 +187,14 @@ class ServicioPodcast:
             )
 
     @classmethod
-    def _construir_mensaje_usuario(cls, tipo: str, fecha_clave: date) -> str:
+    def _construir_mensaje_usuario(cls, tipo: str, fecha_clave: date, origen: str = "manual") -> str:
         """Construye el mensaje del usuario para la generación del guión."""
+        marcador = "MAÑANA" if origen == "preview" else "HOY"
         if tipo == "dia":
-            return f"Generá el episodio de podcast para hoy {fecha_clave.strftime('%d de %B de %Y')}."
+            return (
+                f"Generá el episodio de podcast para {fecha_clave.strftime('%d de %B de %Y')}. "
+                f"MARCADOR TEMPORAL PARA EL SALUDO: {marcador}."
+            )
         elif tipo == "semana":
             fin_semana = fecha_clave + timedelta(days=6)
             return (
@@ -210,8 +214,15 @@ class ServicioPodcast:
         usuario_id: uuid.UUID,
         fecha: date,
         tipo: str,
+        origen: str = "manual",
+        fecha_objetivo: date | None = None,
     ) -> PodcastEpisodio:
-        """Pipeline completo para generar un episodio de podcast."""
+        """Pipeline completo para generar un episodio de podcast.
+
+        Args:
+            origen: "manual" (usuario pidió), "preview" (adelanto de mañana), "auto" (lazy)
+            fecha_objetivo: fecha real para la que se genera el contenido (puede ser mañana)
+        """
         repo = RepositorioPodcast(sesion)
         fecha_clave = _calcular_fecha_clave(tipo, fecha)
         titulo = cls._construir_titulo(tipo, fecha_clave)
@@ -235,6 +246,8 @@ class ServicioPodcast:
                 momento=tipo,
                 titulo=titulo,
                 estado="generando_guion",
+                origen=origen,
+                fecha_objetivo=fecha_objetivo or fecha_clave,
             )
 
         try:
@@ -267,7 +280,7 @@ class ServicioPodcast:
                 system=system_prompt,
                 messages=[{
                     "role": "user",
-                    "content": cls._construir_mensaje_usuario(tipo, fecha_clave),
+                    "content": cls._construir_mensaje_usuario(tipo, fecha_clave, origen),
                 }],
             )
 
@@ -333,7 +346,7 @@ class ServicioPodcast:
 
             # Notificar por email (fire-and-forget)
             try:
-                repo_usuario = RepositorioUsuario(db)
+                repo_usuario = RepositorioUsuario(sesion)
                 usuario = await repo_usuario.obtener_por_id(usuario_id)
                 if usuario:
                     await ServicioEmail.enviar_podcast_listo(

@@ -40,5 +40,7 @@ class PodcastEpisodio(ModeloBase):
     duracion_segundos: Mapped[float | None] = mapped_column(Float, nullable=True)
     url_audio: Mapped[str | None] = mapped_column(String(500), nullable=True)
     estado: Mapped[str] = mapped_column(String(20), nullable=False, default="pendiente")
+    origen: Mapped[str] = mapped_column(String(20), nullable=False, default="manual")  # manual | preview | auto
+    fecha_objetivo: Mapped[date | None] = mapped_column(Date, nullable=True)  # fecha para la que fue generado
     error_detalle: Mapped[str | None] = mapped_column(Text, nullable=True)
     tokens_usados: Mapped[int | None] = mapped_column(Integer, nullable=True)

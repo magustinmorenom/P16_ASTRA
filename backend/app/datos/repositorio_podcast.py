@@ -29,6 +29,8 @@ class RepositorioPodcast:
         momento: str,
         titulo: str,
         estado: str = "pendiente",
+        origen: str = "manual",
+        fecha_objetivo: date | None = None,
     ) -> PodcastEpisodio:
         """Crea un nuevo episodio de podcast."""
         episodio = PodcastEpisodio(
@@ -37,6 +39,8 @@ class RepositorioPodcast:
             momento=momento,
             titulo=titulo,
             estado=estado,
+            origen=origen,
+            fecha_objetivo=fecha_objetivo or fecha,
         )
         self.sesion.add(episodio)
         await self.sesion.commit()

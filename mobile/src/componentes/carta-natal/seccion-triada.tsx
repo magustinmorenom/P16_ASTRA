@@ -12,9 +12,9 @@ interface SeccionTriadaProps {
 }
 
 const CONFIG = [
-  { key: "sol" as const, label: "Sol", sublabel: "Esencia", accent: "#D4A234", Icono: Sun },
-  { key: "luna" as const, label: "Luna", sublabel: "Emociones", accent: "#9575CD", Icono: Moon },
-  { key: "ascendente" as const, label: "Ascendente", sublabel: "Máscara", accent: "#5C6BC0", Icono: Compass },
+  { key: "sol" as const, label: "Sol", sublabel: "Esencia", Icono: Sun },
+  { key: "luna" as const, label: "Luna", sublabel: "Emociones", Icono: Moon },
+  { key: "ascendente" as const, label: "Ascendente", sublabel: "Presencia", Icono: Compass },
 ];
 
 export function SeccionTriada({ sol, luna, ascendente, onSeleccionar }: SeccionTriadaProps) {
@@ -43,12 +43,12 @@ export function SeccionTriada({ sol, luna, ascendente, onSeleccionar }: SeccionT
               accessibilityLabel={`${config.label} en ${signo}`}
               style={{
                 flex: 1,
-                backgroundColor: `${config.accent}15`,
+                backgroundColor: colores.fondoSecundario,
                 borderRadius: 16,
                 padding: 12,
                 alignItems: "center",
                 borderWidth: 1,
-                borderColor: `${config.accent}30`,
+                borderColor: colores.vidrioBorde,
               }}
             >
               <View
@@ -56,17 +56,15 @@ export function SeccionTriada({ sol, luna, ascendente, onSeleccionar }: SeccionT
                   width: 44,
                   height: 44,
                   borderRadius: 22,
-                  backgroundColor: `${config.accent}20`,
-                  borderWidth: 2,
-                  borderColor: config.accent,
+                  backgroundColor: colores.acento + "18",
                   alignItems: "center",
                   justifyContent: "center",
                   marginBottom: 6,
                 }}
               >
-                <Icono size={22} color={config.accent} weight="fill" />
+                <Icono size={22} color={colores.acento} weight="fill" />
               </View>
-              <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: config.accent, textTransform: "uppercase", letterSpacing: 1 }}>
+              <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: colores.acento, textTransform: "uppercase", letterSpacing: 1 }}>
                 {config.label}
               </Text>
               <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: colores.primario, marginTop: 2 }}>

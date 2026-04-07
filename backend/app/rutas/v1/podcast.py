@@ -2,7 +2,7 @@
 
 import io
 import uuid
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -34,6 +34,8 @@ def _serializar_episodio(ep) -> dict:
         "duracion_segundos": ep.duracion_segundos,
         "url_audio": ep.url_audio,
         "estado": ep.estado,
+        "origen": getattr(ep, "origen", "manual"),
+        "fecha_objetivo": ep.fecha_objetivo.isoformat() if getattr(ep, "fecha_objetivo", None) else ep.fecha.isoformat(),
         "error_detalle": ep.error_detalle,
         "creado_en": ep.creado_en.isoformat() if ep.creado_en else None,
     }
@@ -150,4 +152,44 @@ async def generar_podcast(
         "exito": True,
         "datos": _serializar_episodio(episodio),
         "mensaje": f"Episodio '{tipo}' procesado correctamente",
+    }
+
+
+@router.post("/preview-manana")
+async def generar_preview_manana(
+    usuario: Usuario = Depends(obtener_usuario_actual),
+    _plan: None = Depends(requiere_plan("premium")),
+    db: AsyncSession = Depends(obtener_db),
+    tz_offset: int = Query(default=-3, description="Offset UTC del usuario en horas (ej: -3 para ARG)"),
+):
+    """Genera el podcast de mañana como preview.
+
+    Disponible a partir de las 19:00 hora local del usuario.
+    El contenido se genera con marcador temporal "MAÑANA" para que el saludo
+    diga "mañana" en vez de "hoy". Cuando llegue el día siguiente, el mismo
+    episodio se sirve como contenido del día (la intro ya dice "mañana"
+    y el contenido es el correcto para esa fecha).
+    """
+    ahora_utc = datetime.now(timezone.utc)
+    hora_local = ahora_utc + timedelta(hours=tz_offset)
+
+    if hora_local.hour < 19:
+        raise HTTPException(
+            status_code=400,
+            detail="El preview de mañana está disponible a partir de las 19:00 hora local.",
+        )
+
+    manana = date.today() + timedelta(days=1)
+    episodio = await ServicioPodcast.generar_episodio(
+        db, usuario.id, manana, "dia",
+        origen="preview",
+        fecha_objetivo=manana,
+    )
+
+    repo = RepositorioPodcast(db)
+    await repo.normalizar_retencion_usuario(usuario.id)
+    return {
+        "exito": True,
+        "datos": _serializar_episodio(episodio),
+        "mensaje": "Preview de mañana generado",
     }

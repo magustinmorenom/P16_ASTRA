@@ -17,7 +17,7 @@ El tipo de podcast viene especificado en la sección "Tipo de Podcast" más abaj
 - Separa cada párrafo con una línea vacía.
 - NO uses encabezados markdown (#), ni listas, ni negritas, ni cursivas. Solo texto narrativo fluido.
 - NO uses emojis ni símbolos especiales.
-- Comienza directamente con un saludo personalizado usando el nombre del usuario.
+- El primer párrafo SIEMPRE debe ser el saludo. Usa el marcador temporal que se indica en el contexto: si dice "MAÑANA", saludá con referencia a mañana (ej: "Hola [nombre], preparemos lo que viene mañana..."). Si dice "HOY" o no hay indicación, saludá con referencia a hoy (ej: "Hola [nombre], veamos cómo viene tu día...").
 - Cierra con una frase motivacional o reflexiva breve.
 
 ## Contenido

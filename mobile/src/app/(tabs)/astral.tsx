@@ -7,7 +7,7 @@ import { RuedaZodiacal } from "@/componentes/visualizaciones/rueda-zodiacal";
 import { usarMisCalculos } from "@/lib/hooks/usar-mis-calculos";
 import { usarTema } from "@/lib/hooks/usar-tema";
 import { EstadoVacio } from "@/componentes/feedback/estado-vacio";
-import { generarEsencia } from "@/lib/utilidades/interpretaciones-natal";
+
 
 import { SeccionTriada } from "@/componentes/carta-natal/seccion-triada";
 import { DistribucionEnergetica } from "@/componentes/carta-natal/distribucion-energetica";
@@ -80,7 +80,6 @@ export default function PantallaAstral() {
 
   const sol = natal.planetas.find((p) => p.nombre === "Sol");
   const luna = natal.planetas.find((p) => p.nombre === "Luna");
-  const esencia = sol && luna ? generarEsencia(sol.signo, luna.signo, natal.ascendente.signo) : null;
 
   return (
     <View style={{ flex: 1, backgroundColor: colores.fondo }}>
@@ -94,16 +93,11 @@ export default function PantallaAstral() {
           <RefreshControl refreshing={refrescando} onRefresh={manejarRefresh} tintColor={colores.acento} />
         }
       >
-        {/* Título + Esencia */}
+        {/* Título */}
         <AnimacionEntrada>
-          <Text style={{ color: colores.primario, fontSize: 24, fontFamily: "Inter_700Bold", marginBottom: 4 }}>
+          <Text style={{ color: colores.primario, fontSize: 24, fontFamily: "Inter_700Bold", marginBottom: 12 }}>
             Carta Astral
           </Text>
-          {esencia && (
-            <Text style={{ color: colores.acento, fontSize: 13, fontStyle: "italic", marginBottom: 12 }}>
-              &ldquo;{esencia}&rdquo;
-            </Text>
-          )}
         </AnimacionEntrada>
 
         {/* Tríada — Sol, Luna, Ascendente */}

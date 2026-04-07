@@ -3,7 +3,6 @@ import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   CaretRight,
   CircleHalf,
@@ -12,7 +11,6 @@ import {
   FileText,
   LockKey,
   Moon,
-  PencilSimple,
   SignOut,
   Sun,
   Trash,
@@ -26,143 +24,36 @@ import { Tarjeta } from "@/componentes/ui/tarjeta";
 import { Separador } from "@/componentes/ui/separador";
 import { PresionableAnimado } from "@/componentes/ui/presionable-animado";
 import { AnimacionEntrada } from "@/componentes/ui/animacion-entrada";
-import { FormularioNacimiento } from "@/componentes/compuestos/formulario-nacimiento";
 import { useStoreAuth } from "@/lib/stores/store-auth";
-import { usarMiPerfil, usarActualizarPerfil } from "@/lib/hooks/usar-perfil";
+import { usarMiPerfil } from "@/lib/hooks/usar-perfil";
 import {
   usarCambiarContrasena,
   usarEliminarCuenta,
   usarLogout,
 } from "@/lib/hooks/usar-auth";
-import { usarCartaNatal } from "@/lib/hooks/usar-carta-natal";
-import { usarDisenoHumano } from "@/lib/hooks/usar-diseno-humano";
-import { usarNumerologia } from "@/lib/hooks/usar-numerologia";
-import { usarRetornoSolar } from "@/lib/hooks/usar-retorno-solar";
 import { usarTema } from "@/lib/hooks/usar-tema";
 import { descargarYAbrirDocumentoProtegido } from "@/lib/utilidades/descargar-documento";
 import {
   formatearFecha,
-  formatearFechaHora,
   formatearHora,
 } from "@/lib/utilidades/formatear-fecha";
-import type { DatosNacimiento } from "@/lib/tipos";
 import type { PreferenciaTema } from "@/lib/stores/store-tema";
 
 export default function PantallaPerfil() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const queryClient = useQueryClient();
   const usuario = useStoreAuth((state) => state.usuario);
   const { data: perfil } = usarMiPerfil();
-  const actualizarPerfil = usarActualizarPerfil();
   const logout = usarLogout();
   const cambiarContrasena = usarCambiarContrasena();
   const eliminarCuenta = usarEliminarCuenta();
-  const cartaNatal = usarCartaNatal();
-  const disenoHumano = usarDisenoHumano();
-  const numerologia = usarNumerologia();
-  const retornoSolar = usarRetornoSolar();
   const { colores, preferencia, setPreferencia } = usarTema();
 
-  const [editandoNacimiento, setEditandoNacimiento] = useState(false);
-  const [mensajeNacimiento, setMensajeNacimiento] = useState<{
-    tipo: "exito" | "error";
-    texto: string;
-  } | null>(null);
-  const [recalculandoNacimiento, setRecalculandoNacimiento] = useState(false);
   const [seccionAbierta, setSeccionAbierta] = useState<string | null>(null);
   const [contrasenaActual, setContrasenaActual] = useState("");
   const [contrasenaNueva, setContrasenaNueva] = useState("");
   const [contrasenaEliminar, setContrasenaEliminar] = useState("");
   const [descargandoPerfil, setDescargandoPerfil] = useState(false);
-
-  const iniciarEdicionNacimiento = () => {
-    setMensajeNacimiento(null);
-    setEditandoNacimiento(true);
-  };
-
-  const cancelarEdicionNacimiento = () => {
-    setEditandoNacimiento(false);
-    setMensajeNacimiento(null);
-  };
-
-  const guardarEdicionNacimiento = async (datos: DatosNacimiento) => {
-    try {
-      setMensajeNacimiento(null);
-
-      const respuesta = await actualizarPerfil.mutateAsync({
-        nombre: datos.nombre.trim(),
-        fecha_nacimiento: datos.fecha_nacimiento,
-        hora_nacimiento: datos.hora_nacimiento,
-        ciudad_nacimiento: datos.ciudad_nacimiento.trim(),
-        pais_nacimiento: datos.pais_nacimiento.trim(),
-      });
-
-      if (respuesta.datos_nacimiento_cambiaron) {
-        setRecalculandoNacimiento(true);
-        setMensajeNacimiento({
-          tipo: "exito",
-          texto: "Guardamos tus datos. Ahora estamos regenerando tus cartas.",
-        });
-
-        const resultados = await Promise.allSettled([
-          cartaNatal.mutateAsync({ datos, perfilId: respuesta.id }),
-          disenoHumano.mutateAsync({ datos, perfilId: respuesta.id }),
-          numerologia.mutateAsync({
-            datos: {
-              nombre: datos.nombre,
-              fecha_nacimiento: datos.fecha_nacimiento,
-            },
-            perfilId: respuesta.id,
-          }),
-          retornoSolar.mutateAsync({
-            datosNacimiento: datos,
-            anio: new Date().getFullYear(),
-            perfilId: respuesta.id,
-          }),
-        ]);
-
-        queryClient.invalidateQueries({ queryKey: ["calculos", "me"] });
-        queryClient.invalidateQueries({ queryKey: ["pronostico"] });
-        queryClient.invalidateQueries({ queryKey: ["podcast"] });
-        queryClient.invalidateQueries({ queryKey: ["chat", "historial"] });
-
-        const huboErrores = resultados.some(
-          (resultado) => resultado.status === "rejected",
-        );
-
-        setMensajeNacimiento(
-          huboErrores
-            ? {
-                tipo: "error",
-                texto:
-                  "Tus datos se actualizaron, pero algunas cartas no se pudieron regenerar. Abrí cada módulo para reintentar.",
-              }
-            : {
-                tipo: "exito",
-                texto: "Perfil y cartas actualizados correctamente.",
-              },
-        );
-      } else {
-        setMensajeNacimiento({
-          tipo: "exito",
-          texto: "Perfil actualizado correctamente.",
-        });
-      }
-
-      setEditandoNacimiento(false);
-    } catch (error) {
-      setMensajeNacimiento({
-        tipo: "error",
-        texto:
-          error instanceof Error
-            ? error.message
-            : "No se pudo actualizar tu perfil.",
-      });
-    } finally {
-      setRecalculandoNacimiento(false);
-    }
-  };
 
   const manejarCambioContrasena = async () => {
     if (!contrasenaActual || contrasenaNueva.length < 8) return;
@@ -238,8 +129,6 @@ export default function PantallaPerfil() {
   };
 
   const esPremium = usuario?.plan_slug === "premium";
-  const proveedor =
-    usuario?.proveedor_auth === "google" ? "Google" : "Email y contraseña";
 
   const opcionesTema: {
     valor: PreferenciaTema;
@@ -283,23 +172,7 @@ export default function PantallaPerfil() {
     },
   ];
 
-  const datosCuenta = [
-    { label: "Proveedor", valor: proveedor },
-    {
-      label: "Estado",
-      valor: usuario?.suscripcion_estado ?? "Sin suscripción",
-    },
-    {
-      label: "Miembro desde",
-      valor: usuario?.creado_en ? formatearFechaHora(usuario.creado_en) : "Sin registro",
-    },
-    {
-      label: "Último acceso",
-      valor: usuario?.ultimo_acceso
-        ? formatearFechaHora(usuario.ultimo_acceso)
-        : "Sin registro",
-    },
-  ];
+  // Datos de cuenta simplificados (sin Proveedor, Estado, Miembro desde, Último acceso)
 
   return (
     <ScrollView
@@ -337,43 +210,12 @@ export default function PantallaPerfil() {
               >
                 {usuario?.nombre}
               </Text>
-              <Text style={{ color: colores.textoSecundario, fontSize: 14 }}>
-                {usuario?.email}
-              </Text>
               <View style={{ marginTop: 8, flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
                 <Badge variante={esPremium ? "info" : "default"}>
                   {usuario?.plan_nombre ?? (esPremium ? "Premium" : "Gratis")}
                 </Badge>
-                <Badge variante="default">{proveedor}</Badge>
               </View>
             </View>
-          </View>
-
-          <View style={{ gap: 8, marginTop: 16 }}>
-            {datosCuenta.map((item) => (
-              <View
-                key={item.label}
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Text style={{ color: colores.textoSecundario, fontSize: 13 }}>
-                  {item.label}
-                </Text>
-                <Text
-                  style={{
-                    color: colores.primario,
-                    fontSize: 13,
-                    maxWidth: "58%",
-                    textAlign: "right",
-                  }}
-                >
-                  {item.valor}
-                </Text>
-              </View>
-            ))}
           </View>
         </Tarjeta>
       </AnimacionEntrada>
@@ -381,146 +223,57 @@ export default function PantallaPerfil() {
       {perfil && (
         <AnimacionEntrada retraso={180}>
           <Tarjeta style={{ marginBottom: 16 }}>
-            <View
+            <Text
               style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
+                color: colores.primario,
+                fontFamily: "Inter_600SemiBold",
                 marginBottom: 12,
               }}
             >
-              <View>
-                <Text
-                  style={{
-                    color: colores.primario,
-                    fontFamily: "Inter_600SemiBold",
-                  }}
-                >
-                  Datos de nacimiento
-                </Text>
-                <Text
-                  style={{
-                    color: colores.textoSecundario,
-                    fontSize: 13,
-                    marginTop: 4,
-                  }}
-                >
-                  Editá tu perfil cósmico y recalculá las cartas desde mobile.
-                </Text>
-              </View>
-              {!editandoNacimiento && (
-                <Pressable onPress={iniciarEdicionNacimiento}>
-                  <PencilSimple size={18} color={colores.acento} />
-                </Pressable>
-              )}
-            </View>
+              Datos de nacimiento
+            </Text>
 
-            {mensajeNacimiento ? (
-              <View
-                style={{
-                  borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor:
-                    mensajeNacimiento.tipo === "exito"
-                      ? `${colores.exito}4D`
-                      : `${colores.error}4D`,
-                  backgroundColor:
-                    mensajeNacimiento.tipo === "exito"
-                      ? `${colores.exito}14`
-                      : `${colores.error}14`,
-                  paddingHorizontal: 12,
-                  paddingVertical: 10,
-                  marginBottom: 14,
-                }}
-              >
-                <Text
+            <View style={{ gap: 10 }}>
+              {[
+                { label: "Nombre", valor: perfil.nombre },
+                {
+                  label: "Nacimiento",
+                  valor: formatearFecha(perfil.fecha_nacimiento),
+                },
+                { label: "Hora", valor: formatearHora(perfil.hora_nacimiento) },
+                {
+                  label: "Lugar",
+                  valor: `${perfil.ciudad_nacimiento}, ${perfil.pais_nacimiento}`,
+                },
+                {
+                  label: "Zona horaria",
+                  valor: perfil.zona_horaria ?? "Sin resolver",
+                },
+              ].map((item) => (
+                <View
+                  key={item.label}
                   style={{
-                    color:
-                      mensajeNacimiento.tipo === "exito"
-                        ? colores.exito
-                        : colores.error,
-                    fontSize: 13,
-                    lineHeight: 18,
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    gap: 16,
                   }}
                 >
-                  {mensajeNacimiento.texto}
-                </Text>
-              </View>
-            ) : null}
-
-            {editandoNacimiento ? (
-              <View>
-                <FormularioNacimiento
-                  onEnviar={guardarEdicionNacimiento}
-                  cargando={actualizarPerfil.isPending || recalculandoNacimiento}
-                  textoBoton={
-                    recalculandoNacimiento
-                      ? "Recalculando cartas..."
-                      : "Guardar cambios"
-                  }
-                  valoresIniciales={{
-                    nombre: perfil.nombre,
-                    fecha_nacimiento: perfil.fecha_nacimiento,
-                    hora_nacimiento: perfil.hora_nacimiento.slice(0, 5),
-                    ciudad_nacimiento: perfil.ciudad_nacimiento,
-                    pais_nacimiento: perfil.pais_nacimiento,
-                    latitud: perfil.latitud ?? undefined,
-                    longitud: perfil.longitud ?? undefined,
-                    zona_horaria: perfil.zona_horaria ?? undefined,
-                  }}
-                />
-
-                <Boton
-                  variante="fantasma"
-                  onPress={cancelarEdicionNacimiento}
-                  disabled={actualizarPerfil.isPending || recalculandoNacimiento}
-                >
-                  Cancelar
-                </Boton>
-              </View>
-            ) : (
-              <View style={{ gap: 10 }}>
-                {[
-                  { label: "Nombre", valor: perfil.nombre },
-                  {
-                    label: "Nacimiento",
-                    valor: formatearFecha(perfil.fecha_nacimiento),
-                  },
-                  { label: "Hora", valor: formatearHora(perfil.hora_nacimiento) },
-                  {
-                    label: "Lugar",
-                    valor: `${perfil.ciudad_nacimiento}, ${perfil.pais_nacimiento}`,
-                  },
-                  {
-                    label: "Zona horaria",
-                    valor: perfil.zona_horaria ?? "Sin resolver",
-                  },
-                ].map((item) => (
-                  <View
-                    key={item.label}
+                  <Text style={{ color: colores.textoSecundario, fontSize: 14 }}>
+                    {item.label}
+                  </Text>
+                  <Text
                     style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      gap: 16,
+                      color: colores.primario,
+                      fontSize: 14,
+                      flex: 1,
+                      textAlign: "right",
                     }}
                   >
-                    <Text style={{ color: colores.textoSecundario, fontSize: 14 }}>
-                      {item.label}
-                    </Text>
-                    <Text
-                      style={{
-                        color: colores.primario,
-                        fontSize: 14,
-                        flex: 1,
-                        textAlign: "right",
-                      }}
-                    >
-                      {item.valor}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
+                    {item.valor}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </Tarjeta>
         </AnimacionEntrada>
       )}
@@ -637,7 +390,7 @@ export default function PantallaPerfil() {
       </PresionableAnimado>
 
       <PresionableAnimado
-        onPress={() => WebBrowser.openBrowserAsync("https://theastra.xyz/privacidad")}
+        onPress={() => WebBrowser.openBrowserAsync("https://theastra.xyz/politica-de-privacidad")}
       >
         <Tarjeta padding="sm" style={{ marginBottom: 8 }}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>

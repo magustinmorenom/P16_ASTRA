@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, ScrollView, Platform } from "react-native";
+import { View, Text, Pressable, ScrollView } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -10,13 +10,14 @@ import {
   FastForward,
   SpeakerHigh,
   SpeakerSlash,
+  Microphone,
 } from "phosphor-react-native";
 import Slider from "@react-native-community/slider";
-import { useStoreUI } from "@/lib/stores/store-ui";
+import { useStoreUI, type PistaReproduccion } from "@/lib/stores/store-ui";
 import { usarTema } from "@/lib/hooks/usar-tema";
 
-type AudioContextProps = {
-  pistaActual: any;
+interface AudioContextProps {
+  pistaActual: PistaReproduccion | null;
   reproduciendo: boolean;
   progresoSegundos: number;
   segmentoActual: number;
@@ -30,7 +31,7 @@ type AudioContextProps = {
   toggleSilencio: () => void;
   manejarSeek: (v: number) => void;
   manejarCerrar: () => void;
-};
+}
 
 export function ReproductorCompleto({
   pistaActual,
@@ -50,16 +51,14 @@ export function ReproductorCompleto({
 }: AudioContextProps) {
   const insets = useSafeAreaInsets();
   const { toggleMiniReproductor } = useStoreUI();
-  const { colores, esOscuro } = usarTema();
+  const { esOscuro } = usarTema();
   const scrollRef = useRef<ScrollView>(null);
   const offsetsSegmentos = useRef<Record<number, number>>({});
   const segmentos = pistaActual?.segmentos ?? [];
 
-  // Estados locales para no robarle el scroll al usuario si está leyendo
   const [isScrollingText, setIsScrollingText] = useState(false);
   const timerScrollRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto-scroll lyrics al segmento activo
   useEffect(() => {
     if (!segmentos.length || isScrollingText) return;
     const idx = Math.min(segmentoActual, segmentos.length - 1);
@@ -75,7 +74,6 @@ export function ReproductorCompleto({
   if (!pistaActual) return null;
 
   const duracion = pistaActual.duracionSegundos || 1;
-  const porcentaje = (progresoSegundos / duracion) * 100;
 
   return (
     <View
@@ -88,7 +86,6 @@ export function ReproductorCompleto({
         zIndex: 50,
       }}
     >
-      {/* Fondo gradiente ciruela */}
       <LinearGradient
         colors={
           esOscuro
@@ -98,7 +95,7 @@ export function ReproductorCompleto({
         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
       />
 
-      {/* Header mínimo */}
+      {/* Header */}
       <View
         style={{
           flexDirection: "row",
@@ -134,7 +131,7 @@ export function ReproductorCompleto({
         <View style={{ width: 32 }} />
       </View>
 
-      {/* Lyrics — zona principal */}
+      {/* Lyrics */}
       {segmentos.length > 0 ? (
         <ScrollView
           ref={scrollRef}
@@ -157,7 +154,7 @@ export function ReproductorCompleto({
             timerScrollRef.current = setTimeout(() => setIsScrollingText(false), 3000);
           }}
         >
-          {segmentos.map((segmento: any, index: number) => {
+          {segmentos.map((segmento, index) => {
             const activo =
               index === segmentoActual || (index === 0 && progresoSegundos === 0);
             const pasado = index < segmentoActual;
@@ -198,7 +195,6 @@ export function ReproductorCompleto({
             paddingHorizontal: 40,
           }}
         >
-          {/* Cover placeholder cuando no hay lyrics */}
           <View
             style={{
               width: 200,
@@ -210,9 +206,7 @@ export function ReproductorCompleto({
               marginBottom: 32,
             }}
           >
-            <Text style={{ color: "#7C4DFF", fontSize: 64, fontFamily: "Inter_700Bold" }}>
-              {pistaActual.tipo === "podcast" ? "P" : "L"}
-            </Text>
+            <Microphone size={72} color="#B388FF" weight="duotone" />
           </View>
           <Text
             style={{
@@ -251,14 +245,13 @@ export function ReproductorCompleto({
         </View>
       )}
 
-      {/* Controles — bottom section */}
+      {/* Controles */}
       <View
         style={{
           paddingHorizontal: 24,
           paddingBottom: insets.bottom + 16,
         }}
       >
-        {/* Título del episodio */}
         <Text
           numberOfLines={1}
           style={{
@@ -281,8 +274,6 @@ export function ReproductorCompleto({
           ASTRA
         </Text>
 
-        {/* Nota: Control deslizante de tiempo eliminado a pedido del usuario */}
-
         {/* Play controls */}
         <View
           style={{
@@ -293,7 +284,6 @@ export function ReproductorCompleto({
             marginBottom: 20,
           }}
         >
-          {/* Skip back */}
           <Pressable
             onPress={() => manejarSeek(Math.max(progresoSegundos - 10, 0))}
             accessibilityRole="button"
@@ -303,7 +293,6 @@ export function ReproductorCompleto({
             <Rewind size={28} color="rgba(255,255,255,0.7)" weight="fill" />
           </Pressable>
 
-          {/* Play/Pause — botón principal */}
           <Pressable
             onPress={toggleReproduccion}
             disabled={descargandoAudio}
@@ -326,7 +315,6 @@ export function ReproductorCompleto({
             )}
           </Pressable>
 
-          {/* Skip forward */}
           <Pressable
             onPress={() => manejarSeek(Math.min(progresoSegundos + 10, duracion))}
             accessibilityRole="button"

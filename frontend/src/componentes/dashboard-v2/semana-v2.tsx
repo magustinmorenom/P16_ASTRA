@@ -215,10 +215,6 @@ export function SemanaV2({
 
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-[24px] font-normal transition-opacity duration-200 text-[color:var(--shell-texto)]">
-        {verSiguiente ? "Tu siguiente semana..." : "Tu semana..."}
-      </h2>
-
       <div
         className="flex flex-col gap-2.5 overflow-hidden rounded-[18px] border p-2.5"
         style={{
@@ -253,11 +249,11 @@ export function SemanaV2({
                   key={dia.fecha}
                   onMouseEnter={(e) => mostrarTooltip(dia, e)}
                   onMouseLeave={ocultarTooltip}
-                  className="group animate-[fade-in-up_300ms_ease-out_both]"
-                  style={{ animationDelay: `${idx * 50}ms` }}
+                  className="animate-[fade-in-up_300ms_ease-out_both]"
+                  style={{ animationDelay: `${idx * 50}ms`, opacity: hoy ? 1 : 0.9 }}
                 >
                   <PanelGlass
-                    className="relative flex w-[160px] min-w-[160px] shrink-0 items-start gap-2.5 p-2.5 transition-all duration-200 group-hover:-translate-y-0.5"
+                    className="relative flex w-[160px] min-w-[160px] shrink-0 items-start gap-2.5 p-2.5"
                     style={
                       hoy
                         ? {

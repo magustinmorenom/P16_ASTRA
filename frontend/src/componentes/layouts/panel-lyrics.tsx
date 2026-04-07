@@ -74,8 +74,8 @@ export default function PanelLyrics() {
                 idx === segmentoActual
                   ? "text-shell-hero-texto font-medium border-l-2 border-primario bg-shell-superficie-suave"
                   : idx < segmentoActual
-                    ? "text-violet-300/40"
-                    : "text-violet-300/60"
+                    ? "text-shell-texto-tenue"
+                    : "text-shell-texto-secundario"
               )}
             >
               {seg.texto}

@@ -55,19 +55,19 @@ const CONFIG_TIPO: Record<TipoPodcast, ConfigTipo> = {
     titulo: "Diario",
     descripcion: "Tu guía cósmica para hoy",
     icono: SunDim,
-    gradiente: ["#7C3AED", "#4F46E5"],
+    gradiente: ["#7C4DFF", "#4A2D8C"],
   },
   semana: {
     titulo: "Semanal",
     descripcion: "Panorama de los próximos 7 días",
     icono: Sparkle,
-    gradiente: ["#6D28D9", "#DB2777"],
+    gradiente: ["#6D28D9", "#2D1B69"],
   },
   mes: {
     titulo: "Mensual",
     descripcion: "Tendencias del mes completo",
     icono: Moon,
-    gradiente: ["#4338CA", "#0891B2"],
+    gradiente: ["#4A2D8C", "#1a1128"],
   },
 };
 
