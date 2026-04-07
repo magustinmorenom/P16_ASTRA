@@ -22,6 +22,5 @@ export function usarPronosticoSemanal(fechaInicio?: string) {
     queryFn: () =>
       clienteApi.get<PronosticoSemanalDTO>(`/pronostico/semanal${params}`),
     staleTime: 60 * 60 * 1000,
-    enabled: fechaInicio !== null,
   });
 }

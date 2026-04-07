@@ -1,6 +1,6 @@
 import { View, Text, Pressable, Platform } from "react-native";
 import { BlurView } from "expo-blur";
-import { Play, Pause, X } from "phosphor-react-native";
+import { Play, Pause, X, Microphone } from "phosphor-react-native";
 import { useStoreUI } from "@/lib/stores/store-ui";
 import { usarAudioNativo } from "@/lib/hooks/usar-audio-nativo";
 import { usarTema } from "@/lib/hooks/usar-tema";
@@ -8,6 +8,7 @@ import { ReproductorCompleto } from "./reproductor-completo";
 
 export function MiniReproductor() {
   const { miniReproductorExpandido, toggleMiniReproductor } = useStoreUI();
+  const audioContext = usarAudioNativo();
   const {
     pistaActual,
     reproduciendo,
@@ -17,23 +18,29 @@ export function MiniReproductor() {
     errorAudio,
     toggleReproduccion,
     manejarCerrar,
-  } = usarAudioNativo();
+  } = audioContext;
+
   const { colores, esOscuro } = usarTema();
 
   if (!pistaActual) return null;
 
   if (miniReproductorExpandido) {
-    return <ReproductorCompleto />;
+    return <ReproductorCompleto {...audioContext} />;
   }
+
+  const fondoSolido = esOscuro ? "#0d0818" : "#2D1B69";
+  const fondoGlass = esOscuro
+    ? "rgba(20, 12, 36, 0.95)"
+    : "rgba(45, 27, 105, 0.95)";
 
   const contenido = (
     <>
       {/* Progress bar */}
-      <View style={{ height: 2, backgroundColor: colores.borde }}>
+      <View style={{ height: 2, backgroundColor: "rgba(255,255,255,0.2)" }}>
         <View
           style={{
             height: "100%",
-            backgroundColor: colores.acento,
+            backgroundColor: "#FFFFFF",
             width: `${Math.min(porcentaje, 100)}%`,
           }}
         />
@@ -45,21 +52,19 @@ export function MiniReproductor() {
         accessibilityLabel={`Reproductor: ${pistaActual.titulo}. Tocar para expandir`}
         style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12 }}
       >
-        {/* Cover placeholder */}
+        {/* Cover icon */}
         <View
           style={{
             width: 40,
             height: 40,
             borderRadius: 8,
-            backgroundColor: colores.acento + "33",
+            backgroundColor: "rgba(255,255,255,0.15)",
             alignItems: "center",
             justifyContent: "center",
             marginRight: 12,
           }}
         >
-          <Text style={{ color: colores.acento, fontSize: 12, fontFamily: "Inter_700Bold" }}>
-            {pistaActual.tipo === "podcast" ? "P" : "L"}
-          </Text>
+          <Microphone size={20} color="#FFFFFF" weight="fill" />
         </View>
 
         {/* Info */}
@@ -67,7 +72,7 @@ export function MiniReproductor() {
           {errorAudio ? (
             <Text
               numberOfLines={2}
-              style={{ color: "#DC2626", fontSize: 12, fontFamily: "Inter_600SemiBold" }}
+              style={{ color: "#f87171", fontSize: 12, fontFamily: "Inter_600SemiBold" }}
             >
               {errorAudio}
             </Text>
@@ -75,13 +80,13 @@ export function MiniReproductor() {
             <>
               <Text
                 numberOfLines={1}
-                style={{ color: colores.primario, fontSize: 14, fontFamily: "Inter_600SemiBold" }}
+                style={{ color: "#FFFFFF", fontSize: 14, fontFamily: "Inter_600SemiBold" }}
               >
                 {pistaActual.titulo}
               </Text>
               <Text
                 numberOfLines={1}
-                style={{ color: colores.textoMuted, fontSize: 12 }}
+                style={{ color: "rgba(255,255,255,0.7)", fontSize: 12 }}
               >
                 {descargandoAudio
                   ? `Descargando ${progresoDescarga}%...`
@@ -94,7 +99,7 @@ export function MiniReproductor() {
         {/* Controles */}
         {descargandoAudio ? (
           <View style={{ marginRight: 12, padding: 4, opacity: 0.5 }}>
-            <Play size={24} color={colores.textoMuted} weight="fill" />
+            <Play size={24} color="rgba(255,255,255,0.7)" weight="fill" />
           </View>
         ) : (
           <Pressable
@@ -104,9 +109,9 @@ export function MiniReproductor() {
             style={{ marginRight: 12, padding: 4 }}
           >
             {reproduciendo ? (
-              <Pause size={24} color={colores.primario} weight="fill" />
+              <Pause size={24} color="#FFFFFF" weight="fill" />
             ) : (
-              <Play size={24} color={colores.primario} weight="fill" />
+              <Play size={24} color="#FFFFFF" weight="fill" />
             )}
           </Pressable>
         )}
@@ -117,7 +122,7 @@ export function MiniReproductor() {
           accessibilityLabel="Cerrar reproductor"
           style={{ padding: 4 }}
         >
-          <X size={20} color={colores.textoMuted} />
+          <X size={20} color="rgba(255,255,255,0.7)" />
         </Pressable>
       </Pressable>
     </>
@@ -127,18 +132,18 @@ export function MiniReproductor() {
   if (Platform.OS === "ios") {
     return (
       <BlurView
-        intensity={50}
-        tint={esOscuro ? "dark" : "light"}
+        intensity={90}
+        tint="dark"
         style={{
           position: "absolute",
-          bottom: 85,
+          bottom: 80,
           left: 0,
           right: 0,
           borderTopWidth: 1,
-          borderTopColor: colores.vidrioBorde,
+          borderTopColor: "rgba(255,255,255,0.05)",
         }}
       >
-        <View style={{ backgroundColor: colores.vidrioOverlay }}>
+        <View style={{ backgroundColor: fondoGlass }}>
           {contenido}
         </View>
       </BlurView>
@@ -149,12 +154,12 @@ export function MiniReproductor() {
     <View
       style={{
         position: "absolute",
-        bottom: 85,
+        bottom: 80,
         left: 0,
         right: 0,
-        backgroundColor: colores.fondoSecundario,
+        backgroundColor: fondoSolido,
         borderTopWidth: 1,
-        borderTopColor: colores.borde,
+        borderTopColor: "rgba(255,255,255,0.05)",
       }}
     >
       {contenido}

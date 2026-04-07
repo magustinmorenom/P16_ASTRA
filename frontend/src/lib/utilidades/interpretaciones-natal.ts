@@ -271,7 +271,7 @@ export function generarEsencia(
     Aire: "presencia ligera y sociable", Agua: "presencia misteriosa",
   };
 
-  return `Alma ${descriptorSol[elSol]} con ${descriptorLuna[elLuna]} y ${descriptorAsc[elAsc]}`;
+  return `${descriptorSol[elSol].charAt(0).toUpperCase() + descriptorSol[elSol].slice(1)} con ${descriptorLuna[elLuna]} y ${descriptorAsc[elAsc]}`;
 }
 
 export function interpretarTriada(

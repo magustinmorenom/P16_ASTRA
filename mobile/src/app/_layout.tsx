@@ -121,7 +121,8 @@ function LayoutRaiz() {
               screenOptions={{
                 headerShown: false,
                 contentStyle: { backgroundColor: colores.fondo },
-                animation: "slide_from_right",
+                animation: "fade",
+                animationDuration: 250,
               }}
             />
           </GuardAuth>

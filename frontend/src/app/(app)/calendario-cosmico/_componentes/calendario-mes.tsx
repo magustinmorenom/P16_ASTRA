@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import {
   eachDayOfInterval,
   endOfMonth,
@@ -39,50 +47,51 @@ interface PosicionTooltipState {
   y: number;
 }
 
-interface RectAnclaTooltip {
-  top: number;
-  left: number;
-  right: number;
-  bottom: number;
-  width: number;
-  height: number;
-}
-
 const ANCHO_MAXIMO_TOOLTIP = 296;
-const MARGEN_TOOLTIP = 16;
-const SEPARACION_TOOLTIP = 14;
+const MARGEN_VIEWPORT = 12;
+const OFFSET_CURSOR_Y = 14;
+const OFFSET_CURSOR_X = 4;
 
 function limitar(valor: number, minimo: number, maximo: number) {
   return Math.min(Math.max(valor, minimo), maximo);
 }
 
+/**
+ * Posiciona el tooltip relativo al cursor del mouse.
+ * Detecta en qué cuadrante del viewport está el cursor y coloca
+ * el tooltip en la dirección donde hay más espacio.
+ */
 export function calcularPosicionTooltip({
-  ancla,
+  cursorX,
+  cursorY,
   tooltipWidth,
   tooltipHeight,
   viewportWidth,
   viewportHeight,
 }: {
-  ancla: RectAnclaTooltip;
+  cursorX: number;
+  cursorY: number;
   tooltipWidth: number;
   tooltipHeight: number;
   viewportWidth: number;
   viewportHeight: number;
 }) {
-  const maxX = Math.max(MARGEN_TOOLTIP, viewportWidth - tooltipWidth - MARGEN_TOOLTIP);
-  const maxY = Math.max(MARGEN_TOOLTIP, viewportHeight - tooltipHeight - MARGEN_TOOLTIP);
+  const maxX = viewportWidth - tooltipWidth - MARGEN_VIEWPORT;
+  const maxY = viewportHeight - tooltipHeight - MARGEN_VIEWPORT;
 
-  const x = ancla.left + ancla.width / 2 - tooltipWidth / 2;
-  let y = ancla.top - tooltipHeight - SEPARACION_TOOLTIP;
+  /* ── Eje horizontal: preferir centrado sobre el cursor, clampeado al viewport ── */
+  const xIdeal = cursorX - tooltipWidth / 2 + OFFSET_CURSOR_X;
+  const x = limitar(xIdeal, MARGEN_VIEWPORT, maxX);
 
-  if (y < MARGEN_TOOLTIP) {
-    y = ancla.bottom + SEPARACION_TOOLTIP;
-  }
+  /* ── Eje vertical: preferir arriba del cursor; si no cabe, abajo ── */
+  const arribaY = cursorY - tooltipHeight - OFFSET_CURSOR_Y;
+  const abajoY = cursorY + OFFSET_CURSOR_Y + 8;
 
-  return {
-    x: limitar(x, MARGEN_TOOLTIP, maxX),
-    y: limitar(y, MARGEN_TOOLTIP, maxY),
-  };
+  const y = arribaY >= MARGEN_VIEWPORT
+    ? arribaY
+    : limitar(abajoY, MARGEN_VIEWPORT, maxY);
+
+  return { x, y };
 }
 
 function tonoEvento(impacto: EventoClaveCalendario["impacto"]) {
@@ -109,10 +118,12 @@ function TooltipDiaCalendario({
   estado,
   posicion,
   referencia,
+  cerrando,
 }: {
   estado: TooltipDiaState;
   posicion: PosicionTooltipState | null;
   referencia: RefObject<HTMLDivElement | null>;
+  cerrando: boolean;
 }) {
   const primerEvento = estado.eventos[0];
   const visible = posicion !== null;
@@ -121,13 +132,14 @@ function TooltipDiaCalendario({
     <div
       ref={referencia}
       className={cn(
-        "pointer-events-none fixed z-[100] transition-opacity duration-150",
-        visible && "animate-[tooltip-in_180ms_ease-out_both]",
+        "pointer-events-none fixed z-[100]",
+        visible && !cerrando && "animate-[tooltip-in_180ms_ease-out_both]",
+        cerrando && "animate-[tooltip-out_120ms_ease-in_both]",
       )}
       style={{
         left: posicion?.x ?? -9999,
         top: posicion?.y ?? -9999,
-        opacity: visible ? 1 : 0,
+        opacity: visible && !cerrando ? 1 : 0,
       }}
     >
       <div
@@ -220,7 +232,11 @@ export function CalendarioMes({
   const refsSemana = useRef<Record<number, HTMLDivElement | null>>({});
   const anclaTooltipRef = useRef<HTMLButtonElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const rafRef = useRef<number>(0);
+  const cursorRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [tooltip, setTooltip] = useState<TooltipDiaState | null>(null);
+  const [tooltipVisible, setTooltipVisible] = useState<TooltipDiaState | null>(null);
+  const [cerrando, setCerrando] = useState(false);
   const [posicionTooltip, setPosicionTooltip] = useState<PosicionTooltipState | null>(null);
 
   const mapaDias = useMemo(() => {
@@ -257,79 +273,91 @@ export function CalendarioMes({
     fila.scrollIntoView({ block: "nearest" });
   }, [indiceSemanaActiva, semanas.length]);
 
-  function ocultarTooltip() {
+  /* ── Animación de salida: mantener datos visibles durante fade-out ── */
+  useEffect(() => {
+    if (tooltip) {
+      setCerrando(false);
+      setTooltipVisible(tooltip);
+    } else if (tooltipVisible) {
+      setCerrando(true);
+      const timer = setTimeout(() => {
+        setTooltipVisible(null);
+        setCerrando(false);
+        setPosicionTooltip(null);
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [tooltip]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const ocultarTooltip = useCallback(() => {
     anclaTooltipRef.current = null;
     setTooltip(null);
-    setPosicionTooltip(null);
-  }
+  }, []);
 
+  /* ── Reposicionar tooltip relativo al cursor ── */
+  const reposicionar = useCallback(() => {
+    const elementoTooltip = tooltipRef.current;
+    if (!elementoTooltip || !anclaTooltipRef.current) return;
+
+    const { x: cx, y: cy } = cursorRef.current;
+
+    const { x, y } = calcularPosicionTooltip({
+      cursorX: cx,
+      cursorY: cy,
+      tooltipWidth: elementoTooltip.offsetWidth,
+      tooltipHeight: elementoTooltip.offsetHeight,
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+    });
+
+    setPosicionTooltip((actual) =>
+      actual?.x === x && actual?.y === y ? actual : { x, y },
+    );
+  }, []);
+
+  /* ── Posicionamiento inicial: useLayoutEffect elimina 1 frame de delay ── */
+  useLayoutEffect(() => {
+    if (!tooltip) return;
+    reposicionar();
+  }, [tooltip, reposicionar]);
+
+  /* ── Ocultar tooltip en scroll (la celda se desplaza bajo el cursor) ── */
   useEffect(() => {
     if (!tooltip) return;
 
-    const reposicionar = () => {
-      const elementoAncla = anclaTooltipRef.current;
-      const elementoTooltip = tooltipRef.current;
+    const onScroll = () => ocultarTooltip();
 
-      if (!elementoAncla || !elementoTooltip) return;
+    window.addEventListener("scroll", onScroll, true);
+    return () => window.removeEventListener("scroll", onScroll, true);
+  }, [tooltip, ocultarTooltip]);
 
-      const rect = elementoAncla.getBoundingClientRect();
-      const fueraDePantalla =
-        rect.bottom < 0 ||
-        rect.top > window.innerHeight ||
-        rect.right < 0 ||
-        rect.left > window.innerWidth;
+  const mostrarTooltip = useCallback(
+    (
+      fecha: string,
+      faseLunar: string,
+      eventos: EventoClaveCalendario[],
+      ritmo: RitmoPersonalCalendario | null,
+      elementoAncla: HTMLButtonElement,
+      clientX: number,
+      clientY: number,
+    ) => {
+      anclaTooltipRef.current = elementoAncla;
+      cursorRef.current = { x: clientX, y: clientY };
+      setPosicionTooltip(null);
+      setTooltip({ fecha, eventos, ritmo, faseLunar });
+    },
+    [],
+  );
 
-      if (fueraDePantalla) {
-        ocultarTooltip();
-        return;
-      }
-
-      const { x, y } = calcularPosicionTooltip({
-        ancla: {
-          top: rect.top,
-          left: rect.left,
-          right: rect.right,
-          bottom: rect.bottom,
-          width: rect.width,
-          height: rect.height,
-        },
-        tooltipWidth: elementoTooltip.offsetWidth,
-        tooltipHeight: elementoTooltip.offsetHeight,
-        viewportWidth: window.innerWidth,
-        viewportHeight: window.innerHeight,
-      });
-
-      setPosicionTooltip((actual) => {
-        if (actual?.x === x && actual?.y === y) {
-          return actual;
-        }
-
-        return { x, y };
-      });
-    };
-
-    const frame = window.requestAnimationFrame(reposicionar);
-    window.addEventListener("resize", reposicionar);
-    window.addEventListener("scroll", reposicionar, true);
-
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener("resize", reposicionar);
-      window.removeEventListener("scroll", reposicionar, true);
-    };
-  }, [tooltip]);
-
-  function mostrarTooltip(
-    fecha: string,
-    faseLunar: string,
-    eventos: EventoClaveCalendario[],
-    ritmo: RitmoPersonalCalendario | null,
-    elementoAncla: HTMLButtonElement,
-  ) {
-    anclaTooltipRef.current = elementoAncla;
-    setPosicionTooltip(null);
-    setTooltip({ fecha, eventos, ritmo, faseLunar });
-  }
+  const moverTooltip = useCallback(
+    (clientX: number, clientY: number) => {
+      cursorRef.current = { x: clientX, y: clientY };
+      if (!anclaTooltipRef.current || !tooltipRef.current) return;
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(reposicionar);
+    },
+    [reposicionar],
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -353,8 +381,8 @@ export function CalendarioMes({
               disabled={!puedeIrAtras}
               aria-label="Mes actual"
               className={cn(
-                "inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors",
-                !puedeIrAtras && "cursor-not-allowed opacity-45",
+                "inline-flex h-10 w-10 items-center justify-center rounded-full border transition-[background-color,border-color] duration-200 hover:bg-[var(--shell-chip)] hover:border-[var(--shell-borde-fuerte)]",
+                !puedeIrAtras && "cursor-not-allowed opacity-45 pointer-events-none",
               )}
               style={{
                 borderColor: "var(--shell-borde)",
@@ -370,8 +398,8 @@ export function CalendarioMes({
               disabled={!puedeIrAdelante}
               aria-label="Próximo mes"
               className={cn(
-                "inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors",
-                !puedeIrAdelante && "cursor-not-allowed opacity-45",
+                "inline-flex h-10 w-10 items-center justify-center rounded-full border transition-[background-color,border-color] duration-200 hover:bg-[var(--shell-chip)] hover:border-[var(--shell-borde-fuerte)]",
+                !puedeIrAdelante && "cursor-not-allowed opacity-45 pointer-events-none",
               )}
               style={{
                 borderColor: "var(--shell-borde)",
@@ -421,6 +449,8 @@ export function CalendarioMes({
                 const estaSeleccionado = fechaStr === fechaSeleccionada;
                 const esHoy = fechaStr === hoy;
 
+                const tieneData = !!dia;
+
                 return (
                   <button
                     key={fechaStr}
@@ -434,28 +464,40 @@ export function CalendarioMes({
                         eventos,
                         ritmo,
                         e.currentTarget,
+                        e.clientX,
+                        e.clientY,
                       );
+                    }}
+                    onMouseMove={(e) => {
+                      if (!dia) return;
+                      moverTooltip(e.clientX, e.clientY);
                     }}
                     onFocus={(e) => {
                       if (!dia) return;
+                      const rect = e.currentTarget.getBoundingClientRect();
                       mostrarTooltip(
                         fechaStr,
                         dia.fase_lunar,
                         eventos,
                         ritmo,
                         e.currentTarget,
+                        rect.left + rect.width / 2,
+                        rect.top,
                       );
                     }}
                     onMouseLeave={ocultarTooltip}
                     onBlur={ocultarTooltip}
                     className={cn(
-                      "relative min-h-[80px] border-r px-2.5 py-2.5 text-left transition-colors last:border-r-0 sm:min-h-[90px]",
+                      "grupo relative min-h-[80px] border-r px-2.5 py-2.5 text-left transition-[background-color,box-shadow] duration-200 last:border-r-0 sm:min-h-[90px]",
                       !perteneceAlMes && "opacity-55",
+                      tieneData
+                        ? "hover:bg-[var(--shell-superficie-suave)] cursor-pointer"
+                        : "cursor-default opacity-80",
                     )}
                     style={{
                       borderColor: indiceDia === 6 ? "transparent" : "var(--shell-borde)",
                       boxShadow: estaSeleccionado ? "inset 0 0 0 1px var(--shell-borde-fuerte)" : "none",
-                      background: estaSeleccionado ? "var(--shell-superficie-suave)" : "transparent",
+                      background: estaSeleccionado ? "var(--shell-superficie-suave)" : undefined,
                     }}
                   >
                     {/* Fila superior: número + luna + ritmo */}
@@ -520,11 +562,12 @@ export function CalendarioMes({
         })}
       </div>
 
-      {tooltip ? (
+      {tooltipVisible ? (
         <TooltipDiaCalendario
-          estado={tooltip}
+          estado={tooltipVisible}
           posicion={posicionTooltip}
           referencia={tooltipRef}
+          cerrando={cerrando}
         />
       ) : null}
     </div>

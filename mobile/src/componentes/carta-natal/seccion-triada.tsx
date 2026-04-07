@@ -1,5 +1,5 @@
 import { View, Text, Pressable } from "react-native";
-import { IconoSigno } from "@/componentes/ui/icono-astral";
+import { Sun, Moon, Compass } from "phosphor-react-native";
 import { usarTema } from "@/lib/hooks/usar-tema";
 import { ROMANO, ELEMENTO_SIGNO } from "@/lib/utilidades/interpretaciones-natal";
 import type { Planeta, PuntoSensible } from "@/lib/tipos";
@@ -12,9 +12,9 @@ interface SeccionTriadaProps {
 }
 
 const CONFIG = [
-  { key: "sol" as const, label: "Sol", sublabel: "Esencia", accent: "#D4A234" },
-  { key: "luna" as const, label: "Luna", sublabel: "Emociones", accent: "#9575CD" },
-  { key: "ascendente" as const, label: "Ascendente", sublabel: "Máscara", accent: "#5C6BC0" },
+  { key: "sol" as const, label: "Sol", sublabel: "Esencia", Icono: Sun },
+  { key: "luna" as const, label: "Luna", sublabel: "Emociones", Icono: Moon },
+  { key: "ascendente" as const, label: "Ascendente", sublabel: "Presencia", Icono: Compass },
 ];
 
 export function SeccionTriada({ sol, luna, ascendente, onSeleccionar }: SeccionTriadaProps) {
@@ -34,18 +34,21 @@ export function SeccionTriada({ sol, luna, ascendente, onSeleccionar }: SeccionT
       <View style={{ flexDirection: "row", gap: 8 }}>
         {items.map(({ config, signo, grado, casa }) => {
           const elemento = ELEMENTO_SIGNO[signo] || "";
+          const { Icono } = config;
           return (
             <Pressable
               key={config.key}
               onPress={() => onSeleccionar(config.key)}
+              accessibilityRole="button"
+              accessibilityLabel={`${config.label} en ${signo}`}
               style={{
                 flex: 1,
-                backgroundColor: `${config.accent}15`,
+                backgroundColor: colores.fondoSecundario,
                 borderRadius: 16,
                 padding: 12,
                 alignItems: "center",
                 borderWidth: 1,
-                borderColor: `${config.accent}30`,
+                borderColor: colores.vidrioBorde,
               }}
             >
               <View
@@ -53,17 +56,15 @@ export function SeccionTriada({ sol, luna, ascendente, onSeleccionar }: SeccionT
                   width: 44,
                   height: 44,
                   borderRadius: 22,
-                  backgroundColor: `${config.accent}20`,
-                  borderWidth: 2,
-                  borderColor: config.accent,
+                  backgroundColor: colores.acento + "18",
                   alignItems: "center",
                   justifyContent: "center",
                   marginBottom: 6,
                 }}
               >
-                <IconoSigno signo={signo} tamaño={22} style={{ tintColor: config.accent }} />
+                <Icono size={22} color={colores.acento} weight="fill" />
               </View>
-              <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: config.accent, textTransform: "uppercase", letterSpacing: 1 }}>
+              <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: colores.acento, textTransform: "uppercase", letterSpacing: 1 }}>
                 {config.label}
               </Text>
               <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: colores.primario, marginTop: 2 }}>

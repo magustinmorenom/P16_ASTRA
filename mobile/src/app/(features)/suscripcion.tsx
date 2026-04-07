@@ -295,24 +295,34 @@ export default function SuscripcionScreen() {
           </View>
         )}
 
-        <Boton
-          variante="secundario"
-          onPress={() => router.push("/(features)/suscripcion-verificacion" as never)}
-          style={{ marginBottom: 12 }}
-        >
-          Verificar estado del pago
-        </Boton>
-
         {esPremium && !suscripcion?.cancelacion_programada && (
           <>
             <Separador />
-            <Boton
-              variante="fantasma"
+            <Pressable
               onPress={manejarCancelacion}
-              cargando={cancelar.isPending}
+              disabled={cancelar.isPending}
+              accessibilityRole="button"
+              accessibilityLabel="Cancelar suscripción"
+              style={{
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: `${colores.error}40`,
+                backgroundColor: `${colores.error}10`,
+                paddingVertical: 14,
+                alignItems: "center",
+                marginTop: 4,
+              }}
             >
-              Cancelar suscripción
-            </Boton>
+              <Text
+                style={{
+                  color: colores.error,
+                  fontSize: 14,
+                  fontFamily: "Inter_600SemiBold",
+                }}
+              >
+                {cancelar.isPending ? "Cancelando..." : "Cancelar suscripción"}
+              </Text>
+            </Pressable>
           </>
         )}
 

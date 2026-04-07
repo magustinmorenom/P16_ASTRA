@@ -35,3 +35,12 @@ class ConversacionOraculo(ModeloBase):
     activa: Mapped[bool] = mapped_column(
         Boolean, default=True,
     )
+    titulo: Mapped[str | None] = mapped_column(
+        String(120), nullable=True,
+    )
+    anclada: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false",
+    )
+    archivada: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false",
+    )

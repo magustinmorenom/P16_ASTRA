@@ -147,22 +147,19 @@ describe("PaginaCalendarioCosmico", () => {
     expect(screen.getByText(/Venus cambia de Piscis a Aries/i)).toBeInTheDocument();
   });
 
-  it("reubica el tooltip hacia la izquierda y arriba cuando el casillero queda contra el borde", () => {
-    expect(
-      calcularPosicionTooltip({
-        ancla: {
-          top: 780,
-          left: 1450,
-          right: 1590,
-          bottom: 870,
-          width: 140,
-          height: 90,
-        },
-        tooltipWidth: 296,
-        tooltipHeight: 212,
-        viewportWidth: 1600,
-        viewportHeight: 900,
-      }),
-    ).toEqual({ x: 1288, y: 554 });
+  it("reubica el tooltip hacia la izquierda y arriba cuando el cursor queda contra el borde", () => {
+    const resultado = calcularPosicionTooltip({
+      cursorX: 1520,
+      cursorY: 820,
+      tooltipWidth: 296,
+      tooltipHeight: 212,
+      viewportWidth: 1600,
+      viewportHeight: 900,
+    });
+    // El tooltip debe caber dentro del viewport con margen 12px
+    expect(resultado.x).toBeLessThanOrEqual(1600 - 296 - 12);
+    expect(resultado.x).toBeGreaterThanOrEqual(12);
+    // Arriba del cursor: 820 - 212 - 14 = 594
+    expect(resultado.y).toBe(594);
   });
 });

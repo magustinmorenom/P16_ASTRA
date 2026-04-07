@@ -669,69 +669,15 @@ export default function PaginaPerfil() {
                     <h1 className="text-lg font-semibold tracking-[-0.02em] text-[color:var(--shell-texto-inverso)] sm:text-xl">
                       {usuario?.nombre ?? "Tu cuenta"}
                     </h1>
-                    <p className="tema-hero-secundario mt-2 break-all text-sm">
-                      {usuario?.email ?? "—"}
-                    </p>
                   </div>
                 </div>
 
                 <p className="tema-hero-secundario mt-5 text-sm leading-6">
-                  {planLabel} · {obtenerEtiquetaProveedor(usuario?.proveedor_auth)} · Alta{" "}
-                  {formatearFechaRegistro(usuario?.creado_en)}
+                  {planLabel}
                   {perfil ? " · Base cargada" : ""}
                 </p>
               </div>
 
-              <div
-                className="rounded-[22px] border p-5 backdrop-blur-xl"
-                style={{
-                  borderColor: "var(--shell-borde)",
-                  background: "var(--shell-superficie)",
-                }}
-              >
-                <EtiquetaPanel>Estado</EtiquetaPanel>
-
-                <div className="mt-3 flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-lg font-semibold tracking-tight text-[color:var(--shell-texto)]">
-                      Cuenta lista para usar
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
-                      {usuario?.activo ? "Sesión activa" : "Cuenta inactiva"} ·{" "}
-                      {usuario?.verificado ? "Correo verificado" : "Correo pendiente"}
-                    </p>
-                  </div>
-
-                  <BadgeEstado tono={badgeSuscripcion.tono}>
-                    {badgeSuscripcion.texto}
-                  </BadgeEstado>
-                </div>
-
-                {miSuscripcion?.cancelacion_programada && (
-                  <p className="mt-4 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
-                    Activo hasta{" "}
-                    <span className="font-medium text-[color:var(--shell-texto)]">
-                      {miSuscripcion.fecha_fin
-                        ? formatearFechaCorta(miSuscripcion.fecha_fin)
-                        : "—"}
-                    </span>
-                    .
-                  </p>
-                )}
-
-                <Link
-                  href="/suscripcion"
-                  className="mt-5 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
-                  style={{
-                    borderColor: "var(--shell-borde)",
-                    background: "var(--shell-superficie)",
-                    color: "var(--shell-texto)",
-                  }}
-                >
-                  <Icono nombre="corona" tamaño={16} />
-                  {tienePlanPago ? "Gestionar plan" : "Ver planes"}
-                </Link>
-              </div>
             </div>
           </section>
 
