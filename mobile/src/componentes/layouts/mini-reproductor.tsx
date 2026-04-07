@@ -129,18 +129,18 @@ export function MiniReproductor() {
   if (Platform.OS === "ios") {
     return (
       <BlurView
-        intensity={80}
+        intensity={90}
         tint="dark"
         style={{
           position: "absolute",
-          bottom: 85,
+          bottom: 80,
           left: 0,
           right: 0,
           borderTopWidth: 1,
-          borderTopColor: "rgba(255,255,255,0.1)",
+          borderTopColor: "rgba(255,255,255,0.05)",
         }}
       >
-        <View style={{ backgroundColor: "rgba(45, 27, 105, 0.85)" }}>
+        <View style={{ backgroundColor: "rgba(20, 12, 36, 0.95)" }}>
           {contenido}
         </View>
       </BlurView>
@@ -151,12 +151,12 @@ export function MiniReproductor() {
     <View
       style={{
         position: "absolute",
-        bottom: 85,
+        bottom: 80,
         left: 0,
         right: 0,
-        backgroundColor: "#1a1128",
+        backgroundColor: "#0d0818",
         borderTopWidth: 1,
-        borderTopColor: "rgba(255,255,255,0.1)",
+        borderTopColor: "rgba(255,255,255,0.05)",
       }}
     >
       {contenido}
