@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, ScrollView, Platform } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -6,49 +6,62 @@ import {
   Play,
   Pause,
   CaretDown,
-  SkipBack,
-  SkipForward,
+  Rewind,
+  FastForward,
   SpeakerHigh,
   SpeakerSlash,
 } from "phosphor-react-native";
 import Slider from "@react-native-community/slider";
 import { useStoreUI } from "@/lib/stores/store-ui";
-import { usarAudioNativo } from "@/lib/hooks/usar-audio-nativo";
 import { usarTema } from "@/lib/hooks/usar-tema";
 
-function formatearTiempo(seg: number): string {
-  const m = Math.floor(seg / 60);
-  const s = Math.floor(seg % 60);
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
+type AudioContextProps = {
+  pistaActual: any;
+  reproduciendo: boolean;
+  progresoSegundos: number;
+  segmentoActual: number;
+  volumen: number;
+  silenciado: boolean;
+  descargandoAudio: boolean;
+  progresoDescarga: number;
+  errorAudio: string | null;
+  toggleReproduccion: () => void;
+  setVolumen: (v: number) => void;
+  toggleSilencio: () => void;
+  manejarSeek: (v: number) => void;
+  manejarCerrar: () => void;
+};
 
-export function ReproductorCompleto() {
+export function ReproductorCompleto({
+  pistaActual,
+  reproduciendo,
+  progresoSegundos,
+  segmentoActual,
+  volumen,
+  silenciado,
+  descargandoAudio,
+  progresoDescarga,
+  errorAudio,
+  toggleReproduccion,
+  setVolumen,
+  toggleSilencio,
+  manejarSeek,
+  manejarCerrar,
+}: AudioContextProps) {
   const insets = useSafeAreaInsets();
   const { toggleMiniReproductor } = useStoreUI();
-  const {
-    pistaActual,
-    reproduciendo,
-    progresoSegundos,
-    segmentoActual,
-    volumen,
-    silenciado,
-    descargandoAudio,
-    progresoDescarga,
-    errorAudio,
-    toggleReproduccion,
-    setVolumen,
-    toggleSilencio,
-    manejarSeek,
-    manejarCerrar,
-  } = usarAudioNativo();
   const { colores, esOscuro } = usarTema();
   const scrollRef = useRef<ScrollView>(null);
   const offsetsSegmentos = useRef<Record<number, number>>({});
   const segmentos = pistaActual?.segmentos ?? [];
 
+  // Estados locales para no robarle el scroll al usuario si está leyendo
+  const [isScrollingText, setIsScrollingText] = useState(false);
+  const timerScrollRef = useRef<NodeJS.Timeout | null>(null);
+
   // Auto-scroll lyrics al segmento activo
   useEffect(() => {
-    if (!segmentos.length) return;
+    if (!segmentos.length || isScrollingText) return;
     const idx = Math.min(segmentoActual, segmentos.length - 1);
     const offset = offsetsSegmentos.current[idx];
     if (typeof offset !== "number") return;
@@ -132,8 +145,19 @@ export function ReproductorCompleto() {
             paddingBottom: 40,
           }}
           showsVerticalScrollIndicator={false}
+          onScrollBeginDrag={() => {
+            setIsScrollingText(true);
+            if (timerScrollRef.current) clearTimeout(timerScrollRef.current);
+          }}
+          onScrollEndDrag={() => {
+            timerScrollRef.current = setTimeout(() => setIsScrollingText(false), 3000);
+          }}
+          onMomentumScrollEnd={() => {
+            if (timerScrollRef.current) clearTimeout(timerScrollRef.current);
+            timerScrollRef.current = setTimeout(() => setIsScrollingText(false), 3000);
+          }}
         >
-          {segmentos.map((segmento, index) => {
+          {segmentos.map((segmento: any, index: number) => {
             const activo =
               index === segmentoActual || (index === 0 && progresoSegundos === 0);
             const pasado = index < segmentoActual;
@@ -257,32 +281,7 @@ export function ReproductorCompleto() {
           ASTRA
         </Text>
 
-        {/* Progress bar */}
-        <Slider
-          minimumValue={0}
-          maximumValue={duracion}
-          value={progresoSegundos}
-          onSlidingComplete={manejarSeek}
-          minimumTrackTintColor="#FFFFFF"
-          maximumTrackTintColor="rgba(255,255,255,0.2)"
-          thumbTintColor="#FFFFFF"
-          style={{ height: 20 }}
-        />
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            marginTop: 2,
-            marginBottom: 20,
-          }}
-        >
-          <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: "Inter_500Medium" }}>
-            {formatearTiempo(progresoSegundos)}
-          </Text>
-          <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: "Inter_500Medium" }}>
-            -{formatearTiempo(Math.max(duracion - progresoSegundos, 0))}
-          </Text>
-        </View>
+        {/* Nota: Control deslizante de tiempo eliminado a pedido del usuario */}
 
         {/* Play controls */}
         <View
@@ -296,12 +295,12 @@ export function ReproductorCompleto() {
         >
           {/* Skip back */}
           <Pressable
-            onPress={() => manejarSeek(Math.max(progresoSegundos - 15, 0))}
+            onPress={() => manejarSeek(Math.max(progresoSegundos - 10, 0))}
             accessibilityRole="button"
-            accessibilityLabel="Retroceder 15 segundos"
+            accessibilityLabel="Retroceder 10 segundos"
             hitSlop={12}
           >
-            <SkipBack size={28} color="rgba(255,255,255,0.7)" weight="fill" />
+            <Rewind size={28} color="rgba(255,255,255,0.7)" weight="fill" />
           </Pressable>
 
           {/* Play/Pause — botón principal */}
@@ -329,12 +328,12 @@ export function ReproductorCompleto() {
 
           {/* Skip forward */}
           <Pressable
-            onPress={() => manejarSeek(Math.min(progresoSegundos + 15, duracion))}
+            onPress={() => manejarSeek(Math.min(progresoSegundos + 10, duracion))}
             accessibilityRole="button"
-            accessibilityLabel="Avanzar 15 segundos"
+            accessibilityLabel="Avanzar 10 segundos"
             hitSlop={12}
           >
-            <SkipForward size={28} color="rgba(255,255,255,0.7)" weight="fill" />
+            <FastForward size={28} color="rgba(255,255,255,0.7)" weight="fill" />
           </Pressable>
         </View>
 

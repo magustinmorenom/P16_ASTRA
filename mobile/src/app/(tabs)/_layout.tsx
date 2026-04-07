@@ -126,14 +126,6 @@ export default function LayoutTabs() {
         />
       </Tabs>
 
-      {/* Degradé suave arriba del tab bar */}
-      <View
-        pointerEvents="none"
-        style={{ position: "absolute", bottom: TAB_H, left: 0, right: 0, height: FADE_H }}
-      >
-        <LinearGradient colors={["transparent", `${violeta}B0`]} style={{ flex: 1 }} />
-      </View>
-
       {/* FAB Chat — centrado sobre el spacer del tab bar */}
       <Pressable
         onPress={abrirChat}
@@ -168,11 +160,6 @@ export default function LayoutTabs() {
               alignItems: "center",
               justifyContent: "center",
               backgroundColor: chatAbierto ? "#9333EA" : "#7C4DFF",
-              shadowColor: "#A855F7",
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: chatAbierto ? 0.65 : 0.35,
-              shadowRadius: 18,
-              elevation: 14,
             }}
           >
             <ChatCircleDots size={28} color="#FFFFFF" weight="fill" />

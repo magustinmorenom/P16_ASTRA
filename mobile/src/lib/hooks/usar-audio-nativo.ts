@@ -4,7 +4,7 @@ import {
   useAudioPlayerStatus,
   setAudioModeAsync,
 } from "expo-audio";
-import { Paths, File as ExpoFile } from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as SecureStore from "expo-secure-store";
 import { useStoreUI } from "@/lib/stores/store-ui";
 import { API_BASE_URL } from "@/lib/api/cliente";
@@ -55,19 +55,28 @@ export function usarAudioNativo() {
 
         const token = await SecureStore.getItemAsync("access_token");
         const audioUrl = `${API_BASE_URL}/podcast/audio/${pistaActual.id}`;
-        const destino = new ExpoFile(Paths.cache, `podcast_${pistaActual.id}.mp3`);
+        
+        console.log(`[usarAudioNativo] Iniciando descarga con API legacy: ${audioUrl}`);
+        
+        const destinoUri = `${FileSystem.cacheDirectory}podcast_${pistaActual.id}.mp3`;
 
-        // Descargar con autenticación
-        await ExpoFile.downloadFileAsync(audioUrl, destino, {
+        const result = await FileSystem.downloadAsync(audioUrl, destinoUri, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
+
+        console.log(`[usarAudioNativo] Descarga API legacy completada: ${result.uri}`);
 
         setProgresoDescarga(100);
         setDescargandoAudio(false);
 
-        player.replace({ uri: destino.uri });
+        if (result.status !== 200) {
+          throw new Error(`HTTP Status ${result.status}`);
+        }
+
+        player.replace({ uri: result.uri });
         player.play();
-      } catch {
+      } catch (error) {
+        console.error("[usarAudioNativo] Falló la descarga de audio:", error);
         setDescargandoAudio(false);
         setProgresoDescarga(0);
         setErrorAudio("No se pudo cargar el audio. Verifica tu conexion.");
@@ -102,13 +111,17 @@ export function usarAudioNativo() {
     if (typeof segundos === "number" && segundos >= 0) {
       setProgreso(segundos);
 
-      // Calcular segmento activo
-      if (pistaActual.segmentos) {
-        const idx = pistaActual.segmentos.findIndex(
-          (s) => segundos >= s.inicio_seg && segundos < s.fin_seg
-        );
-        if (idx !== -1 && idx !== segmentoActual) {
-          setSegmentoActual(idx);
+      // Calcular segmento activo (búsqueda robusta inversa para sortear silencios)
+      if (pistaActual.segmentos && pistaActual.segmentos.length > 0) {
+        let nuevoIdx = 0;
+        for (let i = pistaActual.segmentos.length - 1; i >= 0; i--) {
+          if (segundos >= pistaActual.segmentos[i].inicio_seg) {
+            nuevoIdx = i;
+            break; // Encontramos el último bloque que ya empezó
+          }
+        }
+        if (nuevoIdx !== segmentoActual) {
+          setSegmentoActual(nuevoIdx);
         }
       }
     }

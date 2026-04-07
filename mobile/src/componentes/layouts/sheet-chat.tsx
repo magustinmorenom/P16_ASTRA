@@ -9,6 +9,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
@@ -278,10 +279,10 @@ function MenuContextual({
   if (!visible) return null;
 
   return (
-    <>
+    <View style={[StyleSheet.absoluteFill, { zIndex: 200, elevation: 200 }]}>
       <Pressable
         onPress={() => onCerrar()}
-        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 10 }}
+        style={StyleSheet.absoluteFill}
       />
       <Animated.View
         entering={FadeIn.duration(150)}
@@ -291,7 +292,8 @@ function MenuContextual({
           left: 16,
           right: 16,
           top: Math.min(posY, 400),
-          zIndex: 20,
+          zIndex: 21,
+          elevation: 21,
           borderRadius: 14,
           overflow: "hidden",
         }}
@@ -357,7 +359,7 @@ function MenuContextual({
           ))}
         </View>
       </Animated.View>
-    </>
+    </View>
   );
 }
 
@@ -469,16 +471,32 @@ function PanelConversaciones({
             accessibilityRole="button"
             accessibilityLabel="Nueva conversación"
             hitSlop={8}
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 10,
-              backgroundColor: colores.acento,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
           >
-            <Plus size={18} color="#FFFFFF" weight="bold" />
+            {({ pressed }) => (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 6,
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  borderRadius: 20,
+                  backgroundColor: pressed ? `${colores.acento}CC` : colores.acento,
+                  transform: [{ scale: pressed ? 0.95 : 1 }],
+                }}
+              >
+                <Plus size={14} color="#FFFFFF" weight="bold" />
+                <Text
+                  style={{
+                    color: "#FFFFFF",
+                    fontSize: 14,
+                    fontFamily: "Inter_600SemiBold",
+                  }}
+                >
+                  Nuevo
+                </Text>
+              </View>
+            )}
           </Pressable>
         </Animated.View>
 

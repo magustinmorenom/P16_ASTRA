@@ -3484,3 +3484,111 @@ Se promovió el chat a la navegación principal inferior para darle más protago
 1. La barra inferior ahora expone `Chat` como destino principal, ubicado al centro y con mayor peso visual; `Descubrir` deja de ocupar un slot de tab pero sigue disponible desde los CTAs internos.
 2. Cualquier acceso viejo al oráculo cae en la nueva tab mediante redirección, así que no se rompe el flujo previo ni los links internos existentes.
 3. Cuando se reproduce un podcast y el usuario expande el mini reproductor, la pantalla completa muestra el texto segmentado del episodio, resalta la línea activa según el tiempo actual y permite tocar cualquier bloque para saltar a ese punto del audio.
+
+## Sesion: Fix del Menú Contextual del Chat
+**Fecha:** 2026-04-07 ~15:35 (ARG)
+
+### Que se hizo
+Se solucionó un bug en el menú contextual de las conversaciones del chat que impedía tocar las opciones (eliminar, archivar, etc) debido a la jerarquía térmica de z-index y el layout absoluto que ocultaba las interacciones.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `mobile/src/componentes/layouts/sheet-chat.tsx` | Se encapsuló `MenuContextual` en un `View` con `StyleSheet.absoluteFill`, `zIndex` y `elevation` para asegurar la captura de eventos en Android e iOS, y evitar que el fondo robe el pulso. |
+
+### Tests
+No aplican (tests UI no automatizados actualmente), sin errores de build.
+
+### Como funciona
+El menú de pulsación larga en las conversaciones se renderizaba de forma que eventos táctiles perforaban o caían al `Pressable` trasero. Al darle un `View` pantalla-completa virtual (absoluteFill) con prioridades absolutas combinando `zIndex` + `elevation`, React Native captura limpiamente el evento en el contenedor y ejecuta la opción deseada (ej. mostrar alerta de borrado) bloqueando gestos del `FlatList` subyacente.
+
+## Sesion: Fix de interfaz del Modal de Resumen Cósmico
+**Fecha:** 2026-04-07 ~17:21 (ARG)
+
+### Que se hizo
+Se implementó el Modal para visualizar el resumen/guión del podcast y se optimizó el diseño del botón alineado a la izquierda.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Descripción |
+|---------|-------------|
+| `mobile/src/app/(tabs)/index.tsx` | Se reconfiguró el botón de Leer Resumen con mayor padding, icono más grande y alineado a la izquierda. Se agregó un componente `Modal` nativo para renderizar la variable `guionVisible` con padding interno y scroll, con fondo adaptativo.
+
+### Tests
+Sin cambios, el build de la app mobile funciona correctamente.
+
+### Como funciona
+Al pulsar el botón 'Leer el resumen' en la tarjeta del podcast diario, el estado `guionVisible` almacena el texto del guión. Un componente `Modal` en la pantalla raíz detecta que el estado no es nulo y se despliega con su contenido en un `ScrollView` que incluye un botón de cierre.
+
+
+## Sesion: Mejoras UI Botón Nueva Conversación Chat Mobile
+**Fecha:** 2026-04-07 ~17:30 (ARG)
+
+### Que se hizo
+Se mejoró visualmente el botón de "Nueva conversación" en el panel lateral deslizable del chat de la app mobile.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambios |
+|---------|---------|
+| `mobile/src/componentes/layouts/sheet-chat.tsx` | Se reemplazó el cuadrado básico del símbolo + por un bloque en forma de píldora que incluye el ícono `Plus` y la palabra "Nuevo", con animación reactiva de escala y opacidad al presionar. |
+
+### Tests
+Sin cambios. UI testeada localmente.
+
+### Como funciona
+Al abrir el panel de "Conversaciones" históricos, en el header a la derecha del título, ahora aparece un botón estilo píldora. Al pulsarlo, el botón se encoge sutilmente y aumenta su transparencia, mejorando la respuesta táctil y estética "premium".
+
+
+## Sesion: Fix de reproducción de Podcast (Expo FileSystem)
+**Fecha:** 2026-04-07 ~17:35 (ARG)
+
+### Que se hizo
+Se solucionó un error crítico en Mobile donde la descarga de los audios de podcast fallaba silenciosamente arrojando el error "Verifica tu conexion" a pesar de que el backend completaba el stream correctamente (200 OK).
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambios |
+|---------|---------|
+| `mobile/src/lib/hooks/usar-audio-nativo.ts` | Se migró la descarga de audio de la API experimental `ExpoFile.downloadFileAsync` a la API probada `expo-file-system/legacy` usando `FileSystem.downloadAsync` debido a problemas con la inyección de headers (token de autorización) de la nueva API. También se agregó registro de errores (`console.error`) y validación de HTTP Status estricto. |
+
+### Tests
+Sin iteración de tests. Se valida funcionalidad principal de React Native.
+
+### Como funciona
+Al tocar reproducir un podcast, el reproductor ahora utiliza la API Legacy para guardar el MP3 en el directorio de caché enviando correctamente el Auth Token. Al terminar de bajarlo de forma segura, setea el progreso y el source uri a la instancia de `expo-audio`.
+
+
+## Sesion: Mejoras Sincronización Reproductor y Slider
+**Fecha:** 2026-04-07 ~17:45 (ARG)
+
+### Que se hizo
+Se arregló el comportamiento errático del control de reproducción (Slider rebotando) durante el arrastre, y la desincronización del texto del podcast/transcript.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambios |
+|---------|---------|
+| `mobile/src/componentes/layouts/reproductor-completo.tsx` | Se incorporaron estados `isSliding` y `localProgreso` para independizar el valor visual temporal del slider de las actualizaciones asíncronas de la API de Expo-Audio. Además el reloj inferior de tiempo transcurrido ahora actúa en tiempo real al arrastrar. |
+| `mobile/src/lib/hooks/usar-audio-nativo.ts` | Se re-escribió la lógica para buscar el index del "segmento activo" pasando de un `findIndex(rango)` estricto a un reverse loop que agarra el último gap. De esta forma, ya no hay saltos de líneas en blanco por desfasajes o pausas que contengan milisegundos de silencio. |
+
+### Tests
+No iteración. Modificación visual/estado pura de JS.
+
+### Como funciona
+Al tocar y mover el progress bar, internamente un estado bloquea que `usarAudioNativo` pise nuestro control visual. A la vez, un algoritmo "optimista" lee los textos de abajo hacia arriba cotejando contra los segundos reales, previniendo que ninguna oración pierda foco aunque haya baches instrumentales sin voz.
+
+
+## Sesion: Fixed Reproductor Doble y UI de Saltos (Mobile)
+**Fecha:** 2026-04-07 ~17:55 (ARG)
+
+### Que se hizo
+Se arregló un bug severo que causaba que el audio se reprodujera solapado a coro, y se mejoraron los controles de avance y retroceso reemplazando los íconos confusos que parecían de salto de pista.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambios |
+|---------|---------|
+| `mobile/src/componentes/layouts/mini-reproductor.tsx` | Se extrajo el hook `usarAudioNativo()` para pasarlo por props a `ReproductorCompleto`, evitando que ambos componentes instancien el player simultáneamente causando doble loop al maximizarlo. |
+| `mobile/src/componentes/layouts/reproductor-completo.tsx` | Se preparó para recibir `{...audioContext}` por props. Se cambiaron los iconos `SkipBack` y `SkipForward` por `Rewind` y `FastForward`.  |
+
+### Tests
+No iteración de CI.
+
+### Como funciona
+El Context local de UI ahora funciona como un singleton visual: independientemente si la hoja está plegada (`Mini`) o expandida (`Completo`), el control subyacente lo gobierna un solo `useAudioPlayer` de `expo-audio`.

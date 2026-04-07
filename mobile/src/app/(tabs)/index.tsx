@@ -767,21 +767,21 @@ export default function DashboardScreen() {
                           style={{
                             flexDirection: "row",
                             alignItems: "center",
-                            justifyContent: "center",
-                            paddingVertical: 11,
+                            paddingVertical: 16,
+                            paddingHorizontal: 16,
                             borderTopWidth: 1,
                             borderTopColor: esOscuro
                               ? "rgba(255,255,255,0.06)"
                               : "rgba(124,77,255,0.1)",
                           }}
                         >
-                          <BookOpenText size={16} color={colores.acento} weight="fill" />
+                          <BookOpenText size={20} color={colores.secundario} weight="fill" />
                           <Text
                             style={{
-                              color: colores.acento,
-                              fontSize: 13,
+                              color: colores.primario,
+                              fontSize: 15,
                               fontFamily: "Inter_600SemiBold",
-                              marginLeft: 6,
+                              marginLeft: 12,
                             }}
                           >
                             Leer el resumen
@@ -1154,6 +1154,73 @@ export default function DashboardScreen() {
         </AnimacionEntrada>
 
       </ScrollView>
+
+      {/* Modal para leer el resumen */}
+      <Modal
+        visible={!!guionVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setGuionVisible(null)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: esOscuro ? "#0a0a1a" : "#F7F3FC",
+            paddingTop: insets.top,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingHorizontal: 20,
+              paddingVertical: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: colores.borde,
+            }}
+          >
+            <Text
+              style={{
+                color: colores.primario,
+                fontSize: 18,
+                fontFamily: "Inter_700Bold",
+              }}
+            >
+              Resumen Cósmico
+            </Text>
+            <Pressable
+              onPress={() => setGuionVisible(null)}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: `${colores.acento}15`,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <X size={20} color={colores.primario} />
+            </Pressable>
+          </View>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 24, paddingBottom: insets.bottom + 40 }}
+          >
+            <Text
+              style={{
+                color: colores.textoBase,
+                fontSize: 16,
+                lineHeight: 26,
+                fontFamily: "Inter_400Regular",
+              }}
+            >
+              {guionVisible}
+            </Text>
+          </ScrollView>
+        </View>
+      </Modal>
+
     </FondoCosmico>
   );
 }

@@ -8,6 +8,7 @@ import { ReproductorCompleto } from "./reproductor-completo";
 
 export function MiniReproductor() {
   const { miniReproductorExpandido, toggleMiniReproductor } = useStoreUI();
+  const audioContext = usarAudioNativo();
   const {
     pistaActual,
     reproduciendo,
@@ -17,23 +18,24 @@ export function MiniReproductor() {
     errorAudio,
     toggleReproduccion,
     manejarCerrar,
-  } = usarAudioNativo();
+  } = audioContext;
+
   const { colores, esOscuro } = usarTema();
 
   if (!pistaActual) return null;
 
   if (miniReproductorExpandido) {
-    return <ReproductorCompleto />;
+    return <ReproductorCompleto {...audioContext} />;
   }
 
   const contenido = (
     <>
       {/* Progress bar */}
-      <View style={{ height: 2, backgroundColor: colores.borde }}>
+      <View style={{ height: 2, backgroundColor: "rgba(255,255,255,0.2)" }}>
         <View
           style={{
             height: "100%",
-            backgroundColor: colores.acento,
+            backgroundColor: "#FFFFFF",
             width: `${Math.min(porcentaje, 100)}%`,
           }}
         />
@@ -51,13 +53,13 @@ export function MiniReproductor() {
             width: 40,
             height: 40,
             borderRadius: 8,
-            backgroundColor: colores.acento + "33",
+            backgroundColor: "rgba(255,255,255,0.15)",
             alignItems: "center",
             justifyContent: "center",
             marginRight: 12,
           }}
         >
-          <Text style={{ color: colores.acento, fontSize: 12, fontFamily: "Inter_700Bold" }}>
+          <Text style={{ color: "#FFFFFF", fontSize: 12, fontFamily: "Inter_700Bold" }}>
             {pistaActual.tipo === "podcast" ? "P" : "L"}
           </Text>
         </View>
@@ -75,13 +77,13 @@ export function MiniReproductor() {
             <>
               <Text
                 numberOfLines={1}
-                style={{ color: colores.primario, fontSize: 14, fontFamily: "Inter_600SemiBold" }}
+                style={{ color: "#FFFFFF", fontSize: 14, fontFamily: "Inter_600SemiBold" }}
               >
                 {pistaActual.titulo}
               </Text>
               <Text
                 numberOfLines={1}
-                style={{ color: colores.textoMuted, fontSize: 12 }}
+                style={{ color: "rgba(255,255,255,0.7)", fontSize: 12 }}
               >
                 {descargandoAudio
                   ? `Descargando ${progresoDescarga}%...`
@@ -94,7 +96,7 @@ export function MiniReproductor() {
         {/* Controles */}
         {descargandoAudio ? (
           <View style={{ marginRight: 12, padding: 4, opacity: 0.5 }}>
-            <Play size={24} color={colores.textoMuted} weight="fill" />
+            <Play size={24} color="rgba(255,255,255,0.7)" weight="fill" />
           </View>
         ) : (
           <Pressable
@@ -104,9 +106,9 @@ export function MiniReproductor() {
             style={{ marginRight: 12, padding: 4 }}
           >
             {reproduciendo ? (
-              <Pause size={24} color={colores.primario} weight="fill" />
+              <Pause size={24} color="#FFFFFF" weight="fill" />
             ) : (
-              <Play size={24} color={colores.primario} weight="fill" />
+              <Play size={24} color="#FFFFFF" weight="fill" />
             )}
           </Pressable>
         )}
@@ -117,7 +119,7 @@ export function MiniReproductor() {
           accessibilityLabel="Cerrar reproductor"
           style={{ padding: 4 }}
         >
-          <X size={20} color={colores.textoMuted} />
+          <X size={20} color="rgba(255,255,255,0.7)" />
         </Pressable>
       </Pressable>
     </>
@@ -127,18 +129,18 @@ export function MiniReproductor() {
   if (Platform.OS === "ios") {
     return (
       <BlurView
-        intensity={50}
-        tint={esOscuro ? "dark" : "light"}
+        intensity={80}
+        tint="dark"
         style={{
           position: "absolute",
           bottom: 85,
           left: 0,
           right: 0,
           borderTopWidth: 1,
-          borderTopColor: colores.vidrioBorde,
+          borderTopColor: "rgba(255,255,255,0.1)",
         }}
       >
-        <View style={{ backgroundColor: colores.vidrioOverlay }}>
+        <View style={{ backgroundColor: "rgba(45, 27, 105, 0.85)" }}>
           {contenido}
         </View>
       </BlurView>
@@ -152,9 +154,9 @@ export function MiniReproductor() {
         bottom: 85,
         left: 0,
         right: 0,
-        backgroundColor: colores.fondoSecundario,
+        backgroundColor: "#1a1128",
         borderTopWidth: 1,
-        borderTopColor: colores.borde,
+        borderTopColor: "rgba(255,255,255,0.1)",
       }}
     >
       {contenido}
