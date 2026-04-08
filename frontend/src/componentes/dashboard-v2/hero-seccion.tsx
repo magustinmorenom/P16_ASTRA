@@ -117,8 +117,7 @@ export function HeroSeccion({
                 >
                   {podcastGenerando ? (
                     <div
-                      className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-t-transparent"
-                      style={{ borderColor: "var(--color-acento)" }}
+                      className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[color:var(--color-acento)] border-t-transparent"
                     />
                   ) : (
                     <Icono
