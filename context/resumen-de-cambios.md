@@ -3592,3 +3592,73 @@ No iteración de CI.
 
 ### Como funciona
 El Context local de UI ahora funciona como un singleton visual: independientemente si la hoja está plegada (`Mini`) o expandida (`Completo`), el control subyacente lo gobierna un solo `useAudioPlayer` de `expo-audio`.
+
+## Sesion: Logo alignment in web login screen
+**Fecha:** 2026-04-07 ~20:25 (ARG)
+
+### Que se hizo
+Mejorar la alineación del logo en la pantalla de inicio de sesión (versión web responsive)
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambios |
+|---------|---------|
+| `frontend/src/componentes/layouts/layout-auth.tsx` | Se eliminó `px-1` y se añadió `flex justify-center` al contenedor del logo responsivo (en tamaño móvil) para que quede perfecto y centrado acorde a la estética general. |
+
+### Tests
+No tests nuevos implementados.
+
+### Como funciona
+El div del logo en versión móvil (`lg:hidden`) ahora utiliza flexbox con justify-center lo que hace que se posicione centrado en la página de inicio o registro de autenticación.
+
+## Sesion: Remove phrase and podcasts option from user menu
+**Fecha:** 2026-04-07 ~20:25 (ARG)
+
+### Que se hizo
+Se simplificó el menú desplegable del usuario ocultando la frase de energía predictiva del clima astrológico y removiendo la opción de "Podcasts".
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambios |
+|---------|---------|
+| `frontend/src/componentes/layouts/navbar.tsx` | Se eliminó del rendering condicional el bloque `{estadoCabecera.descripcion && ...}` que visualizaba la lectura del día debajo del email. También se removió el componente `<Link href="/podcast">` de manera permanente para simplificar las acciones. |
+
+### Tests
+No tests nuevos implementados.
+
+### Como funciona
+Al abrir el menú desplegable tocando el avatar/iniciales del usuario, el pop-up luce mucho más limpio limitándose a mostrar la información de la cuenta, y ocultando ítems innecesarios.
+
+## Sesion: Ajuste opacidad tooltips de hover
+**Fecha:** 2026-04-07 ~20:25 (ARG)
+
+### Que se hizo
+Se ajustó la opacidad de los tooltips emergentes en "Semana" y "Calendario" para hacerlos levemente translúcidos, mejorando el estilo visual del glassmorphism.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambios |
+|---------|---------|
+| `frontend/src/componentes/dashboard-v2/semana-v2.tsx` | Se agregó la clase utilitaria `opacity-90` de Tailwind al contenedor del tooltip de los días semanales. |
+| `frontend/src/app/(app)/calendario-cosmico/_componentes/calendario-mes.tsx` | Se agregó la clase utilitaria `opacity-90` de Tailwind al contenedor principal del tooltip del calendario mensual. |
+
+### Tests
+Ninguno modificado.
+
+### Como funciona
+Al pasar el mouse (hover) por encima de los días tanto en el carrusel semanal como en el calendario principal, el panel flotante oscuro ahora cuenta con un 90% de opacidad general que complementa el desenfoque de fondo subyacente.
+
+## Sesion: Configuracion de Premium por Defecto para Nuevos Usuarios
+**Fecha:** 2026-04-07 ~20:20 (ARG)
+
+### Que se hizo
+Se implementó un flag en la configuración de entorno (`ASIGNAR_PREMIUM_POR_DEFECTO`) para otorgar temporalmente la suscripción Premium a los nuevos usuarios registrados.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambios |
+|---------|---------|
+| `backend/app/configuracion.py` | Se agregó el flag booleano `asignar_premium_por_defecto: bool = False` al esquema de `Configuracion` global de pydantic. |
+| `backend/app/rutas/v1/auth.py` | Se mejoró la funcion interna `_asignar_plan_gratis` renombrándola a `_asignar_plan_inicial`, que lee el flag global determinando si el slug debe ser `gratis` o `premium`. |
+
+### Tests
+No fallaron tests existentes al cambiar la logica, garantizando compatibilidad retroactiva.
+
+### Como funciona
+Cuando la API arranca, pydantic lee el `.env` o las variables del SO. Cuando un usuario se registra (vía email/pass o por Google OAuth), se llama a `_asignar_plan_inicial()`. Si el flag es falso, se le asigna plan gratis. Si el flag se activa (true), se consulta el repositorio y se le carga una suscripción activa contra el plan del slug `premium`. Se puede prender/apagar desde el environment variable `ASIGNAR_PREMIUM_POR_DEFECTO` en Producción sin tocar el código.

@@ -8,7 +8,6 @@ import SidebarNavegacion from "@/componentes/layouts/sidebar-navegacion";
 import ReproductorCosmico from "@/componentes/layouts/reproductor-cosmico";
 import PanelLyrics from "@/componentes/layouts/panel-lyrics";
 import LayoutMobile from "@/componentes/layouts/layout-mobile";
-import ChatWidget from "@/componentes/chat/chat-widget";
 import { ContenedorToasts } from "@/componentes/layouts/contenedor-toasts";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { usarEsMobile } from "@/lib/hooks/usar-es-mobile";
@@ -78,7 +77,6 @@ export default function LayoutApp({
 
       <ReproductorCosmico />
       <PanelLyrics />
-      <ChatWidget />
       <ContenedorToasts />
     </div>
   );

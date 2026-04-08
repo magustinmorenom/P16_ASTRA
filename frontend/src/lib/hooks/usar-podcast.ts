@@ -65,6 +65,8 @@ export function usarGenerarPodcast() {
       clienteApi.post<PodcastEpisodio>(`/podcast/generar?tipo=${tipo}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["podcast"] });
+      // También invalidamos el pronóstico para que se recalcule basándose en este audio/lectura
+      queryClient.invalidateQueries({ queryKey: ["pronostico"] });
     },
   });
 }

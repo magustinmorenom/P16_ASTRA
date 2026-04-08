@@ -55,14 +55,14 @@ function TooltipDia({ dia, x, y, saliendo }: { dia: DiaSemanalDTO; x: number; y:
           ? "opacity-0 translate-y-1.5 scale-[0.97]"
           : "animate-[tooltip-in_200ms_ease-out_both]"
       }`}
-      style={{ left: x, top: y, transform: "translateY(-100%)" }}
+      style={{ left: x, top: y, transform: "translateY(-100%)", opacity: saliendo ? 0 : 1 }}
     >
       <div
         className="w-[220px] rounded-2xl border px-4 py-3.5 backdrop-blur-3xl"
         style={{
-          background: "var(--shell-panel)",
-          borderColor: "var(--shell-borde)",
-          boxShadow: "var(--shell-sombra-fuerte)",
+          background: "rgba(18, 9, 31, 0.9)",
+          borderColor: "var(--shell-borde-fuerte)",
+          boxShadow: "0 12px 48px rgba(0, 0, 0, 0.4)",
         }}
       >
         <div className="flex items-center gap-2 mb-2.5">

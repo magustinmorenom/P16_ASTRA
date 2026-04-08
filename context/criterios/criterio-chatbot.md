@@ -34,7 +34,7 @@ Su enfoque es **sintético** (una lectura integrada, no tres separadas), **pedag
 |-----------|-------|
 | Proveedor | Anthropic (Claude API) |
 | Modelo | Configurable via `ANTHROPIC_MODELO` en `.env` |
-| Max tokens | 220 |
+| Max tokens | 500 (700 para análisis temporal) |
 | Temperature | 0.7 |
 | Historial | Últimos 20 mensajes de la conversación |
 
@@ -44,7 +44,7 @@ Su enfoque es **sintético** (una lectura integrada, no tres separadas), **pedag
 
 ### Reglas obligatorias
 
-- Máximo **3 líneas** por respuesta
+- Máximo **5 oraciones** por respuesta (conversacional) o **7 líneas** (temporal)
 - Estilo chat natural, español rioplatense
 - Sin títulos, subtítulos, secciones, listas, tablas ni markdown decorativo
 - Sin emojis salvo que el usuario los use primero
@@ -55,7 +55,8 @@ Su enfoque es **sintético** (una lectura integrada, no tres separadas), **pedag
 
 La respuesta del modelo pasa por `_formatear_respuesta_chat()` que:
 - Elimina markdown (negritas, headers, listas, code blocks)
-- Limita a 3 segmentos de máximo 180 caracteres cada uno
+- Para respuestas conversacionales: limita a 5 segmentos de máximo 300 caracteres cada uno
+- Para respuestas temporales (con fechas): preserva estructura, limita a 7 líneas
 - Si la respuesta queda vacía, retorna fallback: "Estoy acá. Decime un poco más y lo vemos juntos."
 
 ---

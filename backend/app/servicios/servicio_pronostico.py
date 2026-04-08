@@ -414,7 +414,19 @@ class ServicioPronostico:
         # 5. Extraer info lunar
         luna_info = cls._extraer_info_luna(transitos)
 
-        # 6. Construir prompt con contexto
+        # 6. Buscar si existe lectura diaria (podcast) para resumir accionables
+        lectura_diaria = None
+        try:
+            from app.datos.repositorio_podcast import RepositorioPodcast
+            repo_podcast = RepositorioPodcast(sesion)
+            podcast = await repo_podcast.obtener_episodio(usuario_id, fecha_obj, "dia")
+            if podcast and podcast.estado == "listo" and podcast.guion_md:
+                lectura_diaria = podcast.guion_md
+                logger.debug("Lectura diaria encontrada para el usuario %s", usuario_id)
+        except Exception as e:
+            logger.warning("No se pudo recuperar la lectura diaria para el pronóstico: %s", e)
+
+        # 7. Construir prompt con contexto
         config = obtener_configuracion()
         if not config.anthropic_api_key:
             logger.warning("Sin API key de Anthropic — retornando fallback")
@@ -431,10 +443,19 @@ class ServicioPronostico:
             f"## Tránsitos del Día\n{resumen_transitos}\n\n"
             f"## Número Personal del Día\n"
             f"Número: {numero_personal['numero']} — {numero_personal['descripcion']}\n\n"
-            f"Generá el pronóstico cósmico completo en JSON."
         )
 
-        # 7. Llamar Claude API
+        if lectura_diaria:
+            mensaje_usuario += (
+                f"## Lectura Diaria (Podcast Transcript)\n"
+                f"IMPORTANTE: Usá este texto como fuente principal para los 'momentos' y 'accionables'. "
+                f"Resumí e identificá qué hacer y qué evitar basándote en esta lectura:\n\n"
+                f"{lectura_diaria}\n\n"
+            )
+
+        mensaje_usuario += "Generá el pronóstico cósmico completo en JSON."
+
+        # 8. Llamar Claude API
         try:
             cliente = anthropic.AsyncAnthropic(api_key=config.anthropic_api_key)
             respuesta = await cliente.messages.create(

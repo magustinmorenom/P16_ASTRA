@@ -21,6 +21,7 @@ interface EnlaceNav {
   ruta: string;
   icono: NombreIcono;
   proximamente?: boolean;
+  destacado?: boolean;
 }
 
 interface EnlaceProximo {
@@ -30,6 +31,7 @@ interface EnlaceProximo {
 }
 
 const enlacesActivos: EnlaceNav[] = [
+  { etiqueta: "ASTRA Chat", ruta: "/chat", icono: "chatCirculo", destacado: true },
   { etiqueta: "Mapa Estratégico", ruta: "/dashboard", icono: "dashboard" },
   { etiqueta: "Recursos Propios", ruta: "/perfil-espiritual", icono: "usuarioFoco" },
   { etiqueta: "Podcasts Guías", ruta: "/podcast", icono: "microfono" },
@@ -256,21 +258,31 @@ export default function SidebarNavegacion() {
                         ? "justify-center px-0 py-3"
                         : "gap-3 px-3 py-3",
                       estaActivo
-                        ? "border text-[color:var(--shell-texto)] shadow-[var(--shell-sombra-suave)]"
-                        : "border border-transparent text-[color:var(--shell-texto-tenue)]"
+                        ? enlace.destacado
+                          ? "border text-white shadow-[0_4px_16px_rgba(124,77,255,0.25)]"
+                          : "border text-[color:var(--shell-texto)] shadow-[var(--shell-sombra-suave)]"
+                        : enlace.destacado
+                          ? "border border-transparent text-[color:var(--color-acento)]"
+                          : "border border-transparent text-[color:var(--shell-texto-tenue)]"
                     )}
                     style={{
-                      borderColor: estaActivo ? "var(--shell-borde-fuerte)" : undefined,
-                      background: estaActivo ? "var(--shell-chip)" : undefined,
+                      borderColor: estaActivo
+                        ? enlace.destacado ? "rgba(124,77,255,0.4)" : "var(--shell-borde-fuerte)"
+                        : undefined,
+                      background: estaActivo
+                        ? enlace.destacado ? "linear-gradient(135deg, #7C4DFF, #4A2D8C)" : "var(--shell-chip)"
+                        : undefined,
                     }}
                   >
                     <Icono
                       nombre={enlace.icono}
                       tamaño={20}
-                      peso={estaActivo ? "fill" : "regular"}
+                      peso={estaActivo || enlace.destacado ? "fill" : "regular"}
                       className={cn(
                         "transition-colors duration-200",
-                        estaActivo ? "text-[color:var(--color-acento)]" : "text-[color:var(--shell-texto-tenue)]"
+                        estaActivo
+                          ? enlace.destacado ? "text-white" : "text-[color:var(--color-acento)]"
+                          : enlace.destacado ? "text-[color:var(--color-acento)]" : "text-[color:var(--shell-texto-tenue)]"
                       )}
                     />
                     {!colapsado && (
@@ -435,21 +447,31 @@ export default function SidebarNavegacion() {
                         className={cn(
                           "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 border",
                           estaActivo
-                            ? "border text-[color:var(--shell-texto)]"
-                            : "border-transparent text-[color:var(--shell-texto-tenue)]"
+                            ? enlace.destacado
+                              ? "border text-white shadow-[0_4px_16px_rgba(124,77,255,0.25)]"
+                              : "border text-[color:var(--shell-texto)]"
+                            : enlace.destacado
+                              ? "border-transparent text-[color:var(--color-acento)]"
+                              : "border-transparent text-[color:var(--shell-texto-tenue)]"
                         )}
                         style={{
-                          borderColor: estaActivo ? "var(--shell-borde-fuerte)" : undefined,
-                          background: estaActivo ? "var(--shell-chip)" : undefined,
+                          borderColor: estaActivo
+                            ? enlace.destacado ? "rgba(124,77,255,0.4)" : "var(--shell-borde-fuerte)"
+                            : undefined,
+                          background: estaActivo
+                            ? enlace.destacado ? "linear-gradient(135deg, #7C4DFF, #4A2D8C)" : "var(--shell-chip)"
+                            : undefined,
                         }}
                       >
                         <Icono
                           nombre={enlace.icono}
                           tamaño={20}
-                          peso={estaActivo ? "fill" : "regular"}
+                          peso={estaActivo || enlace.destacado ? "fill" : "regular"}
                           className={cn(
                             "transition-colors duration-200",
-                            estaActivo ? "text-[color:var(--color-acento)]" : "text-[color:var(--shell-texto-tenue)]"
+                            estaActivo
+                              ? enlace.destacado ? "text-white" : "text-[color:var(--color-acento)]"
+                              : enlace.destacado ? "text-[color:var(--color-acento)]" : "text-[color:var(--shell-texto-tenue)]"
                           )}
                         />
                         <span>{enlace.etiqueta}</span>

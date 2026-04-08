@@ -118,6 +118,8 @@ export type {
   RespuestaChat,
   HistorialChat,
   NuevaConversacion,
+  ConversacionResumen,
+  CambiarConversacionRespuesta,
 } from "./chat";
 
 // Pronóstico Cósmico

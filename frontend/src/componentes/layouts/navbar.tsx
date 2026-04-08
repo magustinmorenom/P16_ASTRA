@@ -751,11 +751,7 @@ export default function Navbar() {
                       </span>
                     </div>
 
-                    {estadoCabecera.descripcion && (
-                      <p className="text-[11px] leading-relaxed text-[color:var(--shell-texto-secundario)]">
-                        {estadoCabecera.descripcion}
-                      </p>
-                    )}
+
                   </div>
                 )}
 
@@ -780,15 +776,7 @@ export default function Navbar() {
                     Suscripción
                   </Link>
 
-                  <Link
-                    href="/podcast"
-                    onClick={() => setMenuUsuarioAbierto(false)}
-                    className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition-colors hover:bg-[var(--shell-superficie)]"
-                    style={{ color: "var(--shell-texto-secundario)" }}
-                  >
-                    <Icono nombre="microfono" tamaño={16} />
-                    Podcasts
-                  </Link>
+
 
                   {usuario?.rol === "admin" && (
                     <Link
