@@ -227,6 +227,8 @@ class ServicioOraculo:
         numero = perfil.get("numerologia")
         if numero:
             partes.append("### Numerología")
+            partes.append(f"- Sistema: {numero.get('sistema', 'pitagórico')}")
+
             _CLAVES_NUMERO = [
                 ("camino_de_vida", "Camino de Vida"),
                 ("expresion", "Expresión"),
@@ -234,13 +236,39 @@ class ServicioOraculo:
                 ("personalidad", "Personalidad"),
                 ("numero_nacimiento", "Número de Nacimiento"),
                 ("anio_personal", "Año Personal"),
+                ("mes_personal", "Mes Personal"),
+                ("dia_personal", "Día Personal"),
             ]
             for clave, nombre_display in _CLAVES_NUMERO:
                 valor = numero.get(clave)
                 if isinstance(valor, dict):
+                    desc_larga = valor.get("descripcion_larga", "")
+                    desc = valor.get("descripcion", "")
+                    texto = desc_larga if desc_larga else desc
                     partes.append(
-                        f"- {nombre_display}: {valor.get('numero', '?')} — {valor.get('descripcion', '')}"
+                        f"- {nombre_display}: {valor.get('numero', '?')} — {texto}"
                     )
+
+            # Números maestros
+            maestros = numero.get("numeros_maestros_presentes", [])
+            if maestros:
+                partes.append(f"- Números maestros presentes: {', '.join(str(m) for m in maestros)}")
+
+            # Etapas de la vida (pináculos)
+            etapas = numero.get("etapas_de_la_vida", [])
+            if etapas:
+                lineas_etapas = []
+                for e in etapas:
+                    lineas_etapas.append(
+                        f"{e.get('nombre', '?')}: {e.get('numero', '?')} "
+                        f"(edad {e.get('edad_inicio', '?')}–{e.get('edad_fin', '?')}) — "
+                        f"{e.get('descripcion_larga', e.get('descripcion', ''))}"
+                    )
+                partes.append(f"- Etapas de la vida:")
+                for linea in lineas_etapas:
+                    partes.append(f"  · {linea}")
+
+            partes.append("")
 
         return "\n".join(partes) if partes else "Perfil cósmico no disponible."
 
