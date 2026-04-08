@@ -151,13 +151,77 @@ class ServicioOraculo:
         hd = perfil.get("diseno_humano")
         if hd:
             partes.append("### Diseño Humano")
-            partes.append(f"- Tipo: {hd.get('tipo', '?')}")
+            tipo_hd = hd.get("tipo", "?")
+            partes.append(f"- Tipo: {tipo_hd}")
             partes.append(f"- Autoridad: {hd.get('autoridad', '?')}")
             partes.append(f"- Perfil: {hd.get('perfil', '?')}")
-            partes.append(f"- Estrategia: {hd.get('estrategia', '?')}")
+            partes.append(f"- Definición: {hd.get('definicion', '?')}")
+
+            # Estrategia derivada del tipo
+            _ESTRATEGIA_POR_TIPO = {
+                "Generador": "Esperar a responder",
+                "Generador Manifestante": "Esperar a responder, luego informar",
+                "Proyector": "Esperar la invitación",
+                "Manifestador": "Informar antes de actuar",
+                "Reflector": "Esperar un ciclo lunar (28 días)",
+            }
+            partes.append(f"- Estrategia: {_ESTRATEGIA_POR_TIPO.get(tipo_hd, '?')}")
+
+            # Cruz de encarnación
             cruz = hd.get("cruz_encarnacion", {})
             if cruz:
-                partes.append(f"- Cruz de encarnación: {cruz.get('nombre', '?')}")
+                puertas_cruz = cruz.get("puertas", [])
+                if puertas_cruz:
+                    partes.append(
+                        f"- Cruz de encarnación: puertas {puertas_cruz[0]}/{puertas_cruz[1]}"
+                        f" | {puertas_cruz[2]}/{puertas_cruz[3]}"
+                        f" (Sol☉ {cruz.get('sol_consciente','?')}/{cruz.get('sol_inconsciente','?')},"
+                        f" Tierra⊕ {cruz.get('tierra_consciente','?')}/{cruz.get('tierra_inconsciente','?')})"
+                    )
+
+            # Centros
+            centros = hd.get("centros", {})
+            if isinstance(centros, dict):
+                definidos = [n for n, e in centros.items() if e == "definido"]
+                abiertos = [n for n, e in centros.items() if e == "abierto"]
+                partes.append(f"- Centros definidos: {', '.join(definidos)}")
+                partes.append(f"- Centros abiertos: {', '.join(abiertos)}")
+
+            # Canales
+            canales = hd.get("canales", [])
+            if canales:
+                lineas_canales = []
+                for ch in canales:
+                    puertas = ch.get("puertas", [])
+                    nombre_ch = ch.get("nombre", "?")
+                    centros_ch = ch.get("centros", [])
+                    lineas_canales.append(
+                        f"{puertas[0]}-{puertas[1]} ({nombre_ch}, {' ↔ '.join(centros_ch)})"
+                    )
+                partes.append(f"- Canales definidos ({len(canales)}): {'; '.join(lineas_canales)}")
+
+            # Puertas
+            puertas_c = hd.get("puertas_conscientes", [])
+            puertas_i = hd.get("puertas_inconscientes", [])
+            if puertas_c:
+                partes.append(f"- Puertas conscientes: {', '.join(str(p) for p in puertas_c)}")
+            if puertas_i:
+                partes.append(f"- Puertas inconscientes: {', '.join(str(p) for p in puertas_i)}")
+
+            # Activaciones planetarias
+            for clave_act, titulo_act in [
+                ("activaciones_conscientes", "Activaciones conscientes (personalidad)"),
+                ("activaciones_inconscientes", "Activaciones inconscientes (diseño)"),
+            ]:
+                activaciones = hd.get(clave_act, [])
+                if activaciones:
+                    lineas_act = [
+                        f"{a.get('planeta','?')}: puerta {a.get('puerta','?')}.{a.get('linea','?')}"
+                        for a in activaciones
+                    ]
+                    partes.append(f"- {titulo_act}: {'; '.join(lineas_act)}")
+
+            partes.append("")
 
         # Numerología
         numero = perfil.get("numerologia")
