@@ -1,5 +1,6 @@
 """Servicio Text-to-Speech via Google Gemini API."""
 
+import asyncio
 import io
 import wave
 
@@ -9,23 +10,57 @@ from google.genai import types
 from app.configuracion import obtener_configuracion
 from app.registro import logger
 
+# Máximo de caracteres por chunk para TTS paralelo
+_MAX_CHARS_CHUNK = 900
+
 
 class ServicioTTS:
     """Genera audio desde texto usando Google Gemini TTS."""
 
     @classmethod
-    async def generar_audio(cls, texto: str) -> tuple[bytes, float]:
-        """Genera audio MP3 desde texto.
+    def _dividir_en_chunks(cls, texto: str) -> list[str]:
+        """Divide el texto en chunks de ≤_MAX_CHARS_CHUNK chars, respetando párrafos.
 
-        Returns:
-            (bytes_mp3, duracion_segundos)
+        Si un párrafo supera el límite, lo corta en oraciones.
         """
-        config = obtener_configuracion()
-        if not config.gemini_api_key:
-            raise ValueError("GEMINI_API_KEY no configurada")
+        parrafos = [p.strip() for p in texto.split("\n\n") if p.strip()]
+        chunks: list[str] = []
+        buffer = ""
 
-        cliente = genai.Client(api_key=config.gemini_api_key)
+        for parrafo in parrafos:
+            # Si el párrafo solo cabe en el buffer actual
+            if len(buffer) + len(parrafo) + 2 <= _MAX_CHARS_CHUNK:
+                buffer = (buffer + "\n\n" + parrafo).strip()
+            else:
+                # Volcar buffer si tiene contenido
+                if buffer:
+                    chunks.append(buffer)
+                    buffer = ""
 
+                # Si el párrafo es más largo que el límite, cortar por oraciones
+                if len(parrafo) > _MAX_CHARS_CHUNK:
+                    oraciones = parrafo.replace(". ", ".|").split("|")
+                    sub_buffer = ""
+                    for oracion in oraciones:
+                        if len(sub_buffer) + len(oracion) + 1 <= _MAX_CHARS_CHUNK:
+                            sub_buffer = (sub_buffer + " " + oracion).strip()
+                        else:
+                            if sub_buffer:
+                                chunks.append(sub_buffer)
+                            sub_buffer = oracion
+                    if sub_buffer:
+                        buffer = sub_buffer
+                else:
+                    buffer = parrafo
+
+        if buffer:
+            chunks.append(buffer)
+
+        return chunks or [texto]
+
+    @classmethod
+    async def _generar_chunk(cls, cliente: genai.Client, texto: str) -> bytes:
+        """Genera PCM raw para un chunk de texto."""
         respuesta = await cliente.aio.models.generate_content(
             model="gemini-2.5-flash-preview-tts",
             contents=texto,
@@ -40,20 +75,46 @@ class ServicioTTS:
                 ),
             ),
         )
+        return respuesta.candidates[0].content.parts[0].inline_data.data
 
-        datos_audio = respuesta.candidates[0].content.parts[0].inline_data.data
+    @classmethod
+    async def generar_audio(cls, texto: str) -> tuple[bytes, float]:
+        """Genera audio MP3 desde texto usando chunking paralelo.
 
-        # Gemini retorna PCM raw — convertir a WAV y luego a MP3
-        wav_bytes = cls._pcm_a_wav(datos_audio, sample_rate=24000)
+        Divide el texto en chunks de ≤900 chars y los genera en paralelo,
+        reduciendo el tiempo de espera para guiones largos.
 
-        # Convertir WAV a MP3 con pydub
+        Returns:
+            (bytes_mp3, duracion_segundos)
+        """
+        config = obtener_configuracion()
+        if not config.gemini_api_key:
+            raise ValueError("GEMINI_API_KEY no configurada")
+
+        cliente = genai.Client(api_key=config.gemini_api_key)
+        chunks = cls._dividir_en_chunks(texto)
+
+        logger.info("TTS: %d chunks para %d chars", len(chunks), len(texto))
+
+        # Generar todos los chunks en paralelo
+        pcm_chunks: list[bytes] = await asyncio.gather(
+            *[cls._generar_chunk(cliente, chunk) for chunk in chunks]
+        )
+
+        # Concatenar PCM raw (mismo formato: 16-bit mono 24kHz)
+        pcm_total = b"".join(pcm_chunks)
+
+        # PCM → WAV → MP3
+        wav_bytes = cls._pcm_a_wav(pcm_total, sample_rate=24000)
         mp3_bytes = cls._wav_a_mp3(wav_bytes)
 
-        # Calcular duración desde los datos PCM (16-bit, 24kHz)
-        num_muestras = len(datos_audio) // 2  # 16-bit = 2 bytes por muestra
+        num_muestras = len(pcm_total) // 2
         duracion = num_muestras / 24000.0
 
-        logger.info("Audio TTS generado: %.1f segundos, %d bytes MP3", duracion, len(mp3_bytes))
+        logger.info(
+            "Audio TTS generado: %.1f segundos, %d bytes MP3 (%d chunks paralelos)",
+            duracion, len(mp3_bytes), len(chunks),
+        )
         return mp3_bytes, duracion
 
     @staticmethod

@@ -270,11 +270,12 @@ class ServicioPodcast:
             if not config.anthropic_api_key:
                 raise ValueError("ANTHROPIC_API_KEY no configurada")
 
-            max_tokens_por_tipo = {"dia": 2048, "semana": 3072, "mes": 4096}
+            # Sonnet: suficiente calidad para guion narrativo, 3-5x más rápido que Opus
+            max_tokens_por_tipo = {"dia": 1400, "semana": 2000, "mes": 2800}
 
             cliente = anthropic.AsyncAnthropic(api_key=config.anthropic_api_key)
             respuesta = await cliente.messages.create(
-                model=config.anthropic_modelo,
+                model="claude-sonnet-4-6",
                 max_tokens=max_tokens_por_tipo.get(tipo, 1024),
                 temperature=0.7,
                 system=system_prompt,
