@@ -66,6 +66,9 @@ import {
   SquaresFour,
   UserFocus,
   Article,
+  ArrowUp,
+  Plus,
+  ChatCircleDots,
   type IconProps as PhosphorIconProps,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utilidades/cn";
@@ -138,6 +141,9 @@ const mapaIconos: Record<string, ComponentType<PhosphorIconProps>> = {
   dashboard: SquaresFour,
   usuarioFoco: UserFocus,
   articulo: Article,
+  flechaArriba: ArrowUp,
+  plus: Plus,
+  chatCirculo: ChatCircleDots,
 };
 
 export type NombreIcono = keyof typeof mapaIconos;

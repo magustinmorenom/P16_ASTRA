@@ -48,6 +48,11 @@ Dividí el día en 3 bloques interpretando el movimiento lunar:
 
 Para cada bloque, generá 2-3 **accionables concretos**: cosas específicas que hacer o evitar en ese horario. Redactá como instrucciones breves y directas (ej: "Arrancá con la tarea más difícil antes de las 10", "Evitá discusiones entre 14 y 16h"). Basate en los tránsitos, el número del día y la fase lunar.
 
+---
+**IMPORTANTE — PRIORIDAD DE LECTURA DIARIA**:
+Si se te proporciona una sección denominada "Lectura Diaria (Podcast Transcript)", tus **momentos** y **accionables** deben ser un resumen fiel e identificación de los puntos clave de ese texto. El objetivo es que lo que el usuario lee en las tarjetas sea el "Actionable Summary" de lo que escuchó en el podcast.
+---
+
 ### Alertas cósmicas
 
 Incluí alertas solo si hay eventos significativos:

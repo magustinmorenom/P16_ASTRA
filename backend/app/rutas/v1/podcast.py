@@ -6,13 +6,14 @@ from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.datos.repositorio_podcast import (
     LIMITE_HISTORIAL_PODCAST,
     RepositorioPodcast,
 )
-from app.dependencias import obtener_db
+from app.dependencias import obtener_db, obtener_redis
 from app.dependencias_auth import obtener_usuario_actual
 from app.dependencias_suscripcion import requiere_plan
 from app.modelos.usuario import Usuario
@@ -138,6 +139,7 @@ async def generar_podcast(
     usuario: Usuario = Depends(obtener_usuario_actual),
     _plan: None = Depends(requiere_plan("premium")),
     db: AsyncSession = Depends(obtener_db),
+    redis: Redis = Depends(obtener_redis),
 ):
     """Genera un episodio de podcast on-demand.
 
@@ -146,6 +148,14 @@ async def generar_podcast(
     """
     hoy = date.today()
     episodio = await ServicioPodcast.generar_episodio(db, usuario.id, hoy, tipo)
+
+    # Si se generó o ya existe un podcast del DÍA, invalidamos el caché del pronóstico
+    # para que se recalcule basándose en esta nueva lectura diaria.
+    if tipo == "dia":
+        fecha_str = hoy.isoformat()
+        clave_cache = f"cosmic:pronostico:diario:{usuario.id}:{fecha_str}"
+        await redis.delete(clave_cache)
+
     repo = RepositorioPodcast(db)
     await repo.normalizar_retencion_usuario(usuario.id)
     return {

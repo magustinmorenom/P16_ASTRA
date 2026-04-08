@@ -146,9 +146,9 @@ function TooltipDiaCalendario({
         className="rounded-[22px] border px-4 py-3.5 backdrop-blur-3xl"
         style={{
           width: `min(${ANCHO_MAXIMO_TOOLTIP}px, calc(100vw - 32px))`,
-          background: "var(--shell-panel)",
-          borderColor: "var(--shell-borde)",
-          boxShadow: "var(--shell-sombra-fuerte)",
+          background: "rgba(18, 9, 31, 0.9)",
+          borderColor: "var(--shell-borde-fuerte)",
+          boxShadow: "0 12px 48px rgba(0, 0, 0, 0.4)",
         }}
       >
         <div className="flex items-center justify-between gap-3">

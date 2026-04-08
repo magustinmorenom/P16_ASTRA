@@ -348,22 +348,22 @@ class ServicioOraculo:
 
         lineas_finales: list[str] = []
         for segmento in segmentos:
-            if len(lineas_finales) >= 3:
+            if len(lineas_finales) >= 5:
                 break
 
             segmento = re.sub(r"\s+", " ", segmento).strip()
             if not segmento:
                 continue
 
-            if len(segmento) > 180:
-                segmento = segmento[:177].rstrip(" ,;:") + "..."
+            if len(segmento) > 300:
+                segmento = segmento[:297].rstrip(" ,;:") + "..."
 
             lineas_finales.append(segmento)
 
         if not lineas_finales:
             return "Estoy acá.\nDecime un poco más y lo vemos juntos."
 
-        return "\n".join(lineas_finales[:3])
+        return "\n".join(lineas_finales[:5])
 
     @classmethod
     async def _generar_analisis_temporal(

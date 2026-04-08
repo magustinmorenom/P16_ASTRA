@@ -31,6 +31,7 @@ class Configuracion(BaseSettings):
     ambiente: str = "desarrollo"
     log_level: str = "INFO"
     version: str = "1.0.0"
+    asignar_premium_por_defecto: bool = False
 
     # Dominio y CORS (producción)
     dominio: str = ""

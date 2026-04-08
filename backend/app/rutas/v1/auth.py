@@ -37,26 +37,30 @@ from app.modelos.usuario import Usuario
 from app.principal import _obtener_db_placeholder, _obtener_redis_placeholder
 from app.servicios.servicio_auth import ServicioAuth
 from app.servicios.servicio_google_oauth import ServicioGoogleOAuth
+from app.configuracion import obtener_configuracion
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
 
-async def _asignar_plan_gratis(usuario_id: uuid.UUID, db: AsyncSession) -> None:
-    """Crea una suscripción al plan gratis para un usuario nuevo."""
+async def _asignar_plan_inicial(usuario_id: uuid.UUID, db: AsyncSession) -> None:
+    """Crea una suscripción con plan inicial para un usuario nuevo."""
     try:
+        config = obtener_configuracion()
+        slug_inicial = "premium" if config.asignar_premium_por_defecto else "gratis"
+        
         repo_plan = RepositorioPlan(db)
-        plan_gratis = await repo_plan.obtener_por_slug("gratis")
-        if plan_gratis:
+        plan_inicial = await repo_plan.obtener_por_slug(slug_inicial)
+        if plan_inicial:
             repo_sus = RepositorioSuscripcion(db)
             await repo_sus.crear(
                 usuario_id=usuario_id,
-                plan_id=plan_gratis.id,
+                plan_id=plan_inicial.id,
                 estado="activa",
             )
     except Exception as e:
-        logger.warning("No se pudo asignar plan gratis a %s: %s", usuario_id, e)
+        logger.warning("No se pudo asignar plan %s a %s: %s", slug_inicial, usuario_id, e)
 
 
 @router.post("/registrar")
@@ -80,8 +84,8 @@ async def registrar(
         hash_contrasena=hash_contrasena,
     )
 
-    # Asignar plan gratis automáticamente
-    await _asignar_plan_gratis(usuario.id, db)
+    # Asignar plan inicial automáticamente
+    await _asignar_plan_inicial(usuario.id, db)
 
     # Email de bienvenida (fire-and-forget)
     try:
@@ -257,8 +261,8 @@ async def google_callback(
             google_id=datos_google["google_id"],
         )
 
-        # Asignar plan gratis automáticamente
-        await _asignar_plan_gratis(usuario.id, db)
+        # Asignar plan inicial automáticamente
+        await _asignar_plan_inicial(usuario.id, db)
 
         # Email de bienvenida (fire-and-forget)
         try:
