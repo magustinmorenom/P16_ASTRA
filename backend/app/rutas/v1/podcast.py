@@ -37,6 +37,7 @@ def _serializar_episodio(ep) -> dict:
         "estado": ep.estado,
         "origen": getattr(ep, "origen", "manual"),
         "fecha_objetivo": ep.fecha_objetivo.isoformat() if getattr(ep, "fecha_objetivo", None) else ep.fecha.isoformat(),
+        "acciones": getattr(ep, "acciones_json", None) or [],
         "error_detalle": ep.error_detalle,
         "creado_en": ep.creado_en.isoformat() if ep.creado_en else None,
     }

@@ -169,6 +169,18 @@ class ServicioNumerologia:
         return {"numero": num, "descripcion": cls._descripcion_numero(num)}
 
     @classmethod
+    def calcular_mes_personal(cls, fecha_nacimiento: date, fecha_objetivo: date | None = None) -> dict:
+        """Retorna número personal del mes con descripción."""
+        num = cls._mes_personal(fecha_nacimiento, fecha_objetivo)
+        return {"numero": num, "descripcion": cls._descripcion_numero(num)}
+
+    @classmethod
+    def calcular_ano_personal(cls, fecha_nacimiento: date, fecha_objetivo: date | None = None) -> dict:
+        """Retorna número personal del año con descripción."""
+        num = cls._anio_personal(fecha_nacimiento, fecha_objetivo)
+        return {"numero": num, "descripcion": cls._descripcion_numero(num)}
+
+    @classmethod
     def _etapas_de_la_vida(cls, fecha_nacimiento: date) -> list[dict]:
         """Calcula los 4 pináculos (etapas de la vida).
 

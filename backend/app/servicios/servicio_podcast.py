@@ -1,5 +1,6 @@
 """Servicio Pipeline de Podcasts — orquesta la generación de podcasts personalizados."""
 
+import json
 import uuid
 from datetime import date, timedelta
 from pathlib import Path
@@ -133,6 +134,37 @@ class ServicioPodcast:
         }
 
         return calculos
+
+    @classmethod
+    def _separar_narrativa_acciones(cls, texto_completo: str) -> tuple[str, list[dict] | None]:
+        """Separa la narrativa del bloque ---ACCIONES--- JSON.
+
+        Returns:
+            (narrativa_limpia, acciones_json o None si no se encontró/parseó)
+        """
+        separador = "---ACCIONES---"
+        if separador not in texto_completo:
+            return texto_completo.strip(), None
+
+        partes = texto_completo.split(separador, 1)
+        narrativa = partes[0].strip()
+        bloque_json = partes[1].strip()
+
+        # Limpiar posibles backticks markdown
+        if bloque_json.startswith("```"):
+            lineas = bloque_json.split("\n")
+            lineas = [l for l in lineas if not l.strip().startswith("```")]
+            bloque_json = "\n".join(lineas)
+
+        try:
+            acciones = json.loads(bloque_json)
+            if isinstance(acciones, list):
+                return narrativa, acciones
+            logger.warning("Bloque acciones no es una lista, ignorando")
+            return narrativa, None
+        except json.JSONDecodeError as e:
+            logger.warning("Error parseando bloque acciones del podcast: %s", e)
+            return narrativa, None
 
     @classmethod
     def _generar_segmentos(cls, texto: str, duracion: float) -> list[dict]:
@@ -285,10 +317,13 @@ class ServicioPodcast:
                 }],
             )
 
-            guion = respuesta.content[0].text if respuesta.content else ""
+            texto_completo = respuesta.content[0].text if respuesta.content else ""
             tokens_in = respuesta.usage.input_tokens or 0
             tokens_out = respuesta.usage.output_tokens or 0
             tokens = tokens_in + tokens_out
+
+            # 4b. Separar narrativa del bloque de acciones JSON
+            guion, acciones = cls._separar_narrativa_acciones(texto_completo)
 
             # Registrar consumo Claude (guión)
             from app.servicios.servicio_consumo_api import registrar_consumo
@@ -303,10 +338,11 @@ class ServicioPodcast:
             )
 
             await repo.actualizar_estado(
-                episodio.id, "generando_audio", guion_md=guion, tokens_usados=tokens
+                episodio.id, "generando_audio",
+                guion_md=guion, acciones_json=acciones, tokens_usados=tokens,
             )
 
-            # 5. Generar audio con TTS
+            # 5. Generar audio con TTS (solo narrativa, sin JSON)
             mp3_bytes, duracion = await ServicioTTS.generar_audio(guion)
 
             # Registrar consumo Gemini TTS

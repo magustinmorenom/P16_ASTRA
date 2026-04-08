@@ -403,13 +403,23 @@ class ServicioPronostico:
         # 3. Obtener tránsitos del día
         transitos = ServicioTransitos.obtener_transitos_actuales()
 
-        # 4. Calcular número personal del día
+        # 4. Calcular números personales (día, mes, año)
         fecha_nac_str = perfil_cosmico.get("datos_personales", {}).get("fecha_nacimiento")
         if fecha_nac_str:
             fecha_nac = date.fromisoformat(fecha_nac_str)
-            numero_personal = ServicioNumerologia.calcular_dia_personal(fecha_nac, fecha_obj)
+            numero_dia = ServicioNumerologia.calcular_dia_personal(fecha_nac, fecha_obj)
+            numero_mes = ServicioNumerologia.calcular_mes_personal(fecha_nac, fecha_obj)
+            numero_ano = ServicioNumerologia.calcular_ano_personal(fecha_nac, fecha_obj)
         else:
-            numero_personal = {"numero": 5, "descripcion": "Libertad, aventura, cambio"}
+            numero_dia = {"numero": 5, "descripcion": "Libertad, aventura, cambio"}
+            numero_mes = {"numero": 3, "descripcion": "Expresión, creatividad, comunicación"}
+            numero_ano = {"numero": 1, "descripcion": "Liderazgo, independencia, originalidad"}
+        numero_personal = {
+            "numero": numero_dia["numero"],
+            "descripcion": numero_dia["descripcion"],
+            "mes": numero_mes,
+            "ano": numero_ano,
+        }
 
         # 5. Extraer info lunar
         luna_info = cls._extraer_info_luna(transitos)
@@ -441,8 +451,10 @@ class ServicioPronostico:
             f"## Fecha del Pronóstico\n{fecha_str}\n\n"
             f"## Perfil Cósmico del Usuario\n{resumen_perfil}\n\n"
             f"## Tránsitos del Día\n{resumen_transitos}\n\n"
-            f"## Número Personal del Día\n"
-            f"Número: {numero_personal['numero']} — {numero_personal['descripcion']}\n\n"
+            f"## Números Personales\n"
+            f"Día: {numero_personal['numero']} — {numero_personal['descripcion']}\n"
+            f"Mes: {numero_personal['mes']['numero']} — {numero_personal['mes']['descripcion']}\n"
+            f"Año: {numero_personal['ano']['numero']} — {numero_personal['ano']['descripcion']}\n\n"
         )
 
         if lectura_diaria:
@@ -496,6 +508,9 @@ class ServicioPronostico:
             pronostico = json.loads(texto_limpio)
 
             # Validar con Pydantic
+            # Capturar interpretacion_integrada generada por Claude
+            interp = pronostico.pop("interpretacion_integrada", None)
+            numero_personal["interpretacion_integrada"] = interp
             pronostico["numero_personal"] = numero_personal
             validado = PronosticoDiarioSchema(**pronostico)
             resultado = validado.model_dump()
