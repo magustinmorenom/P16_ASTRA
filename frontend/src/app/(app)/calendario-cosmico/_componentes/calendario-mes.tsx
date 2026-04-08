@@ -143,58 +143,68 @@ function TooltipDiaCalendario({
       }}
     >
       <div
-        className="rounded-[22px] border px-4 py-3.5 backdrop-blur-3xl"
+        className="overflow-hidden rounded-[18px] border backdrop-blur-3xl"
         style={{
           width: `min(${ANCHO_MAXIMO_TOOLTIP}px, calc(100vw - 32px))`,
-          background: "rgba(18, 9, 31, 0.9)",
-          borderColor: "var(--shell-borde-fuerte)",
-          boxShadow: "0 12px 48px rgba(0, 0, 0, 0.4)",
+          background: "rgba(14, 7, 26, 0.92)",
+          borderColor: "rgba(124, 77, 255, 0.22)",
+          boxShadow: "0 16px 48px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(124, 77, 255, 0.08), 0 4px 32px rgba(124, 77, 255, 0.08)",
         }}
       >
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
-              {format(parseISO(estado.fecha), "EEEE d 'de' MMMM", { locale: es })}
-            </p>
-            <p className="mt-1 text-sm font-semibold text-[color:var(--shell-texto)]">
-              {estado.ritmo
-                ? `Día personal ${estado.ritmo.dia} · Año ${estado.ritmo.anio}`
-                : "Calendario del día"}
-            </p>
+        {/* Acento superior violeta */}
+        <div
+          aria-hidden
+          className="h-[2px] w-full"
+          style={{ background: "linear-gradient(90deg, transparent 0%, rgba(124,77,255,0.7) 35%, rgba(179,136,255,0.9) 50%, rgba(124,77,255,0.7) 65%, transparent 100%)" }}
+        />
+
+        <div className="px-4 py-3.5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
+                {format(parseISO(estado.fecha), "EEEE d 'de' MMMM", { locale: es })}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-[color:var(--shell-texto)]">
+                {estado.ritmo
+                  ? `Día personal ${estado.ritmo.dia} · Año ${estado.ritmo.anio}`
+                  : "Calendario del día"}
+              </p>
+            </div>
+            <span
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold"
+              style={{
+                background: "rgba(124, 77, 255, 0.14)",
+                borderColor: "rgba(124, 77, 255, 0.25)",
+                color: "var(--color-acento)",
+              }}
+            >
+              <IconoFaseLunar fase={estado.faseLunar} tamaño={13} className="text-[color:var(--color-acento)]" />
+              {estado.faseLunar}
+            </span>
           </div>
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold"
-            style={{
-              background: "var(--shell-chip)",
-              color: "var(--color-acento)",
-            }}
-          >
-            <IconoFaseLunar fase={estado.faseLunar} tamaño={13} className="text-[color:var(--color-acento)]" />
-            {estado.faseLunar}
-          </span>
-        </div>
 
-        <p className="mt-3 text-[12px] leading-5 text-[color:var(--shell-texto-secundario)]">
-          {primerEvento?.descripcion ?? describirFaseLunar(estado.faseLunar)}
-        </p>
+          <p className="mt-3 text-[12px] leading-5 text-[color:var(--shell-texto-secundario)]">
+            {primerEvento?.descripcion ?? describirFaseLunar(estado.faseLunar)}
+          </p>
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          {estado.eventos.slice(0, 3).map((evento) => {
-            const tono = tonoEvento(evento.impacto);
-            return (
-              <span
-                key={evento.id}
-                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium"
-                style={{ background: tono.fondo, color: tono.punto }}
-              >
+          <div className="mt-3 flex flex-wrap gap-2">
+            {estado.eventos.slice(0, 3).map((evento) => {
+              const tono = tonoEvento(evento.impacto);
+              return (
                 <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ background: tono.punto }}
-                />
-                {evento.etiquetaCorta}
-              </span>
-            );
-          })}
+                  key={evento.id}
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium"
+                  style={{ background: tono.fondo, color: tono.punto }}
+                >
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ background: tono.punto }}
+                  />
+                  {evento.etiquetaCorta}
+                </span>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
@@ -488,20 +498,49 @@ export function CalendarioMes({
                     onMouseLeave={ocultarTooltip}
                     onBlur={ocultarTooltip}
                     className={cn(
-                      "grupo relative min-h-[80px] border-r px-2.5 py-2.5 text-left transition-[background-color,box-shadow] duration-200 last:border-r-0 sm:min-h-[90px]",
-                      !perteneceAlMes && "opacity-55",
-                      tieneData
-                        ? "hover:bg-[var(--shell-superficie-suave)] cursor-pointer"
-                        : "cursor-default opacity-80",
+                      "group relative min-h-[80px] overflow-hidden border-r px-2.5 py-2.5 text-left transition-[box-shadow] duration-200 last:border-r-0 sm:min-h-[90px]",
+                      !perteneceAlMes && "opacity-50",
+                      tieneData ? "cursor-pointer" : "cursor-default opacity-80",
                     )}
                     style={{
                       borderColor: indiceDia === 6 ? "transparent" : "var(--shell-borde)",
-                      boxShadow: estaSeleccionado ? "inset 0 0 0 1px var(--shell-borde-fuerte)" : "none",
-                      background: estaSeleccionado ? "var(--shell-superficie-suave)" : undefined,
+                      background: estaSeleccionado
+                        ? "rgba(124, 77, 255, 0.055)"
+                        : undefined,
+                      boxShadow: estaSeleccionado
+                        ? "inset 0 0 0 1.5px rgba(124, 77, 255, 0.32), inset 0 1px 0 rgba(124, 77, 255, 0.18)"
+                        : "none",
                     }}
                   >
+                    {/* Indicador superior "hoy" */}
+                    {esHoy && (
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-x-0 top-0 h-[2px]"
+                        style={{ background: "linear-gradient(90deg, transparent 0%, rgba(124,77,255,0.8) 30%, rgba(179,136,255,1) 50%, rgba(124,77,255,0.8) 70%, transparent 100%)" }}
+                      />
+                    )}
+
+                    {/* Hover: gradiente violeta sutil */}
+                    {tieneData && (
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                        style={{ background: "linear-gradient(145deg, rgba(124,77,255,0.09) 0%, rgba(124,77,255,0.03) 45%, transparent 75%)" }}
+                      />
+                    )}
+
+                    {/* Hover: ring borde violeta sutil */}
+                    {tieneData && (
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                        style={{ boxShadow: "inset 0 0 0 1px rgba(124, 77, 255, 0.18)" }}
+                      />
+                    )}
+
                     {/* Fila superior: número + luna + ritmo */}
-                    <div className="flex items-center justify-between gap-1">
+                    <div className="relative flex items-center justify-between gap-1">
                       <div className="flex items-center gap-2">
                         <p
                           className={cn(
@@ -523,11 +562,19 @@ export function CalendarioMes({
                       </div>
                       {ritmo ? (
                         <span
-                          className="inline-flex min-w-[24px] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
-                          style={{
-                            background: esHoy ? "var(--color-acento)" : "var(--shell-chip)",
-                            color: esHoy ? "white" : "var(--color-acento)",
-                          }}
+                          className="inline-flex min-w-[24px] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold transition-all duration-200"
+                          style={
+                            esHoy
+                              ? {
+                                  background: "var(--color-acento)",
+                                  color: "white",
+                                  boxShadow: "0 0 8px rgba(124,77,255,0.45)",
+                                }
+                              : {
+                                  background: "var(--shell-chip)",
+                                  color: "var(--color-acento)",
+                                }
+                          }
                         >
                           {ritmo.dia}
                         </span>
@@ -536,7 +583,7 @@ export function CalendarioMes({
 
                     {/* Eventos */}
                     {eventos.length > 0 && (
-                      <div className="mt-2 flex flex-col gap-1">
+                      <div className="relative mt-2 flex flex-col gap-1">
                         {eventos.slice(0, 2).map((evento) => {
                           const tono = tonoEvento(evento.impacto);
                           return (

@@ -64,6 +64,9 @@ mobile/eas-build-local/
 htmlcov/
 .pytest_cache/
 
+# Swiss Ephemeris (binarios, se provisionan en levantar.sh y Dockerfile)
+backend/datos_efemerides/
+
 # Misc
 *.log
 *.tsbuildinfo

@@ -86,6 +86,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as e:
         logger.warning("No se pudo inicializar MinIO: %s", e)
 
+    # Ventana de tránsitos — verificar y completar si hay días faltantes
+    try:
+        from app.tareas.tarea_transitos import tarea_diaria_transitos
+        insertados = await tarea_diaria_transitos(sesion_factory)
+        if insertados > 0:
+            logger.info("Ventana de tránsitos: %d días insertados al startup", insertados)
+    except Exception as e:
+        logger.warning("No se pudo completar la ventana de tránsitos: %s", e)
+
     yield
 
     # Limpieza

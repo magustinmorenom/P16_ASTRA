@@ -62,9 +62,14 @@ class ClienteAPI {
       headers: { ...headers, ...opciones?.headers },
     });
 
-    // 401 → intentar renovar y reintentar una vez (salvo rutas de auth)
-    const esRutaAuth = ruta.startsWith("/auth/");
-    if (respuesta.status === 401 && !esRutaAuth) {
+    // 401 → intentar renovar y reintentar una vez.
+    // Solo se omite el refresh para rutas que no requieren token activo.
+    // /auth/me, /auth/logout, /auth/cambiar-contrasena, etc. SÍ deben reintentar.
+    const RUTAS_SIN_TOKEN = ["/auth/login", "/auth/registrar", "/auth/renovar",
+      "/auth/solicitar-reset", "/auth/verificar-otp", "/auth/confirmar-reset",
+      "/auth/google/"];
+    const esRutaSinToken = RUTAS_SIN_TOKEN.some((r) => ruta.startsWith(r));
+    if (respuesta.status === 401 && !esRutaSinToken) {
       const renovado = await this.intentarRenovar();
       if (renovado) {
         const headersNuevos = this.obtenerHeaders();

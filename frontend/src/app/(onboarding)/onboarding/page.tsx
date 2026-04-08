@@ -3,13 +3,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 
 import LayoutOnboarding from "@/componentes/layouts/layout-onboarding";
 import { Icono } from "@/componentes/ui/icono";
-import {
-  IconoAstral,
-  type NombreIconoAstral,
-} from "@/componentes/ui/icono-astral";
 import {
   usarCrearPerfil,
   usarCartaNatal,
@@ -20,6 +17,8 @@ import {
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import type { DatosNacimiento, DatosNumerologia } from "@/lib/tipos";
 import { cn } from "@/lib/utilidades/cn";
+
+/* ─── Tipos ─── */
 
 interface DatosFormulario {
   nombre: string;
@@ -42,7 +41,6 @@ interface ResultadoGeo {
   zona_horaria: string;
 }
 
-type TonoBarra = "panel" | "hero";
 type EstadoItem = "pendiente" | "en_curso" | "completado" | "error";
 
 interface EstadoCalculo {
@@ -53,127 +51,12 @@ interface EstadoCalculo {
   retornoSolar: EstadoItem;
 }
 
-const TEXTOS_PANEL: Record<number, string> = {
-  0: "Con tu fecha, hora y lugar activamos una base precisa para astrología, Diseño Humano y numerología sin perder continuidad visual ni técnica.",
-  1: "",
-};
+/* ─── Estilos compartidos ─── */
 
-const MODULOS_GENERADOS: Array<{
-  icono: NombreIconoAstral;
-  titulo: string;
-  descripcion: string;
-}> = [
-  {
-    icono: "astrologia",
-    titulo: "Carta natal",
-    descripcion: "Posiciones, casas y aspectos base.",
-  },
-  {
-    icono: "personal",
-    titulo: "Diseño Humano",
-    descripcion: "Tipo, autoridad y perfil inicial.",
-  },
-  {
-    icono: "numerologia",
-    titulo: "Numerología",
-    descripcion: "Ritmo, núcleo y tono personal.",
-  },
-];
+const CLASE_INPUT =
+  "h-12 w-full rounded-[18px] border border-white/[0.10] bg-white/[0.08] px-4 text-sm text-white outline-none placeholder:text-white/35 transition-all duration-200 focus:border-white/25 focus:bg-white/[0.12] focus:ring-2 focus:ring-white/[0.06]";
 
-const PISTAS_PRECISION = [
-  {
-    icono: "reloj" as const,
-    titulo: "Hora aproximada",
-    descripcion:
-      "Si no conocés tu hora exacta, usá 12:00. Algunas capas del perfil pueden variar después.",
-  },
-  {
-    icono: "ubicacion" as const,
-    titulo: "Zona horaria histórica",
-    descripcion:
-      "Usamos la ubicación seleccionada para resolver el huso horario real del nacimiento y evitar errores.",
-  },
-];
-
-const CLASE_CAMPO_BASE =
-  "h-12 w-full rounded-[20px] border px-4 text-sm outline-none transition-all duration-200 placeholder:text-[color:var(--shell-texto-tenue)] focus:border-[color:var(--shell-borde-fuerte)] focus:bg-[color:var(--shell-superficie-fuerte)] focus:ring-4 focus:ring-[color:var(--shell-overlay-suave)]";
-
-const CLASE_CAMPO_PANEL = cn(
-  CLASE_CAMPO_BASE,
-  "border-[color:var(--shell-borde)] bg-[color:var(--shell-superficie)] text-[color:var(--shell-texto)]",
-);
-
-function BarraProgreso({
-  paso,
-  tono = "panel",
-}: {
-  paso: number;
-  tono?: TonoBarra;
-}) {
-  const esHero = tono === "hero";
-
-  return (
-    <div
-      className={cn(
-        "mb-8 rounded-[28px] border p-4 sm:p-5",
-        esHero ? "border-white/10 bg-white/[0.06]" : "tema-superficie-panel-suave",
-      )}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p
-            className={cn(
-              "text-[11px] font-semibold uppercase tracking-[0.18em]",
-              esHero
-                ? "text-[color:var(--shell-hero-texto-tenue)]"
-                : "text-[color:var(--shell-texto-tenue)]",
-            )}
-          >
-            Configuración inicial
-          </p>
-          <p
-            className={cn(
-              "mt-1 text-sm font-semibold",
-              esHero
-                ? "text-[color:var(--shell-hero-texto)]"
-                : "text-[color:var(--shell-texto)]",
-            )}
-          >
-            Paso {paso + 1} de 2
-          </p>
-        </div>
-
-        <span
-          className={cn(
-            "rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]",
-            esHero
-              ? "border-white/12 bg-white/10 text-[color:var(--shell-hero-texto-secundario)]"
-              : "border-[color:var(--shell-badge-violeta-borde)] bg-[color:var(--shell-badge-violeta-fondo)] text-[color:var(--shell-badge-violeta-texto)]",
-          )}
-        >
-          {paso === 0 ? "Datos natales" : "Activando motor"}
-        </span>
-      </div>
-
-      <div
-        className={cn(
-          "mt-4 h-2 overflow-hidden rounded-full",
-          esHero ? "bg-white/10" : "bg-[color:var(--shell-superficie)]",
-        )}
-      >
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{
-            width: `${((paso + 1) / 2) * 100}%`,
-            background: esHero
-              ? "linear-gradient(135deg, var(--color-dorado-300), var(--color-violet-300))"
-              : "var(--shell-gradiente-boton)",
-          }}
-        />
-      </div>
-    </div>
-  );
-}
+/* ─── Página principal ─── */
 
 export default function PaginaOnboarding() {
   const router = useRouter();
@@ -188,10 +71,15 @@ export default function PaginaOnboarding() {
     pais_nacimiento: "",
   });
 
-  if (paso === 1) {
-    return (
-      <LayoutOnboarding modoOscuro>
-        <BarraProgreso paso={1} tono="hero" />
+  return (
+    <LayoutOnboarding>
+      {paso === 0 ? (
+        <PasoFormulario
+          datos={datos}
+          onChange={(parcial) => setDatos({ ...datos, ...parcial })}
+          onSiguiente={() => setPaso(1)}
+        />
+      ) : (
         <PasoCalculando
           datos={datos}
           onFinalizar={async () => {
@@ -200,24 +88,14 @@ export default function PaginaOnboarding() {
             router.push("/dashboard");
           }}
         />
-      </LayoutOnboarding>
-    );
-  }
-
-  return (
-    <LayoutOnboarding textoPanel={TEXTOS_PANEL[paso]}>
-      <BarraProgreso paso={paso} />
-
-      <PasoDatosCompletos
-        datos={datos}
-        onChange={(parcial) => setDatos({ ...datos, ...parcial })}
-        onSiguiente={() => setPaso(1)}
-      />
+      )}
     </LayoutOnboarding>
   );
 }
 
-function PasoDatosCompletos({
+/* ─── Paso 1: Formulario ─── */
+
+function PasoFormulario({
   datos,
   onChange,
   onSiguiente,
@@ -251,14 +129,11 @@ function PasoDatosCompletos({
       setAbierto(false);
       return;
     }
-
     setBuscando(true);
-
     try {
       const res = await fetch(
         `/api/v1/geo/buscar?q=${encodeURIComponent(texto)}&limite=6`,
       );
-
       if (res.ok) {
         const json = await res.json();
         const datosRespuesta = json.datos ?? json;
@@ -282,11 +157,7 @@ function PasoDatosCompletos({
       longitud_geo: undefined,
       zona_horaria: undefined,
     });
-
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => buscar(texto), 400);
   };
 
@@ -305,271 +176,156 @@ function PasoDatosCompletos({
   };
 
   useEffect(() => {
-    const handler = (evento: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(evento.target as Node)
-      ) {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
         setAbierto(false);
-      }
     };
-
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   useEffect(() => {
     return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, []);
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <span
-          className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]"
-          style={{
-            borderColor: "var(--shell-badge-violeta-borde)",
-            background: "var(--shell-badge-violeta-fondo)",
-            color: "var(--shell-badge-violeta-texto)",
-          }}
-        >
-          <Icono nombre="destello" tamaño={14} />
-          Datos natales
-        </span>
-        <h2 className="mt-4 text-[30px] font-semibold leading-tight tracking-[-0.04em] text-[color:var(--shell-texto)]">
-          Cargá tu momento de nacimiento
-        </h2>
-        <p className="mt-3 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
-          Con esta base vamos a generar tu carta natal, tu Diseño Humano, tu
-          numerología y tu retorno solar inicial sin obligarte a navegar pantallas
-          desconectadas entre sí.
-        </p>
+      {/* Header */}
+      <div className="flex flex-col items-center text-center">
+        <PillPaso paso={1} />
+
+        <Image
+          src="/img/isotipo-blanco.png"
+          alt="ASTRA"
+          width={44}
+          height={44}
+          className="mt-5 h-11 w-11"
+          priority
+        />
+
+        <h1 className="mt-5 text-2xl font-semibold tracking-tight text-white">
+          Cargá tu momento exacto de nacimiento
+        </h1>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        {MODULOS_GENERADOS.map((modulo) => (
-          <article
-            key={modulo.titulo}
-            className="rounded-[24px] border p-4"
-            style={{
-              borderColor: "var(--shell-borde)",
-              background: "var(--shell-superficie)",
-            }}
-          >
-            <div
-              className="flex h-11 w-11 items-center justify-center rounded-[18px]"
-              style={{
-                background: "var(--shell-gradiente-acento-suave)",
-                color: "var(--color-acento)",
-              }}
-            >
-              <IconoAstral nombre={modulo.icono} tamaño={20} />
+      {/* Form */}
+      <div className="flex flex-col gap-3">
+        <div>
+          <input
+            type="text"
+            placeholder="Nombre completo"
+            value={datos.nombre}
+            onChange={(e) => onChange({ nombre: e.target.value })}
+            className={CLASE_INPUT}
+          />
+          <p className="mt-1.5 px-1 text-[11px] text-white/30">
+            Tal como figura en tu cédula de identificación.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <input
+            type="date"
+            value={datos.fecha_nacimiento}
+            onChange={(e) => onChange({ fecha_nacimiento: e.target.value })}
+            className={cn(CLASE_INPUT, "[color-scheme:dark]")}
+          />
+          <input
+            type="time"
+            value={datos.hora_nacimiento}
+            onChange={(e) => onChange({ hora_nacimiento: e.target.value })}
+            className={cn(CLASE_INPUT, "[color-scheme:dark]")}
+          />
+        </div>
+
+        {/* Lugar con autocomplete */}
+        <div ref={dropdownRef} className="relative">
+          <Icono
+            nombre="ubicacion"
+            tamaño={16}
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/35"
+          />
+          <input
+            type="text"
+            placeholder="Lugar de nacimiento"
+            value={consulta}
+            onChange={(e) => handleLugarChange(e.target.value)}
+            onFocus={() => resultados.length > 0 && setAbierto(true)}
+            className={cn(CLASE_INPUT, "pl-10 pr-10")}
+          />
+
+          {buscando && (
+            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
             </div>
-            <h3 className="mt-4 text-sm font-semibold text-[color:var(--shell-texto)]">
-              {modulo.titulo}
-            </h3>
-            <p className="mt-2 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
-              {modulo.descripcion}
-            </p>
-          </article>
-        ))}
-      </div>
+          )}
 
-      <div className="grid gap-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <CampoFormulario etiqueta="Nombre completo">
-            <input
-              type="text"
-              placeholder="Tu nombre"
-              value={datos.nombre}
-              onChange={(e) => onChange({ nombre: e.target.value })}
-              className={CLASE_CAMPO_PANEL}
-            />
-          </CampoFormulario>
-
-          <div
-            className="rounded-[24px] border p-4"
-            style={{
-              borderColor: "var(--shell-borde)",
-              background: "var(--shell-superficie)",
-            }}
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
-              Qué vamos a usar
-            </p>
-            <p className="mt-3 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
-              Fecha, hora y lugar reales para fijar la zona horaria histórica y
-              calcular el perfil con precisión.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <CampoFormulario etiqueta="Fecha de nacimiento">
-            <input
-              type="date"
-              value={datos.fecha_nacimiento}
-              onChange={(e) => onChange({ fecha_nacimiento: e.target.value })}
-              className={CLASE_CAMPO_PANEL}
-            />
-          </CampoFormulario>
-
-          <CampoFormulario etiqueta="Hora de nacimiento">
-            <input
-              type="time"
-              value={datos.hora_nacimiento}
-              onChange={(e) => onChange({ hora_nacimiento: e.target.value })}
-              className={CLASE_CAMPO_PANEL}
-            />
-          </CampoFormulario>
-        </div>
-
-        <CampoFormulario etiqueta="Lugar de nacimiento">
-          <div ref={dropdownRef} className="relative">
+          {lugarSeleccionado && !buscando && (
             <Icono
-              nombre="ubicacion"
-              tamaño={18}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--shell-texto-tenue)]"
+              nombre="check"
+              tamaño={16}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-400"
             />
-            <input
-              type="text"
-              placeholder="Ej: Buenos Aires, Argentina"
-              value={consulta}
-              onChange={(e) => handleLugarChange(e.target.value)}
-              onFocus={() => resultados.length > 0 && setAbierto(true)}
-              className={cn(
-                CLASE_CAMPO_BASE,
-                "pl-11 pr-12",
-                lugarSeleccionado
-                  ? "border-[color:var(--shell-badge-exito-borde)] bg-[color:var(--shell-badge-exito-fondo)] text-[color:var(--shell-texto)]"
-                  : "border-[color:var(--shell-borde)] bg-[color:var(--shell-superficie)] text-[color:var(--shell-texto)]",
-              )}
-            />
+          )}
 
-            {buscando && (
-              <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-[color:var(--shell-chip-borde)] border-t-[color:var(--color-acento)]" />
-              </div>
-            )}
-
-            {lugarSeleccionado && !buscando && (
-              <Icono
-                nombre="check"
-                tamaño={18}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[color:var(--shell-badge-exito-texto)]"
-              />
-            )}
-
-            {abierto && resultados.length > 0 && (
-              <div className="tema-superficie-panel absolute top-[calc(100%+8px)] z-50 w-full overflow-hidden rounded-[24px]">
-                {resultados.map((resultado, indice) => (
-                  <button
-                    key={`${resultado.latitud}-${resultado.longitud}-${indice}`}
-                    type="button"
-                    onClick={() => seleccionar(resultado)}
-                    className="flex w-full items-center gap-3 border-b px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-[color:var(--shell-superficie-suave)]"
-                    style={{ borderColor: "var(--shell-borde)" }}
-                  >
-                    <Icono
-                      nombre="ubicacion"
-                      tamaño={15}
-                      className="shrink-0 text-[color:var(--color-acento)]"
-                    />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-[color:var(--shell-texto)]">
-                        {resultado.nombre_mostrar}
-                      </p>
-                      <p className="text-xs text-[color:var(--shell-texto-tenue)]">
-                        {resultado.estado ? `${resultado.estado}, ` : ""}
-                        {resultado.pais}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {abierto && resultados.length === 0 && !buscando && consulta.length >= 3 && (
-              <div className="tema-superficie-panel absolute top-[calc(100%+8px)] z-50 w-full rounded-[24px] px-4 py-4">
-                <p className="text-sm text-[color:var(--shell-texto-secundario)]">
-                  No encontramos ubicaciones para esa búsqueda.
-                </p>
-              </div>
-            )}
-          </div>
-        </CampoFormulario>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        {PISTAS_PRECISION.map((pista) => (
-          <article
-            key={pista.titulo}
-            className="rounded-[24px] border p-4"
-            style={{
-              borderColor: "var(--shell-borde)",
-              background: "var(--shell-superficie)",
-            }}
-          >
-            <div className="flex items-start gap-3">
-              <div
-                className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-[16px]"
-                style={{
-                  background: "var(--shell-superficie-suave)",
-                  color: "var(--color-acento)",
-                }}
-              >
-                <Icono nombre={pista.icono} tamaño={18} />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-[color:var(--shell-texto)]">
-                  {pista.titulo}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--shell-texto-secundario)]">
-                  {pista.descripcion}
-                </p>
-              </div>
+          {abierto && resultados.length > 0 && (
+            <div className="absolute top-[calc(100%+6px)] z-50 w-full overflow-hidden rounded-2xl border border-white/[0.10] bg-[#1a1128]/95 backdrop-blur-xl">
+              {resultados.map((resultado, i) => (
+                <button
+                  key={`${resultado.latitud}-${resultado.longitud}-${i}`}
+                  type="button"
+                  onClick={() => seleccionar(resultado)}
+                  className="flex w-full items-center gap-3 border-b border-white/[0.06] px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-white/[0.06]"
+                >
+                  <Icono
+                    nombre="ubicacion"
+                    tamaño={14}
+                    className="shrink-0 text-violet-300"
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm text-white/90">
+                      {resultado.nombre_mostrar}
+                    </p>
+                    <p className="text-xs text-white/40">
+                      {resultado.estado ? `${resultado.estado}, ` : ""}
+                      {resultado.pais}
+                    </p>
+                  </div>
+                </button>
+              ))}
             </div>
-          </article>
-        ))}
+          )}
+
+          {abierto && resultados.length === 0 && !buscando && consulta.length >= 3 && (
+            <div className="absolute top-[calc(100%+6px)] z-50 w-full rounded-2xl border border-white/[0.10] bg-[#1a1128]/95 px-4 py-3 backdrop-blur-xl">
+              <p className="text-sm text-white/40">Sin resultados para esa búsqueda.</p>
+            </div>
+          )}
+        </div>
       </div>
 
+      {/* CTA */}
       <button
         type="button"
         onClick={onSiguiente}
         disabled={!puedeAvanzar}
-        className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[22px] px-5 text-sm font-semibold text-white transition-all hover:brightness-[1.03] disabled:cursor-not-allowed disabled:opacity-45"
-        style={{
-          background: "var(--shell-gradiente-boton)",
-          boxShadow: "var(--shell-sombra-suave)",
-        }}
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-[18px] border border-white/[0.10] bg-white/[0.10] text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/[0.16] disabled:cursor-not-allowed disabled:opacity-35"
       >
-        <Icono nombre="destello" tamaño={18} />
-        Calcular mi perfil cósmico
+        Calcular mi perfil
+        <Icono nombre="flecha-derecha" tamaño={16} />
       </button>
+
+      {/* Hint hora */}
+      <p className="text-center text-[11px] leading-relaxed text-white/30">
+        Si no conocés tu hora exacta, usá 12:00.
+      </p>
     </div>
   );
 }
 
-function CampoFormulario({
-  etiqueta,
-  children,
-}: {
-  etiqueta: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="flex flex-col gap-2">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
-        {etiqueta}
-      </span>
-      {children}
-    </label>
-  );
-}
+/* ─── Paso 2: Calculando ─── */
 
 function PasoCalculando({
   datos,
@@ -611,8 +367,8 @@ function PasoCalculando({
       fecha_nacimiento: datos.fecha_nacimiento,
     };
 
+    // Crear perfil
     setEstado((prev) => ({ ...prev, perfil: "en_curso" }));
-
     let perfilIdObtenido: string | null = null;
 
     try {
@@ -623,6 +379,7 @@ function PasoCalculando({
       setEstado((prev) => ({ ...prev, perfil: "error" }));
     }
 
+    // Cálculos en paralelo
     setEstado((prev) => ({
       ...prev,
       cartaNatal: "en_curso",
@@ -633,31 +390,17 @@ function PasoCalculando({
 
     const promesas = [
       cartaNatal
-        .mutateAsync({
-          datos: datosNacimiento,
-          perfilId: perfilIdObtenido ?? undefined,
-        })
+        .mutateAsync({ datos: datosNacimiento, perfilId: perfilIdObtenido ?? undefined })
         .then(() => setEstado((prev) => ({ ...prev, cartaNatal: "completado" })))
         .catch(() => setEstado((prev) => ({ ...prev, cartaNatal: "error" }))),
-
       disenoHumano
-        .mutateAsync({
-          datos: datosNacimiento,
-          perfilId: perfilIdObtenido ?? undefined,
-        })
-        .then(() =>
-          setEstado((prev) => ({ ...prev, disenoHumano: "completado" })),
-        )
+        .mutateAsync({ datos: datosNacimiento, perfilId: perfilIdObtenido ?? undefined })
+        .then(() => setEstado((prev) => ({ ...prev, disenoHumano: "completado" })))
         .catch(() => setEstado((prev) => ({ ...prev, disenoHumano: "error" }))),
-
       numerologia
-        .mutateAsync({
-          datos: datosNumerologia,
-          perfilId: perfilIdObtenido ?? undefined,
-        })
+        .mutateAsync({ datos: datosNumerologia, perfilId: perfilIdObtenido ?? undefined })
         .then(() => setEstado((prev) => ({ ...prev, numerologia: "completado" })))
         .catch(() => setEstado((prev) => ({ ...prev, numerologia: "error" }))),
-
       retornoSolar
         .mutateAsync({
           datosNacimiento,
@@ -670,177 +413,129 @@ function PasoCalculando({
 
     await Promise.allSettled(promesas);
     setTodoListo(true);
-  }, [datos, crearPerfil, cartaNatal, disenoHumano, numerologia, retornoSolar]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [datos]);
 
   useEffect(() => {
     if (!ejecutadoRef.current) {
       ejecutadoRef.current = true;
-      const timer = window.setTimeout(() => {
-        void ejecutarCalculos();
-      }, 0);
-
-      return () => window.clearTimeout(timer);
+      void ejecutarCalculos();
     }
-  }, [ejecutarCalculos]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (todoListo) {
-      const timer = setTimeout(onFinalizar, 1500);
+      const timer = setTimeout(onFinalizar, 1200);
       return () => clearTimeout(timer);
     }
   }, [todoListo, onFinalizar]);
 
-  const pasos = [
-    {
-      clave: "perfil" as const,
-      textoEnCurso: "Creando tu perfil cósmico",
-      textoListo: "Perfil creado",
-    },
-    {
-      clave: "cartaNatal" as const,
-      textoEnCurso: "Calculando carta natal",
-      textoListo: "Carta natal lista",
-    },
-    {
-      clave: "disenoHumano" as const,
-      textoEnCurso: "Analizando Diseño Humano",
-      textoListo: "Diseño Humano listo",
-    },
-    {
-      clave: "numerologia" as const,
-      textoEnCurso: "Procesando numerología",
-      textoListo: "Numerología lista",
-    },
-    {
-      clave: "retornoSolar" as const,
-      textoEnCurso: "Calculando retorno solar",
-      textoListo: "Retorno solar listo",
-    },
+  const pasos: Array<{ clave: keyof EstadoCalculo; texto: string }> = [
+    { clave: "perfil", texto: "Perfil cósmico" },
+    { clave: "cartaNatal", texto: "Carta natal" },
+    { clave: "disenoHumano", texto: "Diseño Humano" },
+    { clave: "numerologia", texto: "Numerología" },
+    { clave: "retornoSolar", texto: "Retorno solar" },
   ];
 
-  const tieneErrores = Object.values(estado).some((item) => item === "error");
-
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col items-center gap-8">
+      {/* Header */}
       <div className="flex flex-col items-center text-center">
-        <div className="relative my-4 h-[120px] w-[120px]">
-          <div className="absolute inset-0 animate-[spin_12s_linear_infinite] rounded-full border border-white/18">
-            <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-white/55" />
+        <PillPaso paso={2} />
+
+        {/* Orbits animation — compact */}
+        <div className="relative my-5 h-20 w-20">
+          <div className="absolute inset-0 animate-[spin_10s_linear_infinite] rounded-full border border-white/15">
+            <div className="absolute -top-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white/50" />
           </div>
-          <div className="absolute inset-3 animate-[spin_8s_linear_infinite_reverse] rounded-full border border-white/22">
-            <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-violet-300" />
+          <div className="absolute inset-2.5 animate-[spin_7s_linear_infinite_reverse] rounded-full border border-white/20">
+            <div className="absolute -top-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-violet-300" />
           </div>
-          <div className="absolute inset-6 animate-[spin_5s_linear_infinite] rounded-full border border-white/18">
-            <div className="absolute -top-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-dorado-400" />
-          </div>
-          <div className="absolute inset-9 flex items-center justify-center rounded-full shadow-[var(--shell-sombra-fuerte)]" style={{ background: "linear-gradient(135deg, var(--color-dorado-300), var(--color-dorado-500))" }}>
-            <Icono nombre="destello" tamaño={20} className="text-white" />
+          <div className="absolute inset-5 flex items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-violet-700 shadow-lg shadow-violet-500/20">
+            <Icono nombre="destello" tamaño={16} className="text-white" />
           </div>
         </div>
 
-        <span className="rounded-full border border-white/12 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-hero-texto-secundario)]">
-          Activando tu perfil
-        </span>
-        <h2 className="mt-5 text-[30px] font-semibold leading-tight tracking-[-0.04em] text-[color:var(--shell-hero-texto)]">
-          {todoListo && !tieneErrores
-            ? "Tu perfil cósmico ya está listo"
-            : todoListo
-              ? "Terminamos la calibración inicial"
-              : "Estamos construyendo tu primera lectura"}
-        </h2>
-        <p className="mt-3 max-w-xl text-sm leading-6 text-[color:var(--shell-hero-texto-secundario)]">
-          {todoListo && !tieneErrores
-            ? "Redirigiendo al dashboard para que veas tu mapa completo."
-            : todoListo
-              ? "Hubo módulos que van a necesitar revisión, pero ya te llevamos al dashboard para continuar."
-              : "Procesamos efemérides históricas, zona horaria exacta y los cálculos base de ASTRA en paralelo."}
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight text-white">
+          {todoListo ? "Tu lectura está lista" : "Construyendo tu lectura"}
+        </h1>
       </div>
 
-      <div className="rounded-[30px] border border-white/10 bg-white/[0.06] p-4 backdrop-blur-xl sm:p-5">
-        <div className="border-b border-white/10 pb-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-hero-texto-tenue)]">
-            Estado del proceso
-          </p>
-          <p className="mt-2 text-sm leading-6 text-[color:var(--shell-hero-texto-secundario)]">
-            Cada módulo se activa en secuencia para dejar la app lista desde el primer ingreso.
-          </p>
-        </div>
+      {/* Progress items — compact */}
+      <div className="flex w-full flex-col gap-1.5">
+        {pasos.map((item, idx) => {
+          const estadoActual = estado[item.clave];
 
-        <div className="mt-4 flex flex-col gap-2">
-          {pasos.map((item) => {
-            const estadoActual = estado[item.clave];
-
-            return (
-              <div
-                key={item.clave}
-                className="flex items-center gap-3 rounded-[22px] border border-white/8 bg-black/10 px-4 py-3"
+          return (
+            <div
+              key={item.clave}
+              className="flex items-center gap-3 px-1 py-1.5"
+              style={{
+                opacity: estadoActual === "pendiente" ? 0.35 : 1,
+                transition: "opacity 300ms ease",
+                animationDelay: `${idx * 50}ms`,
+              }}
+            >
+              <IndicadorEstado estado={estadoActual} />
+              <span
+                className={cn(
+                  "text-sm",
+                  estadoActual === "completado" && "text-white/90",
+                  estadoActual === "en_curso" && "text-white/70",
+                  estadoActual === "error" && "text-red-300/80",
+                  estadoActual === "pendiente" && "text-white/50",
+                )}
               >
-                <IndicadorEstado estado={estadoActual} />
-                <div className="min-w-0 flex-1">
-                  <p
-                    className={cn(
-                      "text-sm font-medium",
-                      estadoActual === "pendiente" &&
-                        "text-[color:var(--shell-hero-texto-tenue)]",
-                      estadoActual === "en_curso" &&
-                        "text-[color:var(--shell-hero-texto-secundario)]",
-                      estadoActual === "completado" &&
-                        "text-[color:var(--shell-hero-texto)]",
-                      estadoActual === "error" && "text-red-200",
-                    )}
-                  >
-                    {estadoActual === "completado"
-                      ? item.textoListo
-                      : item.textoEnCurso}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {tieneErrores ? (
-          <div className="mt-4 rounded-[22px] border px-4 py-3" style={{ borderColor: "var(--shell-badge-error-borde)", background: "var(--shell-badge-error-fondo)" }}>
-            <p className="text-sm leading-6 text-red-200">
-              Algunos cálculos no terminaron correctamente. Podrás recalcularlos
-              desde tu perfil o al volver a entrar a cada módulo.
-            </p>
-          </div>
-        ) : null}
+                {item.texto}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
+  );
+}
+
+/* ─── Componentes auxiliares ─── */
+
+function PillPaso({ paso }: { paso: number }) {
+  return (
+    <span className="rounded-full border border-white/[0.10] bg-white/[0.06] px-4 py-1.5 text-[11px] font-medium tracking-widest text-white/50">
+      {paso} / 2
+    </span>
   );
 }
 
 function IndicadorEstado({ estado }: { estado: EstadoItem }) {
   if (estado === "completado") {
     return (
-      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-exito/90 text-white shadow-[var(--shell-sombra-suave)]">
-        <Icono nombre="check" tamaño={15} />
+      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/90">
+        <Icono nombre="check" tamaño={12} className="text-white" />
       </div>
     );
   }
 
   if (estado === "error") {
     return (
-      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-error/90 text-white shadow-[var(--shell-sombra-suave)]">
-        <Icono nombre="x" tamaño={15} />
+      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-400/80">
+        <Icono nombre="x" tamaño={12} className="text-white" />
       </div>
     );
   }
 
   if (estado === "en_curso") {
     return (
-      <div className="flex h-7 w-7 items-center justify-center">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/45 border-t-dorado-400" />
+      <div className="flex h-5 w-5 items-center justify-center">
+        <div className="h-4 w-4 animate-spin rounded-full border-[1.5px] border-white/30 border-t-violet-300" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-7 w-7 items-center justify-center">
-      <div className="h-2.5 w-2.5 rounded-full bg-white/28" />
+    <div className="flex h-5 w-5 items-center justify-center">
+      <div className="h-1.5 w-1.5 rounded-full bg-white/30" />
     </div>
   );
 }
