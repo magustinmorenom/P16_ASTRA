@@ -129,7 +129,7 @@ export function HeroSeccion({
                     />
                   )}
                 </span>
-                <span>{podcastGenerando ? "Generando audio" : podcastListo ? "Escuchar ahora" : "Generar audio de hoy"}</span>
+                <span>{podcastGenerando ? "Astra está generando tu podcast Hoy" : podcastListo ? "Escuchar ahora" : "Generar audio de hoy"}</span>
               </button>
 
               {podcastListo && onLeerDia && (

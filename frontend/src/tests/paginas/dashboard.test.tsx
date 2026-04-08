@@ -252,7 +252,7 @@ describe("PaginaDashboard", () => {
     expect(screen.getByRole("button", { name: /Escuchar ahora/i })).toBeInTheDocument();
   });
 
-  it("muestra 'Generando audio' cuando el podcast del día está en proceso", () => {
+  it("muestra 'Astra está generando tu podcast Hoy' cuando el podcast del día está en proceso", () => {
     mockUsarPronosticoDiario.mockReturnValue({
       data: PRONOSTICO_MOCK,
       isLoading: false,
@@ -267,7 +267,7 @@ describe("PaginaDashboard", () => {
 
     renderConProveedores(<PaginaDashboard />);
 
-    expect(screen.getByRole("button", { name: /Generando audio/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Astra está generando tu podcast Hoy/i })).toBeInTheDocument();
   });
 
   it("muestra feedback informativo al interactuar con el CTA de mañana", () => {
