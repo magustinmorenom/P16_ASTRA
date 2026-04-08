@@ -510,6 +510,7 @@ class ServicioPronostico:
             # Validar con Pydantic
             # Capturar interpretacion_integrada generada por Claude
             interp = pronostico.pop("interpretacion_integrada", None)
+            logger.info("Pronóstico — interpretacion_integrada de Claude: %s", repr(interp))
             numero_personal["interpretacion_integrada"] = interp
             pronostico["numero_personal"] = numero_personal
             validado = PronosticoDiarioSchema(**pronostico)
