@@ -1,12 +1,30 @@
 """Repositorio de conversaciones del oráculo — persistencia."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import delete as sa_delete, desc, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modelos.conversacion_oraculo import ConversacionOraculo
+
+# Zona horaria de referencia para el "corte de día" del chat.
+# El producto apunta a Argentina, por lo que el día natural es ARG.
+_TZ_ARG = ZoneInfo("America/Argentina/Buenos_Aires")
+
+
+def _dia_arg_de_iso(iso_ts: str | None) -> date | None:
+    """Devuelve la fecha (en hora ARG) de un timestamp ISO, o None si inválido."""
+    if not iso_ts:
+        return None
+    try:
+        dt = datetime.fromisoformat(iso_ts.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(_TZ_ARG).date()
 
 
 class RepositorioConversacion:
@@ -114,7 +132,12 @@ class RepositorioConversacion:
     async def obtener_o_crear_web(
         self, usuario_id: uuid.UUID
     ) -> ConversacionOraculo:
-        """Obtiene la conversación web activa o crea una nueva."""
+        """Obtiene la conversación web activa o crea una nueva.
+
+        Si la conversación activa tiene mensajes de un día previo (hora ARG),
+        se desactiva y se crea una nueva — el corte de día fuerza sesión
+        fresca para que el usuario no retome conversaciones viejas al entrar.
+        """
         resultado = await self.sesion.execute(
             select(ConversacionOraculo).where(
                 ConversacionOraculo.usuario_id == usuario_id,
@@ -123,6 +146,15 @@ class RepositorioConversacion:
             ).order_by(ConversacionOraculo.creado_en.desc()).limit(1)
         )
         conversacion = resultado.scalar_one_or_none()
+
+        if conversacion and conversacion.mensajes:
+            ultimo = conversacion.mensajes[-1].get("fecha")
+            dia_ultimo = _dia_arg_de_iso(ultimo)
+            hoy_arg = datetime.now(_TZ_ARG).date()
+            if dia_ultimo is not None and dia_ultimo != hoy_arg:
+                conversacion.activa = False
+                await self.sesion.commit()
+                conversacion = None
 
         if not conversacion:
             conversacion = ConversacionOraculo(

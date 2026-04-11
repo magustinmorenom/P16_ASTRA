@@ -384,6 +384,62 @@ body::-webkit-scrollbar-thumb {
 }
 
 /* ============================================
+   Banner podcast del día — entrada + shimmer
+   ============================================ */
+@keyframes banner-fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes banner-fade-out-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes banner-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-banner-in {
+  animation: banner-fade-in-down 400ms ease-out both;
+}
+
+.animate-banner-out {
+  animation: banner-fade-out-up 300ms ease-in both;
+}
+
+.banner-shimmer-texto {
+  background: linear-gradient(
+    90deg,
+    var(--shell-texto) 0%,
+    var(--color-acento) 50%,
+    var(--shell-texto) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: banner-shimmer 3.2s linear infinite;
+}
+
+/* ============================================
    Tooltip glassmorphic — Semana
    ============================================ */
 @keyframes tooltip-in {

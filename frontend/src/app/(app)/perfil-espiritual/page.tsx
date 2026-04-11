@@ -164,7 +164,7 @@ export default function PaginaPerfilEspiritual() {
         <div className="space-y-6 animate-[fadeIn_400ms_ease-out]">
           {/* Resumen */}
           <div
-            className="rounded-2xl border px-6 py-5"
+            className="rounded-2xl border px-[10px] py-5"
             style={{
               borderColor: "var(--shell-borde)",
               background: "var(--shell-superficie)",

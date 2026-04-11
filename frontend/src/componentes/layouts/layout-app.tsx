@@ -8,6 +8,7 @@ import SidebarNavegacion from "@/componentes/layouts/sidebar-navegacion";
 import ReproductorCosmico from "@/componentes/layouts/reproductor-cosmico";
 import PanelLyrics from "@/componentes/layouts/panel-lyrics";
 import LayoutMobile from "@/componentes/layouts/layout-mobile";
+import BannerPodcastDia from "@/componentes/layouts/banner-podcast-dia";
 import { ContenedorToasts } from "@/componentes/layouts/contenedor-toasts";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { usarEsMobile } from "@/lib/hooks/usar-es-mobile";
@@ -45,6 +46,7 @@ export default function LayoutApp({
   if (esMobile) {
     return (
       <>
+        <BannerPodcastDia />
         <LayoutMobile>{children}</LayoutMobile>
         <ContenedorToasts />
       </>
@@ -59,6 +61,9 @@ export default function LayoutApp({
     >
       {/* Navbar — full width */}
       <Navbar />
+
+      {/* Banner de auto-generación del podcast del día (sólo si corresponde) */}
+      <BannerPodcastDia />
 
       {/* Body: sidebar + content */}
       <div className="flex flex-1 min-h-0 overflow-hidden">

@@ -405,6 +405,15 @@ export default function Navbar() {
       return;
     }
 
+    // El podcast del DÍA se auto-genera en el primer login del día (ver
+    // `banner-podcast-dia.tsx` + `servicio_podcast_bootstrap.py`). No se
+    // dispara manualmente desde el menú — simplemente llevamos al usuario
+    // a la página de podcasts para que espere la generación.
+    if (tipo === "dia") {
+      router.push("/podcast");
+      return;
+    }
+
     generarPodcast.mutate(tipo);
   }
 

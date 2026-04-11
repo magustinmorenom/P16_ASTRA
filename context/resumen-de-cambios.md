@@ -3701,3 +3701,62 @@ Se corrigió la navegación de Diseño Humano para que conserve el menú inferio
 
 ### Como funciona
 La tarjeta de Diseño Humano ya no abre una pantalla en el stack `/(features)`, sino una ruta oculta dentro de `/(tabs)`, por lo que el layout del menú inferior permanece montado. En Numerología, el encabezado reutiliza el componente `HeaderMobile`, así que al entrar desde Descubrir el usuario ahora ve la flecha de volver y puede regresar manteniendo el contexto de navegación.
+
+## Sesion: Chat web — corte de día automático
+**Fecha:** 2026-04-11 ~07:59 (ARG)
+
+### Que se hizo
+Al entrar al chat en un día distinto al del último mensaje (zona horaria ARG en backend, local del navegador en frontend), la conversación previa ya no se abre automáticamente: la pantalla arranca en limpio y al enviar el primer mensaje se crea una conversación nueva. La conversación vieja sigue visible y reabrible desde el panel lateral.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambio |
+|---------|--------|
+| `backend/app/datos/repositorio_conversacion.py` | Nuevo helper `_dia_arg_de_iso`, y `obtener_o_crear_web` desactiva la conv activa si su último mensaje es de otro día (hora ARG) y crea una nueva. |
+| `backend/app/rutas/v1/chat.py` | `GET /chat/conversaciones` ahora expone `ultimo_mensaje_en` (fecha ISO del último mensaje o `null`). |
+| `frontend/src/lib/tipos/chat.ts` | `ConversacionResumen` incluye `ultimo_mensaje_en: string \| null`. |
+| `frontend/src/app/(app)/chat/page.tsx` | El `useEffect` de auto-selección compara la fecha local del último mensaje contra hoy; si no coincide, no selecciona la conversación activa. |
+| `backend/tests/datos/test_repositorio_conversacion.py` | Archivo nuevo: tests de `_dia_arg_de_iso` y de los 4 escenarios de `obtener_o_crear_web` (hoy, ayer, vacía, sin conv previa). |
+
+### Tests
+9 tests pasando (`tests/datos/test_repositorio_conversacion.py` + `tests/rutas/test_rutas_chat.py`). `npx tsc --noEmit` en frontend sin errores.
+
+### Como funciona
+Cuando el usuario abre `/chat`, el frontend lista las conversaciones vía `GET /chat/conversaciones`, que ahora incluye el timestamp del último mensaje. El auto-select compara el día local del navegador con ese timestamp: si coinciden, selecciona la conversación; si no, deja `conversacionActiva = null` y se muestra el saludo inicial con sugerencias. Cuando el usuario envía su primer mensaje, el backend en `obtener_o_crear_web` detecta la misma situación del lado servidor (usando hora ARG), marca la conversación vieja como `activa=false` y crea una nueva limpia. El corte queda cubierto por partida doble — el frontend evita mostrar la conversación vieja y el backend evita seguir escribiéndole mensajes. La conversación anterior no se archiva ni se borra: sigue apareciendo en el panel lateral y el usuario puede reabrirla con `/chat/cambiar/{id}` si quiere continuarla manualmente.
+
+## Sesion: Podcast del día — auto-generación en primer login + banner
+**Fecha:** 2026-04-11 ~09:30 (ARG)
+
+### Que se hizo
+El podcast del día deja de generarse on-demand y pasa a ser automático: cuando un usuario premium con perfil cargado entra a ASTRA por primera vez en el día (hora ARG), el endpoint `/auth/me` encola un background task que dispara el pipeline de `ServicioPodcast.generar_episodio(tipo="dia")`. Un banner nuevo en el header del shell acompaña el progreso en vivo con un mensaje animado "Hola {nombre} 👋, hoy es un nuevo día! Te estoy preparando tu día." (el emoji 👋 está pedido explícitamente por producto). Al completarse, el banner transiciona a "Tu día está listo" con un CTA "Escuchar" y auto-desaparece a los 8 segundos. El botón "Generar ahora" del tipo `dia` en `/podcast` queda reemplazado por un indicador "Preparando tu día…" y el menú del navbar ya no dispara mutation para `dia`. Los tipos `semana` y `mes` siguen siendo manuales.
+
+### Backend — Archivos creados/modificados
+| Archivo | Cambio |
+|---------|--------|
+| `backend/app/nucleo/utilidades_fecha.py` | **NUEVO** — helper común: `TZ_ARG`, `dia_arg_actual()`, `dia_arg_de_datetime()`, `es_primer_acceso_del_dia_arg()`. |
+| `backend/app/servicios/servicio_podcast_bootstrap.py` | **NUEVO** — `bootstrap_dia_podcast(usuario_id)` con guards (activo, premium, con perfil) + set `_bootstrap_en_curso` para evitar dispatches paralelos. Crea sesión propia con `crear_motor_async`/`crear_sesion_factory`. Toda excepción se loguea sin propagar. |
+| `backend/app/rutas/v1/auth.py` | `/auth/me` recibe `BackgroundTasks`. Captura `ultimo_acceso` previo antes de devolver la respuesta y, si es primer acceso del día ARG + premium + con perfil, actualiza `ultimo_acceso` y encola `bootstrap_dia_podcast`. Sólo se hace el `UPDATE` en primer acceso del día para mantener el endpoint barato en navegaciones normales. |
+| `backend/tests/nucleo/test_utilidades_fecha.py` | **NUEVO** — 9 tests del helper (None, UTC→ARG, naive, frontera medianoche). |
+| `backend/tests/servicios/test_servicio_podcast_bootstrap.py` | **NUEVO** — 7 tests del bootstrap: usuario inactivo, sin suscripción, plan gratis, sin perfil, caso feliz (valida args), guard duplicado, excepción no propaga. |
+| `backend/tests/rutas/test_rutas_auth.py` | `TestMeBootstrapPodcast` con 4 tests: primer acceso del día encola bootstrap; mismo día no; plan gratis no; sin perfil no. |
+
+### Frontend — Archivos creados/modificados
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/componentes/layouts/banner-podcast-dia.tsx` | **NUEVO** — consume `usarPodcastHoy()` + `useStoreAuth`. Estados: `generando_*` (shimmer + dots + mensaje saludo), `listo` reciente (CTA "Escuchar" + auto-hide 8s), `error` (botón reintentar + auto-hide 15s). Usa `localStorage` con clave por fecha local para no repetir el estado "listo" en la misma sesión del día. Botón "X" para descartar manualmente (también persistido en `localStorage`). |
+| `frontend/src/app/globals.css` | Keyframes nuevos `banner-fade-in-down`, `banner-fade-out-up`, `banner-shimmer` + clases `.animate-banner-in`, `.animate-banner-out`, `.banner-shimmer-texto`. |
+| `frontend/src/componentes/layouts/layout-app.tsx` | Monta `<BannerPodcastDia />` justo después del navbar en desktop y al tope en mobile. |
+| `frontend/src/app/(app)/podcast/page.tsx` | `CardEpisodio` recibe prop `autoGenerado`. Cuando `autoGenerado=true` y el episodio aún no existe, en lugar del botón "Generar ahora" muestra un indicador "Preparando tu día…" con spinner. Se pasa `autoGenerado={tipo === "dia"}` desde el map — los tipos `semana`/`mes` mantienen el flujo manual. |
+| `frontend/src/componentes/layouts/navbar.tsx` | En `manejarSeleccionPodcast`, cuando `tipo="dia"` y el episodio no está listo, navega a `/podcast` en vez de disparar `generarPodcast.mutate("dia")`. Flujo de `semana`/`mes` intacto. |
+
+### Tests
+- **Backend:** 20 tests nuevos (9 helper + 7 bootstrap + 4 endpoint `/auth/me`). Toda la suite relacionada: 101 tests pasando (`test_utilidades_fecha`, `test_servicio_podcast_bootstrap`, `test_rutas_auth`, `test_rutas_podcast`, `test_servicio_podcast`, `test_rutas_chat`).
+- **Frontend:** `npx tsc --noEmit` sin errores.
+
+### Como funciona
+1. El usuario loguea y el frontend llama `GET /auth/me`. El endpoint lee `usuario.ultimo_acceso`, lo compara contra el día ARG de hoy con `es_primer_acceso_del_dia_arg` y — si es primer acceso + premium + con perfil — actualiza `ultimo_acceso` y encola `bootstrap_dia_podcast` como background task. La respuesta al frontend no se bloquea.
+2. El background task abre su propia sesión DB, valida guards (activo, premium, perfil) y llama `ServicioPodcast.generar_episodio(usuario_id, dia_arg_actual(), "dia", origen="auto")`. Como el pipeline es idempotente por constraint único `(usuario_id, fecha, momento)`, si ya existe un episodio `listo` o `generando_*` lo retorna sin relanzar.
+3. Mientras el pipeline corre, el frontend (que ya tiene `usarPodcastHoy` con polling inteligente de 5s cuando hay generación en curso) refleja el estado en `<BannerPodcastDia />`, montado en el layout del shell. El banner muestra el saludo animado con shimmer + dots pulsantes + CTA "Ver detalle".
+4. Cuando el estado pasa a `listo`, si el usuario vio antes el estado "generando" en este montaje, el banner cross-fade a "Tu día está listo" con un CTA "Escuchar" que carga el episodio en el reproductor cósmico. El banner se oculta solo a los 8s y queda marcado en `localStorage` para no repetirse el mismo día al refrescar.
+5. En caso de error, el banner muestra una variante discreta con "Reintentar" (que llama a `POST /podcast/generar?tipo=dia`) y auto-oculta tras 15s.
+6. La página `/podcast` y el menú del navbar ya no exponen la opción de generar manualmente el tipo `dia`: la card muestra "Preparando tu día…" mientras el pipeline corre, y el menú navega a `/podcast` en lugar de disparar la mutation.
+7. Guards duros: si el usuario es gratis, no tiene perfil, o el pipeline ya corrió hoy, el bootstrap queda silencioso — el banner nunca aparece. El emoji 👋 en el texto del saludo es una excepción explícita a la regla "no emojis" y está marcado con un comentario anti-remoción en el código.

@@ -274,6 +274,8 @@ async def listar_conversaciones(
         if not preview and mensajes:
             preview = mensajes[0].get("contenido", "")[:80]
 
+        ultimo_mensaje_en = mensajes[-1].get("fecha") if mensajes else None
+
         resultado.append({
             "id": str(c.id),
             "preview": preview,
@@ -283,6 +285,7 @@ async def listar_conversaciones(
             "anclada": c.anclada,
             "archivada": c.archivada,
             "creado_en": c.creado_en.isoformat() if c.creado_en else None,
+            "ultimo_mensaje_en": ultimo_mensaje_en,
         })
 
     return {"exito": True, "datos": resultado}

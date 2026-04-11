@@ -1350,3 +1350,208 @@ class TestMeConPlan:
         assert datos["plan_slug"] is None
         assert datos["plan_nombre"] is None
         assert datos["suscripcion_estado"] is None
+
+
+class TestMeBootstrapPodcast:
+    """GET /auth/me debe encolar el bootstrap del podcast del día cuando corresponda."""
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.auth.bootstrap_dia_podcast")
+    @patch("app.rutas.v1.auth.RepositorioPerfil")
+    @patch("app.rutas.v1.auth.RepositorioPlan")
+    @patch("app.rutas.v1.auth.RepositorioSuscripcion")
+    @patch("app.rutas.v1.auth.RepositorioUsuario")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_primer_acceso_del_dia_premium_con_perfil_encola_bootstrap(
+        self,
+        MockRepoAuth,
+        MockRepoUsuarioActualizar,
+        MockRepoSus,
+        MockRepoPlan,
+        MockRepoPerfil,
+        mock_bootstrap,
+        cliente,
+    ):
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid, email="premium@test.com")
+        usuario.ultimo_acceso = datetime.now(timezone.utc) - timedelta(days=2)
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+
+        plan_mock = MagicMock()
+        plan_mock.id = uuid.uuid4()
+        plan_mock.slug = "premium"
+        plan_mock.nombre = "Premium"
+        sus_mock = MagicMock()
+        sus_mock.plan_id = plan_mock.id
+        sus_mock.estado = "activa"
+        MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=sus_mock)
+        MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan_mock)
+
+        perfil_mock = MagicMock()
+        MockRepoPerfil.return_value.obtener_por_usuario = AsyncMock(
+            return_value=perfil_mock
+        )
+        MockRepoUsuarioActualizar.return_value.actualizar_ultimo_acceso = AsyncMock()
+
+        token = ServicioAuth.crear_token_acceso(uid, "premium@test.com")
+        resp = await cliente.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        # BackgroundTasks ejecuta el task después de la respuesta.
+        # Si está mockeado, la llamada es sincrónica vía add_task → await.
+        # Validamos que la función fue registrada al menos una vez con el uid.
+        assert mock_bootstrap.called or mock_bootstrap.await_count > 0
+        argumentos_usados = (
+            mock_bootstrap.call_args
+            or (mock_bootstrap.await_args if hasattr(mock_bootstrap, "await_args") else None)
+        )
+        assert argumentos_usados is not None
+        assert argumentos_usados.args[0] == uid
+        MockRepoUsuarioActualizar.return_value.actualizar_ultimo_acceso.assert_awaited_once_with(
+            uid
+        )
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.auth.bootstrap_dia_podcast")
+    @patch("app.rutas.v1.auth.RepositorioPerfil")
+    @patch("app.rutas.v1.auth.RepositorioPlan")
+    @patch("app.rutas.v1.auth.RepositorioSuscripcion")
+    @patch("app.rutas.v1.auth.RepositorioUsuario")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_mismo_dia_no_encola_bootstrap(
+        self,
+        MockRepoAuth,
+        MockRepoUsuarioActualizar,
+        MockRepoSus,
+        MockRepoPlan,
+        MockRepoPerfil,
+        mock_bootstrap,
+        cliente,
+    ):
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid, email="repetido@test.com")
+        # Último acceso hace 5 minutos → mismo día ARG
+        usuario.ultimo_acceso = datetime.now(timezone.utc) - timedelta(minutes=5)
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+
+        plan_mock = MagicMock()
+        plan_mock.id = uuid.uuid4()
+        plan_mock.slug = "premium"
+        plan_mock.nombre = "Premium"
+        sus_mock = MagicMock()
+        sus_mock.plan_id = plan_mock.id
+        sus_mock.estado = "activa"
+        MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=sus_mock)
+        MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan_mock)
+
+        perfil_mock = MagicMock()
+        MockRepoPerfil.return_value.obtener_por_usuario = AsyncMock(
+            return_value=perfil_mock
+        )
+        MockRepoUsuarioActualizar.return_value.actualizar_ultimo_acceso = AsyncMock()
+
+        token = ServicioAuth.crear_token_acceso(uid, "repetido@test.com")
+        resp = await cliente.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        mock_bootstrap.assert_not_called()
+        MockRepoUsuarioActualizar.return_value.actualizar_ultimo_acceso.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.auth.bootstrap_dia_podcast")
+    @patch("app.rutas.v1.auth.RepositorioPerfil")
+    @patch("app.rutas.v1.auth.RepositorioPlan")
+    @patch("app.rutas.v1.auth.RepositorioSuscripcion")
+    @patch("app.rutas.v1.auth.RepositorioUsuario")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_plan_gratis_no_encola_bootstrap(
+        self,
+        MockRepoAuth,
+        MockRepoUsuarioActualizar,
+        MockRepoSus,
+        MockRepoPlan,
+        MockRepoPerfil,
+        mock_bootstrap,
+        cliente,
+    ):
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid, email="free@test.com")
+        usuario.ultimo_acceso = None  # primer login absoluto
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+
+        plan_mock = MagicMock()
+        plan_mock.id = uuid.uuid4()
+        plan_mock.slug = "gratis"
+        plan_mock.nombre = "Gratis"
+        sus_mock = MagicMock()
+        sus_mock.plan_id = plan_mock.id
+        sus_mock.estado = "activa"
+        MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=sus_mock)
+        MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan_mock)
+
+        perfil_mock = MagicMock()
+        MockRepoPerfil.return_value.obtener_por_usuario = AsyncMock(
+            return_value=perfil_mock
+        )
+        MockRepoUsuarioActualizar.return_value.actualizar_ultimo_acceso = AsyncMock()
+
+        token = ServicioAuth.crear_token_acceso(uid, "free@test.com")
+        resp = await cliente.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        mock_bootstrap.assert_not_called()
+        MockRepoUsuarioActualizar.return_value.actualizar_ultimo_acceso.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch("app.rutas.v1.auth.bootstrap_dia_podcast")
+    @patch("app.rutas.v1.auth.RepositorioPerfil")
+    @patch("app.rutas.v1.auth.RepositorioPlan")
+    @patch("app.rutas.v1.auth.RepositorioSuscripcion")
+    @patch("app.rutas.v1.auth.RepositorioUsuario")
+    @patch("app.dependencias_auth.RepositorioUsuario")
+    async def test_sin_perfil_no_encola_bootstrap(
+        self,
+        MockRepoAuth,
+        MockRepoUsuarioActualizar,
+        MockRepoSus,
+        MockRepoPlan,
+        MockRepoPerfil,
+        mock_bootstrap,
+        cliente,
+    ):
+        uid = uuid.uuid4()
+        usuario = _crear_usuario_mock(uid=uid, email="nuevo@test.com")
+        usuario.ultimo_acceso = None
+        MockRepoAuth.return_value.obtener_por_id = AsyncMock(return_value=usuario)
+
+        plan_mock = MagicMock()
+        plan_mock.id = uuid.uuid4()
+        plan_mock.slug = "premium"
+        plan_mock.nombre = "Premium"
+        sus_mock = MagicMock()
+        sus_mock.plan_id = plan_mock.id
+        sus_mock.estado = "activa"
+        MockRepoSus.return_value.obtener_activa = AsyncMock(return_value=sus_mock)
+        MockRepoPlan.return_value.obtener_por_id = AsyncMock(return_value=plan_mock)
+
+        MockRepoPerfil.return_value.obtener_por_usuario = AsyncMock(return_value=None)
+        MockRepoUsuarioActualizar.return_value.actualizar_ultimo_acceso = AsyncMock()
+
+        token = ServicioAuth.crear_token_acceso(uid, "nuevo@test.com")
+        resp = await cliente.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+        mock_bootstrap.assert_not_called()
+        MockRepoUsuarioActualizar.return_value.actualizar_ultimo_acceso.assert_not_called()

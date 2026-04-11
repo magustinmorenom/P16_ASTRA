@@ -104,12 +104,16 @@ function CardEpisodio({
   onGenerar,
   generando,
   bloqueado,
+  autoGenerado = false,
 }: {
   tipo: TipoPodcast;
   episodio: PodcastEpisodio | undefined;
   onGenerar: () => void;
   generando: boolean;
   bloqueado: boolean;
+  /** Si es true, la card nunca muestra el botón "Generar ahora" porque el
+   *  pipeline se dispara automáticamente (ver `banner-podcast-dia.tsx`). */
+  autoGenerado?: boolean;
 }) {
   const router = useRouter();
   const { setPistaActual, pistaActual } = useStoreUI();
@@ -225,6 +229,14 @@ function CardEpisodio({
             >
               En preparación
             </div>
+          </div>
+        ) : autoGenerado ? (
+          <div
+            className="mt-auto inline-flex h-11 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-medium"
+            style={ESTILO_BOTON_SHELL}
+          >
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-[color:var(--color-acento)] border-t-transparent" />
+            Preparando tu día…
           </div>
         ) : (
           <button
@@ -394,6 +406,7 @@ export default function PaginaPodcast() {
                       generarMutation.variables === tipo
                     }
                     bloqueado={!esPremium}
+                    autoGenerado={tipo === "dia"}
                   />
                 ))}
               </div>

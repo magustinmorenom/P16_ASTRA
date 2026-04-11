@@ -31,6 +31,7 @@ export interface ConversacionResumen {
   anclada: boolean;
   archivada: boolean;
   creado_en: string | null;
+  ultimo_mensaje_en: string | null;
 }
 
 export interface CambiarConversacionRespuesta {

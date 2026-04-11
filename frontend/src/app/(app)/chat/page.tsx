@@ -27,14 +27,29 @@ export default function PaginaChat() {
   const cambiarMutation = usarCambiarConversacion();
   const nuevaMutation = usarNuevaConversacion();
 
-  // Auto-seleccionar la conversacion activa al cargar
+  // Auto-seleccionar la conversacion activa al cargar.
+  // Si la conversacion activa es de un dia anterior (hora local del usuario),
+  // NO se selecciona: arranca en limpio para forzar sesion nueva al escribir.
   useEffect(() => {
     if (inicializado || conversaciones.length === 0) return;
 
     const activa = conversaciones.find((c) => c.activa && !c.archivada);
     if (activa) {
-      setConversacionActiva(activa.id);
-      setTituloActiva(activa.titulo || activa.preview || null);
+      const esDeHoy = (() => {
+        if (!activa.ultimo_mensaje_en) return true; // conv nueva sin mensajes
+        const ultimo = new Date(activa.ultimo_mensaje_en);
+        const hoy = new Date();
+        return (
+          ultimo.getFullYear() === hoy.getFullYear() &&
+          ultimo.getMonth() === hoy.getMonth() &&
+          ultimo.getDate() === hoy.getDate()
+        );
+      })();
+
+      if (esDeHoy) {
+        setConversacionActiva(activa.id);
+        setTituloActiva(activa.titulo || activa.preview || null);
+      }
     }
     setInicializado(true);
   }, [conversaciones, inicializado]);
