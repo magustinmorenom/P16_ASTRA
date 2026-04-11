@@ -119,6 +119,16 @@ export default function LayoutTabs() {
           }}
         />
 
+        <Tabs.Screen
+          name="diseno-humano"
+          options={{ href: null }}
+        />
+
+        <Tabs.Screen
+          name="numerologia"
+          options={{ href: null }}
+        />
+
         {/* Perfil oculto del tab bar */}
         <Tabs.Screen
           name="perfil"

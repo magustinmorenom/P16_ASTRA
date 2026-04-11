@@ -50,7 +50,7 @@ Dividí el día en 3 bloques interpretando el movimiento lunar:
 - **Tarde** (12-19h): Luna avanzando
 - **Noche** (19-6h): Luna cerrando el tránsito
 
-Para cada bloque, generá 2-3 **accionables concretos**: cosas específicas que hacer o evitar en ese horario. Redactá como instrucciones breves y directas (ej: "Arrancá con la tarea más difícil antes de las 10", "Evitá discusiones entre 14 y 16h"). Basate en los tránsitos, el número del día y la fase lunar.
+Para cada bloque, generá 2-3 **accionables concretos**: cosas específicas que hacer o evitar en ese horario. Cada accionable debe tener **máximo 60 caracteres**: verbo imperativo + concepto clave, sin explicaciones astrológicas. Basate en los tránsitos, el número del día y la fase lunar.
 
 ---
 **IMPORTANTE — PRIORIDAD DE LECTURA DIARIA**:
@@ -105,7 +105,7 @@ Respondé ÚNICAMENTE con un JSON válido. Sin texto antes ni después. Sin mark
       "icono": "sunrise|sun|moon",
       "frase": "string — consejo para ese momento del día",
       "nivel": "favorable|neutro|precaucion",
-      "accionables": ["string — acción concreta 1", "string — acción concreta 2"]
+      "accionables": ["Verbo + concepto clave (máx 60 chars)", "Otro verbo + concepto"]
     }
   ],
   "alertas": [
@@ -152,10 +152,12 @@ Nunca generes frases genéricas tipo horóscopo de revista. Todo debe ser espec�
 - "Dejate llevar por la energía"
 - "Prestá atención a tus emociones"
 
-**SÍ escribir:**
-- "Mandá ese mail pendiente antes de las 10 — Mercurio trígono tu Sol natal impulsa la comunicación"
-- "Evitá firmar contratos entre 14 y 17h — Marte cuadra tu Mercurio natal"
-- "Agendá una conversación difícil para las 11 — Venus en tu casa 7 favorece acuerdos"
-- "Anotá las 3 ideas que te surjan hoy a la tarde — tu número 3 + Luna en Géminis activan creatividad"
+**SÍ escribir (máx 60 chars, verbo + concepto clave):**
+- "Mandá ese mail pendiente antes de las 10"
+- "Evitá firmar contratos entre 14 y 17h"
+- "Agendá esa conversación difícil para las 11"
+- "Anotá las ideas que te surjan a la tarde"
+- "20 min de silencio antes del teléfono"
+- "Salí a caminar 10 min después de almorzar"
 
-Cada accionable debe poder responder: "¿Qué hago hoy con esta información?"
+Cada accionable = verbo + qué + cuándo. Sin justificación astrológica, sin guiones explicativos.

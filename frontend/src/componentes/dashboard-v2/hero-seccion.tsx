@@ -24,17 +24,7 @@ interface HeroSeccionProps {
   podcastGenerando: boolean;
   onReproducirPodcast: () => void;
   onGenerarPodcast: () => void;
-  onInformarPodcastManana: () => void;
   onLeerDia?: () => void;
-}
-
-const DIAS_CORTOS = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"] as const;
-
-function obtenerFechaManana(fecha: Date): string {
-  const manana = new Date(fecha);
-  manana.setDate(manana.getDate() + 1);
-  const dia = DIAS_CORTOS[manana.getDay()];
-  return `${dia} ${manana.getDate()}`;
 }
 
 export function HeroSeccion({
@@ -50,7 +40,6 @@ export function HeroSeccion({
   podcastGenerando,
   onReproducirPodcast,
   onGenerarPodcast,
-  onInformarPodcastManana,
   onLeerDia,
 }: HeroSeccionProps) {
   const estadoPodcast = podcastGenerando
@@ -142,15 +131,6 @@ export function HeroSeccion({
                 </button>
               )}
 
-              <button
-                onClick={onInformarPodcastManana}
-                disabled={podcastGenerando}
-                className="flex min-h-[38px] max-w-full items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors hover:text-[color:var(--shell-texto)] disabled:cursor-not-allowed disabled:opacity-70"
-                style={estiloBotonSecundario}
-              >
-                <Icono nombre="destello" tamaño={13} peso="fill" />
-                <span>Audio de mañana · {obtenerFechaManana(fecha)}</span>
-              </button>
             </div>
           </div>
         </div>

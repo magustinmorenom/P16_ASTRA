@@ -256,6 +256,38 @@ class ServicioPronostico:
         return max(1, min(10, claridad)), max(1, min(10, intuicion))
 
     @classmethod
+    def _inyectar_acciones_podcast(cls, resultado: dict, acciones_podcast: list[dict]) -> dict:
+        """Sobrescribe los accionables de los momentos con las acciones reales del podcast.
+
+        El podcast genera acciones con estructura:
+            {"bloque": "manana"|"tarde"|"noche", "accion": "...", "contexto": "..."}
+        Los momentos del pronóstico esperan:
+            {"accionables": ["string1", "string2", ...]}
+        """
+        # Agrupar acciones por bloque
+        acciones_por_bloque: dict[str, list[str]] = {}
+        for accion in acciones_podcast:
+            bloque = accion.get("bloque", "")
+            texto = accion.get("accion", "")
+            if bloque and texto:
+                acciones_por_bloque.setdefault(bloque, []).append(texto)
+
+        if not acciones_por_bloque:
+            return resultado
+
+        # Reemplazar accionables en cada momento
+        for momento in resultado.get("momentos", []):
+            bloque = momento.get("bloque", "")
+            if bloque in acciones_por_bloque:
+                momento["accionables"] = acciones_por_bloque[bloque]
+
+        logger.info(
+            "Accionables inyectados desde podcast: %s",
+            {b: len(a) for b, a in acciones_por_bloque.items()},
+        )
+        return resultado
+
+    @classmethod
     def _generar_fallback_diario(
         cls, numero_personal: dict, luna_info: dict
     ) -> dict:
@@ -426,13 +458,18 @@ class ServicioPronostico:
 
         # 6. Buscar si existe lectura diaria (podcast) para resumir accionables
         lectura_diaria = None
+        acciones_podcast: list[dict] | None = None
         try:
             from app.datos.repositorio_podcast import RepositorioPodcast
             repo_podcast = RepositorioPodcast(sesion)
             podcast = await repo_podcast.obtener_episodio(usuario_id, fecha_obj, "dia")
-            if podcast and podcast.estado == "listo" and podcast.guion_md:
-                lectura_diaria = podcast.guion_md
-                logger.debug("Lectura diaria encontrada para el usuario %s", usuario_id)
+            if podcast and podcast.estado == "listo":
+                if podcast.guion_md:
+                    lectura_diaria = podcast.guion_md
+                    logger.debug("Lectura diaria encontrada para el usuario %s", usuario_id)
+                if podcast.acciones_json and isinstance(podcast.acciones_json, list):
+                    acciones_podcast = podcast.acciones_json
+                    logger.debug("Acciones del podcast encontradas: %d acciones", len(acciones_podcast))
         except Exception as e:
             logger.warning("No se pudo recuperar la lectura diaria para el pronóstico: %s", e)
 
@@ -440,7 +477,10 @@ class ServicioPronostico:
         config = obtener_configuracion()
         if not config.anthropic_api_key:
             logger.warning("Sin API key de Anthropic — retornando fallback")
-            return cls._generar_fallback_diario(numero_personal, luna_info)
+            fallback = cls._generar_fallback_diario(numero_personal, luna_info)
+            if acciones_podcast:
+                fallback = cls._inyectar_acciones_podcast(fallback, acciones_podcast)
+            return fallback
 
         system_prompt = cls._cargar_prompt()
 
@@ -472,7 +512,7 @@ class ServicioPronostico:
             cliente = anthropic.AsyncAnthropic(api_key=config.anthropic_api_key)
             respuesta = await cliente.messages.create(
                 model=config.pronostico_modelo,
-                max_tokens=2048,
+                max_tokens=4096,
                 temperature=0.7,
                 system=system_prompt,
                 messages=[{"role": "user", "content": mensaje_usuario}],
@@ -496,14 +536,14 @@ class ServicioPronostico:
                 modelo=config.pronostico_modelo,
             )
 
-            # 8. Parsear JSON
-            # Limpiar posibles backticks de markdown
+            # 8. Parsear JSON — extraer el primer objeto JSON válido
             texto_limpio = texto.strip()
-            if texto_limpio.startswith("```"):
-                lineas = texto_limpio.split("\n")
-                # Remover primera y última línea de backticks
-                lineas = [l for l in lineas if not l.strip().startswith("```")]
-                texto_limpio = "\n".join(lineas)
+            # Buscar el primer '{' y el último '}' para extraer el JSON
+            inicio = texto_limpio.find("{")
+            fin = texto_limpio.rfind("}")
+            if inicio == -1 or fin == -1 or fin <= inicio:
+                raise json.JSONDecodeError("No se encontró JSON válido en la respuesta", texto_limpio, 0)
+            texto_limpio = texto_limpio[inicio:fin + 1]
 
             pronostico = json.loads(texto_limpio)
 
@@ -519,6 +559,10 @@ class ServicioPronostico:
         except (json.JSONDecodeError, Exception) as e:
             logger.error("Error generando pronóstico con Claude: %s", e)
             resultado = cls._generar_fallback_diario(numero_personal, luna_info)
+
+        # 8b. Inyectar acciones del podcast directamente en los momentos
+        if acciones_podcast:
+            resultado = cls._inyectar_acciones_podcast(resultado, acciones_podcast)
 
         # 9. Guardar en Redis
         try:

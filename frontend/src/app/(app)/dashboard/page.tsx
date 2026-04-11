@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Icono } from "@/componentes/ui/icono";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
@@ -60,6 +61,7 @@ export default function PaginaDashboard() {
   const { usuario, autenticado } = useStoreAuth();
   const generarMutation = usarGenerarPodcast();
   const esMobile = usarEsMobile();
+  const queryClient = useQueryClient();
 
   const {
     data: pronosticoDiario,
@@ -116,6 +118,41 @@ export default function PaginaDashboard() {
   useEffect(() => {
     precargarAudiosPodcast(episodiosHoy ?? []);
   }, [episodiosHoy]);
+
+  // Auto-trigger: si el pronóstico cargó pero no existe podcast del día,
+  // disparar la generación una sola vez por sesión para que los accionables
+  // del pronóstico se enriquezcan con los del podcast.
+  const autoGeneracionDisparada = useRef(false);
+  useEffect(() => {
+    if (autoGeneracionDisparada.current) return;
+    if (!autenticado || !pronosticoDiario) return;
+    if (!episodiosHoy) return; // esperar a que cargue la lista
+    if (generarMutation.isPending) return;
+
+    const epDiaActual = episodiosHoy.find((ep) => ep.tipo === "dia");
+    const necesitaGenerar = !epDiaActual || epDiaActual.estado === "error";
+
+    if (necesitaGenerar) {
+      autoGeneracionDisparada.current = true;
+      generarMutation.mutate("dia");
+    }
+  }, [autenticado, pronosticoDiario, episodiosHoy, generarMutation]);
+
+  // Cuando el podcast del día transiciona a "listo", invalidar el pronóstico
+  // para que el backend re-inyecte los accionables reales del podcast.
+  const estadoEpDiaPrevio = useRef<string | null>(null);
+  useEffect(() => {
+    const epDiaActual = (episodiosHoy ?? []).find((ep) => ep.tipo === "dia");
+    const estadoActual = epDiaActual?.estado ?? null;
+    if (
+      estadoEpDiaPrevio.current &&
+      estadoEpDiaPrevio.current !== "listo" &&
+      estadoActual === "listo"
+    ) {
+      queryClient.invalidateQueries({ queryKey: ["pronostico"] });
+    }
+    estadoEpDiaPrevio.current = estadoActual;
+  }, [episodiosHoy, queryClient]);
 
   function manejarPlayPodcast(tipo: TipoPodcast) {
     const ep = mapaEpisodios.get(tipo);
@@ -182,13 +219,6 @@ export default function PaginaDashboard() {
     (generarMutation.isPending && generarMutation.variables === "semana") ||
     mapaEpisodios.get("semana")?.estado === "generando_guion" ||
     mapaEpisodios.get("semana")?.estado === "generando_audio";
-
-  function manejarInfoPodcastManana() {
-    mostrarToast(
-      "info",
-      "El audio de mañana se habilita cuando comienza el próximo día."
-    );
-  }
 
   // =========================================================================
   // DASHBOARD UNIFICADO — dark ciruela (mobile + desktop)
@@ -308,7 +338,6 @@ export default function PaginaDashboard() {
               podcastGenerando={podcastDiaGenerando ?? false}
               onReproducirPodcast={() => manejarPlayPodcast("dia")}
               onGenerarPodcast={() => generarMutation.mutate("dia")}
-              onInformarPodcastManana={manejarInfoPodcastManana}
               onLeerDia={podcastDiaListo ? () => setModalLectura(true) : undefined}
             />
 

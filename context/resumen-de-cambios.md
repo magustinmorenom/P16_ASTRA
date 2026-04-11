@@ -3662,3 +3662,42 @@ No fallaron tests existentes al cambiar la logica, garantizando compatibilidad r
 
 ### Como funciona
 Cuando la API arranca, pydantic lee el `.env` o las variables del SO. Cuando un usuario se registra (vía email/pass o por Google OAuth), se llama a `_asignar_plan_inicial()`. Si el flag es falso, se le asigna plan gratis. Si el flag se activa (true), se consulta el repositorio y se le carga una suscripción activa contra el plan del slug `premium`. Se puede prender/apagar desde el environment variable `ASIGNAR_PREMIUM_POR_DEFECTO` en Producción sin tocar el código.
+
+## Sesion: Menu inferior persistente en numerologia mobile
+**Fecha:** 2026-04-08 ~18:53 (ARG)
+
+### Que se hizo
+Se corrigió la navegación hacia la sección de numerología en la app mobile para que conserve el menú inferior visible al abrirse desde la pestaña Descubrir.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambios |
+|---------|---------|
+| `mobile/src/app/(tabs)/numerologia.tsx` | Nueva ruta dentro del grupo de tabs que reutiliza la pantalla existente de numerología para mantener el tab bar montado. |
+| `mobile/src/app/(tabs)/_layout.tsx` | Se registró `numerologia` como pantalla oculta del tab bar (`href: null`) para permitir navegación interna sin agregar un ítem nuevo al menú inferior. |
+| `mobile/src/app/(tabs)/descubrir.tsx` | Se actualizó la tarjeta de Numerología para navegar a `/(tabs)/numerologia` en lugar de `/(features)/numerologia`. |
+
+### Tests
+0 tests nuevos/modificados. `npm run typecheck` en `mobile/` pasando.
+
+### Como funciona
+Antes, la tarjeta de Numerología empujaba una ruta del grupo `/(features)`, que usa un stack separado y desmonta el layout de tabs, por eso desaparecía el menú inferior. Ahora la navegación entra por una ruta oculta dentro de `/(tabs)`, reutiliza la misma pantalla y mantiene visible el menú inferior durante toda la experiencia.
+
+## Sesion: Persistencia de tabs en Diseño Humano y back en Numerología mobile
+**Fecha:** 2026-04-08 ~18:57 (ARG)
+
+### Que se hizo
+Se corrigió la navegación de Diseño Humano para que conserve el menú inferior en mobile y se agregó un encabezado con flecha de volver en la pantalla de Numerología.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambios |
+|---------|---------|
+| `mobile/src/app/(tabs)/diseno-humano.tsx` | Nueva ruta oculta dentro del grupo de tabs que reutiliza la pantalla existente de Diseño Humano. |
+| `mobile/src/app/(tabs)/_layout.tsx` | Se registró `diseno-humano` como pantalla oculta del tab bar para navegación interna sin sumar un ítem visible. |
+| `mobile/src/app/(tabs)/descubrir.tsx` | La tarjeta de Diseño Humano ahora navega a `/(tabs)/diseno-humano` y Numerología mantiene la ruta interna de tabs. |
+| `mobile/src/app/(features)/numerologia.tsx` | Se integró `HeaderMobile` en estados de carga, vacío y contenido para mostrar la flecha de volver y un encabezado consistente. |
+
+### Tests
+0 tests nuevos/modificados. `npm run typecheck` en `mobile/` pasando.
+
+### Como funciona
+La tarjeta de Diseño Humano ya no abre una pantalla en el stack `/(features)`, sino una ruta oculta dentro de `/(tabs)`, por lo que el layout del menú inferior permanece montado. En Numerología, el encabezado reutiliza el componente `HeaderMobile`, así que al entrar desde Descubrir el usuario ahora ve la flecha de volver y puede regresar manteniendo el contexto de navegación.

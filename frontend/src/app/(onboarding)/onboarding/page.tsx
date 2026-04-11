@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import Image from "next/image";
 
 import LayoutOnboarding from "@/componentes/layouts/layout-onboarding";
 import { Icono } from "@/componentes/ui/icono";
@@ -193,21 +192,15 @@ function PasoFormulario({
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="flex flex-col items-center text-center">
+      <div className="flex flex-col items-start text-left">
         <PillPaso paso={1} />
-
-        <Image
-          src="/img/isotipo-blanco.png"
-          alt="ASTRA"
-          width={44}
-          height={44}
-          className="mt-5 h-11 w-11"
-          priority
-        />
 
         <h1 className="mt-5 text-2xl font-semibold tracking-tight text-white">
           Cargá tu momento exacto de nacimiento
         </h1>
+        <p className="mt-2 text-sm text-white/50">
+          Necesitamos fecha, hora y lugar para construir tu carta natal con precisión.
+        </p>
       </div>
 
       {/* Form */}
@@ -226,18 +219,28 @@ function PasoFormulario({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <input
-            type="date"
-            value={datos.fecha_nacimiento}
-            onChange={(e) => onChange({ fecha_nacimiento: e.target.value })}
-            className={cn(CLASE_INPUT, "[color-scheme:dark]")}
-          />
-          <input
-            type="time"
-            value={datos.hora_nacimiento}
-            onChange={(e) => onChange({ hora_nacimiento: e.target.value })}
-            className={cn(CLASE_INPUT, "[color-scheme:dark]")}
-          />
+          <div>
+            <input
+              type="date"
+              value={datos.fecha_nacimiento}
+              onChange={(e) => onChange({ fecha_nacimiento: e.target.value })}
+              className={cn(CLASE_INPUT, "[color-scheme:dark]")}
+            />
+            <p className="mt-1.5 px-1 text-[11px] text-white/30">
+              Día exacto de nacimiento.
+            </p>
+          </div>
+          <div>
+            <input
+              type="time"
+              value={datos.hora_nacimiento}
+              onChange={(e) => onChange({ hora_nacimiento: e.target.value })}
+              className={cn(CLASE_INPUT, "[color-scheme:dark]")}
+            />
+            <p className="mt-1.5 px-1 text-[11px] text-white/30">
+              Si no la sabés, usá 12:00.
+            </p>
+          </div>
         </div>
 
         {/* Lugar con autocomplete */}
@@ -303,6 +306,9 @@ function PasoFormulario({
               <p className="text-sm text-white/40">Sin resultados para esa búsqueda.</p>
             </div>
           )}
+          <p className="mt-1.5 px-1 text-[11px] text-white/30">
+            Ciudad donde naciste — usamos la zona horaria histórica.
+          </p>
         </div>
       </div>
 
@@ -316,11 +322,6 @@ function PasoFormulario({
         Calcular mi perfil
         <Icono nombre="flecha-derecha" tamaño={16} />
       </button>
-
-      {/* Hint hora */}
-      <p className="text-center text-[11px] leading-relaxed text-white/30">
-        Si no conocés tu hora exacta, usá 12:00.
-      </p>
     </div>
   );
 }
