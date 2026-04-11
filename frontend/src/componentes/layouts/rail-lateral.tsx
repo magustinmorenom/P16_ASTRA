@@ -151,17 +151,11 @@ export function RailLateral({
   );
 
   if (modo === "overlay") {
+    // Sin backdrop: el contenedor es pointer-events-none, solo el aside
+    // intercepta clics. Así los controles de reproducción (footer) y el
+    // resto de la pantalla siguen operativos mientras el panel está abierto.
     return (
       <div className="pointer-events-none fixed inset-0 z-50 hidden lg:block">
-        <div
-          onClick={onCerrar}
-          className={cn(
-            "pointer-events-auto absolute inset-0 transition-opacity duration-350",
-            montado ? "opacity-100" : "opacity-0",
-          )}
-          style={{ background: "var(--shell-overlay-suave)" }}
-        />
-
         <aside
           className={cn(
             "pointer-events-auto absolute inset-y-0 right-0 w-[360px] transition-all duration-350 ease-[cubic-bezier(0.25,0.1,0.25,1)]",

@@ -99,7 +99,7 @@ export default function PaginaDashboard() {
 
   const { data: episodiosHoy } = usarPodcastHoy(generarMutation.isPending);
 
-  const { setPistaActual, pistaActual, toggleReproduccion, mostrarToast } = useStoreUI();
+  const { setPistaActual, pistaActual, reproduciendo, toggleReproduccion, mostrarToast } = useStoreUI();
 
   const fechaHoy = useMemo(() => {
     return new Date().toLocaleDateString("es-ES", {
@@ -199,6 +199,8 @@ export default function PaginaDashboard() {
     (generarMutation.isPending && generarMutation.variables === "dia") ||
     epDia?.estado === "generando_guion" ||
     epDia?.estado === "generando_audio";
+  const podcastDiaReproduciendo =
+    !!epDia && pistaActual?.id === epDia.id && reproduciendo;
 
   const [modalLectura, setModalLectura] = useState(false);
   const modalLecturaRef = useRef<HTMLDivElement>(null);
@@ -263,12 +265,28 @@ export default function PaginaDashboard() {
                 borderColor: "var(--shell-borde)",
                 background: "var(--shell-superficie)",
               }}
-              aria-label={podcastDiaListo ? "Reproducir podcast del día" : "Generar podcast del día"}
+              aria-label={
+                podcastDiaReproduciendo
+                  ? "Pausar podcast del día"
+                  : podcastDiaListo
+                    ? "Reproducir podcast del día"
+                    : "Generar podcast del día"
+              }
             >
               {podcastDiaGenerando ? (
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-[color:var(--color-acento)] border-t-transparent" />
               ) : (
-                <Icono nombre={podcastDiaListo ? "reproducir" : "microfono"} tamaño={18} peso="fill" />
+                <Icono
+                  nombre={
+                    podcastDiaReproduciendo
+                      ? "pausar"
+                      : podcastDiaListo
+                        ? "reproducir"
+                        : "microfono"
+                  }
+                  tamaño={18}
+                  peso="fill"
+                />
               )}
             </button>
           }
@@ -336,6 +354,7 @@ export default function PaginaDashboard() {
               intuicion={pronosticoDiario.clima.intuicion ?? (pronosticoDiario.clima as any).conexion ?? 5}
               podcastListo={podcastDiaListo}
               podcastGenerando={podcastDiaGenerando ?? false}
+              podcastReproduciendo={podcastDiaReproduciendo}
               onReproducirPodcast={() => manejarPlayPodcast("dia")}
               onGenerarPodcast={() => generarMutation.mutate("dia")}
               onLeerDia={podcastDiaListo ? () => setModalLectura(true) : undefined}

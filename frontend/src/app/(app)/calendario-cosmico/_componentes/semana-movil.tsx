@@ -53,8 +53,8 @@ export function SemanaMovil({
                 esHoy
                   ? "bg-primario text-white border-primario"
                   : seleccionado
-                    ? "bg-violet-50 border-violet-300"
-                    : "bg-fondo-tarjeta border-borde hover:border-violet-300"
+                    ? "bg-acento-suave border-[color:var(--shell-borde-fuerte)]"
+                    : "bg-fondo-tarjeta border-borde hover:border-[color:var(--shell-borde-fuerte)] hover:bg-[color:var(--shell-chip-hover)]"
               )}
             >
               <p

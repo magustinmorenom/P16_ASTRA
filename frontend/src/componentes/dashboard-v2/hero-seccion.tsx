@@ -22,6 +22,7 @@ interface HeroSeccionProps {
   intuicion: number;
   podcastListo: boolean;
   podcastGenerando: boolean;
+  podcastReproduciendo: boolean;
   onReproducirPodcast: () => void;
   onGenerarPodcast: () => void;
   onLeerDia?: () => void;
@@ -38,15 +39,18 @@ export function HeroSeccion({
   intuicion,
   podcastListo,
   podcastGenerando,
+  podcastReproduciendo,
   onReproducirPodcast,
   onGenerarPodcast,
   onLeerDia,
 }: HeroSeccionProps) {
   const estadoPodcast = podcastGenerando
     ? "Preparando el audio del día"
-    : podcastListo
-      ? "Tu audio del día ya está listo"
-      : "Tu audio del día todavía no fue generado";
+    : podcastReproduciendo
+      ? "Estás escuchando tu audio del día"
+      : podcastListo
+        ? "Tu audio del día ya está listo"
+        : "Tu audio del día todavía no fue generado";
   const estiloPanelResumen = {
     background: "var(--shell-superficie-fuerte)",
     borderColor: "var(--shell-borde)",
@@ -99,6 +103,15 @@ export function HeroSeccion({
                 disabled={podcastGenerando}
                 className="flex min-h-[38px] max-w-full items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                 style={estiloBotonPrincipal}
+                aria-label={
+                  podcastGenerando
+                    ? "Generando podcast del día"
+                    : podcastReproduciendo
+                      ? "Pausar podcast del día"
+                      : podcastListo
+                        ? "Reproducir podcast del día"
+                        : "Generar podcast del día"
+                }
               >
                 <span
                   className="flex h-6 w-6 items-center justify-center rounded-full border"
@@ -110,14 +123,28 @@ export function HeroSeccion({
                     />
                   ) : (
                     <Icono
-                      nombre={podcastListo ? "reproducir" : "destello"}
+                      nombre={
+                        podcastReproduciendo
+                          ? "pausar"
+                          : podcastListo
+                            ? "reproducir"
+                            : "destello"
+                      }
                       tamaño={12}
                       peso="fill"
                       className="text-[color:var(--color-acento)]"
                     />
                   )}
                 </span>
-                <span>{podcastGenerando ? "Astra está generando tu podcast Hoy" : podcastListo ? "Escuchar ahora" : "Generar audio de hoy"}</span>
+                <span>
+                  {podcastGenerando
+                    ? "Astra está generando tu podcast Hoy"
+                    : podcastReproduciendo
+                      ? "Pausar"
+                      : podcastListo
+                        ? "Escuchar ahora"
+                        : "Generar audio de hoy"}
+                </span>
               </button>
 
               {podcastListo && onLeerDia && (

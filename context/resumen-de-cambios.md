@@ -3760,3 +3760,91 @@ El podcast del día deja de generarse on-demand y pasa a ser automático: cuando
 5. En caso de error, el banner muestra una variante discreta con "Reintentar" (que llama a `POST /podcast/generar?tipo=dia`) y auto-oculta tras 15s.
 6. La página `/podcast` y el menú del navbar ya no exponen la opción de generar manualmente el tipo `dia`: la card muestra "Preparando tu día…" mientras el pipeline corre, y el menú navega a `/podcast` en lugar de disparar la mutation.
 7. Guards duros: si el usuario es gratis, no tiene perfil, o el pipeline ya corrió hoy, el bootstrap queda silencioso — el banner nunca aparece. El emoji 👋 en el texto del saludo es una excepción explícita a la regla "no emojis" y está marcado con un comentario anti-remoción en el código.
+
+---
+
+## Sesion: Centro de notificaciones en navbar (caja central como hub de avisos)
+**Fecha:** 2026-04-11 ~12:30 (ARG)
+
+### Que se hizo
+La caja central del header de desktop dejó de ser un bloque de "contexto verboso" (etiqueta + título + descripción + meta apilados, que muchas veces sobrepasaba el navbar) y pasó a funcionar como **centro de notificaciones de prioridad**. La generación automática del podcast del día ahora se muestra ahí en vez de aparecer en un banner separado debajo del navbar.
+
+### Frontend — Archivos creados/modificados
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/componentes/layouts/navbar.tsx` | **Refactor mayor de la caja central.** Reemplazo de `EstadoCabecera` (4 líneas apiladas, sin alto fijo) por la interfaz `NotificacionCentral` con `id`/`etiqueta`/`titulo`/`descripcion`/`icono`/`tono`/`pulso`/`accion`. Nuevo sub-componente `CentroNotificaciones` con layout fijo de 54px de alto: icono 36px (gradiente según tono) + dots de pulso opcionales + 3 líneas truncadas + botón CTA inline. Sistema de prioridades en `useMemo` (7 niveles): generando podcast → error podcast → listo podcast (transición) → pista activa → alerta cósmica → pronóstico diario → contexto de ruta. Replicación in-place de la lógica de tracking generando→listo del banner (con `vioGenerandoRef`, `mostrarListoNotif`, `ocultarErrorNotif`, flag `localStorage` por fecha local). Helpers `reproducirEpisodioDia` / `reintentarPodcastDia` para los CTAs inline. Helper `obtenerEstilosTono` que mapea `violeta`/`rojo`/`esmeralda` a tokens CSS de la paleta ASTRA (sin naranjas, según regla del proyecto). Animación de fade-in en cada cambio de notificación vía `key={id}` + clase `animate-banner-in`. |
+| `frontend/src/componentes/layouts/layout-app.tsx` | Removido el render de `<BannerPodcastDia />` del branch desktop (la caja central del navbar ahora cumple ese rol). El branch mobile **mantiene** el banner sin cambios (el `HeaderMobile` no tiene caja central equivalente). Comentario en el JSX explicando por qué el banner ya no vive en desktop. |
+| `context/resumen-de-cambios.md` | Esta entrada. |
+
+### Tests
+- `npx tsc --noEmit` sin errores en archivos del proyecto. (El único error reportado por tsc es en `.next/dev/types/validator.ts`, un artefacto generado por Next.js no relacionado con este cambio.)
+- Sin tests unitarios nuevos: cambio puramente visual/UX en un componente client-side ya existente.
+
+### Como funciona
+1. El navbar deriva en cada render una única `NotificacionCentral` aplicando un orden de prioridad fijo. Cuando hay un episodio del día con estado `generando_guion` o `generando_audio` y el usuario es premium, esa notificación gana sobre todo lo demás (excepto error de generación).
+2. Mientras el pipeline corre, la caja central muestra: ícono "sol" sobre gradiente violeta + 3 dots pulsantes (`animate-chat-soft-pulse`) + etiqueta "Escribiendo guión" o "Generando audio" + título "Hola {nombreCorto}, hoy es un nuevo día" con shimmer + bajada "Estoy preparando tu lectura del día. Llega en segundos."
+3. Cuando el estado transiciona a `listo` y la sesión actual vio antes el estado generando, la notificación cambia a tono esmeralda con CTA "Escuchar" inline (`reproducirEpisodioDia`). Al apretar el CTA, la pista se carga en el reproductor cósmico y la notificación se cierra. Auto-hide de 8s (mismo flag de `localStorage` por fecha que el banner anterior, pero con clave distinta `astra:navbar_podcast_listo_visto:YYYY-MM-DD`).
+4. En caso de error, la notificación adopta tono rojo con CTA "Reintentar" inline que dispara `generarPodcast.mutate("dia")`. Auto-hide de 15s.
+5. Cuando no hay actividad de podcast, la prioridad cae a: pista activa en el reproductor → alerta cósmica destacada del día → pronóstico diario (clima del cielo) → contexto de la ruta actual. Cada estado tiene icono propio y tono violeta o rojo según corresponda.
+6. La animación de transición entre notificaciones funciona porque el `<div>` de `CentroNotificaciones` usa `key={notificacion.id}`: React desmonta el anterior y monta el nuevo, disparando `animate-banner-in` (fade-in-down 400ms).
+7. Layout fijo de 54px de alto (dentro del navbar de 70px): el contenido nunca crece verticalmente. Cada línea de texto usa `truncate`, garantizando que nada sobresalga del header. Las restricciones del CLAUDE.md se respetan: tipografía contenida (10/13/11px), sin emojis, sin naranjas, glassmorphism sutil del shell.
+8. El `BannerPodcastDia` queda activo solo en mobile, donde el header mobile no tiene una caja central donde alojar la notificación. La lógica del banner no fue tocada — solo se desmontó del shell desktop.
+
+---
+
+## Sesion: Hovers que respetan los tokens del modo claro
+**Fecha:** 2026-04-11 ~14:00 (ARG)
+
+### Que se hizo
+Reemplazo de hovers que usaban `--shell-superficie` (que en modo claro es prácticamente blanco opaco — `rgba(255,255,255,0.82)`) por `--shell-chip-hover`, que es el token semántico correcto para hover de items sobre superficies. El token `--shell-chip-hover` cambia de `rgba(124,77,255,0.14)` (violeta sutil) en claro a `rgba(255,255,255,0.12)` (blanco sutil) en oscuro, dando un hover visible y coherente en ambos esquemas. Antes los hovers se "perdían" en modo claro porque blanco-sobre-blanco no aporta contraste, mientras que en oscuro lucían bien; el resultado es que toda la interfaz mantiene el aspecto del modo activo en lugar de seguir leyendo "como oscura".
+
+### Frontend — Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/componentes/layouts/navbar.tsx` | Items del menú de usuario (`Mi perfil`, `Suscripción`): `hover:bg-[var(--shell-superficie)]` → `hover:bg-[var(--shell-chip-hover)] hover:text-[color:var(--shell-texto)]`. |
+| `frontend/src/componentes/chat/panel-conversaciones-web.tsx` | Items del menú contextual de conversación: opciones normales pasan a `hover:bg-[var(--shell-chip-hover)]`; opciones peligrosas pasan a `text-[color:var(--color-peligro-texto)] hover:bg-[var(--color-peligro-suave)]`. Items de la lista de conversaciones (`ItemConversacion`): `hover:bg-[var(--shell-superficie)]` → `hover:bg-[var(--shell-chip-hover)]`. |
+| `frontend/src/app/(auth)/login/page.tsx` | Botón "Continuar con Google": `hover:bg-[color:var(--shell-superficie)]` → `hover:border-[color:var(--shell-borde-fuerte)] hover:bg-[color:var(--shell-chip-hover)]`. |
+| `frontend/src/app/(auth)/registro/page.tsx` | Mismo cambio que login para el botón de Google. |
+| `frontend/src/app/(app)/calendario-cosmico/_componentes/semana-movil.tsx` | Tarjetas de día: estado seleccionado pasa de `bg-violet-50 border-violet-300` a `bg-acento-suave border-[color:var(--shell-borde-fuerte)]`; estado normal pasa de `hover:border-violet-300` a `hover:border-[color:var(--shell-borde-fuerte)] hover:bg-[color:var(--shell-chip-hover)]`. |
+
+### Tests
+- `cd frontend && npx tsc --noEmit` → exit 0, sin errores.
+- Sin tests unitarios nuevos: cambio puramente visual de tokens CSS, sin cambio de comportamiento ni props.
+
+### Como funciona
+1. **Diagnóstico**: en modo claro `--shell-superficie` es `rgba(255,255,255,0.82)`, casi blanco opaco. Cuando se usaba como `hover:bg-*` sobre superficies que ya eran blancas o casi blancas (panel del shell, dropdown del usuario, botones de auth), el hover quedaba invisible en claro pero seguía funcionando en oscuro porque allí el mismo token vale `rgba(255,255,255,0.06)` (un tinte blanco sutil sobre fondo oscuro). Resultado: la UI parecía pensada para oscuro y "se sentía oscura" al hover.
+2. **Token elegido**: `--shell-chip-hover` es el token semántico correcto para hover. En claro pinta un tinte violeta `rgba(124,77,255,0.14)` (visible sobre cualquier fondo claro); en oscuro pinta un tinte blanco `rgba(255,255,255,0.12)` (visible sobre cualquier fondo oscuro). Ambos valores ya están definidos en `frontend/src/estilos/tokens/colores.css` y expuestos vía `@theme inline` en `frontend/src/app/globals.css`.
+3. **Estrategia de reemplazo**: solo se tocaron hovers que apuntaban al token de surface (`--shell-superficie`) o a violetas hardcoded (`hover:border-violet-300`). Los hovers que ya usaban `--shell-superficie-suave`, `--shell-chip-hover` o tokens semánticos de error/exito quedaron intactos porque ya eran correctos en ambos modos.
+4. **Casos peligrosos**: en `panel-conversaciones-web.tsx` la opción "Eliminar" del menú contextual pasaba de `hover:bg-red-500/10` a `hover:bg-[var(--color-peligro-suave)]` para alinear con el resto del sistema (los tokens de peligro ya están definidos para claro y oscuro).
+5. **Selección de día en `semana-movil.tsx`**: el estado seleccionado usaba `bg-violet-50 border-violet-300`, valores fijos de Tailwind que no respetan el modo. Ahora usa `bg-acento-suave` (token) y borde de `--shell-borde-fuerte` (token). El hover normal acompaña con el mismo `--shell-chip-hover`.
+6. **Validación**: al ser un cambio puramente CSS basado en tokens ya existentes, `npx tsc --noEmit` corre limpio. Visualmente, ahora al hover en claro se ve un tinte violeta sutil, y en oscuro un tinte blanco sutil — coherente con la paleta ASTRA.
+
+---
+
+## Sesion: Fix botón pausa + panel transcript (colores diurnos + fondo no opacado)
+**Fecha:** 2026-04-11 ~16:30 (ARG)
+
+### Que se hizo
+Tres correcciones visuales sobre el flujo del podcast del día:
+1. El botón "Escuchar ahora" del hero del dashboard (desktop y mobile) ahora refleja estado **pausa** cuando el podcast del día está efectivamente reproduciéndose.
+2. El panel lateral de transcripción (`panel-lyrics.tsx`) usaba `text-shell-hero-texto` (blanco) para el segmento activo, lo cual era invisible en modo diurno. Ahora usa `text-shell-texto` que se adapta al token gris de cada tema.
+3. El rail lateral en modo `overlay` opacaba el fondo con un backdrop que además interceptaba clics y bloqueaba el reproductor cósmico del footer. Se removió el backdrop: el container queda `pointer-events-none` y solo el aside intercepta eventos.
+
+### Frontend — Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/componentes/layouts/rail-lateral.tsx` | Removido el `<div>` backdrop del modo `overlay`. El contenedor exterior ya era `pointer-events-none`, así que sin el backdrop los clics en el reproductor del footer y el resto del dashboard pasan libres. El `aside` sigue teniendo `pointer-events-auto` para seguir capturando clics dentro del panel. Se pierde el "click fuera para cerrar" — el cierre sigue disponible vía el botón X del header. |
+| `frontend/src/componentes/layouts/panel-lyrics.tsx` | Segmento activo ahora usa `text-shell-texto` en lugar de `text-shell-hero-texto`. El token `--shell-texto` vale `#2c2926` en light y `#f8f6ff` en dark, así que el segmento resaltado queda legible en ambos temas. Los demás segmentos (`text-shell-texto-tenue` / `text-shell-texto-secundario`) no cambian. |
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Agregada prop obligatoria `podcastReproduciendo: boolean`. Cuando es `true` el botón muestra icono `pausar`, label "Pausar" y `aria-label` "Pausar podcast del día"; cuando es `false` conserva "Escuchar ahora" / "Generar audio de hoy". El copy del estado ("Tu audio del día ya está listo") también cambia a "Estás escuchando tu audio del día" durante la reproducción. |
+| `frontend/src/app/(app)/dashboard/page.tsx` | Se extrae `reproduciendo` del `useStoreUI`. Nueva derivada `podcastDiaReproduciendo = !!epDia && pistaActual?.id === epDia.id && reproduciendo`. Se pasa como prop `podcastReproduciendo` al `<HeroSeccion>`. El botón flotante del header mobile (`accionDerecha`) también se actualizó con la misma lógica de icono + aria-label. |
+
+### Tests
+- `cd frontend && npx tsc --noEmit` sin errores.
+- Sin tests unitarios nuevos: cambios puramente visuales/UX.
+
+### Como funciona
+1. El store `useStoreUI` ya exponía `pistaActual` y `reproduciendo`. El dashboard ahora los combina con el id del episodio del día para saber si el podcast diario es la pista activa y está corriendo en ese momento.
+2. Cuando el usuario toca "Escuchar ahora", `manejarPlayPodcast("dia")` ya existía y hace toggle: si la pista ya es la del día, llama `toggleReproduccion()`; si no, llama `setPistaActual()` con la pista nueva. El único cambio era que la UI no reflejaba el estado. Ahora, con `podcastReproduciendo`, el botón pasa a mostrar icono `pausar` + label "Pausar" mientras el audio corre, y vuelve a "Escuchar ahora" al pausar.
+3. El panel lateral de lyrics aparece como overlay sin backdrop cuando el usuario toca play en un podcast con segmentos. Al no haber más un `<div>` que cubra el viewport con `pointer-events-auto`, los controles del `ReproductorCosmico` del footer siguen operativos: el usuario puede pausar, avanzar, saltar segmentos desde los botones de abajo mientras lee la transcripción en el panel.
+4. El cierre del panel sigue funcionando vía el botón X del header del rail (`CabeceraRail`). La regla del proyecto "no opacar fondos innecesariamente" queda respetada porque el panel ya tiene borde, blur y sombra que lo delimitan por sí solo.
+5. En light mode el segmento activo de la transcripción pasa a renderizarse con el token `#2c2926` (gris oscuro cálido) sobre el fondo `var(--shell-superficie-suave)`, garantizando legibilidad. En dark mode el mismo token resuelve a `#f8f6ff` y el layout sigue igual que antes.

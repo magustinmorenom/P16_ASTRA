@@ -59,11 +59,11 @@ export default function LayoutApp({
       className="flex h-screen flex-col overflow-hidden"
       style={{ background: "var(--shell-fondo-profundo)" }}
     >
-      {/* Navbar — full width */}
+      {/* Navbar — full width.
+          La caja central del navbar funciona como centro de notificaciones
+          (incluye los estados generando/listo/error del podcast del día),
+          por eso en desktop ya no montamos BannerPodcastDia. */}
       <Navbar />
-
-      {/* Banner de auto-generación del podcast del día (sólo si corresponde) */}
-      <BannerPodcastDia />
 
       {/* Body: sidebar + content */}
       <div className="flex flex-1 min-h-0 overflow-hidden">

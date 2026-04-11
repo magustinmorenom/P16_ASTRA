@@ -72,7 +72,7 @@ export default function PanelLyrics() {
               className={cn(
                 "transition-all duration-300 py-2 px-3 rounded-lg leading-relaxed text-sm",
                 idx === segmentoActual
-                  ? "text-shell-hero-texto font-medium border-l-2 border-primario bg-shell-superficie-suave"
+                  ? "text-shell-texto font-medium border-l-2 border-primario bg-shell-superficie-suave"
                   : idx < segmentoActual
                     ? "text-shell-texto-tenue"
                     : "text-shell-texto-secundario"

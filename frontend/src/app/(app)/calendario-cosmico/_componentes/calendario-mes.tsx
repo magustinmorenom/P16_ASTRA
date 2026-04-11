@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type RefObject,
-} from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   eachDayOfInterval,
   endOfMonth,
@@ -35,63 +27,11 @@ import {
 
 const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
-interface TooltipDiaState {
+interface DetalleDiaSeleccionado {
   fecha: string;
+  faseLunar: string;
   eventos: EventoClaveCalendario[];
   ritmo: RitmoPersonalCalendario | null;
-  faseLunar: string;
-}
-
-interface PosicionTooltipState {
-  x: number;
-  y: number;
-}
-
-const ANCHO_MAXIMO_TOOLTIP = 296;
-const MARGEN_VIEWPORT = 12;
-const OFFSET_CURSOR_Y = 14;
-const OFFSET_CURSOR_X = 4;
-
-function limitar(valor: number, minimo: number, maximo: number) {
-  return Math.min(Math.max(valor, minimo), maximo);
-}
-
-/**
- * Posiciona el tooltip relativo al cursor del mouse.
- * Detecta en qué cuadrante del viewport está el cursor y coloca
- * el tooltip en la dirección donde hay más espacio.
- */
-export function calcularPosicionTooltip({
-  cursorX,
-  cursorY,
-  tooltipWidth,
-  tooltipHeight,
-  viewportWidth,
-  viewportHeight,
-}: {
-  cursorX: number;
-  cursorY: number;
-  tooltipWidth: number;
-  tooltipHeight: number;
-  viewportWidth: number;
-  viewportHeight: number;
-}) {
-  const maxX = viewportWidth - tooltipWidth - MARGEN_VIEWPORT;
-  const maxY = viewportHeight - tooltipHeight - MARGEN_VIEWPORT;
-
-  /* ── Eje horizontal: preferir centrado sobre el cursor, clampeado al viewport ── */
-  const xIdeal = cursorX - tooltipWidth / 2 + OFFSET_CURSOR_X;
-  const x = limitar(xIdeal, MARGEN_VIEWPORT, maxX);
-
-  /* ── Eje vertical: preferir arriba del cursor; si no cabe, abajo ── */
-  const arribaY = cursorY - tooltipHeight - OFFSET_CURSOR_Y;
-  const abajoY = cursorY + OFFSET_CURSOR_Y + 8;
-
-  const y = arribaY >= MARGEN_VIEWPORT
-    ? arribaY
-    : limitar(abajoY, MARGEN_VIEWPORT, maxY);
-
-  return { x, y };
 }
 
 function tonoEvento(impacto: EventoClaveCalendario["impacto"]) {
@@ -114,99 +54,78 @@ function tonoEvento(impacto: EventoClaveCalendario["impacto"]) {
   }
 }
 
-function TooltipDiaCalendario({
-  estado,
-  posicion,
-  referencia,
-  cerrando,
-}: {
-  estado: TooltipDiaState;
-  posicion: PosicionTooltipState | null;
-  referencia: RefObject<HTMLDivElement | null>;
-  cerrando: boolean;
-}) {
-  const primerEvento = estado.eventos[0];
-  const visible = posicion !== null;
+/**
+ * Panel inline en el header del calendario que muestra el detalle del día seleccionado.
+ * Reemplaza al tooltip flotante: ahora la información vive en un único lugar fijo
+ * a la izquierda de las flechas de navegación.
+ */
+function PanelDetalleDiaHeader({ detalle }: { detalle: DetalleDiaSeleccionado }) {
+  const primerEvento = detalle.eventos[0];
+  const titulo = detalle.ritmo
+    ? `Día personal ${detalle.ritmo.dia} · Año ${detalle.ritmo.anio}`
+    : "Día del calendario";
+  const descripcion =
+    primerEvento?.descripcion ?? describirFaseLunar(detalle.faseLunar);
+  const eventosVisibles = detalle.eventos.slice(0, 3);
 
   return (
     <div
-      ref={referencia}
-      className={cn(
-        "pointer-events-none fixed z-[100]",
-        visible && !cerrando && "animate-[tooltip-in_180ms_ease-out_both]",
-        cerrando && "animate-[tooltip-out_120ms_ease-in_both]",
-      )}
+      className="relative flex min-w-0 flex-1 items-center gap-3 self-stretch rounded-[18px] border px-3 py-2.5 lg:gap-3.5 lg:px-3.5 lg:py-3"
       style={{
-        left: posicion?.x ?? -9999,
-        top: posicion?.y ?? -9999,
-        opacity: visible && !cerrando ? 1 : 0,
+        borderColor: "var(--shell-borde)",
+        background: "var(--shell-superficie-suave)",
       }}
+      key={detalle.fecha}
     >
+      {/* Ícono fase lunar */}
       <div
-        className="overflow-hidden rounded-[18px] border backdrop-blur-3xl"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border lg:h-11 lg:w-11"
         style={{
-          width: `min(${ANCHO_MAXIMO_TOOLTIP}px, calc(100vw - 32px))`,
-          background: "rgba(14, 7, 26, 0.92)",
-          borderColor: "rgba(124, 77, 255, 0.22)",
-          boxShadow: "0 16px 48px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(124, 77, 255, 0.08), 0 4px 32px rgba(124, 77, 255, 0.08)",
+          borderColor: "var(--shell-borde-fuerte)",
+          background: "var(--shell-chip)",
+          color: "var(--color-acento)",
         }}
       >
-        {/* Acento superior violeta */}
-        <div
-          aria-hidden
-          className="h-[2px] w-full"
-          style={{ background: "linear-gradient(90deg, transparent 0%, rgba(124,77,255,0.7) 35%, rgba(179,136,255,0.9) 50%, rgba(124,77,255,0.7) 65%, transparent 100%)" }}
-        />
-
-        <div className="px-4 py-3.5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
-                {format(parseISO(estado.fecha), "EEEE d 'de' MMMM", { locale: es })}
-              </p>
-              <p className="mt-1 text-sm font-semibold text-[color:var(--shell-texto)]">
-                {estado.ritmo
-                  ? `Día personal ${estado.ritmo.dia} · Año ${estado.ritmo.anio}`
-                  : "Calendario del día"}
-              </p>
-            </div>
-            <span
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold"
-              style={{
-                background: "rgba(124, 77, 255, 0.14)",
-                borderColor: "rgba(124, 77, 255, 0.25)",
-                color: "var(--color-acento)",
-              }}
-            >
-              <IconoFaseLunar fase={estado.faseLunar} tamaño={13} className="text-[color:var(--color-acento)]" />
-              {estado.faseLunar}
-            </span>
-          </div>
-
-          <p className="mt-3 text-[12px] leading-5 text-[color:var(--shell-texto-secundario)]">
-            {primerEvento?.descripcion ?? describirFaseLunar(estado.faseLunar)}
-          </p>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            {estado.eventos.slice(0, 3).map((evento) => {
-              const tono = tonoEvento(evento.impacto);
-              return (
-                <span
-                  key={evento.id}
-                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium"
-                  style={{ background: tono.fondo, color: tono.punto }}
-                >
-                  <span
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ background: tono.punto }}
-                  />
-                  {evento.etiquetaCorta}
-                </span>
-              );
-            })}
-          </div>
-        </div>
+        <IconoFaseLunar fase={detalle.faseLunar} tamaño={20} />
       </div>
+
+      {/* Texto: fecha + título + descripción */}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
+          {format(parseISO(detalle.fecha), "EEEE d 'de' MMMM", { locale: es })}
+          <span className="mx-1.5 opacity-40">·</span>
+          <span className="text-[color:var(--color-acento)]">{detalle.faseLunar}</span>
+        </p>
+        <p className="mt-0.5 truncate text-[13px] font-semibold leading-tight text-[color:var(--shell-texto)]">
+          {titulo}
+        </p>
+        <p className="mt-0.5 truncate text-[11px] leading-snug text-[color:var(--shell-texto-secundario)]">
+          {descripcion}
+        </p>
+      </div>
+
+      {/* Chips eventos (solo desktop ancho) */}
+      {eventosVisibles.length > 0 && (
+        <div className="hidden shrink-0 items-center gap-1.5 xl:flex">
+          {eventosVisibles.map((evento) => {
+            const tono = tonoEvento(evento.impacto);
+            return (
+              <span
+                key={evento.id}
+                className="inline-flex max-w-[140px] items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium"
+                style={{ background: tono.fondo, color: tono.punto }}
+              >
+                <span
+                  aria-hidden
+                  className="h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{ background: tono.punto }}
+                />
+                <span className="truncate">{evento.etiquetaCorta}</span>
+              </span>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -240,18 +159,21 @@ export function CalendarioMes({
 }) {
   const contenedorSemanasRef = useRef<HTMLDivElement | null>(null);
   const refsSemana = useRef<Record<number, HTMLDivElement | null>>({});
-  const anclaTooltipRef = useRef<HTMLButtonElement | null>(null);
-  const tooltipRef = useRef<HTMLDivElement | null>(null);
-  const rafRef = useRef<number>(0);
-  const cursorRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [tooltip, setTooltip] = useState<TooltipDiaState | null>(null);
-  const [tooltipVisible, setTooltipVisible] = useState<TooltipDiaState | null>(null);
-  const [cerrando, setCerrando] = useState(false);
-  const [posicionTooltip, setPosicionTooltip] = useState<PosicionTooltipState | null>(null);
 
   const mapaDias = useMemo(() => {
     return new Map(dias.map((dia) => [dia.fecha, dia]));
   }, [dias]);
+
+  const detalleSeleccionado = useMemo<DetalleDiaSeleccionado | null>(() => {
+    const dia = mapaDias.get(fechaSeleccionada);
+    if (!dia) return null;
+    return {
+      fecha: fechaSeleccionada,
+      faseLunar: dia.fase_lunar,
+      eventos: obtenerEventosClave(dia),
+      ritmo: calcularRitmoPersonal(fechaNacimiento, parseISO(fechaSeleccionada)),
+    };
+  }, [fechaSeleccionada, mapaDias, fechaNacimiento]);
 
   const semanas = useMemo(() => {
     const inicio = startOfWeek(startOfMonth(mesVisible), { weekStartsOn: 1 });
@@ -283,107 +205,111 @@ export function CalendarioMes({
     fila.scrollIntoView({ block: "nearest" });
   }, [indiceSemanaActiva, semanas.length]);
 
-  /* ── Animación de salida: mantener datos visibles durante fade-out ── */
-  useEffect(() => {
-    if (tooltip) {
-      setCerrando(false);
-      setTooltipVisible(tooltip);
-    } else if (tooltipVisible) {
-      setCerrando(true);
-      const timer = setTimeout(() => {
-        setTooltipVisible(null);
-        setCerrando(false);
-        setPosicionTooltip(null);
-      }, 120);
-      return () => clearTimeout(timer);
-    }
-  }, [tooltip]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const ocultarTooltip = useCallback(() => {
-    anclaTooltipRef.current = null;
-    setTooltip(null);
-  }, []);
-
-  /* ── Reposicionar tooltip relativo al cursor ── */
-  const reposicionar = useCallback(() => {
-    const elementoTooltip = tooltipRef.current;
-    if (!elementoTooltip || !anclaTooltipRef.current) return;
-
-    const { x: cx, y: cy } = cursorRef.current;
-
-    const { x, y } = calcularPosicionTooltip({
-      cursorX: cx,
-      cursorY: cy,
-      tooltipWidth: elementoTooltip.offsetWidth,
-      tooltipHeight: elementoTooltip.offsetHeight,
-      viewportWidth: window.innerWidth,
-      viewportHeight: window.innerHeight,
-    });
-
-    setPosicionTooltip((actual) =>
-      actual?.x === x && actual?.y === y ? actual : { x, y },
-    );
-  }, []);
-
-  /* ── Posicionamiento inicial: useLayoutEffect elimina 1 frame de delay ── */
-  useLayoutEffect(() => {
-    if (!tooltip) return;
-    reposicionar();
-  }, [tooltip, reposicionar]);
-
-  /* ── Ocultar tooltip en scroll (la celda se desplaza bajo el cursor) ── */
-  useEffect(() => {
-    if (!tooltip) return;
-
-    const onScroll = () => ocultarTooltip();
-
-    window.addEventListener("scroll", onScroll, true);
-    return () => window.removeEventListener("scroll", onScroll, true);
-  }, [tooltip, ocultarTooltip]);
-
-  const mostrarTooltip = useCallback(
-    (
-      fecha: string,
-      faseLunar: string,
-      eventos: EventoClaveCalendario[],
-      ritmo: RitmoPersonalCalendario | null,
-      elementoAncla: HTMLButtonElement,
-      clientX: number,
-      clientY: number,
-    ) => {
-      anclaTooltipRef.current = elementoAncla;
-      cursorRef.current = { x: clientX, y: clientY };
-      setPosicionTooltip(null);
-      setTooltip({ fecha, eventos, ritmo, faseLunar });
-    },
-    [],
-  );
-
-  const moverTooltip = useCallback(
-    (clientX: number, clientY: number) => {
-      cursorRef.current = { x: clientX, y: clientY };
-      if (!anclaTooltipRef.current || !tooltipRef.current) return;
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(reposicionar);
-    },
-    [reposicionar],
-  );
+  const fechaHoy = useMemo(() => parseISO(hoy), [hoy]);
+  const esHoyEnVista = isSameMonth(fechaHoy, mesVisible);
+  const diaDestacado = format(esHoyEnVista ? fechaHoy : startOfMonth(mesVisible), "d");
+  const mesNombreVisible = format(mesVisible, "MMMM", { locale: es });
+  const anioVisible = format(mesVisible, "yyyy");
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 lg:px-5" style={{ borderColor: "var(--shell-borde)" }}>
-        <div className="flex min-w-0 flex-wrap items-center gap-2.5">
-          <h2 className="text-[17px] font-semibold capitalize text-[color:var(--shell-texto)]">
-            {format(mesVisible, "MMMM yyyy", { locale: es })}
-          </h2>
-          <span className="text-[12px] text-[color:var(--shell-texto-secundario)]">
-            {ritmoHoy ? `Año ${ritmoHoy.anio} · Día ${ritmoHoy.dia}` : ""}
-            {ritmoHoy ? " · " : ""}
-            hasta {limiteTexto}
-          </span>
+      <div
+        className="relative flex flex-wrap items-center justify-between gap-4 overflow-hidden border-b px-4 py-4 lg:px-6 lg:py-5"
+        style={{ borderColor: "var(--shell-borde)" }}
+      >
+        {/* Glow ambiental sutil violeta */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -left-16 -top-20 h-48 w-48 rounded-full blur-3xl"
+          style={{ background: "radial-gradient(circle, rgba(124,77,255,0.10) 0%, transparent 70%)" }}
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-10 -bottom-16 h-40 w-40 rounded-full blur-3xl"
+          style={{ background: "radial-gradient(circle, rgba(179,136,255,0.08) 0%, transparent 70%)" }}
+        />
+
+        {/* Bloque numérico día — identidad del mes visible */}
+        <div className="relative flex shrink-0 items-center gap-2.5">
+          <div className="relative flex flex-col items-start leading-none">
+            <span
+              aria-hidden
+              className="text-[8.5px] font-semibold uppercase tracking-[0.28em]"
+              style={{
+                color: esHoyEnVista
+                  ? "var(--color-acento)"
+                  : "var(--shell-texto-tenue)",
+              }}
+            >
+              {esHoyEnVista ? "Hoy" : "Día 1"}
+            </span>
+            <span
+              className="mt-1 block text-[30px] font-light leading-none tabular-nums tracking-[-0.035em] lg:text-[32px]"
+              style={
+                esHoyEnVista
+                  ? {
+                      backgroundImage:
+                        "linear-gradient(150deg, var(--color-acento) 0%, #B388FF 65%, #D4A234 130%)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                      color: "transparent",
+                    }
+                  : { color: "var(--shell-texto)" }
+              }
+            >
+              {diaDestacado}
+            </span>
+          </div>
+          <span
+            aria-hidden
+            className="h-9 w-px"
+            style={{
+              background:
+                "linear-gradient(180deg, transparent 0%, var(--shell-borde) 35%, var(--shell-borde) 65%, transparent 100%)",
+            }}
+          />
+          <div className="flex flex-col leading-[1.05]">
+            <span
+              className="text-[15px] font-medium capitalize lg:text-[16px]"
+              style={{ color: "var(--shell-texto)" }}
+            >
+              {mesNombreVisible}
+            </span>
+            <span
+              className="mt-1 text-[9px] font-semibold uppercase tracking-[0.32em] tabular-nums"
+              style={{ color: "var(--shell-texto-tenue)" }}
+            >
+              {anioVisible}
+            </span>
+            <span
+              className="mt-1 text-[8.5px] font-medium uppercase tracking-[0.18em]"
+              style={{ color: "var(--shell-texto-tenue)" }}
+            >
+              Hasta{" "}
+              <span
+                className="capitalize"
+                style={{ color: "var(--shell-texto-secundario)" }}
+              >
+                {limiteTexto}
+              </span>
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Panel detalle del día seleccionado — reemplaza al tooltip */}
+        {detalleSeleccionado ? (
+          <PanelDetalleDiaHeader detalle={detalleSeleccionado} />
+        ) : (
+          <div
+            className="relative flex min-w-0 flex-1 items-center justify-center self-stretch rounded-[18px] border border-dashed px-4 py-3 text-[11px] font-medium text-[color:var(--shell-texto-tenue)]"
+            style={{ borderColor: "var(--shell-borde)" }}
+          >
+            Seleccioná un día del calendario para ver su detalle
+          </div>
+        )}
+
+        <div className="relative flex shrink-0 items-center gap-2">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -466,49 +392,18 @@ export function CalendarioMes({
                     key={fechaStr}
                     type="button"
                     onClick={() => onSeleccionarFecha(fechaStr)}
-                    onMouseEnter={(e) => {
-                      if (!dia) return;
-                      mostrarTooltip(
-                        fechaStr,
-                        dia.fase_lunar,
-                        eventos,
-                        ritmo,
-                        e.currentTarget,
-                        e.clientX,
-                        e.clientY,
-                      );
-                    }}
-                    onMouseMove={(e) => {
-                      if (!dia) return;
-                      moverTooltip(e.clientX, e.clientY);
-                    }}
-                    onFocus={(e) => {
-                      if (!dia) return;
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      mostrarTooltip(
-                        fechaStr,
-                        dia.fase_lunar,
-                        eventos,
-                        ritmo,
-                        e.currentTarget,
-                        rect.left + rect.width / 2,
-                        rect.top,
-                      );
-                    }}
-                    onMouseLeave={ocultarTooltip}
-                    onBlur={ocultarTooltip}
                     className={cn(
-                      "group relative min-h-[80px] overflow-hidden border-r px-2.5 py-2.5 text-left transition-[box-shadow] duration-200 last:border-r-0 sm:min-h-[90px]",
+                      "relative min-h-[80px] overflow-hidden border-r px-2.5 py-2.5 text-left transition-[box-shadow,background-color] duration-200 last:border-r-0 sm:min-h-[90px]",
                       !perteneceAlMes && "opacity-50",
                       tieneData ? "cursor-pointer" : "cursor-default opacity-80",
                     )}
                     style={{
                       borderColor: indiceDia === 6 ? "transparent" : "var(--shell-borde)",
                       background: estaSeleccionado
-                        ? "rgba(124, 77, 255, 0.055)"
+                        ? "var(--shell-chip)"
                         : undefined,
                       boxShadow: estaSeleccionado
-                        ? "inset 0 0 0 1.5px rgba(124, 77, 255, 0.32), inset 0 1px 0 rgba(124, 77, 255, 0.18)"
+                        ? "inset 0 0 0 1.5px var(--shell-borde-fuerte), inset 0 1px 0 var(--shell-glow-1)"
                         : "none",
                     }}
                   >
@@ -518,24 +413,6 @@ export function CalendarioMes({
                         aria-hidden
                         className="pointer-events-none absolute inset-x-0 top-0 h-[2px]"
                         style={{ background: "linear-gradient(90deg, transparent 0%, rgba(124,77,255,0.8) 30%, rgba(179,136,255,1) 50%, rgba(124,77,255,0.8) 70%, transparent 100%)" }}
-                      />
-                    )}
-
-                    {/* Hover: gradiente violeta sutil */}
-                    {tieneData && (
-                      <span
-                        aria-hidden
-                        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                        style={{ background: "linear-gradient(145deg, rgba(124,77,255,0.09) 0%, rgba(124,77,255,0.03) 45%, transparent 75%)" }}
-                      />
-                    )}
-
-                    {/* Hover: ring borde violeta sutil */}
-                    {tieneData && (
-                      <span
-                        aria-hidden
-                        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                        style={{ boxShadow: "inset 0 0 0 1px rgba(124, 77, 255, 0.18)" }}
                       />
                     )}
 
@@ -609,14 +486,6 @@ export function CalendarioMes({
         })}
       </div>
 
-      {tooltipVisible ? (
-        <TooltipDiaCalendario
-          estado={tooltipVisible}
-          posicion={posicionTooltip}
-          referencia={tooltipRef}
-          cerrando={cerrando}
-        />
-      ) : null}
     </div>
   );
 }

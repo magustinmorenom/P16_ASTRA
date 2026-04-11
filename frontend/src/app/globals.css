@@ -440,6 +440,44 @@ body::-webkit-scrollbar-thumb {
 }
 
 /* ============================================
+   Marquee — texto deslizante horizontal
+   Usado en notificaciones del navbar (centro
+   de notificaciones) cuando la descripción
+   no entra completa en su contenedor.
+
+   Estrategia:
+   - El marquee arranca por DEFAULT (CSS puro).
+   - JS solo agrega `.is-paused` cuando el
+     contenido sí entra completo en el slot
+     (ahí se frena y se resetea a translateX 0).
+   - Si JS falla, el marquee igual funciona.
+
+   El track contiene el texto duplicado y se
+   desplaza -50% en loop infinito, generando
+   un scroll seamless: el texto sale por la
+   izquierda y la copia clonada lo reemplaza
+   exactamente desde la derecha.
+   ============================================ */
+@keyframes marquee-deslizar {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee-deslizar 60s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee.is-paused {
+  animation: none;
+  transform: translateX(0);
+}
+
+/* ============================================
    Tooltip glassmorphic — Semana
    ============================================ */
 @keyframes tooltip-in {

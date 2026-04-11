@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   addMonths,
   endOfMonth,
@@ -24,18 +24,51 @@ function crearFechaLocal(anio: number, mes: number, dia: number) {
   return new Date(anio, mes, dia, 12, 0, 0);
 }
 
+function obtenerHoyLocal() {
+  const ahora = new Date();
+  return crearFechaLocal(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+}
+
 export default function PaginaCalendarioCosmico() {
-  const hoyFecha = crearFechaLocal(
-    new Date().getFullYear(),
-    new Date().getMonth(),
-    new Date().getDate(),
-  );
+  const [hoyFecha, setHoyFecha] = useState<Date>(() => obtenerHoyLocal());
   const hoy = formatearFechaISOlocal(hoyFecha);
   const mesBase = startOfMonth(hoyFecha);
   const proximoMes = startOfMonth(addMonths(mesBase, 1));
 
-  const [mesVisible, setMesVisible] = useState(mesBase);
+  const [mesVisible, setMesVisible] = useState<Date>(() => startOfMonth(hoyFecha));
   const [fechaSeleccionada, setFechaSeleccionada] = useState(hoy);
+
+  // Si el mes real cambió desde la última render, actualizar hoy para re-renderizar.
+  useEffect(() => {
+    const verificar = () => {
+      const nuevoHoy = obtenerHoyLocal();
+      setHoyFecha((anterior) =>
+        isSameMonth(anterior, nuevoHoy) ? anterior : nuevoHoy,
+      );
+    };
+
+    const alCambiarVisibilidad = () => {
+      if (document.visibilityState === "visible") verificar();
+    };
+
+    document.addEventListener("visibilitychange", alCambiarVisibilidad);
+    window.addEventListener("focus", verificar);
+
+    return () => {
+      document.removeEventListener("visibilitychange", alCambiarVisibilidad);
+      window.removeEventListener("focus", verificar);
+    };
+  }, []);
+
+  // Si cambia el día real y se cruzó de mes, deslizar la vista al nuevo mes base.
+  useEffect(() => {
+    const nuevoMesBase = startOfMonth(hoyFecha);
+    setMesVisible((actual) => (isSameMonth(actual, nuevoMesBase) ? actual : nuevoMesBase));
+    setFechaSeleccionada((actual) => {
+      const fechaActual = new Date(actual);
+      return isSameMonth(fechaActual, nuevoMesBase) ? actual : formatearFechaISOlocal(hoyFecha);
+    });
+  }, [hoyFecha]);
 
   const { data: perfil } = usarMiPerfil();
 
