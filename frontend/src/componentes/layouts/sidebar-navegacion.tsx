@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utilidades/cn";
 import { Icono, type NombreIcono } from "@/componentes/ui/icono";
@@ -249,31 +250,41 @@ export default function SidebarNavegacion() {
                   : pathname.startsWith(enlace.ruta);
 
               return (
-                <li key={enlace.ruta} className="group">
+                <li key={enlace.ruta} className="group relative">
+                  {/* Indicador deslizante animado */}
+                  {estaActivo && (
+                    <motion.div
+                      layoutId="sidebar-indicador-activo"
+                      className="absolute inset-0 rounded-xl border"
+                      style={{
+                        borderColor: enlace.destacado ? "rgba(124,77,255,0.4)" : "var(--shell-borde-fuerte)",
+                        background: enlace.destacado ? "linear-gradient(135deg, #7C4DFF, #4A2D8C)" : "var(--shell-chip)",
+                        boxShadow: enlace.destacado ? "0 4px 16px rgba(124,77,255,0.25)" : "var(--shell-sombra-suave)",
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 380,
+                        damping: 32,
+                        mass: 0.8,
+                      }}
+                    />
+                  )}
                   <Link
                     href={enlace.ruta}
                     title={colapsado ? enlace.etiqueta : undefined}
                     className={cn(
-                      "flex items-center rounded-xl text-[13px] font-medium transition-all duration-200",
+                      "relative z-[1] flex items-center rounded-xl text-[13px] font-medium transition-colors duration-200",
                       colapsado
                         ? "justify-center px-0 py-3"
                         : "gap-3 px-3 py-3",
                       estaActivo
                         ? enlace.destacado
-                          ? "border text-white shadow-[0_4px_16px_rgba(124,77,255,0.25)]"
-                          : "border text-[color:var(--shell-texto)] shadow-[var(--shell-sombra-suave)]"
+                          ? "text-white"
+                          : "text-[color:var(--shell-texto)]"
                         : enlace.destacado
-                          ? "border border-transparent text-[color:var(--color-acento)]"
-                          : "border border-transparent text-[color:var(--shell-texto-tenue)]"
+                          ? "text-[color:var(--color-acento)]"
+                          : "text-[color:var(--shell-texto-tenue)]"
                     )}
-                    style={{
-                      borderColor: estaActivo
-                        ? enlace.destacado ? "rgba(124,77,255,0.4)" : "var(--shell-borde-fuerte)"
-                        : undefined,
-                      background: estaActivo
-                        ? enlace.destacado ? "linear-gradient(135deg, #7C4DFF, #4A2D8C)" : "var(--shell-chip)"
-                        : undefined,
-                    }}
                   >
                     <Icono
                       nombre={enlace.icono}

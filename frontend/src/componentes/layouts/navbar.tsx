@@ -1072,17 +1072,19 @@ function TextoDeslizante({
         <span
           ref={refCopiaCanonica}
           className="shrink-0"
-          style={{ paddingRight: "3rem" }}
+          style={pausado ? undefined : { paddingRight: "3rem" }}
         >
           {texto}
         </span>
-        <span
-          aria-hidden="true"
-          className="shrink-0"
-          style={{ paddingRight: "3rem" }}
-        >
-          {texto}
-        </span>
+        {!pausado && (
+          <span
+            aria-hidden="true"
+            className="shrink-0"
+            style={{ paddingRight: "3rem" }}
+          >
+            {texto}
+          </span>
+        )}
       </div>
     </div>
   );

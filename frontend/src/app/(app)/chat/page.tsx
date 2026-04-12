@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Icono } from "@/componentes/ui/icono";
 import PanelConversacionesWeb from "@/componentes/chat/panel-conversaciones-web";
@@ -25,6 +25,7 @@ export default function PaginaChat() {
   const [tituloActiva, setTituloActiva] = useState<string | null>(null);
   const [panelMovilAbierto, setPanelMovilAbierto] = useState(false);
   const [inicializado, setInicializado] = useState(false);
+  const convQueryProcesadaRef = useRef<string | null>(null);
 
   const { data: conversaciones = [], refetch: refetchConversaciones } =
     usarConversaciones();
@@ -34,11 +35,16 @@ export default function PaginaChat() {
   // Si llegamos con ?conv=<id> (por ejemplo desde el tooltip "Explicame mejor"),
   // priorizamos esa conversación: la activamos en backend, la seleccionamos en
   // el panel y limpiamos el query param para no re-disparar el efecto.
+  // Usamos un ref para garantizar que cada convQuery se procese una sola vez —
+  // de lo contrario, como `cambiarMutation` cambia de referencia en cada render,
+  // el efecto entraría en bucle infinito mientras `router.replace` aún no se aplicó.
   useEffect(() => {
     if (!convQuery || conversaciones.length === 0) return;
+    if (convQueryProcesadaRef.current === convQuery) return;
     const objetivo = conversaciones.find((c) => c.id === convQuery);
     if (!objetivo) return;
 
+    convQueryProcesadaRef.current = convQuery;
     setConversacionActiva(objetivo.id);
     setTituloActiva(objetivo.titulo || objetivo.preview || null);
     setPanelMovilAbierto(false);

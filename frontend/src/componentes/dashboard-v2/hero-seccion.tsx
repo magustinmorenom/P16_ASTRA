@@ -95,74 +95,73 @@ export function HeroSeccion({
                 <p className="mt-2 text-[13px] leading-6 text-[color:var(--shell-texto-secundario)] lg:mt-3">
                   {estadoPodcast}
                 </p>
+                <div className="mt-3 flex flex-col items-start gap-2.5">
+                  <button
+                    onClick={podcastListo ? onReproducirPodcast : onGenerarPodcast}
+                    disabled={podcastGenerando}
+                    className="flex min-h-[38px] max-w-full items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+                    style={estiloBotonPrincipal}
+                    aria-label={
+                      podcastGenerando
+                        ? "Generando podcast del día"
+                        : podcastReproduciendo
+                          ? "Pausar podcast del día"
+                          : podcastListo
+                            ? "Reproducir podcast del día"
+                            : "Generar podcast del día"
+                    }
+                  >
+                    <span
+                      className="flex h-6 w-6 items-center justify-center rounded-full border"
+                      style={estiloIconoBotonPrincipal}
+                    >
+                      {podcastGenerando ? (
+                        <div
+                          className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[color:var(--color-acento)] border-t-transparent"
+                        />
+                      ) : (
+                        <Icono
+                          nombre={
+                            podcastReproduciendo
+                              ? "pausar"
+                              : podcastListo
+                                ? "reproducir"
+                                : "destello"
+                          }
+                          tamaño={12}
+                          peso="fill"
+                          className="text-[color:var(--color-acento)]"
+                        />
+                      )}
+                    </span>
+                    <span>
+                      {podcastGenerando
+                        ? "Astra está generando tu podcast Hoy"
+                        : podcastReproduciendo
+                          ? "Pausar"
+                          : podcastListo
+                            ? "Escuchar ahora"
+                            : "Generar audio de hoy"}
+                    </span>
+                  </button>
+
+                  {podcastListo && onLeerDia && (
+                    <button
+                      onClick={onLeerDia}
+                      className="flex min-h-[38px] max-w-full items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors hover:text-[color:var(--shell-texto)]"
+                      style={estiloBotonSecundario}
+                    >
+                      <Icono nombre="articulo" tamaño={13} peso="fill" />
+                      <span>Lee tu día</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Perlas del día — recordatorios íntimos generados por IA, encima del CTA del podcast */}
+            {/* Perlas del día — recordatorios íntimos generados por IA */}
             <PerlasDia />
 
-            <div className="mt-auto flex flex-col items-start gap-2.5 pb-0.5 lg:pt-2">
-              <button
-                onClick={podcastListo ? onReproducirPodcast : onGenerarPodcast}
-                disabled={podcastGenerando}
-                className="flex min-h-[38px] max-w-full items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-70"
-                style={estiloBotonPrincipal}
-                aria-label={
-                  podcastGenerando
-                    ? "Generando podcast del día"
-                    : podcastReproduciendo
-                      ? "Pausar podcast del día"
-                      : podcastListo
-                        ? "Reproducir podcast del día"
-                        : "Generar podcast del día"
-                }
-              >
-                <span
-                  className="flex h-6 w-6 items-center justify-center rounded-full border"
-                  style={estiloIconoBotonPrincipal}
-                >
-                  {podcastGenerando ? (
-                    <div
-                      className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[color:var(--color-acento)] border-t-transparent"
-                    />
-                  ) : (
-                    <Icono
-                      nombre={
-                        podcastReproduciendo
-                          ? "pausar"
-                          : podcastListo
-                            ? "reproducir"
-                            : "destello"
-                      }
-                      tamaño={12}
-                      peso="fill"
-                      className="text-[color:var(--color-acento)]"
-                    />
-                  )}
-                </span>
-                <span>
-                  {podcastGenerando
-                    ? "Astra está generando tu podcast Hoy"
-                    : podcastReproduciendo
-                      ? "Pausar"
-                      : podcastListo
-                        ? "Escuchar ahora"
-                        : "Generar audio de hoy"}
-                </span>
-              </button>
-
-              {podcastListo && onLeerDia && (
-                <button
-                  onClick={onLeerDia}
-                  className="flex min-h-[38px] max-w-full items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors hover:text-[color:var(--shell-texto)]"
-                  style={estiloBotonSecundario}
-                >
-                  <Icono nombre="articulo" tamaño={13} peso="fill" />
-                  <span>Lee tu día</span>
-                </button>
-              )}
-
-            </div>
           </div>
         </div>
 

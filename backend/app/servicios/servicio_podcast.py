@@ -410,20 +410,21 @@ class ServicioPodcast:
                 segmentos_json=segmentos,
             )
 
+            # Invalidar cache del pronóstico diario para tipo "dia"
+            # ANTES de refrescar desde BD — minimiza la ventana de race con
+            # el polling del frontend que detecta `listo` y refetch pronostico.
+            if tipo == "dia":
+                fecha_invalidacion = fecha_objetivo or fecha_clave
+                await cls._invalidar_cache_pronostico_diario(
+                    redis, usuario_id, fecha_invalidacion
+                )
+
             # Refrescar desde BD
             episodio = await repo.obtener_episodio_por_id(episodio.id)
             logger.info(
                 "Podcast generado: usuario=%s fecha=%s tipo=%s duracion=%.1fs",
                 usuario_id, fecha_clave, tipo, duracion,
             )
-
-            # Invalidar cache del pronóstico diario para tipo "dia"
-            # (ver docstring de `_invalidar_cache_pronostico_diario`).
-            if tipo == "dia":
-                fecha_invalidacion = fecha_objetivo or fecha_clave
-                await cls._invalidar_cache_pronostico_diario(
-                    redis, usuario_id, fecha_invalidacion
-                )
 
             # Notificar por email (fire-and-forget)
             try:

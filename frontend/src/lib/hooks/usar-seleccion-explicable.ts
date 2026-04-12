@@ -24,6 +24,8 @@ const MIN_CHARS = 2;
 const MAX_CHARS = 600;
 const MAX_CONTEXTO_EXTENDIDO = 1200;
 const DEBOUNCE_MS = 120;
+/** Caracteres que terminan una oración (con o sin espacio detrás). */
+const FIN_DE_ORACION = /[.!?…]/;
 
 /** Tags considerados "bloque de lectura" para extraer contexto natural. */
 const TAGS_BLOQUE = new Set([
@@ -51,38 +53,38 @@ function normalizarTexto(raw: string): string {
 }
 
 /**
- * Reduce un bloque demasiado largo a las oraciones que rodean a la selección.
- * Si no encuentra el fragmento dentro del bloque, recorta los primeros MAX_*.
+ * Expande el fragmento `seleccion` dentro de `bloque` hacia atrás hasta el
+ * inicio de la oración (último `.`, `!`, `?` o `…` antes de la selección) y
+ * hacia adelante hasta el final de la oración (próximo separador después de
+ * la selección). Si no encuentra delimitadores, devuelve los extremos del
+ * bloque. Esto le da a la IA contexto natural para interpretar palabras o
+ * frases sueltas dentro de su oración completa.
  */
-function recortarAlEntornoDeOracion(
-  bloque: string,
-  seleccion: string,
-): string {
-  if (bloque.length <= MAX_CONTEXTO_EXTENDIDO) return bloque;
-
+function expandirAOracion(bloque: string, seleccion: string): string {
   const idx = bloque.indexOf(seleccion);
   if (idx === -1) return bloque.slice(0, MAX_CONTEXTO_EXTENDIDO);
 
-  // Inicio de oración: último separador antes del idx
+  // Hacia atrás: último separador `.!?…` antes de la selección
   const izq = bloque.slice(0, idx);
-  const matchesIzq = Array.from(izq.matchAll(/[.!?…]\s+/g));
+  const matchesIzq = Array.from(izq.matchAll(/[.!?…]\s*/g));
   const inicio = matchesIzq.length
     ? matchesIzq[matchesIzq.length - 1].index! +
       matchesIzq[matchesIzq.length - 1][0].length
     : 0;
 
-  // Fin de oración: primer separador después del fin de la selección
+  // Hacia adelante: primer separador después del fin de la selección
   const fin = idx + seleccion.length;
   const der = bloque.slice(fin);
-  const matchDer = der.match(/[.!?…](\s|$)/);
+  const matchDer = der.match(FIN_DE_ORACION);
   const finFinal = matchDer
     ? fin + matchDer.index! + 1
-    : Math.min(bloque.length, fin + 240);
+    : bloque.length;
 
   const recorte = bloque.slice(inicio, finFinal).trim();
-  return recorte.length > 0
-    ? recorte.slice(0, MAX_CONTEXTO_EXTENDIDO)
-    : bloque.slice(0, MAX_CONTEXTO_EXTENDIDO);
+  if (recorte.length === 0) {
+    return bloque.slice(0, MAX_CONTEXTO_EXTENDIDO);
+  }
+  return recorte.slice(0, MAX_CONTEXTO_EXTENDIDO);
 }
 
 /**
@@ -133,7 +135,10 @@ function extraerContextoExtendido(
     return bloque.slice(0, MAX_CONTEXTO_EXTENDIDO);
   }
 
-  return recortarAlEntornoDeOracion(bloque, seleccion);
+  // Expandimos la selección a la oración completa que la contiene (atrás hasta
+  // el inicio de la oración, adelante hasta el final). Eso es exactamente el
+  // contexto que necesita Astra para no explicar palabras aisladas.
+  return expandirAOracion(bloque, seleccion);
 }
 
 /** Devuelve el primer segmento del pathname (ej: "/diseno-humano/x" → "diseno-humano"). */

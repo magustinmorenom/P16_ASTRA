@@ -30,6 +30,16 @@ const MAPA_FASE_ARCHIVO: Record<string, string> = {
 
 const ARCHIVO_FALLBACK = "moon";
 
+/**
+ * Diámetro del disco lunar dentro del SVG: r=20 en viewBox 0 0 48 → 40/48.
+ * Usamos esta proporción para el círculo amarillo de fondo así coincide
+ * exactamente con el disco que dibuja el SVG.
+ */
+const PROPORCION_DISCO = 40 / 48;
+
+/** Color amarillo lunar cálido (paleta ASTRA — no naranja). */
+const COLOR_DISCO_LUNAR = "#F5E6A8";
+
 interface IconoFaseLunarProps {
   fase: string;
   tamaño?: number;
@@ -39,17 +49,36 @@ interface IconoFaseLunarProps {
 export function IconoFaseLunar({ fase, tamaño = 16, className }: IconoFaseLunarProps) {
   const archivo = MAPA_FASE_ARCHIVO[fase] ?? ARCHIVO_FALLBACK;
   const url = `/img/fases-lunares/${archivo}.svg`;
+  const tamañoDisco = tamaño * PROPORCION_DISCO;
 
   return (
-    <img
-      src={url}
-      alt={fase}
-      width={tamaño}
-      height={tamaño}
-      draggable={false}
-      className={cn("inline-block shrink-0 select-none", className)}
+    <span
+      className={cn("relative inline-block shrink-0 select-none align-middle", className)}
       style={{ width: tamaño, height: tamaño }}
-    />
+      aria-label={fase}
+      role="img"
+    >
+      <span
+        aria-hidden
+        className="absolute left-1/2 top-1/2 rounded-full"
+        style={{
+          width: tamañoDisco,
+          height: tamañoDisco,
+          transform: "translate(-50%, -50%)",
+          background: COLOR_DISCO_LUNAR,
+          boxShadow: `0 0 ${Math.max(2, tamaño * 0.15)}px ${COLOR_DISCO_LUNAR}55`,
+        }}
+      />
+      <img
+        src={url}
+        alt=""
+        width={tamaño}
+        height={tamaño}
+        draggable={false}
+        className="relative block"
+        style={{ width: tamaño, height: tamaño }}
+      />
+    </span>
   );
 }
 

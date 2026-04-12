@@ -74,17 +74,24 @@ export default function PaginaDashboard() {
   const { data: pronosticoSemanal, isLoading: cargandoSemanal } =
     usarPronosticoSemanal();
 
-  // Siguiente semana (para grafica de tendencia 10 dias)
-  const fechaSiguienteSemana = useMemo(() => {
+  // Siguientes 2 semanas (para gráfica de tendencia 15 días)
+  const { fechaSiguienteSemana, fechaTerceraSemana } = useMemo(() => {
     const hoy = new Date();
     const diff = (7 - hoy.getDay() + 1) % 7 || 7;
-    const lunes = new Date(hoy);
-    lunes.setDate(hoy.getDate() + diff);
-    return lunes.toISOString().split("T")[0];
+    const lunes1 = new Date(hoy);
+    lunes1.setDate(hoy.getDate() + diff);
+    const lunes2 = new Date(lunes1);
+    lunes2.setDate(lunes1.getDate() + 7);
+    return {
+      fechaSiguienteSemana: lunes1.toISOString().split("T")[0],
+      fechaTerceraSemana: lunes2.toISOString().split("T")[0],
+    };
   }, []);
 
   const { data: pronosticoSiguiente } =
     usarPronosticoSemanaSiguiente(fechaSiguienteSemana);
+  const { data: pronosticoTercera } =
+    usarPronosticoSemanaSiguiente(fechaTerceraSemana);
 
   const hoyISO = useMemo(() => new Date().toISOString().split("T")[0], []);
 
@@ -92,11 +99,12 @@ export default function PaginaDashboard() {
     const todas = [
       ...(pronosticoSemanal?.semana ?? []),
       ...(pronosticoSiguiente?.semana ?? []),
+      ...(pronosticoTercera?.semana ?? []),
     ];
     const idxHoy = todas.findIndex((d) => d.fecha === hoyISO);
     const inicio = Math.max(0, idxHoy);
-    return todas.slice(inicio, inicio + 10);
-  }, [pronosticoSemanal, pronosticoSiguiente, hoyISO]);
+    return todas.slice(inicio, inicio + 15);
+  }, [pronosticoSemanal, pronosticoSiguiente, pronosticoTercera, hoyISO]);
 
   const { data: episodiosHoy } = usarPodcastHoy(generarMutation.isPending);
 
@@ -197,9 +205,10 @@ export default function PaginaDashboard() {
   const epDia = mapaEpisodios.get("dia");
   const podcastDiaListo = epDia?.estado === "listo";
   const podcastDiaGenerando =
-    (generarMutation.isPending && generarMutation.variables === "dia") ||
-    epDia?.estado === "generando_guion" ||
-    epDia?.estado === "generando_audio";
+    epDia?.estado !== "listo" &&
+    ((generarMutation.isPending && generarMutation.variables === "dia") ||
+      epDia?.estado === "generando_guion" ||
+      epDia?.estado === "generando_audio");
   const podcastDiaReproduciendo =
     !!epDia && pistaActual?.id === epDia.id && reproduciendo;
 
@@ -370,7 +379,7 @@ export default function PaginaDashboard() {
             {/* 2. Áreas de Vida */}
             <AreasVidaV2 areas={pronosticoDiario.areas} />
 
-            {/* 3. Tendencia Cósmica — gráfica 10 días */}
+            {/* 3. Tendencia Cósmica — gráfica 15 días */}
             {datosTendencia.length >= 3 && (
               <GraficaTendencia datos={datosTendencia} fechaHoy={hoyISO} />
             )}

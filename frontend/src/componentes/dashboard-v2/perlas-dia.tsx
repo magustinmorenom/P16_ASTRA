@@ -35,13 +35,13 @@ export function PerlasDia({ expandido = true }: PropsPerlasDia) {
           className="text-[10px] leading-none"
           style={{ color: "var(--color-acento)" }}
         >
-          ✦
+          
         </span>
         <span
           className="text-[9px] font-semibold uppercase tracking-[0.22em]"
           style={{ color: "var(--shell-texto-tenue)" }}
         >
-          Recordatorios para vos
+        Perlas de tu perfil
         </span>
       </div>
 
@@ -70,10 +70,9 @@ export function PerlasDia({ expandido = true }: PropsPerlasDia) {
               }
             >
               <p
-                className="text-[12.5px] leading-snug lg:text-[13px]"
+                className="font-display text-[12.5px] leading-snug lg:text-[13px]"
                 style={{
                   color: "var(--shell-texto-secundario)",
-                  fontFamily: "var(--font-serif, ui-serif, Georgia, serif)",
                   letterSpacing: "0.005em",
                 }}
               >

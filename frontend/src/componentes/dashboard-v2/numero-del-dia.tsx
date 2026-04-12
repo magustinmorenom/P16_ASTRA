@@ -86,13 +86,10 @@ export function NumeroDelDia({ numero, compacto = false }: NumeroDelDiaProps) {
     >
       <div className="flex items-center gap-3">
         <div
-          className="flex min-h-[66px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[14px] border px-3 py-2"
+          className="flex h-[66px] w-[72px] shrink-0 items-center justify-center rounded-[14px] border"
           style={ESTILO_PLACA_NUMERO}
         >
-          <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
-            Hoy
-          </span>
-          <span className="mt-1 font-[family-name:var(--font-inria)] text-[30px] font-normal leading-none text-[color:var(--color-acento)]">
+          <span className="font-[family-name:var(--font-inria)] text-[30px] font-normal leading-none text-[color:var(--color-acento)]">
             {numero.numero}
           </span>
         </div>

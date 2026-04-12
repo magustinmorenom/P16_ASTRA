@@ -146,27 +146,17 @@ function BadgeEstado({
 function DatoCompacto({
   etiqueta,
   valor,
-  icono,
 }: {
   etiqueta: string;
   valor: string;
-  icono: string;
+  icono?: string;
 }) {
   return (
-    <div
-      className="rounded-[22px] border p-4"
-      style={{
-        borderColor: "var(--shell-borde)",
-        background: "var(--shell-superficie)",
-      }}
-    >
-      <div className="flex items-center gap-2 text-[color:var(--shell-texto-tenue)]">
-        <Icono nombre={icono} tamaño={14} />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.16em]">
-          {etiqueta}
-        </span>
-      </div>
-      <p className="mt-3 text-sm font-medium text-[color:var(--shell-texto)]">
+    <div className="py-2.5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
+        {etiqueta}
+      </p>
+      <p className="mt-1 text-[13px] font-medium leading-snug text-[color:var(--shell-texto)]">
         {valor || "—"}
       </p>
     </div>
@@ -218,24 +208,24 @@ function SelectorTema({
     <button
       type="button"
       onClick={() => onClick(valor)}
-      className="flex flex-1 items-center gap-3 rounded-[20px] border px-4 py-3 text-left transition-colors"
+      className="flex flex-1 items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-left transition-all duration-200"
       style={{
-        borderColor: activo ? "var(--shell-borde-fuerte)" : "var(--shell-borde)",
-        background: activo ? "var(--shell-chip)" : "var(--shell-superficie)",
+        borderColor: activo ? "var(--color-acento)" : "var(--shell-borde)",
+        background: activo ? "var(--shell-chip)" : "transparent",
       }}
     >
-      <div
-        className="flex h-10 w-10 items-center justify-center rounded-full"
-        style={{ background: "var(--shell-superficie-suave)", color: "var(--color-acento)" }}
+      <Icono
+        nombre={icono}
+        tamaño={15}
+        peso={activo ? "fill" : "regular"}
+        className={`transition-colors duration-200 ${activo ? "text-[color:var(--color-acento)]" : "text-[color:var(--shell-texto-tenue)]"}`}
+      />
+      <p
+        className="text-[13px] font-medium transition-colors duration-200"
+        style={{ color: activo ? "var(--shell-texto)" : "var(--shell-texto-secundario)" }}
       >
-        <Icono nombre={icono} tamaño={18} peso="fill" />
-      </div>
-      <div>
-        <p className="text-sm font-medium text-[color:var(--shell-texto)]">{etiqueta}</p>
-        <p className="mt-1 text-xs text-[color:var(--shell-texto-tenue)]">
-          {valor === "automatico" ? "Sigue al sistema" : `Modo ${etiqueta.toLowerCase()}`}
-        </p>
-      </div>
+        {etiqueta}
+      </p>
     </button>
   );
 }
@@ -747,30 +737,26 @@ export default function PaginaPerfil() {
               style={{ background: "var(--shell-glow-1)" }}
             />
 
-            <div className="relative z-10 grid gap-5 xl:grid-cols-[1.25fr_0.75fr] xl:items-start">
-              <div>
-                <EtiquetaPanel>Cuenta ASTRA</EtiquetaPanel>
+            <div className="relative z-10">
+              <EtiquetaPanel>Cuenta ASTRA</EtiquetaPanel>
 
-                <div className="mt-4 flex items-start gap-4">
-                  <Avatar
-                    nombre={usuario?.nombre ?? "Usuario"}
-                    tamaño="lg"
-                    className="ring-1 ring-shell-borde shadow-[var(--shell-sombra-fuerte)]"
-                  />
+              <div className="mt-4 flex items-center gap-4">
+                <Avatar
+                  nombre={usuario?.nombre ?? "Usuario"}
+                  tamaño="lg"
+                  className="ring-1 ring-shell-borde shadow-[var(--shell-sombra-fuerte)]"
+                />
 
-                  <div className="min-w-0">
-                    <h1 className="text-lg font-semibold tracking-[-0.02em] text-[color:var(--shell-texto-inverso)] sm:text-xl">
-                      {usuario?.nombre ?? "Tu cuenta"}
-                    </h1>
-                  </div>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-lg font-semibold tracking-[-0.02em] text-[color:var(--shell-texto-inverso)] sm:text-xl">
+                    {usuario?.nombre ?? "Tu cuenta"}
+                  </h1>
+                  <p className="tema-hero-secundario mt-1 text-sm leading-6">
+                    {planLabel}
+                    {perfil ? " · Base cargada" : ""}
+                  </p>
                 </div>
-
-                <p className="tema-hero-secundario mt-5 text-sm leading-6">
-                  {planLabel}
-                  {perfil ? " · Base cargada" : ""}
-                </p>
               </div>
-
             </div>
           </section>
 
@@ -960,21 +946,22 @@ export default function PaginaPerfil() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <DatoCompacto etiqueta="Nombre" valor={perfil.nombre ?? "—"} icono="usuario" />
+                    <div
+                      className="grid grid-cols-2 gap-x-6 divide-y sm:grid-cols-3"
+                      style={{ borderColor: "var(--shell-borde)" }}
+                    >
+                      <DatoCompacto etiqueta="Nombre" valor={perfil.nombre ?? "—"} />
                       <DatoCompacto
                         etiqueta="Fecha"
                         valor={formatearFechaNacimiento(perfil.fecha_nacimiento)}
-                        icono="calendario"
                       />
                       <DatoCompacto
                         etiqueta="Hora"
                         valor={perfil.hora_nacimiento ? perfil.hora_nacimiento.slice(0, 5) : "—"}
-                        icono="reloj"
                       />
-                      <DatoCompacto etiqueta="Ciudad" valor={perfil.ciudad_nacimiento ?? "—"} icono="ubicacion" />
-                      <DatoCompacto etiqueta="País" valor={perfil.pais_nacimiento ?? "—"} icono="globo" />
-                      <DatoCompacto etiqueta="Zona horaria" valor={perfil.zona_horaria ?? "—"} icono="planeta" />
+                      <DatoCompacto etiqueta="Ciudad" valor={perfil.ciudad_nacimiento ?? "—"} />
+                      <DatoCompacto etiqueta="País" valor={perfil.pais_nacimiento ?? "—"} />
+                      <DatoCompacto etiqueta="Zona horaria" valor={perfil.zona_horaria ?? "—"} />
                     </div>
 
                     {mensajeNacimiento && (
@@ -999,14 +986,14 @@ export default function PaginaPerfil() {
                 </h2>
 
                 <div className="mt-5">
-                  <p className="text-sm font-medium text-[color:var(--shell-texto)]">
+                  <p className="text-[13px] font-medium text-[color:var(--shell-texto)]">
                     Apariencia
                   </p>
-                  <p className="mt-1 text-xs leading-5 text-[color:var(--shell-texto-tenue)]">
+                  <p className="mt-1 text-[11px] leading-5 text-[color:var(--shell-texto-tenue)]">
                     Elegí cómo querés ver ASTRA en esta web.
                   </p>
 
-                  <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                  <div className="mt-3 flex gap-2">
                     <SelectorTema
                       valor="claro"
                       activo={preferencia === "claro"}
