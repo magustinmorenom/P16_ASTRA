@@ -109,7 +109,7 @@ export default function PaginaLogin() {
           icono={<LogoGoogleColor />}
           onClick={manejarGoogle}
           cargando={googleAuth.isPending}
-          className="h-12 w-full rounded-[20px] border-[color:var(--shell-borde)] bg-[color:var(--shell-superficie-fuerte)] text-[color:var(--shell-texto)] shadow-none hover:bg-[color:var(--shell-superficie)]"
+          className="h-12 w-full rounded-[20px] border-[color:var(--shell-borde)] bg-[color:var(--shell-superficie-fuerte)] text-[color:var(--shell-texto)] shadow-none hover:border-[color:var(--shell-borde-fuerte)] hover:bg-[color:var(--shell-chip-hover)]"
         >
           Continuar con Google
         </Boton>

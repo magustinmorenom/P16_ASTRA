@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Icono } from "@/componentes/ui/icono";
 import PanelConversacionesWeb from "@/componentes/chat/panel-conversaciones-web";
 import AreaChatWeb from "@/componentes/chat/area-chat-web";
@@ -14,6 +15,9 @@ import HeaderMobile from "@/componentes/layouts/header-mobile";
 
 export default function PaginaChat() {
   const esMobile = usarEsMobile();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const convQuery = searchParams.get("conv");
 
   const [conversacionActiva, setConversacionActiva] = useState<string | null>(
     null,
@@ -21,20 +25,58 @@ export default function PaginaChat() {
   const [tituloActiva, setTituloActiva] = useState<string | null>(null);
   const [panelMovilAbierto, setPanelMovilAbierto] = useState(false);
   const [inicializado, setInicializado] = useState(false);
+  const convQueryProcesadaRef = useRef<string | null>(null);
 
   const { data: conversaciones = [], refetch: refetchConversaciones } =
     usarConversaciones();
   const cambiarMutation = usarCambiarConversacion();
   const nuevaMutation = usarNuevaConversacion();
 
-  // Auto-seleccionar la conversacion activa al cargar
+  // Si llegamos con ?conv=<id> (por ejemplo desde el tooltip "Explicame mejor"),
+  // priorizamos esa conversación: la activamos en backend, la seleccionamos en
+  // el panel y limpiamos el query param para no re-disparar el efecto.
+  // Usamos un ref para garantizar que cada convQuery se procese una sola vez —
+  // de lo contrario, como `cambiarMutation` cambia de referencia en cada render,
+  // el efecto entraría en bucle infinito mientras `router.replace` aún no se aplicó.
+  useEffect(() => {
+    if (!convQuery || conversaciones.length === 0) return;
+    if (convQueryProcesadaRef.current === convQuery) return;
+    const objetivo = conversaciones.find((c) => c.id === convQuery);
+    if (!objetivo) return;
+
+    convQueryProcesadaRef.current = convQuery;
+    setConversacionActiva(objetivo.id);
+    setTituloActiva(objetivo.titulo || objetivo.preview || null);
+    setPanelMovilAbierto(false);
+    setInicializado(true);
+    cambiarMutation.mutate(objetivo.id);
+    router.replace("/chat");
+  }, [convQuery, conversaciones, cambiarMutation, router]);
+
+  // Auto-seleccionar la conversacion activa al cargar.
+  // Si la conversacion activa es de un dia anterior (hora local del usuario),
+  // NO se selecciona: arranca en limpio para forzar sesion nueva al escribir.
   useEffect(() => {
     if (inicializado || conversaciones.length === 0) return;
+    if (convQuery) return; // dejamos que el efecto de arriba maneje el deep-link
 
     const activa = conversaciones.find((c) => c.activa && !c.archivada);
     if (activa) {
-      setConversacionActiva(activa.id);
-      setTituloActiva(activa.titulo || activa.preview || null);
+      const esDeHoy = (() => {
+        if (!activa.ultimo_mensaje_en) return true; // conv nueva sin mensajes
+        const ultimo = new Date(activa.ultimo_mensaje_en);
+        const hoy = new Date();
+        return (
+          ultimo.getFullYear() === hoy.getFullYear() &&
+          ultimo.getMonth() === hoy.getMonth() &&
+          ultimo.getDate() === hoy.getDate()
+        );
+      })();
+
+      if (esDeHoy) {
+        setConversacionActiva(activa.id);
+        setTituloActiva(activa.titulo || activa.preview || null);
+      }
     }
     setInicializado(true);
   }, [conversaciones, inicializado]);

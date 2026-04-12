@@ -1,6 +1,10 @@
 """Tests para ServicioPodcast."""
 
+import uuid
 from datetime import date
+from unittest.mock import AsyncMock
+
+import pytest
 
 from app.servicios.servicio_podcast import (
     ServicioPodcast,
@@ -177,3 +181,47 @@ class TestConstruirTitulo:
         assert "Marzo" in titulo
         assert "2026" in titulo
         assert "Ampliá tu horizonte para este mes" in titulo
+
+
+class TestInvalidarCachePronostico:
+    """Tests para _invalidar_cache_pronostico_diario.
+
+    Esta invalidación es crítica: arregla el bug donde el dashboard mostraba
+    los accionables del fallback porque el pronóstico se cacheaba antes de
+    que el podcast (con sus acciones reales) estuviera listo.
+    """
+
+    @pytest.mark.asyncio
+    async def test_invalidacion_borra_clave_correcta(self):
+        redis = AsyncMock()
+        redis.delete = AsyncMock()
+        usuario_id = uuid.UUID("11111111-1111-1111-1111-111111111111")
+        fecha = date(2026, 4, 11)
+
+        await ServicioPodcast._invalidar_cache_pronostico_diario(
+            redis, usuario_id, fecha
+        )
+
+        redis.delete.assert_awaited_once_with(
+            "cosmic:pronostico:diario:11111111-1111-1111-1111-111111111111:2026-04-11"
+        )
+
+    @pytest.mark.asyncio
+    async def test_invalidacion_con_redis_none_es_noop(self):
+        # No debe explotar — el caso "sin redis" es válido (algunos callers
+        # no pasan el cliente).
+        await ServicioPodcast._invalidar_cache_pronostico_diario(
+            None, uuid.uuid4(), date(2026, 4, 11)
+        )
+
+    @pytest.mark.asyncio
+    async def test_invalidacion_captura_excepciones_de_redis(self):
+        """Si Redis falla, el podcast NO debe romperse — solo loggear."""
+        redis = AsyncMock()
+        redis.delete = AsyncMock(side_effect=ConnectionError("redis caído"))
+
+        # No debe re-raise
+        await ServicioPodcast._invalidar_cache_pronostico_diario(
+            redis, uuid.uuid4(), date(2026, 4, 11)
+        )
+        redis.delete.assert_awaited_once()

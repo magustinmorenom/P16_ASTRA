@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Icono } from "@/componentes/ui/icono";
+import { IconoFaseLunar } from "@/componentes/ui/icono-fase-lunar";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
 import { precargarAudiosPodcast } from "@/lib/hooks/usar-audio";
@@ -60,6 +62,7 @@ export default function PaginaDashboard() {
   const { usuario, autenticado } = useStoreAuth();
   const generarMutation = usarGenerarPodcast();
   const esMobile = usarEsMobile();
+  const queryClient = useQueryClient();
 
   const {
     data: pronosticoDiario,
@@ -71,17 +74,24 @@ export default function PaginaDashboard() {
   const { data: pronosticoSemanal, isLoading: cargandoSemanal } =
     usarPronosticoSemanal();
 
-  // Siguiente semana (para grafica de tendencia 10 dias)
-  const fechaSiguienteSemana = useMemo(() => {
+  // Siguientes 2 semanas (para gráfica de tendencia 15 días)
+  const { fechaSiguienteSemana, fechaTerceraSemana } = useMemo(() => {
     const hoy = new Date();
     const diff = (7 - hoy.getDay() + 1) % 7 || 7;
-    const lunes = new Date(hoy);
-    lunes.setDate(hoy.getDate() + diff);
-    return lunes.toISOString().split("T")[0];
+    const lunes1 = new Date(hoy);
+    lunes1.setDate(hoy.getDate() + diff);
+    const lunes2 = new Date(lunes1);
+    lunes2.setDate(lunes1.getDate() + 7);
+    return {
+      fechaSiguienteSemana: lunes1.toISOString().split("T")[0],
+      fechaTerceraSemana: lunes2.toISOString().split("T")[0],
+    };
   }, []);
 
   const { data: pronosticoSiguiente } =
     usarPronosticoSemanaSiguiente(fechaSiguienteSemana);
+  const { data: pronosticoTercera } =
+    usarPronosticoSemanaSiguiente(fechaTerceraSemana);
 
   const hoyISO = useMemo(() => new Date().toISOString().split("T")[0], []);
 
@@ -89,15 +99,16 @@ export default function PaginaDashboard() {
     const todas = [
       ...(pronosticoSemanal?.semana ?? []),
       ...(pronosticoSiguiente?.semana ?? []),
+      ...(pronosticoTercera?.semana ?? []),
     ];
     const idxHoy = todas.findIndex((d) => d.fecha === hoyISO);
     const inicio = Math.max(0, idxHoy);
-    return todas.slice(inicio, inicio + 10);
-  }, [pronosticoSemanal, pronosticoSiguiente, hoyISO]);
+    return todas.slice(inicio, inicio + 15);
+  }, [pronosticoSemanal, pronosticoSiguiente, pronosticoTercera, hoyISO]);
 
   const { data: episodiosHoy } = usarPodcastHoy(generarMutation.isPending);
 
-  const { setPistaActual, pistaActual, toggleReproduccion, mostrarToast } = useStoreUI();
+  const { setPistaActual, pistaActual, reproduciendo, toggleReproduccion, mostrarToast } = useStoreUI();
 
   const fechaHoy = useMemo(() => {
     return new Date().toLocaleDateString("es-ES", {
@@ -116,6 +127,41 @@ export default function PaginaDashboard() {
   useEffect(() => {
     precargarAudiosPodcast(episodiosHoy ?? []);
   }, [episodiosHoy]);
+
+  // Auto-trigger: si el pronóstico cargó pero no existe podcast del día,
+  // disparar la generación una sola vez por sesión para que los accionables
+  // del pronóstico se enriquezcan con los del podcast.
+  const autoGeneracionDisparada = useRef(false);
+  useEffect(() => {
+    if (autoGeneracionDisparada.current) return;
+    if (!autenticado || !pronosticoDiario) return;
+    if (!episodiosHoy) return; // esperar a que cargue la lista
+    if (generarMutation.isPending) return;
+
+    const epDiaActual = episodiosHoy.find((ep) => ep.tipo === "dia");
+    const necesitaGenerar = !epDiaActual || epDiaActual.estado === "error";
+
+    if (necesitaGenerar) {
+      autoGeneracionDisparada.current = true;
+      generarMutation.mutate("dia");
+    }
+  }, [autenticado, pronosticoDiario, episodiosHoy, generarMutation]);
+
+  // Cuando el podcast del día transiciona a "listo", invalidar el pronóstico
+  // para que el backend re-inyecte los accionables reales del podcast.
+  const estadoEpDiaPrevio = useRef<string | null>(null);
+  useEffect(() => {
+    const epDiaActual = (episodiosHoy ?? []).find((ep) => ep.tipo === "dia");
+    const estadoActual = epDiaActual?.estado ?? null;
+    if (
+      estadoEpDiaPrevio.current &&
+      estadoEpDiaPrevio.current !== "listo" &&
+      estadoActual === "listo"
+    ) {
+      queryClient.invalidateQueries({ queryKey: ["pronostico"] });
+    }
+    estadoEpDiaPrevio.current = estadoActual;
+  }, [episodiosHoy, queryClient]);
 
   function manejarPlayPodcast(tipo: TipoPodcast) {
     const ep = mapaEpisodios.get(tipo);
@@ -159,9 +205,12 @@ export default function PaginaDashboard() {
   const epDia = mapaEpisodios.get("dia");
   const podcastDiaListo = epDia?.estado === "listo";
   const podcastDiaGenerando =
-    (generarMutation.isPending && generarMutation.variables === "dia") ||
-    epDia?.estado === "generando_guion" ||
-    epDia?.estado === "generando_audio";
+    epDia?.estado !== "listo" &&
+    ((generarMutation.isPending && generarMutation.variables === "dia") ||
+      epDia?.estado === "generando_guion" ||
+      epDia?.estado === "generando_audio");
+  const podcastDiaReproduciendo =
+    !!epDia && pistaActual?.id === epDia.id && reproduciendo;
 
   const [modalLectura, setModalLectura] = useState(false);
   const modalLecturaRef = useRef<HTMLDivElement>(null);
@@ -183,13 +232,6 @@ export default function PaginaDashboard() {
     mapaEpisodios.get("semana")?.estado === "generando_guion" ||
     mapaEpisodios.get("semana")?.estado === "generando_audio";
 
-  function manejarInfoPodcastManana() {
-    mostrarToast(
-      "info",
-      "El audio de mañana se habilita cuando comienza el próximo día."
-    );
-  }
-
   // =========================================================================
   // DASHBOARD UNIFICADO — dark ciruela (mobile + desktop)
   // =========================================================================
@@ -200,7 +242,13 @@ export default function PaginaDashboard() {
       ? { icono: "wifi" as const, texto: `Energía ${pronosticoDiario.clima.energia}/10` }
       : { icono: "destello" as const, texto: "Pronóstico pendiente", tono: "rojo" as const },
     pronosticoDiario
-      ? { icono: "luna" as const, texto: `Luna en ${pronosticoDiario.luna.signo}` }
+      ? {
+          icono: "luna" as const,
+          texto: `Luna en ${pronosticoDiario.luna.signo}`,
+          iconoCustom: (
+            <IconoFaseLunar fase={pronosticoDiario.luna.fase} tamaño={14} />
+          ),
+        }
       : { icono: "calendario" as const, texto: fechaHoy },
     podcastDiaGenerando
       ? { icono: "microfono" as const, texto: "Preparando audio", tono: "oro" as const }
@@ -233,12 +281,28 @@ export default function PaginaDashboard() {
                 borderColor: "var(--shell-borde)",
                 background: "var(--shell-superficie)",
               }}
-              aria-label={podcastDiaListo ? "Reproducir podcast del día" : "Generar podcast del día"}
+              aria-label={
+                podcastDiaReproduciendo
+                  ? "Pausar podcast del día"
+                  : podcastDiaListo
+                    ? "Reproducir podcast del día"
+                    : "Generar podcast del día"
+              }
             >
               {podcastDiaGenerando ? (
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-[color:var(--color-acento)] border-t-transparent" />
               ) : (
-                <Icono nombre={podcastDiaListo ? "reproducir" : "microfono"} tamaño={18} peso="fill" />
+                <Icono
+                  nombre={
+                    podcastDiaReproduciendo
+                      ? "pausar"
+                      : podcastDiaListo
+                        ? "reproducir"
+                        : "microfono"
+                  }
+                  tamaño={18}
+                  peso="fill"
+                />
               )}
             </button>
           }
@@ -306,16 +370,16 @@ export default function PaginaDashboard() {
               intuicion={pronosticoDiario.clima.intuicion ?? (pronosticoDiario.clima as any).conexion ?? 5}
               podcastListo={podcastDiaListo}
               podcastGenerando={podcastDiaGenerando ?? false}
+              podcastReproduciendo={podcastDiaReproduciendo}
               onReproducirPodcast={() => manejarPlayPodcast("dia")}
               onGenerarPodcast={() => generarMutation.mutate("dia")}
-              onInformarPodcastManana={manejarInfoPodcastManana}
               onLeerDia={podcastDiaListo ? () => setModalLectura(true) : undefined}
             />
 
             {/* 2. Áreas de Vida */}
             <AreasVidaV2 areas={pronosticoDiario.areas} />
 
-            {/* 3. Tendencia Cósmica — gráfica 10 días */}
+            {/* 3. Tendencia Cósmica — gráfica 15 días */}
             {datosTendencia.length >= 3 && (
               <GraficaTendencia datos={datosTendencia} fechaHoy={hoyISO} />
             )}

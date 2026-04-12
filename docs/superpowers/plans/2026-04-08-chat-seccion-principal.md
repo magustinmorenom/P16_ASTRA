@@ -309,7 +309,7 @@ cd frontend && npx tsc --noEmit
 
 - [ ] **Step 2: Verificacion visual**
 
-- [ ] Click "Agente AI Guia" en sidebar → navega a /chat
+- [ ] Click "Agente/ AI Guia" en sidebar → navega a /chat
 - [ ] Panel izquierdo muestra lista de conversaciones
 - [ ] Click en conversacion → carga mensajes en area principal
 - [ ] Click [+ Nueva] → crea conversacion, limpia area

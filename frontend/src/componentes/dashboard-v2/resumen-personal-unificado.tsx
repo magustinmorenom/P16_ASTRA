@@ -79,12 +79,54 @@ export function ResumenPersonalUnificado({
           {numero.numero}
         </span>
         <div className="min-w-0">
-          <p className="text-[15px] font-semibold leading-tight text-[color:var(--shell-texto)]">
-            Número del día
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-[15px] font-semibold leading-tight text-[color:var(--shell-texto)]">
+              Número del día
+            </p>
+            {(numero.mes || numero.ano) && (
+              <div className="flex gap-1">
+                {numero.mes && (
+                  <span
+                    className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[9px] font-medium"
+                    style={{ background: "var(--shell-chip)", color: "var(--shell-texto-secundario)", border: "1px solid var(--shell-chip-borde)" }}
+                  >
+                    M <span className="font-semibold text-[color:var(--color-acento)]">{numero.mes.numero}</span>
+                  </span>
+                )}
+                {numero.ano && (
+                  <span
+                    className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[9px] font-medium"
+                    style={{ background: "var(--shell-chip)", color: "var(--shell-texto-secundario)", border: "1px solid var(--shell-chip-borde)" }}
+                  >
+                    A <span className="font-semibold text-[color:var(--color-acento)]">{numero.ano.numero}</span>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
           <p className="mt-1 text-[13px] leading-5 text-[color:var(--shell-texto-secundario)] line-clamp-2">
             {numero.descripcion}
           </p>
+          {numero.interpretacion_integrada && (
+            <div className="group relative">
+              <p className="mt-1 cursor-default text-[11px] leading-[1.45] text-[color:var(--shell-texto-tenue)] line-clamp-2">
+                {numero.interpretacion_integrada}
+              </p>
+              {/* Hover tooltip para ver completo si está truncado */}
+              <div
+                className="pointer-events-none absolute left-0 right-0 top-full z-10 mt-1 rounded-lg border px-2.5 py-2 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100"
+                style={{
+                  background: "var(--shell-superficie-fuerte)",
+                  borderColor: "var(--shell-borde)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                }}
+              >
+                <p className="text-[11px] leading-[1.5] text-[color:var(--shell-texto-secundario)]">
+                  {numero.interpretacion_integrada}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

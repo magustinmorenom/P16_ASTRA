@@ -37,6 +37,7 @@ def _serializar_episodio(ep) -> dict:
         "estado": ep.estado,
         "origen": getattr(ep, "origen", "manual"),
         "fecha_objetivo": ep.fecha_objetivo.isoformat() if getattr(ep, "fecha_objetivo", None) else ep.fecha.isoformat(),
+        "acciones": getattr(ep, "acciones_json", None) or [],
         "error_detalle": ep.error_detalle,
         "creado_en": ep.creado_en.isoformat() if ep.creado_en else None,
     }
@@ -145,16 +146,15 @@ async def generar_podcast(
 
     Si ya existe uno listo para la fecha clave, lo retorna directamente.
     Si está generándose, retorna el estado actual para polling.
+
+    El servicio se encarga de invalidar el cache del pronóstico cuando
+    corresponde (tipo "dia", episodio recién listo) — pasamos el cliente
+    Redis para que pueda hacerlo.
     """
     hoy = date.today()
-    episodio = await ServicioPodcast.generar_episodio(db, usuario.id, hoy, tipo)
-
-    # Si se generó o ya existe un podcast del DÍA, invalidamos el caché del pronóstico
-    # para que se recalcule basándose en esta nueva lectura diaria.
-    if tipo == "dia":
-        fecha_str = hoy.isoformat()
-        clave_cache = f"cosmic:pronostico:diario:{usuario.id}:{fecha_str}"
-        await redis.delete(clave_cache)
+    episodio = await ServicioPodcast.generar_episodio(
+        db, usuario.id, hoy, tipo, redis=redis
+    )
 
     repo = RepositorioPodcast(db)
     await repo.normalizar_retencion_usuario(usuario.id)
@@ -170,6 +170,7 @@ async def generar_preview_manana(
     usuario: Usuario = Depends(obtener_usuario_actual),
     _plan: None = Depends(requiere_plan("premium")),
     db: AsyncSession = Depends(obtener_db),
+    redis: Redis = Depends(obtener_redis),
     tz_offset: int = Query(default=-3, description="Offset UTC del usuario en horas (ej: -3 para ARG)"),
 ):
     """Genera el podcast de mañana como preview.
@@ -194,6 +195,7 @@ async def generar_preview_manana(
         db, usuario.id, manana, "dia",
         origen="preview",
         fecha_objetivo=manana,
+        redis=redis,
     )
 
     repo = RepositorioPodcast(db)

@@ -44,9 +44,17 @@ export interface LunaInfoDTO {
   significado: string;
 }
 
+export interface NumeroComponenteDTO {
+  numero: number;
+  descripcion: string;
+}
+
 export interface NumeroPersonalDTO {
   numero: number;
   descripcion: string;
+  mes?: NumeroComponenteDTO;
+  ano?: NumeroComponenteDTO;
+  interpretacion_integrada?: string;
 }
 
 export interface AccesoPronosticoDTO {

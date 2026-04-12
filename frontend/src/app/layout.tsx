@@ -68,7 +68,7 @@ export default function RootLayout({
   `;
 
   return (
-    <html lang="es" className={`${inter.variable} ${inriaSans.variable} h-full antialiased`}>
+    <html suppressHydrationWarning lang="es" className={`${inter.variable} ${inriaSans.variable} h-full antialiased`}>
       <head>
         <link rel="apple-touch-icon" href="/img/icon-192.png" />
         <script dangerouslySetInnerHTML={{ __html: scriptTemaInicial }} />

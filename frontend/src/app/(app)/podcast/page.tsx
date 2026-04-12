@@ -104,12 +104,16 @@ function CardEpisodio({
   onGenerar,
   generando,
   bloqueado,
+  autoGenerado = false,
 }: {
   tipo: TipoPodcast;
   episodio: PodcastEpisodio | undefined;
   onGenerar: () => void;
   generando: boolean;
   bloqueado: boolean;
+  /** Si es true, la card nunca muestra el botón "Generar ahora" porque el
+   *  pipeline se dispara automáticamente (ver `banner-podcast-dia.tsx`). */
+  autoGenerado?: boolean;
 }) {
   const router = useRouter();
   const { setPistaActual, pistaActual } = useStoreUI();
@@ -226,6 +230,14 @@ function CardEpisodio({
               En preparación
             </div>
           </div>
+        ) : autoGenerado ? (
+          <div
+            className="mt-auto inline-flex h-11 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-medium"
+            style={ESTILO_BOTON_SHELL}
+          >
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-[color:var(--color-acento)] border-t-transparent" />
+            Preparando tu día…
+          </div>
         ) : (
           <button
             onClick={bloqueado ? () => router.push("/suscripcion") : onGenerar}
@@ -241,6 +253,41 @@ function CardEpisodio({
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Header con animación de carga
+// ---------------------------------------------------------------------------
+function HeaderGenerando({ nombre }: { nombre: string }) {
+  return (
+    <div className="min-w-0 flex-1">
+      <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-[3px]">
+          <span
+            className="block h-1.5 w-1.5 rounded-full bg-[var(--color-acento)] animate-[chat-soft-pulse_1.2s_ease-in-out_infinite]"
+            style={{ animationDelay: "0ms" }}
+          />
+          <span
+            className="block h-1.5 w-1.5 rounded-full bg-[var(--color-acento)] animate-[chat-soft-pulse_1.2s_ease-in-out_infinite]"
+            style={{ animationDelay: "200ms" }}
+          />
+          <span
+            className="block h-1.5 w-1.5 rounded-full bg-[var(--color-acento)] animate-[chat-soft-pulse_1.2s_ease-in-out_infinite]"
+            style={{ animationDelay: "400ms" }}
+          />
+        </div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-acento)]">
+          Preparando
+        </p>
+      </div>
+      <h1 className="text-[17px] font-semibold leading-tight text-[color:var(--shell-texto)]">
+        {nombre}, solo un par de minutos
+      </h1>
+      <p className="mt-1 text-[12px] leading-5 text-[color:var(--shell-texto-tenue)]">
+        Estoy conectando todos los puntos de tu perfil con los datos en tiempo real
+      </p>
     </div>
   );
 }
@@ -262,6 +309,14 @@ export default function PaginaPodcast() {
 
   const mapaHoy = new Map((episodiosHoy ?? []).map((ep) => [ep.tipo, ep]));
 
+  const estaGenerandoAlguno =
+    generarMutation.isPending ||
+    (episodiosHoy ?? []).some(
+      (ep) => ep.estado === "generando_guion" || ep.estado === "generando_audio",
+    );
+
+  const nombreCorto = usuario?.nombre?.split(" ")[0] ?? "";
+
   useEffect(() => {
     precargarAudiosPodcast([...(episodiosHoy ?? []), ...(historial ?? [])]);
   }, [episodiosHoy, historial]);
@@ -275,7 +330,9 @@ export default function PaginaPodcast() {
 
   return (
     <>
-      <HeaderMobile titulo="Podcasts" />
+      <HeaderMobile titulo={estaGenerandoAlguno ? undefined : "Podcasts"}>
+        {estaGenerandoAlguno ? <HeaderGenerando nombre={nombreCorto} /> : undefined}
+      </HeaderMobile>
       <div className="relative overflow-hidden" style={{ background: "var(--shell-fondo)" }}>
         <div
           className="pointer-events-none absolute right-[-120px] top-20 h-80 w-80 rounded-full blur-3xl"
@@ -349,6 +406,7 @@ export default function PaginaPodcast() {
                       generarMutation.variables === tipo
                     }
                     bloqueado={!esPremium}
+                    autoGenerado={tipo === "dia"}
                   />
                 ))}
               </div>

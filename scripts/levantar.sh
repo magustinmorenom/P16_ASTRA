@@ -120,6 +120,50 @@ levantar_docker() {
     fi
 }
 
+# ── Provisionar efemérides (Swiss Ephemeris) ──
+provisionar_efemerides() {
+    titulo "Verificando efemérides (Swiss Ephemeris)"
+
+    local EPHE_DIR="$BACKEND_DIR/datos_efemerides"
+
+    # Si ya tiene archivos .se1, no hacer nada
+    if ls "$EPHE_DIR"/*.se1 &>/dev/null; then
+        ok "Efemérides ya presentes ($(ls "$EPHE_DIR"/*.se1 | wc -l | tr -d ' ') archivos)"
+        return
+    fi
+
+    info "Copiando archivos .se1 desde kerykeion..."
+    mkdir -p "$EPHE_DIR"
+    source "$VENV_DIR/bin/activate"
+
+    local KERYKEION_SWEPH
+    KERYKEION_SWEPH=$(python3 -c "import kerykeion, os; print(os.path.join(os.path.dirname(kerykeion.__file__), 'sweph'))" 2>/dev/null || true)
+
+    if [ -d "$KERYKEION_SWEPH" ]; then
+        # Copiar los 3 archivos principales
+        for archivo in seas_18.se1 sepl_18.se1 semo_18.se1; do
+            if [ -f "$KERYKEION_SWEPH/$archivo" ]; then
+                cp "$KERYKEION_SWEPH/$archivo" "$EPHE_DIR/"
+            fi
+        done
+
+        # Si faltan planetas o luna, descargar desde GitHub
+        for archivo in sepl_18.se1 semo_18.se1; do
+            if [ ! -f "$EPHE_DIR/$archivo" ]; then
+                info "Descargando $archivo desde GitHub..."
+                curl -sL "https://raw.githubusercontent.com/aloistr/swisseph/master/ephe/$archivo" -o "$EPHE_DIR/$archivo" 2>/dev/null || warn "No se pudo descargar $archivo"
+            fi
+        done
+
+        local conteo
+        conteo=$(ls "$EPHE_DIR"/*.se1 2>/dev/null | wc -l | tr -d ' ')
+        ok "Efemérides provisionadas ($conteo archivos)"
+    else
+        error "No se encontró kerykeion/sweph. Instalá kerykeion: pip install kerykeion"
+        exit 1
+    fi
+}
+
 # ── Ejecutar migraciones ──
 ejecutar_migraciones() {
     titulo "Ejecutando migraciones (Alembic)"
@@ -245,6 +289,7 @@ reiniciar() {
 
     # Volver a levantar
     levantar_docker
+    provisionar_efemerides
     ejecutar_migraciones
     lanzar_servidor
     health_check
@@ -260,6 +305,7 @@ main() {
         levantar|"")
             verificar_requisitos
             levantar_docker
+            provisionar_efemerides
             ejecutar_migraciones
             lanzar_servidor
             health_check

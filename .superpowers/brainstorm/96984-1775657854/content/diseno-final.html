@@ -1,0 +1,362 @@
+<h2>Diseño final — Menú inferior con Chat FAB</h2>
+<p class="subtitle">Así va a quedar el menú mobile web. Revisá medidas, colores y comportamiento.</p>
+
+<style>
+/* ──── Reset / base ──── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ──── Layout central ──── */
+.demo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 8px 0 24px;
+}
+
+/* ──── Phone shell ──── */
+.phone {
+  width: 340px;
+  height: 580px;
+  border-radius: 40px;
+  background: #100824;
+  border: 2px solid rgba(124,77,255,0.3);
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 24px 72px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+  display: flex;
+  flex-direction: column;
+}
+.screen-content {
+  flex: 1;
+  background: linear-gradient(160deg,#1A0D3E 0%,#0D0620 100%);
+  padding: 24px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+.sr { height: 11px; border-radius: 6px; background: rgba(255,255,255,0.06); }
+.sr.w80 { width: 80%; }
+.sr.w50 { width: 50%; }
+.sr.w30 { width: 30%; }
+.sb {
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(124,77,255,0.12);
+  flex: 1;
+}
+
+/* ──── Tab bar ──── */
+.tab-bar {
+  height: 72px;
+  background: rgba(45,27,105,0.96);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(124,77,255,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding-bottom: 10px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* ──── Tabs normales ──── */
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 100%;
+  padding-top: 6px;
+}
+.tab-icon {
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.10);
+}
+.tab.active .tab-icon { background: #7C4DFF; }
+.tab-label {
+  font-family: system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.32);
+  letter-spacing: 0.3px;
+}
+.tab.active .tab-label { color: #ffffff; }
+
+/* ──── Spacer central (reserva columna para el FAB) ──── */
+.tab-spacer { flex: 1; height: 100%; }
+
+/* ──── FAB ──── */
+.fab-positioner {
+  position: absolute;
+  bottom: 18px;            /* desde el fondo del tab bar */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+}
+.fab-aura {
+  width: 68px; height: 68px;
+  border-radius: 50%;
+  background: rgba(124,77,255,0.16);
+  box-shadow: 0 0 22px rgba(124,77,255,0.35);
+  display: flex; align-items: center; justify-content: center;
+  animation: pulse-aura 2.4s ease-in-out infinite;
+}
+@keyframes pulse-aura {
+  0%,100% { box-shadow: 0 0 16px rgba(124,77,255,0.3); }
+  50%      { box-shadow: 0 0 28px rgba(124,77,255,0.55); }
+}
+.fab-btn {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: #7C4DFF;
+  box-shadow: 0 4px 18px rgba(124,77,255,0.55);
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, transform 0.15s;
+}
+.fab-btn:active { transform: scale(0.93); background: #9333EA; }
+.fab-btn svg { width: 26px; height: 26px; }
+
+/* ──── Estado activo en /chat ──── */
+.phone.chat-active .fab-btn { background: #9333EA; }
+.phone.chat-active .fab-aura {
+  background: rgba(147,51,234,0.22);
+  box-shadow: 0 0 28px rgba(147,51,234,0.5);
+}
+
+/* ──── Anotaciones ──── */
+.annotations {
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ann-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.ann-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #7C4DFF;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.ann-text {
+  font-family: system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.55);
+}
+.ann-text strong { color: rgba(255,255,255,0.9); }
+
+/* ──── Comparativa lado a lado ──── */
+.split-compare {
+  display: flex;
+  gap: 24px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.compare-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.compare-label {
+  font-family: system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.compare-label.old { color: rgba(255,255,255,0.25); }
+.compare-label.new { color: #7C4DFF; }
+
+/* ──── Mini phone para comparativa ──── */
+.mini-phone {
+  width: 200px;
+  border-radius: 24px;
+  background: #100824;
+  border: 1.5px solid rgba(124,77,255,0.25);
+  overflow: visible;
+  position: relative;
+}
+.mini-screen {
+  height: 60px;
+  background: linear-gradient(160deg,#1A0D3E,#0D0620);
+  border-radius: 22px 22px 0 0;
+}
+.mini-tabbar {
+  height: 52px;
+  background: rgba(45,27,105,0.96);
+  border-top: 1px solid rgba(124,77,255,0.18);
+  border-radius: 0 0 22px 22px;
+  display: flex;
+  align-items: center;
+  padding-bottom: 6px;
+  position: relative;
+}
+.mini-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-top: 4px;
+}
+.mini-icon { width: 14px; height: 14px; border-radius: 3px; background: rgba(255,255,255,0.1); }
+.mini-tab.active .mini-icon { background: #7C4DFF; }
+.mini-lbl { font-family: system-ui,sans-serif; font-size: 7px; color: rgba(255,255,255,0.3); }
+.mini-tab.active .mini-lbl { color: #fff; }
+.mini-spacer { flex: 1; }
+.mini-fab {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.mini-fab-aura {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: rgba(124,77,255,0.18);
+  box-shadow: 0 0 14px rgba(124,77,255,0.4);
+  display: flex; align-items: center; justify-content: center;
+}
+.mini-fab-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: #7C4DFF;
+  display: flex; align-items: center; justify-content: center;
+}
+.mini-fab-btn svg { width: 16px; height: 16px; }
+.strike { text-decoration: line-through; opacity: 0.4; }
+</style>
+
+<div class="demo-wrap">
+
+  <!-- ── MOCKUP PRINCIPAL ── -->
+  <div class="phone">
+    <div class="screen-content">
+      <div class="sr w80"></div>
+      <div class="sr w50"></div>
+      <div class="sb"></div>
+      <div class="sr w30"></div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab active">
+        <div class="tab-icon"></div>
+        <span class="tab-label">Inicio</span>
+      </div>
+      <div class="tab">
+        <div class="tab-icon"></div>
+        <span class="tab-label">Astral</span>
+      </div>
+
+      <div class="tab-spacer"></div>
+
+      <div class="tab">
+        <div class="tab-icon"></div>
+        <span class="tab-label">Explorar</span>
+      </div>
+      <div class="tab">
+        <div class="tab-icon"></div>
+        <span class="tab-label">Podcast</span>
+      </div>
+
+      <!-- FAB Chat -->
+      <div class="fab-positioner">
+        <div class="fab-aura">
+          <div class="fab-btn">
+            <svg viewBox="0 0 256 256" fill="white">
+              <path d="M216,48H40A16,16,0,0,0,24,64V224a15.84,15.84,0,0,0,9.25,14.5A16.05,16.05,0,0,0,40,240a15.89,15.89,0,0,0,10.25-3.78.69.69,0,0,0,.13-.11L82.5,208H216a16,16,0,0,0,16-16V64A16,16,0,0,0,216,48ZM96,144a12,12,0,1,1,12-12A12,12,0,0,1,96,144Zm32,0a12,12,0,1,1,12-12A12,12,0,0,1,128,144Zm32,0a12,12,0,1,1,12-12A12,12,0,0,1,160,144Z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ANOTACIONES ── -->
+  <div class="annotations">
+    <div class="ann-row">
+      <div class="ann-dot"></div>
+      <div class="ann-text"><strong>4 tabs:</strong> Inicio · Astral · Explorar · Podcast — Perfil via avatar en header</div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-dot"></div>
+      <div class="ann-text"><strong>FAB:</strong> 52px violeta sólido (#7C4DFF) + aura 68px pulsante — navega a <code>/chat</code></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-dot"></div>
+      <div class="ann-text"><strong>Estado activo en /chat:</strong> aura más intensa, fondo #9333EA (igual a nativa)</div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-dot"></div>
+      <div class="ann-text"><strong>Altura tab bar:</strong> 56px → <strong>72px</strong> para que el FAB tenga espacio vertical</div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-dot"></div>
+      <div class="ann-text"><strong>Icono:</strong> <code>ChatCircleDots</code> Phosphor weight=fill (ya disponible en el proyecto)</div>
+    </div>
+  </div>
+
+  <!-- ── COMPARATIVA ANTES / DESPUÉS ── -->
+  <div style="text-align:center;">
+    <p style="font-family:system-ui,sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:16px;">Antes vs Después</p>
+    <div class="split-compare">
+
+      <!-- ANTES -->
+      <div class="compare-item">
+        <span class="compare-label old">Antes</span>
+        <div class="mini-phone">
+          <div class="mini-screen"></div>
+          <div class="mini-tabbar">
+            <div class="mini-tab active"><div class="mini-icon"></div><span class="mini-lbl">Inicio</span></div>
+            <div class="mini-tab"><div class="mini-icon"></div><span class="mini-lbl">Astral</span></div>
+            <div class="mini-tab"><div class="mini-icon"></div><span class="mini-lbl">Descubrir</span></div>
+            <div class="mini-tab"><div class="mini-icon"></div><span class="mini-lbl">Podcast</span></div>
+            <div class="mini-tab"><div class="mini-icon"></div><span class="mini-lbl">Perfil</span></div>
+          </div>
+        </div>
+        <p style="font-family:system-ui,sans-serif;font-size:10px;color:rgba(255,255,255,0.25);">5 tabs planos, sin chat</p>
+      </div>
+
+      <div style="font-size:24px;color:rgba(124,77,255,0.6);padding-bottom:40px;">→</div>
+
+      <!-- DESPUÉS -->
+      <div class="compare-item">
+        <span class="compare-label new">Después</span>
+        <div class="mini-phone" style="overflow:visible;">
+          <div class="mini-screen"></div>
+          <div class="mini-tabbar" style="overflow:visible;">
+            <div class="mini-tab active"><div class="mini-icon"></div><span class="mini-lbl">Inicio</span></div>
+            <div class="mini-tab"><div class="mini-icon"></div><span class="mini-lbl">Astral</span></div>
+            <div class="mini-spacer"></div>
+            <div class="mini-tab"><div class="mini-icon"></div><span class="mini-lbl">Explorar</span></div>
+            <div class="mini-tab"><div class="mini-icon"></div><span class="mini-lbl">Podcast</span></div>
+            <div class="mini-fab">
+              <div class="mini-fab-aura">
+                <div class="mini-fab-btn">
+                  <svg viewBox="0 0 256 256" fill="white">
+                    <path d="M216,48H40A16,16,0,0,0,24,64V224a15.84,15.84,0,0,0,9.25,14.5A16.05,16.05,0,0,0,40,240a15.89,15.89,0,0,0,10.25-3.78.69.69,0,0,0,.13-.11L82.5,208H216a16,16,0,0,0,16-16V64A16,16,0,0,0,216,48ZM96,144a12,12,0,1,1,12-12A12,12,0,0,1,96,144Zm32,0a12,12,0,1,1,12-12A12,12,0,0,1,128,144Zm32,0a12,12,0,1,1,12-12A12,12,0,0,1,160,144Z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p style="font-family:system-ui,sans-serif;font-size:10px;color:#b388ff;">4 tabs + FAB chat central</p>
+      </div>
+
+    </div>
+  </div>
+
+</div>

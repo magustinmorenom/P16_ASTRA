@@ -1,9 +1,11 @@
 """Servicio Pipeline de Podcasts — orquesta la generación de podcasts personalizados."""
 
+import json
 import uuid
 from datetime import date, timedelta
 from pathlib import Path
 
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.configuracion import obtener_configuracion
@@ -135,6 +137,65 @@ class ServicioPodcast:
         return calculos
 
     @classmethod
+    async def _invalidar_cache_pronostico_diario(
+        cls,
+        redis: Redis | None,
+        usuario_id: uuid.UUID,
+        fecha: date,
+    ) -> None:
+        """Borra el cache del pronóstico diario para una fecha dada.
+
+        El pronóstico inyecta `acciones_json` del podcast en sus
+        `momentos.accionables`. Si el pronóstico se cacheó ANTES de que el
+        podcast estuviera listo (race habitual: dashboard pide pronóstico
+        mientras el bootstrap genera el podcast en background), el cache
+        contiene los accionables del fallback. Borrarlo fuerza regeneración
+        con las acciones reales en la próxima petición.
+
+        No-op si `redis` es None. Captura excepciones y solo loggea —
+        nunca debe romper el pipeline del podcast.
+        """
+        if redis is None:
+            return
+        clave = f"cosmic:pronostico:diario:{usuario_id}:{fecha.isoformat()}"
+        try:
+            await redis.delete(clave)
+            logger.info("Cache de pronóstico invalidado: %s", clave)
+        except Exception as e:
+            logger.warning("No se pudo invalidar cache de pronóstico: %s", e)
+
+    @classmethod
+    def _separar_narrativa_acciones(cls, texto_completo: str) -> tuple[str, list[dict] | None]:
+        """Separa la narrativa del bloque ---ACCIONES--- JSON.
+
+        Returns:
+            (narrativa_limpia, acciones_json o None si no se encontró/parseó)
+        """
+        separador = "---ACCIONES---"
+        if separador not in texto_completo:
+            return texto_completo.strip(), None
+
+        partes = texto_completo.split(separador, 1)
+        narrativa = partes[0].strip()
+        bloque_json = partes[1].strip()
+
+        # Limpiar posibles backticks markdown
+        if bloque_json.startswith("```"):
+            lineas = bloque_json.split("\n")
+            lineas = [l for l in lineas if not l.strip().startswith("```")]
+            bloque_json = "\n".join(lineas)
+
+        try:
+            acciones = json.loads(bloque_json)
+            if isinstance(acciones, list):
+                return narrativa, acciones
+            logger.warning("Bloque acciones no es una lista, ignorando")
+            return narrativa, None
+        except json.JSONDecodeError as e:
+            logger.warning("Error parseando bloque acciones del podcast: %s", e)
+            return narrativa, None
+
+    @classmethod
     def _generar_segmentos(cls, texto: str, duracion: float) -> list[dict]:
         """Divide el texto en segmentos y asigna timestamps proporcionales.
 
@@ -216,12 +277,19 @@ class ServicioPodcast:
         tipo: str,
         origen: str = "manual",
         fecha_objetivo: date | None = None,
+        redis: Redis | None = None,
     ) -> PodcastEpisodio:
         """Pipeline completo para generar un episodio de podcast.
 
         Args:
             origen: "manual" (usuario pidió), "preview" (adelanto de mañana), "auto" (lazy)
             fecha_objetivo: fecha real para la que se genera el contenido (puede ser mañana)
+            redis: cliente Redis opcional. Si se pasa y el episodio queda `listo`,
+                el servicio invalida el cache del pronóstico de la fecha objetivo
+                para forzar regeneración con las acciones recién producidas. Esto
+                centraliza la invalidación: el servicio es la única fuente de
+                verdad, sin importar quién lo dispare (bootstrap, ruta manual,
+                cron, etc).
         """
         repo = RepositorioPodcast(sesion)
         fecha_clave = _calcular_fecha_clave(tipo, fecha)
@@ -270,11 +338,12 @@ class ServicioPodcast:
             if not config.anthropic_api_key:
                 raise ValueError("ANTHROPIC_API_KEY no configurada")
 
-            max_tokens_por_tipo = {"dia": 2048, "semana": 3072, "mes": 4096}
+            # Sonnet: suficiente calidad para guion narrativo, 3-5x más rápido que Opus
+            max_tokens_por_tipo = {"dia": 1400, "semana": 2000, "mes": 2800}
 
             cliente = anthropic.AsyncAnthropic(api_key=config.anthropic_api_key)
             respuesta = await cliente.messages.create(
-                model=config.anthropic_modelo,
+                model="claude-sonnet-4-6",
                 max_tokens=max_tokens_por_tipo.get(tipo, 1024),
                 temperature=0.7,
                 system=system_prompt,
@@ -284,10 +353,13 @@ class ServicioPodcast:
                 }],
             )
 
-            guion = respuesta.content[0].text if respuesta.content else ""
+            texto_completo = respuesta.content[0].text if respuesta.content else ""
             tokens_in = respuesta.usage.input_tokens or 0
             tokens_out = respuesta.usage.output_tokens or 0
             tokens = tokens_in + tokens_out
+
+            # 4b. Separar narrativa del bloque de acciones JSON
+            guion, acciones = cls._separar_narrativa_acciones(texto_completo)
 
             # Registrar consumo Claude (guión)
             from app.servicios.servicio_consumo_api import registrar_consumo
@@ -302,10 +374,11 @@ class ServicioPodcast:
             )
 
             await repo.actualizar_estado(
-                episodio.id, "generando_audio", guion_md=guion, tokens_usados=tokens
+                episodio.id, "generando_audio",
+                guion_md=guion, acciones_json=acciones, tokens_usados=tokens,
             )
 
-            # 5. Generar audio con TTS
+            # 5. Generar audio con TTS (solo narrativa, sin JSON)
             mp3_bytes, duracion = await ServicioTTS.generar_audio(guion)
 
             # Registrar consumo Gemini TTS
@@ -336,6 +409,15 @@ class ServicioPodcast:
                 duracion_segundos=duracion,
                 segmentos_json=segmentos,
             )
+
+            # Invalidar cache del pronóstico diario para tipo "dia"
+            # ANTES de refrescar desde BD — minimiza la ventana de race con
+            # el polling del frontend que detecta `listo` y refetch pronostico.
+            if tipo == "dia":
+                fecha_invalidacion = fecha_objetivo or fecha_clave
+                await cls._invalidar_cache_pronostico_diario(
+                    redis, usuario_id, fecha_invalidacion
+                )
 
             # Refrescar desde BD
             episodio = await repo.obtener_episodio_por_id(episodio.id)

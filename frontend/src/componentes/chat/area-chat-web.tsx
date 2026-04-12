@@ -315,32 +315,24 @@ export default function AreaChatWeb({
   if (!tieneConversacion) {
     return (
       <div key="empty" className="flex-1 flex flex-col items-center justify-center px-6 animate-[fadeIn_300ms_ease-out]">
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
-          style={{
-            background: "linear-gradient(135deg, #7C4DFF20, #4A2D8C20)",
-            border: "1px solid var(--shell-borde)",
-          }}
-        >
-          <Icono
-            nombre="destello"
-            tamaño={28}
-            peso="fill"
-            className="text-[#7C4DFF]"
-          />
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/img/isotipo-ciruela.png"
+          alt="Astra"
+          className="w-16 h-16 mb-5 object-contain"
+        />
         <h2
           className="text-[20px] font-semibold mb-2 tracking-tight"
           style={{ color: "var(--shell-texto)" }}
         >
-          Tu oraculo personal
+          Hola {usuario?.nombre?.split(" ")[0] ?? ""}, soy Astra
         </h2>
         <p
           className="text-[13.5px] text-center max-w-sm mb-8 leading-relaxed"
           style={{ color: "var(--shell-texto-secundario)" }}
         >
-          Conozco tu carta natal, tu diseno humano y tu numerologia.
-          Preguntame lo que necesites saber.
+          Conozco tu carta natal, tu diseño humano y tu numerología combinadas.
+          ¿Qué asunto querés revisar?
         </p>
         <div className="flex flex-wrap justify-center gap-2.5">
           {SUGERENCIAS.map((s, i) => (
@@ -395,13 +387,24 @@ export default function AreaChatWeb({
         {cargandoHistorial ? (
           <EsqueletoCargando />
         ) : mensajes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full">
+          <div className="flex flex-col items-center justify-center h-full gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/img/isotipo-ciruela.png"
+              alt="Astra"
+              className="w-10 h-10 object-contain mb-1"
+            />
             <p
-              className="text-[15px] text-center"
+              className="text-[15px] font-semibold text-center"
+              style={{ color: "var(--shell-texto)" }}
+            >
+              Hola {usuario?.nombre?.split(" ")[0] ?? ""}, soy Astra
+            </p>
+            <p
+              className="text-[13px] text-center max-w-xs leading-relaxed"
               style={{ color: "var(--shell-texto-secundario)" }}
             >
-              Hola 👋 {usuario?.nombre?.split(" ")[0] ?? ""}
-              <br />
+              Conozco tu carta natal, tu diseño humano y tu numerología combinadas.
               ¿Qué asunto querés revisar?
             </p>
           </div>

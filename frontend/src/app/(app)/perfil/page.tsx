@@ -1,6 +1,6 @@
 "use client";
 
-import { type InputHTMLAttributes, useState } from "react";
+import { type InputHTMLAttributes, useState, useCallback, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 
@@ -62,6 +62,16 @@ const ESTILO_ALERTA_ERROR = {
   background: "var(--shell-badge-error-fondo)",
   color: "var(--shell-badge-error-texto)",
 } as const;
+
+interface ResultadoGeo {
+  nombre_mostrar: string;
+  ciudad: string;
+  estado: string;
+  pais: string;
+  latitud: number;
+  longitud: number;
+  zona_horaria: string;
+}
 
 function FondoPerfil() {
   return (
@@ -136,27 +146,17 @@ function BadgeEstado({
 function DatoCompacto({
   etiqueta,
   valor,
-  icono,
 }: {
   etiqueta: string;
   valor: string;
-  icono: string;
+  icono?: string;
 }) {
   return (
-    <div
-      className="rounded-[22px] border p-4"
-      style={{
-        borderColor: "var(--shell-borde)",
-        background: "var(--shell-superficie)",
-      }}
-    >
-      <div className="flex items-center gap-2 text-[color:var(--shell-texto-tenue)]">
-        <Icono nombre={icono} tamaño={14} />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.16em]">
-          {etiqueta}
-        </span>
-      </div>
-      <p className="mt-3 text-sm font-medium text-[color:var(--shell-texto)]">
+    <div className="py-2.5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--shell-texto-tenue)]">
+        {etiqueta}
+      </p>
+      <p className="mt-1 text-[13px] font-medium leading-snug text-[color:var(--shell-texto)]">
         {valor || "—"}
       </p>
     </div>
@@ -208,24 +208,24 @@ function SelectorTema({
     <button
       type="button"
       onClick={() => onClick(valor)}
-      className="flex flex-1 items-center gap-3 rounded-[20px] border px-4 py-3 text-left transition-colors"
+      className="flex flex-1 items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-left transition-all duration-200"
       style={{
-        borderColor: activo ? "var(--shell-borde-fuerte)" : "var(--shell-borde)",
-        background: activo ? "var(--shell-chip)" : "var(--shell-superficie)",
+        borderColor: activo ? "var(--color-acento)" : "var(--shell-borde)",
+        background: activo ? "var(--shell-chip)" : "transparent",
       }}
     >
-      <div
-        className="flex h-10 w-10 items-center justify-center rounded-full"
-        style={{ background: "var(--shell-superficie-suave)", color: "var(--color-acento)" }}
+      <Icono
+        nombre={icono}
+        tamaño={15}
+        peso={activo ? "fill" : "regular"}
+        className={`transition-colors duration-200 ${activo ? "text-[color:var(--color-acento)]" : "text-[color:var(--shell-texto-tenue)]"}`}
+      />
+      <p
+        className="text-[13px] font-medium transition-colors duration-200"
+        style={{ color: activo ? "var(--shell-texto)" : "var(--shell-texto-secundario)" }}
       >
-        <Icono nombre={icono} tamaño={18} peso="fill" />
-      </div>
-      <div>
-        <p className="text-sm font-medium text-[color:var(--shell-texto)]">{etiqueta}</p>
-        <p className="mt-1 text-xs text-[color:var(--shell-texto-tenue)]">
-          {valor === "automatico" ? "Sigue al sistema" : `Modo ${etiqueta.toLowerCase()}`}
-        </p>
-      </div>
+        {etiqueta}
+      </p>
     </button>
   );
 }
@@ -382,6 +382,15 @@ export default function PaginaPerfil() {
   const [mostrarConfirmacionEdicion, setMostrarConfirmacionEdicion] = useState(false);
   const [textoConfirmacionEdicion, setTextoConfirmacionEdicion] = useState("");
 
+  // Estado autocomplete de ciudad
+  const [consultaCiudad, setConsultaCiudad] = useState("");
+  const [resultadosCiudad, setResultadosCiudad] = useState<ResultadoGeo[]>([]);
+  const [buscandoCiudad, setBuscandoCiudad] = useState(false);
+  const [ciudadSeleccionada, setCiudadSeleccionada] = useState(false);
+  const [dropdownCiudadAbierto, setDropdownCiudadAbierto] = useState(false);
+  const debounceRefCiudad = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dropdownRefCiudad = useRef<HTMLDivElement>(null);
+
   // Estado de cambio de contraseña
   const [contrasenaActual, setContrasenaActual] = useState("");
   const [contrasenaNueva, setContrasenaNueva] = useState("");
@@ -437,6 +446,18 @@ export default function PaginaPerfil() {
       ciudad_nacimiento: perfil.ciudad_nacimiento ?? "",
       pais_nacimiento: perfil.pais_nacimiento ?? "",
     });
+    // Pre-cargar consulta con ciudad y país existentes
+    if (perfil.ciudad_nacimiento) {
+      setConsultaCiudad(
+        perfil.pais_nacimiento
+          ? `${perfil.ciudad_nacimiento}, ${perfil.pais_nacimiento}`
+          : perfil.ciudad_nacimiento
+      );
+      setCiudadSeleccionada(true);
+    } else {
+      setConsultaCiudad("");
+      setCiudadSeleccionada(false);
+    }
     setMensajeNacimiento(null);
     setEditando(true);
   }
@@ -446,7 +467,69 @@ export default function PaginaPerfil() {
     setMensajeNacimiento(null);
     setMostrarConfirmacionEdicion(false);
     setTextoConfirmacionEdicion("");
+    setConsultaCiudad("");
+    setResultadosCiudad([]);
+    setCiudadSeleccionada(false);
+    setDropdownCiudadAbierto(false);
   }
+
+  const buscarCiudad = useCallback(async (texto: string) => {
+    if (texto.length < 3) {
+      setResultadosCiudad([]);
+      setDropdownCiudadAbierto(false);
+      return;
+    }
+    setBuscandoCiudad(true);
+    try {
+      const res = await fetch(`/api/v1/geo/buscar?q=${encodeURIComponent(texto)}&limite=6`);
+      if (res.ok) {
+        const json = await res.json();
+        const datos = json.datos ?? json;
+        setResultadosCiudad(Array.isArray(datos) ? datos : []);
+        setDropdownCiudadAbierto(true);
+      }
+    } catch {
+      setResultadosCiudad([]);
+    } finally {
+      setBuscandoCiudad(false);
+    }
+  }, []);
+
+  const handleCiudadChange = (texto: string) => {
+    setConsultaCiudad(texto);
+    setCiudadSeleccionada(false);
+    setFormNacimiento((p) => ({ ...p, ciudad_nacimiento: "", pais_nacimiento: "" }));
+    if (debounceRefCiudad.current) clearTimeout(debounceRefCiudad.current);
+    debounceRefCiudad.current = setTimeout(() => buscarCiudad(texto), 400);
+  };
+
+  const seleccionarCiudad = (resultado: ResultadoGeo) => {
+    setConsultaCiudad(resultado.nombre_mostrar);
+    setCiudadSeleccionada(true);
+    setDropdownCiudadAbierto(false);
+    setResultadosCiudad([]);
+    setFormNacimiento((p) => ({
+      ...p,
+      ciudad_nacimiento: resultado.ciudad,
+      pais_nacimiento: resultado.pais,
+    }));
+  };
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRefCiudad.current && !dropdownRefCiudad.current.contains(e.target as Node)) {
+        setDropdownCiudadAbierto(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRefCiudad.current) clearTimeout(debounceRefCiudad.current);
+    };
+  }, []);
 
   function validarDatosNacimiento(): boolean {
     if (!formNacimiento.nombre.trim()) {
@@ -654,30 +737,26 @@ export default function PaginaPerfil() {
               style={{ background: "var(--shell-glow-1)" }}
             />
 
-            <div className="relative z-10 grid gap-5 xl:grid-cols-[1.25fr_0.75fr] xl:items-start">
-              <div>
-                <EtiquetaPanel>Cuenta ASTRA</EtiquetaPanel>
+            <div className="relative z-10">
+              <EtiquetaPanel>Cuenta ASTRA</EtiquetaPanel>
 
-                <div className="mt-4 flex items-start gap-4">
-                  <Avatar
-                    nombre={usuario?.nombre ?? "Usuario"}
-                    tamaño="lg"
-                    className="ring-1 ring-shell-borde shadow-[var(--shell-sombra-fuerte)]"
-                  />
+              <div className="mt-4 flex items-center gap-4">
+                <Avatar
+                  nombre={usuario?.nombre ?? "Usuario"}
+                  tamaño="lg"
+                  className="ring-1 ring-shell-borde shadow-[var(--shell-sombra-fuerte)]"
+                />
 
-                  <div className="min-w-0">
-                    <h1 className="text-lg font-semibold tracking-[-0.02em] text-[color:var(--shell-texto-inverso)] sm:text-xl">
-                      {usuario?.nombre ?? "Tu cuenta"}
-                    </h1>
-                  </div>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-lg font-semibold tracking-[-0.02em] text-[color:var(--shell-texto-inverso)] sm:text-xl">
+                    {usuario?.nombre ?? "Tu cuenta"}
+                  </h1>
+                  <p className="tema-hero-secundario mt-1 text-sm leading-6">
+                    {planLabel}
+                    {perfil ? " · Base cargada" : ""}
+                  </p>
                 </div>
-
-                <p className="tema-hero-secundario mt-5 text-sm leading-6">
-                  {planLabel}
-                  {perfil ? " · Base cargada" : ""}
-                </p>
               </div>
-
             </div>
           </section>
 
@@ -755,22 +834,79 @@ export default function PaginaPerfil() {
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <CampoPerfil
-                        etiqueta="Ciudad de nacimiento"
-                        name="ciudad_nacimiento"
-                        placeholder="Ej: Buenos Aires"
-                        value={formNacimiento.ciudad_nacimiento}
-                        onChange={(e) => setFormNacimiento((p) => ({ ...p, ciudad_nacimiento: e.target.value }))}
-                        icono="ubicacion"
-                      />
-                      <CampoPerfil
-                        etiqueta="País de nacimiento"
-                        name="pais_nacimiento"
-                        placeholder="Ej: Argentina"
-                        value={formNacimiento.pais_nacimiento}
-                        onChange={(e) => setFormNacimiento((p) => ({ ...p, pais_nacimiento: e.target.value }))}
-                        icono="globo"
-                      />
+                      {/* Autocomplete de ciudad — igual que onboarding */}
+                      <label className="block sm:col-span-2">
+                        <span className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--shell-texto-tenue)]">
+                          <Icono nombre="ubicacion" tamaño={14} />
+                          Ciudad de nacimiento
+                        </span>
+                        <div ref={dropdownRefCiudad} className="relative">
+                          <Icono
+                            nombre="ubicacion"
+                            tamaño={16}
+                            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--shell-texto-tenue)]"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Ej: Buenos Aires, Argentina"
+                            value={consultaCiudad}
+                            onChange={(e) => handleCiudadChange(e.target.value)}
+                            onFocus={() => resultadosCiudad.length > 0 && setDropdownCiudadAbierto(true)}
+                            className="h-11 w-full rounded-2xl border pl-10 pr-10 text-sm outline-none transition-colors placeholder:text-[color:var(--shell-texto-tenue)] focus:ring-1 focus:ring-[var(--color-acento)]"
+                            style={{
+                              borderColor: ciudadSeleccionada
+                                ? "var(--shell-badge-exito-borde)"
+                                : "var(--shell-borde)",
+                              background: ciudadSeleccionada
+                                ? "var(--shell-badge-exito-fondo)"
+                                : "var(--shell-superficie)",
+                              color: "var(--shell-texto)",
+                            }}
+                          />
+                          {buscandoCiudad && (
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[color:var(--shell-chip-borde)] border-t-[color:var(--color-acento)]" />
+                            </div>
+                          )}
+                          {ciudadSeleccionada && !buscandoCiudad && (
+                            <Icono
+                              nombre="check"
+                              tamaño={16}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-[color:var(--shell-badge-exito-texto)]"
+                            />
+                          )}
+                          {dropdownCiudadAbierto && resultadosCiudad.length > 0 && (
+                            <div className="tema-superficie-panel absolute top-[calc(100%+8px)] z-50 w-full overflow-hidden rounded-[20px]">
+                              {resultadosCiudad.map((r, i) => (
+                                <button
+                                  key={`${r.latitud}-${r.longitud}-${i}`}
+                                  type="button"
+                                  onClick={() => seleccionarCiudad(r)}
+                                  className="flex w-full items-center gap-3 border-b px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-[color:var(--shell-superficie-suave)]"
+                                  style={{ borderColor: "var(--shell-borde)" }}
+                                >
+                                  <Icono nombre="ubicacion" tamaño={14} className="shrink-0 text-[color:var(--color-acento)]" />
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-medium text-[color:var(--shell-texto)]">
+                                      {r.nombre_mostrar}
+                                    </p>
+                                    <p className="text-xs text-[color:var(--shell-texto-tenue)]">
+                                      {r.estado ? `${r.estado}, ` : ""}{r.pais}
+                                    </p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {dropdownCiudadAbierto && resultadosCiudad.length === 0 && !buscandoCiudad && consultaCiudad.length >= 3 && (
+                            <div className="tema-superficie-panel absolute top-[calc(100%+8px)] z-50 w-full rounded-[20px] px-4 py-4">
+                              <p className="text-sm text-[color:var(--shell-texto-secundario)]">
+                                No encontramos ubicaciones para esa búsqueda.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </label>
                     </div>
 
                     {mensajeNacimiento && (
@@ -810,21 +946,22 @@ export default function PaginaPerfil() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <DatoCompacto etiqueta="Nombre" valor={perfil.nombre ?? "—"} icono="usuario" />
+                    <div
+                      className="grid grid-cols-2 gap-x-6 divide-y sm:grid-cols-3"
+                      style={{ borderColor: "var(--shell-borde)" }}
+                    >
+                      <DatoCompacto etiqueta="Nombre" valor={perfil.nombre ?? "—"} />
                       <DatoCompacto
                         etiqueta="Fecha"
                         valor={formatearFechaNacimiento(perfil.fecha_nacimiento)}
-                        icono="calendario"
                       />
                       <DatoCompacto
                         etiqueta="Hora"
                         valor={perfil.hora_nacimiento ? perfil.hora_nacimiento.slice(0, 5) : "—"}
-                        icono="reloj"
                       />
-                      <DatoCompacto etiqueta="Ciudad" valor={perfil.ciudad_nacimiento ?? "—"} icono="ubicacion" />
-                      <DatoCompacto etiqueta="País" valor={perfil.pais_nacimiento ?? "—"} icono="globo" />
-                      <DatoCompacto etiqueta="Zona horaria" valor={perfil.zona_horaria ?? "—"} icono="planeta" />
+                      <DatoCompacto etiqueta="Ciudad" valor={perfil.ciudad_nacimiento ?? "—"} />
+                      <DatoCompacto etiqueta="País" valor={perfil.pais_nacimiento ?? "—"} />
+                      <DatoCompacto etiqueta="Zona horaria" valor={perfil.zona_horaria ?? "—"} />
                     </div>
 
                     {mensajeNacimiento && (
@@ -849,14 +986,14 @@ export default function PaginaPerfil() {
                 </h2>
 
                 <div className="mt-5">
-                  <p className="text-sm font-medium text-[color:var(--shell-texto)]">
+                  <p className="text-[13px] font-medium text-[color:var(--shell-texto)]">
                     Apariencia
                   </p>
-                  <p className="mt-1 text-xs leading-5 text-[color:var(--shell-texto-tenue)]">
+                  <p className="mt-1 text-[11px] leading-5 text-[color:var(--shell-texto-tenue)]">
                     Elegí cómo querés ver ASTRA en esta web.
                   </p>
 
-                  <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                  <div className="mt-3 flex gap-2">
                     <SelectorTema
                       valor="claro"
                       activo={preferencia === "claro"}

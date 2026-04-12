@@ -38,6 +38,7 @@ export default function ReproductorCosmico() {
 
   return (
     <footer
+      data-no-explicable="true"
       className="fixed bottom-0 left-0 right-0 z-50 flex h-[84px] items-center gap-4 px-4 lg:px-6"
       style={{
         background: "var(--shell-reproductor)",

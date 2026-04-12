@@ -69,6 +69,7 @@ import {
   ArrowUp,
   Plus,
   ChatCircleDots,
+  Copy,
   type IconProps as PhosphorIconProps,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utilidades/cn";
@@ -144,6 +145,7 @@ const mapaIconos: Record<string, ComponentType<PhosphorIconProps>> = {
   flechaArriba: ArrowUp,
   plus: Plus,
   chatCirculo: ChatCircleDots,
+  copiar: Copy,
 };
 
 export type NombreIcono = keyof typeof mapaIconos;

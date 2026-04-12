@@ -122,6 +122,13 @@ export type {
   CambiarConversacionRespuesta,
 } from "./chat";
 
+// Explicar (micro-chat sobre selección)
+export type {
+  ExplicarRequest,
+  ExplicarResponse,
+  SeleccionActiva,
+} from "./explicar";
+
 // Pronóstico Cósmico
 export type {
   ClimaCosmicoDTO,

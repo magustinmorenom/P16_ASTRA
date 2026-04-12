@@ -86,6 +86,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as e:
         logger.warning("No se pudo inicializar MinIO: %s", e)
 
+    # Ventana de tránsitos — verificar y completar si hay días faltantes
+    try:
+        from app.tareas.tarea_transitos import tarea_diaria_transitos
+        insertados = await tarea_diaria_transitos(sesion_factory)
+        if insertados > 0:
+            logger.info("Ventana de tránsitos: %d días insertados al startup", insertados)
+    except Exception as e:
+        logger.warning("No se pudo completar la ventana de tránsitos: %s", e)
+
     yield
 
     # Limpieza
@@ -169,6 +178,7 @@ def _registrar_rutas(app: FastAPI) -> None:
         oraculo,
         perfil,
         perfil_espiritual,
+        perlas,
         podcast,
         pronostico,
         retorno_solar,
@@ -191,6 +201,7 @@ def _registrar_rutas(app: FastAPI) -> None:
     app.include_router(chat.router, prefix=prefijo)
     app.include_router(podcast.router, prefix=prefijo, tags=["Podcasts"])
     app.include_router(pronostico.router, prefix=prefijo, tags=["Pronóstico Cósmico"])
+    app.include_router(perlas.router, prefix=prefijo, tags=["Perlas del día"])
     app.include_router(geo.router, prefix=prefijo)
     app.include_router(perfil_espiritual.router, prefix=prefijo)
 

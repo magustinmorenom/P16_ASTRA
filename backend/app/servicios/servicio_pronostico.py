@@ -255,6 +255,72 @@ class ServicioPronostico:
 
         return max(1, min(10, claridad)), max(1, min(10, intuicion))
 
+    # Límite de caracteres por accionable. Calculado para que entre cómodo
+    # en 2 líneas en la columna de momentos del dashboard:
+    #   ancho columna ≈ 280px - 14px (bullet + gap) ≈ 266px útiles
+    #   font-size 11px Inter ≈ 50-55 chars/línea
+    #   2 líneas ≈ 100-110 chars
+    _MAX_LARGO_ACCIONABLE = 110
+    _CORTE_PALABRA_ACCIONABLE = 100
+
+    @classmethod
+    def _sintetizar_accion(cls, texto: str) -> str:
+        """Recorta una acción larga a max ~2 líneas preservando palabras enteras.
+
+        Estrategia:
+            1. Si entra completa (≤ MAX), devuelve tal cual.
+            2. Si excede, busca la última palabra completa antes de
+               CORTE_PALABRA y agrega "…".
+            3. Si no encuentra espacio (palabra única gigante), corta hard.
+        """
+        texto = (texto or "").strip()
+        if len(texto) <= cls._MAX_LARGO_ACCIONABLE:
+            return texto
+
+        recorte = texto[: cls._CORTE_PALABRA_ACCIONABLE]
+        ultimo_espacio = recorte.rfind(" ")
+        if ultimo_espacio > 50:  # asegurar que el recorte tenga sentido
+            recorte = recorte[:ultimo_espacio]
+        # Limpiar puntuación final colgante
+        recorte = recorte.rstrip(",;:.- ")
+        return f"{recorte}…"
+
+    @classmethod
+    def _inyectar_acciones_podcast(cls, resultado: dict, acciones_podcast: list[dict]) -> dict:
+        """Sobrescribe los accionables de los momentos con las acciones reales del podcast.
+
+        El podcast genera acciones con estructura:
+            {"bloque": "manana"|"tarde"|"noche", "accion": "...", "contexto": "..."}
+        Los momentos del pronóstico esperan:
+            {"accionables": ["string1", "string2", ...]}
+
+        Cada `accion` se sintetiza a max ~110 chars (≈2 líneas en el dashboard)
+        para evitar que un texto muy largo desborde la card del momento.
+        """
+        # Agrupar acciones por bloque, sintetizando longitud sobre la marcha.
+        acciones_por_bloque: dict[str, list[str]] = {}
+        for accion in acciones_podcast:
+            bloque = accion.get("bloque", "")
+            texto = accion.get("accion", "")
+            if bloque and texto:
+                texto_sintetizado = cls._sintetizar_accion(texto)
+                acciones_por_bloque.setdefault(bloque, []).append(texto_sintetizado)
+
+        if not acciones_por_bloque:
+            return resultado
+
+        # Reemplazar accionables en cada momento
+        for momento in resultado.get("momentos", []):
+            bloque = momento.get("bloque", "")
+            if bloque in acciones_por_bloque:
+                momento["accionables"] = acciones_por_bloque[bloque]
+
+        logger.info(
+            "Accionables inyectados desde podcast: %s",
+            {b: len(a) for b, a in acciones_por_bloque.items()},
+        )
+        return resultado
+
     @classmethod
     def _generar_fallback_diario(
         cls, numero_personal: dict, luna_info: dict
@@ -403,26 +469,41 @@ class ServicioPronostico:
         # 3. Obtener tránsitos del día
         transitos = ServicioTransitos.obtener_transitos_actuales()
 
-        # 4. Calcular número personal del día
+        # 4. Calcular números personales (día, mes, año)
         fecha_nac_str = perfil_cosmico.get("datos_personales", {}).get("fecha_nacimiento")
         if fecha_nac_str:
             fecha_nac = date.fromisoformat(fecha_nac_str)
-            numero_personal = ServicioNumerologia.calcular_dia_personal(fecha_nac, fecha_obj)
+            numero_dia = ServicioNumerologia.calcular_dia_personal(fecha_nac, fecha_obj)
+            numero_mes = ServicioNumerologia.calcular_mes_personal(fecha_nac, fecha_obj)
+            numero_ano = ServicioNumerologia.calcular_ano_personal(fecha_nac, fecha_obj)
         else:
-            numero_personal = {"numero": 5, "descripcion": "Libertad, aventura, cambio"}
+            numero_dia = {"numero": 5, "descripcion": "Libertad, aventura, cambio"}
+            numero_mes = {"numero": 3, "descripcion": "Expresión, creatividad, comunicación"}
+            numero_ano = {"numero": 1, "descripcion": "Liderazgo, independencia, originalidad"}
+        numero_personal = {
+            "numero": numero_dia["numero"],
+            "descripcion": numero_dia["descripcion"],
+            "mes": numero_mes,
+            "ano": numero_ano,
+        }
 
         # 5. Extraer info lunar
         luna_info = cls._extraer_info_luna(transitos)
 
         # 6. Buscar si existe lectura diaria (podcast) para resumir accionables
         lectura_diaria = None
+        acciones_podcast: list[dict] | None = None
         try:
             from app.datos.repositorio_podcast import RepositorioPodcast
             repo_podcast = RepositorioPodcast(sesion)
             podcast = await repo_podcast.obtener_episodio(usuario_id, fecha_obj, "dia")
-            if podcast and podcast.estado == "listo" and podcast.guion_md:
-                lectura_diaria = podcast.guion_md
-                logger.debug("Lectura diaria encontrada para el usuario %s", usuario_id)
+            if podcast and podcast.estado == "listo":
+                if podcast.guion_md:
+                    lectura_diaria = podcast.guion_md
+                    logger.debug("Lectura diaria encontrada para el usuario %s", usuario_id)
+                if podcast.acciones_json and isinstance(podcast.acciones_json, list):
+                    acciones_podcast = podcast.acciones_json
+                    logger.debug("Acciones del podcast encontradas: %d acciones", len(acciones_podcast))
         except Exception as e:
             logger.warning("No se pudo recuperar la lectura diaria para el pronóstico: %s", e)
 
@@ -430,7 +511,10 @@ class ServicioPronostico:
         config = obtener_configuracion()
         if not config.anthropic_api_key:
             logger.warning("Sin API key de Anthropic — retornando fallback")
-            return cls._generar_fallback_diario(numero_personal, luna_info)
+            fallback = cls._generar_fallback_diario(numero_personal, luna_info)
+            if acciones_podcast:
+                fallback = cls._inyectar_acciones_podcast(fallback, acciones_podcast)
+            return fallback
 
         system_prompt = cls._cargar_prompt()
 
@@ -441,8 +525,10 @@ class ServicioPronostico:
             f"## Fecha del Pronóstico\n{fecha_str}\n\n"
             f"## Perfil Cósmico del Usuario\n{resumen_perfil}\n\n"
             f"## Tránsitos del Día\n{resumen_transitos}\n\n"
-            f"## Número Personal del Día\n"
-            f"Número: {numero_personal['numero']} — {numero_personal['descripcion']}\n\n"
+            f"## Números Personales\n"
+            f"Día: {numero_personal['numero']} — {numero_personal['descripcion']}\n"
+            f"Mes: {numero_personal['mes']['numero']} — {numero_personal['mes']['descripcion']}\n"
+            f"Año: {numero_personal['ano']['numero']} — {numero_personal['ano']['descripcion']}\n\n"
         )
 
         if lectura_diaria:
@@ -460,7 +546,7 @@ class ServicioPronostico:
             cliente = anthropic.AsyncAnthropic(api_key=config.anthropic_api_key)
             respuesta = await cliente.messages.create(
                 model=config.pronostico_modelo,
-                max_tokens=2048,
+                max_tokens=4096,
                 temperature=0.7,
                 system=system_prompt,
                 messages=[{"role": "user", "content": mensaje_usuario}],
@@ -484,18 +570,22 @@ class ServicioPronostico:
                 modelo=config.pronostico_modelo,
             )
 
-            # 8. Parsear JSON
-            # Limpiar posibles backticks de markdown
+            # 8. Parsear JSON — extraer el primer objeto JSON válido
             texto_limpio = texto.strip()
-            if texto_limpio.startswith("```"):
-                lineas = texto_limpio.split("\n")
-                # Remover primera y última línea de backticks
-                lineas = [l for l in lineas if not l.strip().startswith("```")]
-                texto_limpio = "\n".join(lineas)
+            # Buscar el primer '{' y el último '}' para extraer el JSON
+            inicio = texto_limpio.find("{")
+            fin = texto_limpio.rfind("}")
+            if inicio == -1 or fin == -1 or fin <= inicio:
+                raise json.JSONDecodeError("No se encontró JSON válido en la respuesta", texto_limpio, 0)
+            texto_limpio = texto_limpio[inicio:fin + 1]
 
             pronostico = json.loads(texto_limpio)
 
             # Validar con Pydantic
+            # Capturar interpretacion_integrada generada por Claude
+            interp = pronostico.pop("interpretacion_integrada", None)
+            logger.info("Pronóstico — interpretacion_integrada de Claude: %s", repr(interp))
+            numero_personal["interpretacion_integrada"] = interp
             pronostico["numero_personal"] = numero_personal
             validado = PronosticoDiarioSchema(**pronostico)
             resultado = validado.model_dump()
@@ -503,6 +593,10 @@ class ServicioPronostico:
         except (json.JSONDecodeError, Exception) as e:
             logger.error("Error generando pronóstico con Claude: %s", e)
             resultado = cls._generar_fallback_diario(numero_personal, luna_info)
+
+        # 8b. Inyectar acciones del podcast directamente en los momentos
+        if acciones_podcast:
+            resultado = cls._inyectar_acciones_podcast(resultado, acciones_podcast)
 
         # 9. Guardar en Redis
         try:

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { HeaderMobile } from "@/componentes/layouts/header-mobile";
 import { Tarjeta } from "@/componentes/ui/tarjeta";
 import { Badge } from "@/componentes/ui/badge";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
@@ -62,9 +62,8 @@ interface DetalleNumero {
 // ── Componente Principal ───────────────────────────────────────────────────
 
 export default function NumerologiaScreen() {
-  const insets = useSafeAreaInsets();
   const { data: calculos, isLoading } = usarMisCalculos();
-  const { colores, esOscuro } = usarTema();
+  const { colores } = usarTema();
   const num = calculos?.numerologia;
 
   // Bottom sheet
@@ -85,11 +84,14 @@ export default function NumerologiaScreen() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colores.fondo, paddingHorizontal: 16, paddingTop: insets.top + 16 }}>
-        <Esqueleto style={{ height: 32, width: 180, marginBottom: 16 }} />
-        <Esqueleto style={{ height: 120, borderRadius: 16, marginBottom: 16 }} />
-        <Esqueleto style={{ height: 80, borderRadius: 12, marginBottom: 8 }} />
-        <Esqueleto style={{ height: 200, borderRadius: 12 }} />
+      <View style={{ flex: 1, backgroundColor: colores.fondo }}>
+        <HeaderMobile titulo="Numerología" />
+        <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+          <Esqueleto style={{ height: 32, width: 180, marginBottom: 16 }} />
+          <Esqueleto style={{ height: 120, borderRadius: 16, marginBottom: 16 }} />
+          <Esqueleto style={{ height: 80, borderRadius: 12, marginBottom: 8 }} />
+          <Esqueleto style={{ height: 200, borderRadius: 12 }} />
+        </View>
       </View>
     );
   }
@@ -98,13 +100,13 @@ export default function NumerologiaScreen() {
 
   if (!num) {
     return (
-      <View style={{ flex: 1, backgroundColor: colores.fondo, alignItems: "center", justifyContent: "center", paddingHorizontal: 32, paddingTop: insets.top }}>
-        <Text style={{ color: colores.primario, fontSize: 20, fontFamily: "Inter_700Bold", textAlign: "center" }}>
-          Numerología
-        </Text>
-        <Text style={{ color: colores.textoSecundario, textAlign: "center", marginTop: 8 }}>
-          Completá tu perfil para ver tu numerología
-        </Text>
+      <View style={{ flex: 1, backgroundColor: colores.fondo }}>
+        <HeaderMobile titulo="Numerología" />
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+          <Text style={{ color: colores.textoSecundario, textAlign: "center", marginTop: 8 }}>
+            Completá tu perfil para ver tu numerología
+          </Text>
+        </View>
       </View>
     );
   }
@@ -164,9 +166,10 @@ export default function NumerologiaScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colores.fondo }}>
+      <HeaderMobile titulo="Numerología" />
       <ScrollView
         contentContainerStyle={{
-          paddingTop: insets.top + 16,
+          paddingTop: 16,
           paddingBottom: 120,
           paddingHorizontal: 16,
         }}
@@ -176,8 +179,8 @@ export default function NumerologiaScreen() {
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <IconoAstral nombre="numerologia" tamaño={24} />
-              <Text style={{ color: colores.primario, fontSize: 24, fontFamily: "Inter_700Bold" }}>
-                Numerología
+              <Text style={{ color: colores.primario, fontSize: 18, fontFamily: "Inter_700Bold" }}>
+                Perfil numerológico
               </Text>
             </View>
             <Badge variante="info">Pitagórico</Badge>

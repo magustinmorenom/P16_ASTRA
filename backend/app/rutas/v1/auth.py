@@ -6,7 +6,7 @@ import re
 import uuid
 
 import jwt
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +16,9 @@ from app.datos.repositorio_plan import RepositorioPlan
 from app.datos.repositorio_suscripcion import RepositorioSuscripcion
 from app.datos.repositorio_usuario import RepositorioUsuario
 from app.dependencias_auth import obtener_usuario_actual
+from app.nucleo.utilidades_fecha import es_primer_acceso_del_dia_arg
+from app.servicios.servicio_podcast_bootstrap import bootstrap_dia_podcast
+from app.utilidades.planes import es_plan_pago
 from app.esquemas.auth import (
     EsquemaCambioContrasena,
     EsquemaConfirmarReset,
@@ -452,10 +455,21 @@ async def eliminar_cuenta(
 
 @router.get("/me")
 async def obtener_perfil_usuario(
+    background_tasks: BackgroundTasks,
     usuario: Usuario = Depends(obtener_usuario_actual),
     db: AsyncSession = Depends(_obtener_db_placeholder),
 ):
-    """Retorna los datos del usuario autenticado, incluyendo su plan actual."""
+    """Retorna los datos del usuario autenticado, incluyendo su plan actual.
+
+    Si detecta que es el primer acceso del día ARG (comparando con
+    `ultimo_acceso`), encola un background task que auto-genera el podcast
+    del día. El usuario no necesita hacer nada manual: mientras usa la app
+    el pipeline corre detrás y el banner del header refleja el progreso.
+    """
+    # Capturamos el último acceso previo ANTES de actualizarlo para poder
+    # decidir si éste es el primer acceso del día ARG.
+    ultimo_acceso_previo = usuario.ultimo_acceso
+
     # Obtener suscripción y plan activo
     plan_slug = None
     plan_nombre = None
@@ -486,6 +500,23 @@ async def obtener_perfil_usuario(
         tiene_perfil = perfil is not None
     except Exception:
         pass
+
+    # Bootstrap automático del podcast del día — sólo si es primer acceso
+    # del día ARG, usuario premium y ya tiene perfil cargado. Actualizamos
+    # `ultimo_acceso` sólo en ese caso (1 vez/día) para mantener `/auth/me`
+    # como hot path barato el resto de las llamadas.
+    if (
+        es_primer_acceso_del_dia_arg(ultimo_acceso_previo)
+        and tiene_perfil
+        and es_plan_pago(plan_slug)
+    ):
+        try:
+            await RepositorioUsuario(db).actualizar_ultimo_acceso(usuario.id)
+        except Exception:
+            logger.warning(
+                "No se pudo actualizar ultimo_acceso para %s", usuario.id
+            )
+        background_tasks.add_task(bootstrap_dia_podcast, usuario.id)
 
     return {
         "exito": True,

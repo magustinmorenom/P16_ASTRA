@@ -17,7 +17,6 @@ vi.mock("@/lib/hooks", () => ({
 }));
 
 import PaginaCalendarioCosmico from "@/app/(app)/calendario-cosmico/page";
-import { calcularPosicionTooltip } from "@/app/(app)/calendario-cosmico/_componentes/calendario-mes";
 
 function crearDia(fecha: string) {
   const esHoy = fecha === "2026-04-03";
@@ -80,6 +79,19 @@ function crearRango(inicio: string, fin: string) {
   };
 }
 
+/**
+ * Helper: matcher de texto que verifica que un elemento contenga
+ * todos los términos en su textContent (útil cuando el contenido
+ * está dividido en múltiples spans hermanos).
+ */
+function contieneTextos(...terminos: RegExp[]) {
+  return (_contenido: string, elemento: Element | null) => {
+    if (!elemento) return false;
+    const texto = elemento.textContent ?? "";
+    return terminos.every((regex) => regex.test(texto));
+  };
+}
+
 describe("PaginaCalendarioCosmico", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -117,10 +129,18 @@ describe("PaginaCalendarioCosmico", () => {
   it("renderiza la vista mensual compacta con ritmo personal integrado", () => {
     renderConProveedores(<PaginaCalendarioCosmico />);
 
-    expect(screen.getByText(/abril 2026/i)).toBeInTheDocument();
-    expect(screen.getByText(/Año 8 · Día 6/i)).toBeInTheDocument();
-    expect(screen.getByText(/hasta mayo/i)).toBeInTheDocument();
-    expect(screen.getByText("Mercurio R")).toBeInTheDocument();
+    // Date stamp del header: el mes y el año viven en spans separados,
+    // así que verificamos que algún ancestro común contenga ambos.
+    expect(
+      screen.getAllByText(contieneTextos(/abril/i, /2026/)).length,
+    ).toBeGreaterThan(0);
+    // El panel detalle del header muestra el día seleccionado por defecto (hoy)
+    expect(screen.getByText(/Día personal 6 · Año 8/i)).toBeInTheDocument();
+    expect(
+      screen.getAllByText(contieneTextos(/hasta/i, /mayo/i)).length,
+    ).toBeGreaterThan(0);
+    // "Mercurio R" puede aparecer en la celda del día y en el panel detalle
+    expect(screen.getAllByText("Mercurio R").length).toBeGreaterThan(0);
   });
 
   it("permite avanzar a la ventana del próximo mes", () => {
@@ -128,10 +148,12 @@ describe("PaginaCalendarioCosmico", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Próximo mes" }));
 
-    expect(screen.getByText(/mayo 2026/i)).toBeInTheDocument();
+    expect(
+      screen.getAllByText(contieneTextos(/mayo/i, /2026/)).length,
+    ).toBeGreaterThan(0);
   });
 
-  it("muestra el tooltip del día y conserva el contenido astral al hacer hover", () => {
+  it("actualiza el panel detalle del header al seleccionar un día", () => {
     renderConProveedores(<PaginaCalendarioCosmico />);
 
     const manana = screen.getAllByRole("button").find((boton) =>
@@ -140,26 +162,11 @@ describe("PaginaCalendarioCosmico", () => {
 
     expect(manana).toBeDefined();
     if (manana) {
-      fireEvent.mouseEnter(manana, { clientX: 980, clientY: 220 });
+      fireEvent.click(manana);
     }
 
+    // Tras clickear el día siguiente (2026-04-04), el panel del header
+    // debe mostrar su ritmo personal calculado.
     expect(screen.getByText(/Día personal 7 · Año 8/i)).toBeInTheDocument();
-    expect(screen.getByText(/Venus cambia de Piscis a Aries/i)).toBeInTheDocument();
-  });
-
-  it("reubica el tooltip hacia la izquierda y arriba cuando el cursor queda contra el borde", () => {
-    const resultado = calcularPosicionTooltip({
-      cursorX: 1520,
-      cursorY: 820,
-      tooltipWidth: 296,
-      tooltipHeight: 212,
-      viewportWidth: 1600,
-      viewportHeight: 900,
-    });
-    // El tooltip debe caber dentro del viewport con margen 12px
-    expect(resultado.x).toBeLessThanOrEqual(1600 - 296 - 12);
-    expect(resultado.x).toBeGreaterThanOrEqual(12);
-    // Arriba del cursor: 820 - 212 - 14 = 594
-    expect(resultado.y).toBe(594);
   });
 });

@@ -210,8 +210,8 @@ function MenuContextual({
           className={cn(
             "w-full flex items-center gap-2.5 px-3 py-2 text-[12.5px] transition-colors",
             op.peligro
-              ? "text-red-400 hover:bg-red-500/10"
-              : "hover:bg-[var(--shell-superficie)]",
+              ? "text-[color:var(--color-peligro-texto)] hover:bg-[var(--color-peligro-suave)]"
+              : "hover:bg-[var(--shell-chip-hover)]",
           )}
           style={
             op.peligro
@@ -256,7 +256,7 @@ function ItemConversacion({
           "w-full text-left px-3 py-2.5 rounded-xl flex items-start gap-2.5 transition-all duration-200",
           activa
             ? "bg-[var(--shell-chip)] border border-[var(--shell-borde-fuerte)]"
-            : "border border-transparent hover:bg-[var(--shell-superficie)]",
+            : "border border-transparent hover:bg-[var(--shell-chip-hover)]",
         )}
       >
         <div className="flex-1 min-w-0">

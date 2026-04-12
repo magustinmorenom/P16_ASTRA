@@ -61,11 +61,21 @@ class LunaInfoSchema(BaseModel):
     significado: str
 
 
-class NumeroPersonalSchema(BaseModel):
-    """Número personal del día."""
+class NumeroComponenteSchema(BaseModel):
+    """Un componente numérico (día, mes o año)."""
 
     numero: int
     descripcion: str
+
+
+class NumeroPersonalSchema(BaseModel):
+    """Número personal del día con contexto de mes y año."""
+
+    numero: int
+    descripcion: str
+    mes: NumeroComponenteSchema | None = None
+    ano: NumeroComponenteSchema | None = None
+    interpretacion_integrada: str | None = None
 
 
 class PronosticoDiarioSchema(BaseModel):

@@ -28,6 +28,38 @@ error() { echo -e "${ROJO}[ERROR]${NC} $1"; }
 # Funciones                                                            #
 # ------------------------------------------------------------------ #
 
+provisionar_efemerides() {
+    local EPHE_DIR="$BACKEND_DIR/datos_efemerides"
+    if ls "$EPHE_DIR"/*.se1 &>/dev/null; then
+        info "Efemérides presentes ($(ls "$EPHE_DIR"/*.se1 | wc -l | tr -d ' ') archivos)"
+        return
+    fi
+
+    info "Provisionando efemérides (Swiss Ephemeris)..."
+    mkdir -p "$EPHE_DIR"
+    source .venv/bin/activate 2>/dev/null || true
+
+    local KERYKEION_SWEPH
+    KERYKEION_SWEPH=$(python3 -c "import kerykeion, os; print(os.path.join(os.path.dirname(kerykeion.__file__), 'sweph'))" 2>/dev/null || true)
+
+    if [ -d "$KERYKEION_SWEPH" ]; then
+        for archivo in seas_18.se1 sepl_18.se1 semo_18.se1; do
+            [ -f "$KERYKEION_SWEPH/$archivo" ] && cp "$KERYKEION_SWEPH/$archivo" "$EPHE_DIR/"
+        done
+        # Descargar los que falten
+        for archivo in sepl_18.se1 semo_18.se1; do
+            if [ ! -f "$EPHE_DIR/$archivo" ]; then
+                info "Descargando $archivo..."
+                curl -sL "https://raw.githubusercontent.com/aloistr/swisseph/master/ephe/$archivo" -o "$EPHE_DIR/$archivo" 2>/dev/null || warn "No se pudo descargar $archivo"
+            fi
+        done
+        info "Efemérides listas ($(ls "$EPHE_DIR"/*.se1 2>/dev/null | wc -l | tr -d ' ') archivos)"
+    else
+        error "No se encontró kerykeion/sweph — instalá dependencias primero"
+        exit 1
+    fi
+}
+
 levantar_infra() {
     info "Levantando PostgreSQL (5434) y Redis (6380)..."
     docker compose up -d
@@ -41,6 +73,9 @@ levantar_infra() {
         fi
         sleep 1
     done
+    # Efemérides
+    provisionar_efemerides
+    # Migraciones
     info "Ejecutando migraciones..."
     source .venv/bin/activate 2>/dev/null || true
     alembic upgrade head
@@ -74,6 +109,11 @@ reiniciar() {
 
 levantar_todo() {
     levantar_infra
+
+    # Matar procesos anteriores si existen
+    pgrep -f "uvicorn app.principal" | xargs kill 2>/dev/null || true
+    pgrep -f "app.bot_main" | xargs kill 2>/dev/null || true
+    sleep 1
 
     # Backend en background
     info "Iniciando backend en background..."

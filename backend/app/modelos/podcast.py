@@ -42,5 +42,6 @@ class PodcastEpisodio(ModeloBase):
     estado: Mapped[str] = mapped_column(String(20), nullable=False, default="pendiente")
     origen: Mapped[str] = mapped_column(String(20), nullable=False, default="manual")  # manual | preview | auto
     fecha_objetivo: Mapped[date | None] = mapped_column(Date, nullable=True)  # fecha para la que fue generado
+    acciones_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     error_detalle: Mapped[str | None] = mapped_column(Text, nullable=True)
     tokens_usados: Mapped[int | None] = mapped_column(Integer, nullable=True)

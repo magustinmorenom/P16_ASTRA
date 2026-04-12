@@ -69,8 +69,8 @@ class Configuracion(BaseSettings):
     # Anthropic (Claude API)
     anthropic_api_key: str = ""
     anthropic_modelo: str = "claude-opus-4-6"
-    oraculo_modelo: str = "claude-sonnet-4-6"
-    pronostico_modelo: str = "claude-haiku-4-5-20251001"
+    oraculo_modelo: str = "claude-haiku-4-5-20251001"
+    pronostico_modelo: str = "claude-sonnet-4-6"
 
     # Gemini (opcional)
     gemini_api_key: str = ""

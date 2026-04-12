@@ -7,6 +7,18 @@ html {
   background: var(--color-fondo);
 }
 
+/* Selección de texto: violeta ciruela ASTRA en toda la app */
+::selection {
+  background-color: var(--color-violet-700);
+  color: #ffffff;
+  text-shadow: none;
+}
+::-moz-selection {
+  background-color: var(--color-violet-700);
+  color: #ffffff;
+  text-shadow: none;
+}
+
 /* Cursor pointer global para elementos interactivos */
 button,
 [role="button"],
@@ -381,6 +393,100 @@ body::-webkit-scrollbar-thumb {
 
 .animate-chat-breathe {
   animation: chat-breathe 3s ease-in-out infinite;
+}
+
+/* ============================================
+   Banner podcast del día — entrada + shimmer
+   ============================================ */
+@keyframes banner-fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes banner-fade-out-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes banner-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-banner-in {
+  animation: banner-fade-in-down 400ms ease-out both;
+}
+
+.animate-banner-out {
+  animation: banner-fade-out-up 300ms ease-in both;
+}
+
+.banner-shimmer-texto {
+  background: linear-gradient(
+    90deg,
+    var(--shell-texto) 0%,
+    var(--color-acento) 50%,
+    var(--shell-texto) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: banner-shimmer 3.2s linear infinite;
+}
+
+/* ============================================
+   Marquee — texto deslizante horizontal
+   Usado en notificaciones del navbar (centro
+   de notificaciones) cuando la descripción
+   no entra completa en su contenedor.
+
+   Estrategia:
+   - El marquee arranca por DEFAULT (CSS puro).
+   - JS solo agrega `.is-paused` cuando el
+     contenido sí entra completo en el slot
+     (ahí se frena y se resetea a translateX 0).
+   - Si JS falla, el marquee igual funciona.
+
+   El track contiene el texto duplicado y se
+   desplaza -50% en loop infinito, generando
+   un scroll seamless: el texto sale por la
+   izquierda y la copia clonada lo reemplaza
+   exactamente desde la derecha.
+   ============================================ */
+@keyframes marquee-deslizar {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee-deslizar 60s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee.is-paused {
+  animation: none;
+  transform: translateX(0);
 }
 
 /* ============================================

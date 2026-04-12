@@ -289,3 +289,163 @@ class TestConfigFeatures:
         from app.configuracion_features import obtener_acceso_pronostico
         acceso = obtener_acceso_pronostico("premium")
         assert all(v is True for v in acceso.values())
+
+
+# ---------------------------------------------------------------------------
+# Tests de inyección de acciones del podcast en el pronóstico
+# ---------------------------------------------------------------------------
+
+
+class TestSintetizarAccion:
+    """Recorte de acciones largas a max ~2 líneas (110 chars)."""
+
+    def test_accion_corta_se_devuelve_tal_cual(self):
+        texto = "Mandá ese mail antes de las 10"
+        assert ServicioPronostico._sintetizar_accion(texto) == texto
+
+    def test_accion_exactamente_en_limite_no_recorta(self):
+        texto = "x" * 110
+        assert ServicioPronostico._sintetizar_accion(texto) == texto
+
+    def test_accion_larga_recorta_en_palabra_completa(self):
+        texto = (
+            "Mandá ese mail pendiente que venís postergando desde "
+            "hace varias semanas antes de las diez de la mañana para "
+            "liberar la cabeza y enfocarte en lo importante"
+        )
+        assert len(texto) > 110  # sanity check del input
+        resultado = ServicioPronostico._sintetizar_accion(texto)
+        assert len(resultado) <= 110
+        assert resultado.endswith("…")
+        # No corta a mitad de palabra
+        sin_elipsis = resultado.replace("…", "").rstrip()
+        assert not sin_elipsis.endswith("…")
+        # Mantiene el comienzo
+        assert resultado.startswith("Mandá ese mail")
+
+    def test_accion_larga_no_deja_puntuacion_colgante(self):
+        texto = (
+            "Escribí un mail largo, con detalles importantes, sobre la "
+            "reunión del lunes que venís postergando desde hace días."
+        )
+        resultado = ServicioPronostico._sintetizar_accion(texto)
+        assert resultado.endswith("…")
+        # No quedan ", …" o ".…"
+        assert ", …" not in resultado
+        assert ". …" not in resultado
+
+    def test_accion_vacia_devuelve_vacio(self):
+        assert ServicioPronostico._sintetizar_accion("") == ""
+        assert ServicioPronostico._sintetizar_accion(None) == ""  # type: ignore
+
+    def test_palabra_unica_gigante_corta_hard(self):
+        texto = "Mandá " + ("supercalifragilisticoespialidoso" * 5)
+        resultado = ServicioPronostico._sintetizar_accion(texto)
+        assert len(resultado) <= 110
+        assert resultado.endswith("…")
+
+
+class TestInyectarAccionesPodcast:
+    """Reemplazo de accionables fallback por acciones reales del podcast."""
+
+    def _resultado_base(self):
+        return {
+            "momentos": [
+                {
+                    "bloque": "manana",
+                    "accionables": ["Fallback mañana 1", "Fallback mañana 2"],
+                },
+                {
+                    "bloque": "tarde",
+                    "accionables": ["Fallback tarde 1", "Fallback tarde 2"],
+                },
+                {
+                    "bloque": "noche",
+                    "accionables": ["Fallback noche 1", "Fallback noche 2"],
+                },
+            ]
+        }
+
+    def test_inyecta_acciones_de_los_tres_bloques(self):
+        resultado = self._resultado_base()
+        acciones_podcast = [
+            {"bloque": "manana", "accion": "Mandá el mail", "contexto": "Mercurio"},
+            {"bloque": "manana", "accion": "Tomá agua", "contexto": "Luna"},
+            {"bloque": "tarde", "accion": "Reunión clave", "contexto": "Marte"},
+            {"bloque": "noche", "accion": "Escribí gratitud", "contexto": "Venus"},
+        ]
+        resultado_inyectado = ServicioPronostico._inyectar_acciones_podcast(
+            resultado, acciones_podcast
+        )
+
+        momentos = {m["bloque"]: m for m in resultado_inyectado["momentos"]}
+        assert momentos["manana"]["accionables"] == ["Mandá el mail", "Tomá agua"]
+        assert momentos["tarde"]["accionables"] == ["Reunión clave"]
+        assert momentos["noche"]["accionables"] == ["Escribí gratitud"]
+        # Sin "Fallback" en ningún lado
+        for momento in resultado_inyectado["momentos"]:
+            for accion in momento["accionables"]:
+                assert "Fallback" not in accion
+
+    def test_acciones_largas_se_sintetizan(self):
+        resultado = self._resultado_base()
+        accion_larga = (
+            "Mandá ese mail pendiente que venís postergando desde "
+            "hace varias semanas antes de las diez de la mañana para "
+            "liberar la cabeza y enfocarte en lo importante"
+        )
+        assert len(accion_larga) > 110  # sanity check del input
+        acciones_podcast = [
+            {"bloque": "manana", "accion": accion_larga, "contexto": "Mercurio"},
+        ]
+        resultado_inyectado = ServicioPronostico._inyectar_acciones_podcast(
+            resultado, acciones_podcast
+        )
+        accion_resultado = resultado_inyectado["momentos"][0]["accionables"][0]
+        assert len(accion_resultado) <= 110
+        assert accion_resultado.endswith("…")
+        assert accion_resultado.startswith("Mandá ese mail")
+
+    def test_lista_vacia_no_modifica_resultado(self):
+        resultado = self._resultado_base()
+        original_manana = list(resultado["momentos"][0]["accionables"])
+        resultado_inyectado = ServicioPronostico._inyectar_acciones_podcast(resultado, [])
+        # Conserva los fallbacks
+        assert resultado_inyectado["momentos"][0]["accionables"] == original_manana
+
+    def test_acciones_sin_bloque_se_descartan(self):
+        resultado = self._resultado_base()
+        acciones_podcast = [
+            {"accion": "Sin bloque, ignorada", "contexto": "..."},
+            {"bloque": "", "accion": "Bloque vacío, ignorada", "contexto": "..."},
+            {"bloque": "manana", "accion": "Esta sí va", "contexto": "..."},
+        ]
+        resultado_inyectado = ServicioPronostico._inyectar_acciones_podcast(
+            resultado, acciones_podcast
+        )
+        assert resultado_inyectado["momentos"][0]["accionables"] == ["Esta sí va"]
+
+    def test_acciones_con_texto_vacio_se_descartan(self):
+        resultado = self._resultado_base()
+        acciones_podcast = [
+            {"bloque": "manana", "accion": "", "contexto": "..."},
+            {"bloque": "manana", "accion": "Acción válida", "contexto": "..."},
+        ]
+        resultado_inyectado = ServicioPronostico._inyectar_acciones_podcast(
+            resultado, acciones_podcast
+        )
+        assert resultado_inyectado["momentos"][0]["accionables"] == ["Acción válida"]
+
+    def test_bloque_sin_acciones_mantiene_fallback(self):
+        """Si el podcast solo trae acciones de mañana, tarde y noche conservan fallback."""
+        resultado = self._resultado_base()
+        acciones_podcast = [
+            {"bloque": "manana", "accion": "Real mañana", "contexto": "..."},
+        ]
+        resultado_inyectado = ServicioPronostico._inyectar_acciones_podcast(
+            resultado, acciones_podcast
+        )
+        momentos = {m["bloque"]: m for m in resultado_inyectado["momentos"]}
+        assert momentos["manana"]["accionables"] == ["Real mañana"]
+        assert momentos["tarde"]["accionables"] == ["Fallback tarde 1", "Fallback tarde 2"]
+        assert momentos["noche"]["accionables"] == ["Fallback noche 1", "Fallback noche 2"]

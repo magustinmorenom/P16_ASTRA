@@ -8,6 +8,12 @@ export interface SegmentoLetra {
   texto: string;
 }
 
+export interface AccionPodcast {
+  bloque: "manana" | "tarde" | "noche";
+  accion: string;
+  contexto: string;
+}
+
 export interface PodcastEpisodio {
   id: string;
   fecha: string;
@@ -18,6 +24,7 @@ export interface PodcastEpisodio {
   duracion_segundos: number;
   url_audio: string;
   estado: "pendiente" | "generando_guion" | "generando_audio" | "listo" | "error";
+  acciones: AccionPodcast[];
   error_detalle?: string;
   creado_en?: string;
 }

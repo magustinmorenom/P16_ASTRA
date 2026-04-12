@@ -6,10 +6,10 @@ import type { DiaSemanalDTO } from "@/lib/tipos";
 
 /* ─── Constantes de layout SVG ─── */
 
-const VB_W = 600;
-const VB_H = 276;
-const PAD_L = 24;
-const PAD_R = 4;
+const VB_W = 800;
+const VB_H = 260;
+const PAD_L = 40;
+const PAD_R = 16;
 const PAD_T = 16;
 const PAD_B = 72;
 const CHART_W = VB_W - PAD_L - PAD_R;
@@ -184,8 +184,8 @@ export function GraficaTendencia({ datos, fechaHoy }: GraficaTendenciaProps) {
         <svg
           viewBox={`0 0 ${VB_W} ${VB_H}`}
           className="w-full"
-          preserveAspectRatio="xMinYMid meet"
-          style={{ maxHeight: 300, width: "100%" }}
+          preserveAspectRatio="xMidYMid meet"
+          style={{ maxHeight: 320, width: "100%" }}
           role="img"
           aria-label="Gráfica de tendencia de energía"
         >

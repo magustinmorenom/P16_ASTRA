@@ -24,14 +24,14 @@ const MODULOS: ItemDescubrir[] = [
     titulo: "Diseño Humano",
     descripcion: "Tu Body Graph, tipo energético, autoridad interna y centros definidos.",
     IconoPhosphor: Fingerprint,
-    ruta: "/(features)/diseno-humano",
+    ruta: "/(tabs)/diseno-humano",
     etiqueta: "Energía",
   },
   {
     titulo: "Numerología",
     descripcion: "Números maestros, ciclos personales y patrones de tu carta numérica.",
     IconoPhosphor: HashStraight,
-    ruta: "/(features)/numerologia",
+    ruta: "/(tabs)/numerologia",
     etiqueta: "Patrón",
   },
 ];

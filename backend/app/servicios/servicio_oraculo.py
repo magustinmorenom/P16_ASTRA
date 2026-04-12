@@ -151,18 +151,84 @@ class ServicioOraculo:
         hd = perfil.get("diseno_humano")
         if hd:
             partes.append("### Diseño Humano")
-            partes.append(f"- Tipo: {hd.get('tipo', '?')}")
+            tipo_hd = hd.get("tipo", "?")
+            partes.append(f"- Tipo: {tipo_hd}")
             partes.append(f"- Autoridad: {hd.get('autoridad', '?')}")
             partes.append(f"- Perfil: {hd.get('perfil', '?')}")
-            partes.append(f"- Estrategia: {hd.get('estrategia', '?')}")
+            partes.append(f"- Definición: {hd.get('definicion', '?')}")
+
+            # Estrategia derivada del tipo
+            _ESTRATEGIA_POR_TIPO = {
+                "Generador": "Esperar a responder",
+                "Generador Manifestante": "Esperar a responder, luego informar",
+                "Proyector": "Esperar la invitación",
+                "Manifestador": "Informar antes de actuar",
+                "Reflector": "Esperar un ciclo lunar (28 días)",
+            }
+            partes.append(f"- Estrategia: {_ESTRATEGIA_POR_TIPO.get(tipo_hd, '?')}")
+
+            # Cruz de encarnación
             cruz = hd.get("cruz_encarnacion", {})
             if cruz:
-                partes.append(f"- Cruz de encarnación: {cruz.get('nombre', '?')}")
+                puertas_cruz = cruz.get("puertas", [])
+                if puertas_cruz:
+                    partes.append(
+                        f"- Cruz de encarnación: puertas {puertas_cruz[0]}/{puertas_cruz[1]}"
+                        f" | {puertas_cruz[2]}/{puertas_cruz[3]}"
+                        f" (Sol☉ {cruz.get('sol_consciente','?')}/{cruz.get('sol_inconsciente','?')},"
+                        f" Tierra⊕ {cruz.get('tierra_consciente','?')}/{cruz.get('tierra_inconsciente','?')})"
+                    )
+
+            # Centros
+            centros = hd.get("centros", {})
+            if isinstance(centros, dict):
+                definidos = [n for n, e in centros.items() if e == "definido"]
+                abiertos = [n for n, e in centros.items() if e == "abierto"]
+                partes.append(f"- Centros definidos: {', '.join(definidos)}")
+                partes.append(f"- Centros abiertos: {', '.join(abiertos)}")
+
+            # Canales
+            canales = hd.get("canales", [])
+            if canales:
+                lineas_canales = []
+                for ch in canales:
+                    puertas = ch.get("puertas", [])
+                    nombre_ch = ch.get("nombre", "?")
+                    centros_ch = ch.get("centros", [])
+                    lineas_canales.append(
+                        f"{puertas[0]}-{puertas[1]} ({nombre_ch}, {' ↔ '.join(centros_ch)})"
+                    )
+                partes.append(f"- Canales definidos ({len(canales)}): {'; '.join(lineas_canales)}")
+
+            # Puertas
+            puertas_c = hd.get("puertas_conscientes", [])
+            puertas_i = hd.get("puertas_inconscientes", [])
+            if puertas_c:
+                partes.append(f"- Puertas conscientes: {', '.join(str(p) for p in puertas_c)}")
+            if puertas_i:
+                partes.append(f"- Puertas inconscientes: {', '.join(str(p) for p in puertas_i)}")
+
+            # Activaciones planetarias
+            for clave_act, titulo_act in [
+                ("activaciones_conscientes", "Activaciones conscientes (personalidad)"),
+                ("activaciones_inconscientes", "Activaciones inconscientes (diseño)"),
+            ]:
+                activaciones = hd.get(clave_act, [])
+                if activaciones:
+                    lineas_act = [
+                        f"{a.get('planeta','?')}: puerta {a.get('puerta','?')}.{a.get('linea','?')}"
+                        for a in activaciones
+                    ]
+                    partes.append(f"- {titulo_act}: {'; '.join(lineas_act)}")
+
+            partes.append("")
 
         # Numerología
         numero = perfil.get("numerologia")
         if numero:
             partes.append("### Numerología")
+            partes.append(f"- Sistema: {numero.get('sistema', 'pitagórico')}")
+
             _CLAVES_NUMERO = [
                 ("camino_de_vida", "Camino de Vida"),
                 ("expresion", "Expresión"),
@@ -170,13 +236,39 @@ class ServicioOraculo:
                 ("personalidad", "Personalidad"),
                 ("numero_nacimiento", "Número de Nacimiento"),
                 ("anio_personal", "Año Personal"),
+                ("mes_personal", "Mes Personal"),
+                ("dia_personal", "Día Personal"),
             ]
             for clave, nombre_display in _CLAVES_NUMERO:
                 valor = numero.get(clave)
                 if isinstance(valor, dict):
+                    desc_larga = valor.get("descripcion_larga", "")
+                    desc = valor.get("descripcion", "")
+                    texto = desc_larga if desc_larga else desc
                     partes.append(
-                        f"- {nombre_display}: {valor.get('numero', '?')} — {valor.get('descripcion', '')}"
+                        f"- {nombre_display}: {valor.get('numero', '?')} — {texto}"
                     )
+
+            # Números maestros
+            maestros = numero.get("numeros_maestros_presentes", [])
+            if maestros:
+                partes.append(f"- Números maestros presentes: {', '.join(str(m) for m in maestros)}")
+
+            # Etapas de la vida (pináculos)
+            etapas = numero.get("etapas_de_la_vida", [])
+            if etapas:
+                lineas_etapas = []
+                for e in etapas:
+                    lineas_etapas.append(
+                        f"{e.get('nombre', '?')}: {e.get('numero', '?')} "
+                        f"(edad {e.get('edad_inicio', '?')}–{e.get('edad_fin', '?')}) — "
+                        f"{e.get('descripcion_larga', e.get('descripcion', ''))}"
+                    )
+                partes.append(f"- Etapas de la vida:")
+                for linea in lineas_etapas:
+                    partes.append(f"  · {linea}")
+
+            partes.append("")
 
         return "\n".join(partes) if partes else "Perfil cósmico no disponible."
 
@@ -522,3 +614,124 @@ class ServicioOraculo:
         except anthropic.APIError as e:
             logger.error("Error en API de Anthropic: %s", e)
             return "Disculpá, hubo un error al consultar al oráculo. Intentá de nuevo.", 0, 0, 0
+
+    # ──────────────────────────────────────────────────────────────────
+    # Explicar selección — micro-chat sobre texto seleccionado en la UI
+    # ──────────────────────────────────────────────────────────────────
+
+    @classmethod
+    def _construir_system_explicacion(
+        cls,
+        texto_seleccionado: str,
+        contexto_seccion: str,
+        perfil_cosmico: dict | None,
+        contexto_extendido: str | None = None,
+    ) -> str:
+        """System prompt corto y pedagógico para 'Explicame mejor'.
+
+        Reusa _resumir_perfil() para inyectar el contexto cósmico del usuario,
+        pero NO carga el system prompt completo del oráculo (es una interacción
+        de un único turno, no una conversación).
+
+        Si se provee `contexto_extendido` (el bloque/oración que rodea a la
+        selección), se inyecta en el prompt para que Claude pueda interpretar
+        fragmentos cortos en su contexto natural.
+        """
+        if perfil_cosmico:
+            resumen_perfil = cls._resumir_perfil(perfil_cosmico)
+        else:
+            resumen_perfil = "No hay perfil cósmico disponible."
+
+        bloque_contexto = ""
+        if contexto_extendido and contexto_extendido.strip() != texto_seleccionado.strip():
+            bloque_contexto = (
+                "El fragmento aparece dentro de este bloque más amplio (úsalo "
+                "solo como contexto para entender el sentido completo, NO lo "
+                "expliques entero):\n\n"
+                f"  «{contexto_extendido}»\n\n"
+            )
+
+        return (
+            "Sos Astra, oráculo personal de ASTRA. El usuario está leyendo la sección "
+            f"\"{contexto_seccion}\" de la app y seleccionó este fragmento de texto:\n\n"
+            f"  ⟨{texto_seleccionado}⟩\n\n"
+            f"{bloque_contexto}"
+            "Tu tarea es explicarle ESE fragmento concreto (no el bloque completo) "
+            "en relación a SU carta personal — natal, diseño humano y numerología — "
+            "en máximo 4 oraciones, español rioplatense, sin markdown, sin listas, "
+            "sin emojis. Empezá llamándolo por su nombre. Conectá el término o frase "
+            "con uno o dos datos concretos de su perfil. Cerrá con una frase práctica "
+            "o una invitación a profundizar. Si el fragmento es ambiguo (un par de "
+            "palabras sueltas, un número solo), interpretalo a la luz del bloque que "
+            "lo rodea y de la sección donde aparece.\n\n"
+            "## Contexto del Consultante\n"
+            f"{resumen_perfil}\n"
+        )
+
+    @classmethod
+    async def explicar_seleccion(
+        cls,
+        texto_seleccionado: str,
+        contexto_seccion: str,
+        perfil_cosmico: dict | None,
+        contexto_extendido: str | None = None,
+    ) -> tuple[str, int, int, int]:
+        """Genera una explicación corta y personalizada del texto seleccionado.
+
+        Retorna (respuesta, tokens_total, tokens_in, tokens_out).
+
+        A diferencia de `consultar()`, este método:
+          - No usa historial (es one-shot)
+          - No corre análisis temporal
+          - Tiene max_tokens más bajo (350) y temperature más conservadora (0.6)
+          - Tiene un system prompt especializado en explicar UN fragmento concreto
+        """
+        config = obtener_configuracion()
+
+        if not config.anthropic_api_key:
+            return (
+                "El oráculo no está configurado. Contactá al administrador.",
+                0,
+                0,
+                0,
+            )
+
+        cliente = anthropic.AsyncAnthropic(api_key=config.anthropic_api_key)
+
+        system_prompt = cls._construir_system_explicacion(
+            texto_seleccionado=texto_seleccionado,
+            contexto_seccion=contexto_seccion,
+            perfil_cosmico=perfil_cosmico,
+            contexto_extendido=contexto_extendido,
+        )
+
+        # El "mensaje del usuario" es una pregunta implícita: que Astra explique
+        # el fragmento ya inyectado en el system prompt.
+        mensaje_usuario = (
+            "Explicame qué significa eso que seleccioné y qué dice sobre mí."
+        )
+
+        try:
+            respuesta = await cliente.messages.create(
+                model=config.oraculo_modelo,
+                max_tokens=350,
+                temperature=0.6,
+                system=system_prompt,
+                messages=[{"role": "user", "content": mensaje_usuario}],
+            )
+
+            texto = respuesta.content[0].text if respuesta.content else ""
+            texto = cls._formatear_respuesta_chat(texto)
+            tokens_in = respuesta.usage.input_tokens or 0
+            tokens_out = respuesta.usage.output_tokens or 0
+
+            return texto, tokens_in + tokens_out, tokens_in, tokens_out
+
+        except anthropic.APIError as e:
+            logger.error("Error en API de Anthropic (explicar): %s", e)
+            return (
+                "Disculpá, no pude generar la explicación. Probá de nuevo en unos segundos.",
+                0,
+                0,
+                0,
+            )

@@ -3662,3 +3662,489 @@ No fallaron tests existentes al cambiar la logica, garantizando compatibilidad r
 
 ### Como funciona
 Cuando la API arranca, pydantic lee el `.env` o las variables del SO. Cuando un usuario se registra (vía email/pass o por Google OAuth), se llama a `_asignar_plan_inicial()`. Si el flag es falso, se le asigna plan gratis. Si el flag se activa (true), se consulta el repositorio y se le carga una suscripción activa contra el plan del slug `premium`. Se puede prender/apagar desde el environment variable `ASIGNAR_PREMIUM_POR_DEFECTO` en Producción sin tocar el código.
+
+## Sesion: Menu inferior persistente en numerologia mobile
+**Fecha:** 2026-04-08 ~18:53 (ARG)
+
+### Que se hizo
+Se corrigió la navegación hacia la sección de numerología en la app mobile para que conserve el menú inferior visible al abrirse desde la pestaña Descubrir.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambios |
+|---------|---------|
+| `mobile/src/app/(tabs)/numerologia.tsx` | Nueva ruta dentro del grupo de tabs que reutiliza la pantalla existente de numerología para mantener el tab bar montado. |
+| `mobile/src/app/(tabs)/_layout.tsx` | Se registró `numerologia` como pantalla oculta del tab bar (`href: null`) para permitir navegación interna sin agregar un ítem nuevo al menú inferior. |
+| `mobile/src/app/(tabs)/descubrir.tsx` | Se actualizó la tarjeta de Numerología para navegar a `/(tabs)/numerologia` en lugar de `/(features)/numerologia`. |
+
+### Tests
+0 tests nuevos/modificados. `npm run typecheck` en `mobile/` pasando.
+
+### Como funciona
+Antes, la tarjeta de Numerología empujaba una ruta del grupo `/(features)`, que usa un stack separado y desmonta el layout de tabs, por eso desaparecía el menú inferior. Ahora la navegación entra por una ruta oculta dentro de `/(tabs)`, reutiliza la misma pantalla y mantiene visible el menú inferior durante toda la experiencia.
+
+## Sesion: Persistencia de tabs en Diseño Humano y back en Numerología mobile
+**Fecha:** 2026-04-08 ~18:57 (ARG)
+
+### Que se hizo
+Se corrigió la navegación de Diseño Humano para que conserve el menú inferior en mobile y se agregó un encabezado con flecha de volver en la pantalla de Numerología.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambios |
+|---------|---------|
+| `mobile/src/app/(tabs)/diseno-humano.tsx` | Nueva ruta oculta dentro del grupo de tabs que reutiliza la pantalla existente de Diseño Humano. |
+| `mobile/src/app/(tabs)/_layout.tsx` | Se registró `diseno-humano` como pantalla oculta del tab bar para navegación interna sin sumar un ítem visible. |
+| `mobile/src/app/(tabs)/descubrir.tsx` | La tarjeta de Diseño Humano ahora navega a `/(tabs)/diseno-humano` y Numerología mantiene la ruta interna de tabs. |
+| `mobile/src/app/(features)/numerologia.tsx` | Se integró `HeaderMobile` en estados de carga, vacío y contenido para mostrar la flecha de volver y un encabezado consistente. |
+
+### Tests
+0 tests nuevos/modificados. `npm run typecheck` en `mobile/` pasando.
+
+### Como funciona
+La tarjeta de Diseño Humano ya no abre una pantalla en el stack `/(features)`, sino una ruta oculta dentro de `/(tabs)`, por lo que el layout del menú inferior permanece montado. En Numerología, el encabezado reutiliza el componente `HeaderMobile`, así que al entrar desde Descubrir el usuario ahora ve la flecha de volver y puede regresar manteniendo el contexto de navegación.
+
+## Sesion: Chat web — corte de día automático
+**Fecha:** 2026-04-11 ~07:59 (ARG)
+
+### Que se hizo
+Al entrar al chat en un día distinto al del último mensaje (zona horaria ARG en backend, local del navegador en frontend), la conversación previa ya no se abre automáticamente: la pantalla arranca en limpio y al enviar el primer mensaje se crea una conversación nueva. La conversación vieja sigue visible y reabrible desde el panel lateral.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambio |
+|---------|--------|
+| `backend/app/datos/repositorio_conversacion.py` | Nuevo helper `_dia_arg_de_iso`, y `obtener_o_crear_web` desactiva la conv activa si su último mensaje es de otro día (hora ARG) y crea una nueva. |
+| `backend/app/rutas/v1/chat.py` | `GET /chat/conversaciones` ahora expone `ultimo_mensaje_en` (fecha ISO del último mensaje o `null`). |
+| `frontend/src/lib/tipos/chat.ts` | `ConversacionResumen` incluye `ultimo_mensaje_en: string \| null`. |
+| `frontend/src/app/(app)/chat/page.tsx` | El `useEffect` de auto-selección compara la fecha local del último mensaje contra hoy; si no coincide, no selecciona la conversación activa. |
+| `backend/tests/datos/test_repositorio_conversacion.py` | Archivo nuevo: tests de `_dia_arg_de_iso` y de los 4 escenarios de `obtener_o_crear_web` (hoy, ayer, vacía, sin conv previa). |
+
+### Tests
+9 tests pasando (`tests/datos/test_repositorio_conversacion.py` + `tests/rutas/test_rutas_chat.py`). `npx tsc --noEmit` en frontend sin errores.
+
+### Como funciona
+Cuando el usuario abre `/chat`, el frontend lista las conversaciones vía `GET /chat/conversaciones`, que ahora incluye el timestamp del último mensaje. El auto-select compara el día local del navegador con ese timestamp: si coinciden, selecciona la conversación; si no, deja `conversacionActiva = null` y se muestra el saludo inicial con sugerencias. Cuando el usuario envía su primer mensaje, el backend en `obtener_o_crear_web` detecta la misma situación del lado servidor (usando hora ARG), marca la conversación vieja como `activa=false` y crea una nueva limpia. El corte queda cubierto por partida doble — el frontend evita mostrar la conversación vieja y el backend evita seguir escribiéndole mensajes. La conversación anterior no se archiva ni se borra: sigue apareciendo en el panel lateral y el usuario puede reabrirla con `/chat/cambiar/{id}` si quiere continuarla manualmente.
+
+## Sesion: Podcast del día — auto-generación en primer login + banner
+**Fecha:** 2026-04-11 ~09:30 (ARG)
+
+### Que se hizo
+El podcast del día deja de generarse on-demand y pasa a ser automático: cuando un usuario premium con perfil cargado entra a ASTRA por primera vez en el día (hora ARG), el endpoint `/auth/me` encola un background task que dispara el pipeline de `ServicioPodcast.generar_episodio(tipo="dia")`. Un banner nuevo en el header del shell acompaña el progreso en vivo con un mensaje animado "Hola {nombre} 👋, hoy es un nuevo día! Te estoy preparando tu día." (el emoji 👋 está pedido explícitamente por producto). Al completarse, el banner transiciona a "Tu día está listo" con un CTA "Escuchar" y auto-desaparece a los 8 segundos. El botón "Generar ahora" del tipo `dia` en `/podcast` queda reemplazado por un indicador "Preparando tu día…" y el menú del navbar ya no dispara mutation para `dia`. Los tipos `semana` y `mes` siguen siendo manuales.
+
+### Backend — Archivos creados/modificados
+| Archivo | Cambio |
+|---------|--------|
+| `backend/app/nucleo/utilidades_fecha.py` | **NUEVO** — helper común: `TZ_ARG`, `dia_arg_actual()`, `dia_arg_de_datetime()`, `es_primer_acceso_del_dia_arg()`. |
+| `backend/app/servicios/servicio_podcast_bootstrap.py` | **NUEVO** — `bootstrap_dia_podcast(usuario_id)` con guards (activo, premium, con perfil) + set `_bootstrap_en_curso` para evitar dispatches paralelos. Crea sesión propia con `crear_motor_async`/`crear_sesion_factory`. Toda excepción se loguea sin propagar. |
+| `backend/app/rutas/v1/auth.py` | `/auth/me` recibe `BackgroundTasks`. Captura `ultimo_acceso` previo antes de devolver la respuesta y, si es primer acceso del día ARG + premium + con perfil, actualiza `ultimo_acceso` y encola `bootstrap_dia_podcast`. Sólo se hace el `UPDATE` en primer acceso del día para mantener el endpoint barato en navegaciones normales. |
+| `backend/tests/nucleo/test_utilidades_fecha.py` | **NUEVO** — 9 tests del helper (None, UTC→ARG, naive, frontera medianoche). |
+| `backend/tests/servicios/test_servicio_podcast_bootstrap.py` | **NUEVO** — 7 tests del bootstrap: usuario inactivo, sin suscripción, plan gratis, sin perfil, caso feliz (valida args), guard duplicado, excepción no propaga. |
+| `backend/tests/rutas/test_rutas_auth.py` | `TestMeBootstrapPodcast` con 4 tests: primer acceso del día encola bootstrap; mismo día no; plan gratis no; sin perfil no. |
+
+### Frontend — Archivos creados/modificados
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/componentes/layouts/banner-podcast-dia.tsx` | **NUEVO** — consume `usarPodcastHoy()` + `useStoreAuth`. Estados: `generando_*` (shimmer + dots + mensaje saludo), `listo` reciente (CTA "Escuchar" + auto-hide 8s), `error` (botón reintentar + auto-hide 15s). Usa `localStorage` con clave por fecha local para no repetir el estado "listo" en la misma sesión del día. Botón "X" para descartar manualmente (también persistido en `localStorage`). |
+| `frontend/src/app/globals.css` | Keyframes nuevos `banner-fade-in-down`, `banner-fade-out-up`, `banner-shimmer` + clases `.animate-banner-in`, `.animate-banner-out`, `.banner-shimmer-texto`. |
+| `frontend/src/componentes/layouts/layout-app.tsx` | Monta `<BannerPodcastDia />` justo después del navbar en desktop y al tope en mobile. |
+| `frontend/src/app/(app)/podcast/page.tsx` | `CardEpisodio` recibe prop `autoGenerado`. Cuando `autoGenerado=true` y el episodio aún no existe, en lugar del botón "Generar ahora" muestra un indicador "Preparando tu día…" con spinner. Se pasa `autoGenerado={tipo === "dia"}` desde el map — los tipos `semana`/`mes` mantienen el flujo manual. |
+| `frontend/src/componentes/layouts/navbar.tsx` | En `manejarSeleccionPodcast`, cuando `tipo="dia"` y el episodio no está listo, navega a `/podcast` en vez de disparar `generarPodcast.mutate("dia")`. Flujo de `semana`/`mes` intacto. |
+
+### Tests
+- **Backend:** 20 tests nuevos (9 helper + 7 bootstrap + 4 endpoint `/auth/me`). Toda la suite relacionada: 101 tests pasando (`test_utilidades_fecha`, `test_servicio_podcast_bootstrap`, `test_rutas_auth`, `test_rutas_podcast`, `test_servicio_podcast`, `test_rutas_chat`).
+- **Frontend:** `npx tsc --noEmit` sin errores.
+
+### Como funciona
+1. El usuario loguea y el frontend llama `GET /auth/me`. El endpoint lee `usuario.ultimo_acceso`, lo compara contra el día ARG de hoy con `es_primer_acceso_del_dia_arg` y — si es primer acceso + premium + con perfil — actualiza `ultimo_acceso` y encola `bootstrap_dia_podcast` como background task. La respuesta al frontend no se bloquea.
+2. El background task abre su propia sesión DB, valida guards (activo, premium, perfil) y llama `ServicioPodcast.generar_episodio(usuario_id, dia_arg_actual(), "dia", origen="auto")`. Como el pipeline es idempotente por constraint único `(usuario_id, fecha, momento)`, si ya existe un episodio `listo` o `generando_*` lo retorna sin relanzar.
+3. Mientras el pipeline corre, el frontend (que ya tiene `usarPodcastHoy` con polling inteligente de 5s cuando hay generación en curso) refleja el estado en `<BannerPodcastDia />`, montado en el layout del shell. El banner muestra el saludo animado con shimmer + dots pulsantes + CTA "Ver detalle".
+4. Cuando el estado pasa a `listo`, si el usuario vio antes el estado "generando" en este montaje, el banner cross-fade a "Tu día está listo" con un CTA "Escuchar" que carga el episodio en el reproductor cósmico. El banner se oculta solo a los 8s y queda marcado en `localStorage` para no repetirse el mismo día al refrescar.
+5. En caso de error, el banner muestra una variante discreta con "Reintentar" (que llama a `POST /podcast/generar?tipo=dia`) y auto-oculta tras 15s.
+6. La página `/podcast` y el menú del navbar ya no exponen la opción de generar manualmente el tipo `dia`: la card muestra "Preparando tu día…" mientras el pipeline corre, y el menú navega a `/podcast` en lugar de disparar la mutation.
+7. Guards duros: si el usuario es gratis, no tiene perfil, o el pipeline ya corrió hoy, el bootstrap queda silencioso — el banner nunca aparece. El emoji 👋 en el texto del saludo es una excepción explícita a la regla "no emojis" y está marcado con un comentario anti-remoción en el código.
+
+---
+
+## Sesion: Centro de notificaciones en navbar (caja central como hub de avisos)
+**Fecha:** 2026-04-11 ~12:30 (ARG)
+
+### Que se hizo
+La caja central del header de desktop dejó de ser un bloque de "contexto verboso" (etiqueta + título + descripción + meta apilados, que muchas veces sobrepasaba el navbar) y pasó a funcionar como **centro de notificaciones de prioridad**. La generación automática del podcast del día ahora se muestra ahí en vez de aparecer en un banner separado debajo del navbar.
+
+### Frontend — Archivos creados/modificados
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/componentes/layouts/navbar.tsx` | **Refactor mayor de la caja central.** Reemplazo de `EstadoCabecera` (4 líneas apiladas, sin alto fijo) por la interfaz `NotificacionCentral` con `id`/`etiqueta`/`titulo`/`descripcion`/`icono`/`tono`/`pulso`/`accion`. Nuevo sub-componente `CentroNotificaciones` con layout fijo de 54px de alto: icono 36px (gradiente según tono) + dots de pulso opcionales + 3 líneas truncadas + botón CTA inline. Sistema de prioridades en `useMemo` (7 niveles): generando podcast → error podcast → listo podcast (transición) → pista activa → alerta cósmica → pronóstico diario → contexto de ruta. Replicación in-place de la lógica de tracking generando→listo del banner (con `vioGenerandoRef`, `mostrarListoNotif`, `ocultarErrorNotif`, flag `localStorage` por fecha local). Helpers `reproducirEpisodioDia` / `reintentarPodcastDia` para los CTAs inline. Helper `obtenerEstilosTono` que mapea `violeta`/`rojo`/`esmeralda` a tokens CSS de la paleta ASTRA (sin naranjas, según regla del proyecto). Animación de fade-in en cada cambio de notificación vía `key={id}` + clase `animate-banner-in`. |
+| `frontend/src/componentes/layouts/layout-app.tsx` | Removido el render de `<BannerPodcastDia />` del branch desktop (la caja central del navbar ahora cumple ese rol). El branch mobile **mantiene** el banner sin cambios (el `HeaderMobile` no tiene caja central equivalente). Comentario en el JSX explicando por qué el banner ya no vive en desktop. |
+| `context/resumen-de-cambios.md` | Esta entrada. |
+
+### Tests
+- `npx tsc --noEmit` sin errores en archivos del proyecto. (El único error reportado por tsc es en `.next/dev/types/validator.ts`, un artefacto generado por Next.js no relacionado con este cambio.)
+- Sin tests unitarios nuevos: cambio puramente visual/UX en un componente client-side ya existente.
+
+### Como funciona
+1. El navbar deriva en cada render una única `NotificacionCentral` aplicando un orden de prioridad fijo. Cuando hay un episodio del día con estado `generando_guion` o `generando_audio` y el usuario es premium, esa notificación gana sobre todo lo demás (excepto error de generación).
+2. Mientras el pipeline corre, la caja central muestra: ícono "sol" sobre gradiente violeta + 3 dots pulsantes (`animate-chat-soft-pulse`) + etiqueta "Escribiendo guión" o "Generando audio" + título "Hola {nombreCorto}, hoy es un nuevo día" con shimmer + bajada "Estoy preparando tu lectura del día. Llega en segundos."
+3. Cuando el estado transiciona a `listo` y la sesión actual vio antes el estado generando, la notificación cambia a tono esmeralda con CTA "Escuchar" inline (`reproducirEpisodioDia`). Al apretar el CTA, la pista se carga en el reproductor cósmico y la notificación se cierra. Auto-hide de 8s (mismo flag de `localStorage` por fecha que el banner anterior, pero con clave distinta `astra:navbar_podcast_listo_visto:YYYY-MM-DD`).
+4. En caso de error, la notificación adopta tono rojo con CTA "Reintentar" inline que dispara `generarPodcast.mutate("dia")`. Auto-hide de 15s.
+5. Cuando no hay actividad de podcast, la prioridad cae a: pista activa en el reproductor → alerta cósmica destacada del día → pronóstico diario (clima del cielo) → contexto de la ruta actual. Cada estado tiene icono propio y tono violeta o rojo según corresponda.
+6. La animación de transición entre notificaciones funciona porque el `<div>` de `CentroNotificaciones` usa `key={notificacion.id}`: React desmonta el anterior y monta el nuevo, disparando `animate-banner-in` (fade-in-down 400ms).
+7. Layout fijo de 54px de alto (dentro del navbar de 70px): el contenido nunca crece verticalmente. Cada línea de texto usa `truncate`, garantizando que nada sobresalga del header. Las restricciones del CLAUDE.md se respetan: tipografía contenida (10/13/11px), sin emojis, sin naranjas, glassmorphism sutil del shell.
+8. El `BannerPodcastDia` queda activo solo en mobile, donde el header mobile no tiene una caja central donde alojar la notificación. La lógica del banner no fue tocada — solo se desmontó del shell desktop.
+
+---
+
+## Sesion: Hovers que respetan los tokens del modo claro
+**Fecha:** 2026-04-11 ~14:00 (ARG)
+
+### Que se hizo
+Reemplazo de hovers que usaban `--shell-superficie` (que en modo claro es prácticamente blanco opaco — `rgba(255,255,255,0.82)`) por `--shell-chip-hover`, que es el token semántico correcto para hover de items sobre superficies. El token `--shell-chip-hover` cambia de `rgba(124,77,255,0.14)` (violeta sutil) en claro a `rgba(255,255,255,0.12)` (blanco sutil) en oscuro, dando un hover visible y coherente en ambos esquemas. Antes los hovers se "perdían" en modo claro porque blanco-sobre-blanco no aporta contraste, mientras que en oscuro lucían bien; el resultado es que toda la interfaz mantiene el aspecto del modo activo en lugar de seguir leyendo "como oscura".
+
+### Frontend — Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/componentes/layouts/navbar.tsx` | Items del menú de usuario (`Mi perfil`, `Suscripción`): `hover:bg-[var(--shell-superficie)]` → `hover:bg-[var(--shell-chip-hover)] hover:text-[color:var(--shell-texto)]`. |
+| `frontend/src/componentes/chat/panel-conversaciones-web.tsx` | Items del menú contextual de conversación: opciones normales pasan a `hover:bg-[var(--shell-chip-hover)]`; opciones peligrosas pasan a `text-[color:var(--color-peligro-texto)] hover:bg-[var(--color-peligro-suave)]`. Items de la lista de conversaciones (`ItemConversacion`): `hover:bg-[var(--shell-superficie)]` → `hover:bg-[var(--shell-chip-hover)]`. |
+| `frontend/src/app/(auth)/login/page.tsx` | Botón "Continuar con Google": `hover:bg-[color:var(--shell-superficie)]` → `hover:border-[color:var(--shell-borde-fuerte)] hover:bg-[color:var(--shell-chip-hover)]`. |
+| `frontend/src/app/(auth)/registro/page.tsx` | Mismo cambio que login para el botón de Google. |
+| `frontend/src/app/(app)/calendario-cosmico/_componentes/semana-movil.tsx` | Tarjetas de día: estado seleccionado pasa de `bg-violet-50 border-violet-300` a `bg-acento-suave border-[color:var(--shell-borde-fuerte)]`; estado normal pasa de `hover:border-violet-300` a `hover:border-[color:var(--shell-borde-fuerte)] hover:bg-[color:var(--shell-chip-hover)]`. |
+
+### Tests
+- `cd frontend && npx tsc --noEmit` → exit 0, sin errores.
+- Sin tests unitarios nuevos: cambio puramente visual de tokens CSS, sin cambio de comportamiento ni props.
+
+### Como funciona
+1. **Diagnóstico**: en modo claro `--shell-superficie` es `rgba(255,255,255,0.82)`, casi blanco opaco. Cuando se usaba como `hover:bg-*` sobre superficies que ya eran blancas o casi blancas (panel del shell, dropdown del usuario, botones de auth), el hover quedaba invisible en claro pero seguía funcionando en oscuro porque allí el mismo token vale `rgba(255,255,255,0.06)` (un tinte blanco sutil sobre fondo oscuro). Resultado: la UI parecía pensada para oscuro y "se sentía oscura" al hover.
+2. **Token elegido**: `--shell-chip-hover` es el token semántico correcto para hover. En claro pinta un tinte violeta `rgba(124,77,255,0.14)` (visible sobre cualquier fondo claro); en oscuro pinta un tinte blanco `rgba(255,255,255,0.12)` (visible sobre cualquier fondo oscuro). Ambos valores ya están definidos en `frontend/src/estilos/tokens/colores.css` y expuestos vía `@theme inline` en `frontend/src/app/globals.css`.
+3. **Estrategia de reemplazo**: solo se tocaron hovers que apuntaban al token de surface (`--shell-superficie`) o a violetas hardcoded (`hover:border-violet-300`). Los hovers que ya usaban `--shell-superficie-suave`, `--shell-chip-hover` o tokens semánticos de error/exito quedaron intactos porque ya eran correctos en ambos modos.
+4. **Casos peligrosos**: en `panel-conversaciones-web.tsx` la opción "Eliminar" del menú contextual pasaba de `hover:bg-red-500/10` a `hover:bg-[var(--color-peligro-suave)]` para alinear con el resto del sistema (los tokens de peligro ya están definidos para claro y oscuro).
+5. **Selección de día en `semana-movil.tsx`**: el estado seleccionado usaba `bg-violet-50 border-violet-300`, valores fijos de Tailwind que no respetan el modo. Ahora usa `bg-acento-suave` (token) y borde de `--shell-borde-fuerte` (token). El hover normal acompaña con el mismo `--shell-chip-hover`.
+6. **Validación**: al ser un cambio puramente CSS basado en tokens ya existentes, `npx tsc --noEmit` corre limpio. Visualmente, ahora al hover en claro se ve un tinte violeta sutil, y en oscuro un tinte blanco sutil — coherente con la paleta ASTRA.
+
+---
+
+## Sesion: Fix botón pausa + panel transcript (colores diurnos + fondo no opacado)
+**Fecha:** 2026-04-11 ~16:30 (ARG)
+
+### Que se hizo
+Tres correcciones visuales sobre el flujo del podcast del día:
+1. El botón "Escuchar ahora" del hero del dashboard (desktop y mobile) ahora refleja estado **pausa** cuando el podcast del día está efectivamente reproduciéndose.
+2. El panel lateral de transcripción (`panel-lyrics.tsx`) usaba `text-shell-hero-texto` (blanco) para el segmento activo, lo cual era invisible en modo diurno. Ahora usa `text-shell-texto` que se adapta al token gris de cada tema.
+3. El rail lateral en modo `overlay` opacaba el fondo con un backdrop que además interceptaba clics y bloqueaba el reproductor cósmico del footer. Se removió el backdrop: el container queda `pointer-events-none` y solo el aside intercepta eventos.
+
+### Frontend — Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/componentes/layouts/rail-lateral.tsx` | Removido el `<div>` backdrop del modo `overlay`. El contenedor exterior ya era `pointer-events-none`, así que sin el backdrop los clics en el reproductor del footer y el resto del dashboard pasan libres. El `aside` sigue teniendo `pointer-events-auto` para seguir capturando clics dentro del panel. Se pierde el "click fuera para cerrar" — el cierre sigue disponible vía el botón X del header. |
+| `frontend/src/componentes/layouts/panel-lyrics.tsx` | Segmento activo ahora usa `text-shell-texto` en lugar de `text-shell-hero-texto`. El token `--shell-texto` vale `#2c2926` en light y `#f8f6ff` en dark, así que el segmento resaltado queda legible en ambos temas. Los demás segmentos (`text-shell-texto-tenue` / `text-shell-texto-secundario`) no cambian. |
+| `frontend/src/componentes/dashboard-v2/hero-seccion.tsx` | Agregada prop obligatoria `podcastReproduciendo: boolean`. Cuando es `true` el botón muestra icono `pausar`, label "Pausar" y `aria-label` "Pausar podcast del día"; cuando es `false` conserva "Escuchar ahora" / "Generar audio de hoy". El copy del estado ("Tu audio del día ya está listo") también cambia a "Estás escuchando tu audio del día" durante la reproducción. |
+| `frontend/src/app/(app)/dashboard/page.tsx` | Se extrae `reproduciendo` del `useStoreUI`. Nueva derivada `podcastDiaReproduciendo = !!epDia && pistaActual?.id === epDia.id && reproduciendo`. Se pasa como prop `podcastReproduciendo` al `<HeroSeccion>`. El botón flotante del header mobile (`accionDerecha`) también se actualizó con la misma lógica de icono + aria-label. |
+
+### Tests
+- `cd frontend && npx tsc --noEmit` sin errores.
+- Sin tests unitarios nuevos: cambios puramente visuales/UX.
+
+### Como funciona
+1. El store `useStoreUI` ya exponía `pistaActual` y `reproduciendo`. El dashboard ahora los combina con el id del episodio del día para saber si el podcast diario es la pista activa y está corriendo en ese momento.
+2. Cuando el usuario toca "Escuchar ahora", `manejarPlayPodcast("dia")` ya existía y hace toggle: si la pista ya es la del día, llama `toggleReproduccion()`; si no, llama `setPistaActual()` con la pista nueva. El único cambio era que la UI no reflejaba el estado. Ahora, con `podcastReproduciendo`, el botón pasa a mostrar icono `pausar` + label "Pausar" mientras el audio corre, y vuelve a "Escuchar ahora" al pausar.
+3. El panel lateral de lyrics aparece como overlay sin backdrop cuando el usuario toca play en un podcast con segmentos. Al no haber más un `<div>` que cubra el viewport con `pointer-events-auto`, los controles del `ReproductorCosmico` del footer siguen operativos: el usuario puede pausar, avanzar, saltar segmentos desde los botones de abajo mientras lee la transcripción en el panel.
+4. El cierre del panel sigue funcionando vía el botón X del header del rail (`CabeceraRail`). La regla del proyecto "no opacar fondos innecesariamente" queda respetada porque el panel ya tiene borde, blur y sombra que lo delimitan por sí solo.
+5. En light mode el segmento activo de la transcripción pasa a renderizarse con el token `#2c2926` (gris oscuro cálido) sobre el fondo `var(--shell-superficie-suave)`, garantizando legibilidad. En dark mode el mismo token resuelve a `#f8f6ff` y el layout sigue igual que antes.
+
+---
+
+## Sesion: Fix accionables del día — race condition pronóstico/podcast
+**Fecha:** 2026-04-11 ~18:45 (ARG)
+
+### Que se hizo
+Arreglado el bug donde el dashboard mostraba siempre los `accionables` del fallback hardcodeado en lugar de las acciones reales generadas por el podcast del día. Causa raíz: race condition entre la carga del pronóstico y la generación auto-bootstrap del podcast, con cache de Redis que nunca se invalidaba. Adicionalmente: las acciones del podcast ahora se sintetizan a max ~110 caracteres (≈2 líneas) para no desbordar las cards del dashboard, y el prompt del podcast pide explícitamente acciones cortas.
+
+### Backend — Archivos creados/modificados
+| Archivo | Cambio |
+|---------|--------|
+| `backend/app/servicios/servicio_podcast.py` | (1) Import de `Redis` desde `redis.asyncio`. (2) Nuevo helper `_invalidar_cache_pronostico_diario(redis, usuario_id, fecha)` que borra `cosmic:pronostico:diario:{usuario_id}:{fecha}` con manejo de errores (no rompe el pipeline si Redis falla). (3) `generar_episodio` ahora acepta parámetro opcional `redis: Redis | None = None`; al final del pipeline, si el episodio queda `listo` y es `tipo="dia"`, llama al helper con `fecha_objetivo or fecha_clave`. Esto centraliza la invalidación de cache: el servicio es la única fuente de verdad sin importar quién dispare la generación (ruta manual, bootstrap, preview, futuro cron). |
+| `backend/app/servicios/servicio_podcast_bootstrap.py` | El bootstrap auto del primer login del día ahora crea su propio cliente `Redis.from_url(config.redis_url, decode_responses=True)` y lo pasa a `ServicioPodcast.generar_episodio(..., redis=redis)`. Cierre del cliente con `aclose()` en el `finally`. Sin esto, el cache del pronóstico nunca se invalidaba en el flujo "auto" (que es el flujo principal hoy). |
+| `backend/app/servicios/servicio_pronostico.py` | (1) Constantes `_MAX_LARGO_ACCIONABLE = 110` y `_CORTE_PALABRA_ACCIONABLE = 100`. (2) Nuevo método `_sintetizar_accion(texto)` que recorta acciones que exceden 110 chars buscando la última palabra completa antes de los 100 chars y agrega "…" — estrategia "soft cut" preservando palabras enteras y limpiando puntuación colgante. (3) `_inyectar_acciones_podcast` ahora aplica `_sintetizar_accion` a cada acción antes de inyectarla en `momento.accionables`, defensivo contra acciones largas que el LLM pueda generar. |
+| `backend/app/rutas/v1/podcast.py` | (1) `POST /podcast/generar` ahora pasa `redis=redis` a `ServicioPodcast.generar_episodio` y se eliminó la invalidación duplicada que vivía inline en la ruta (ahora la maneja el servicio). (2) `POST /podcast/preview-manana` también recibe `redis: Redis = Depends(obtener_redis)` y lo pasa al servicio para invalidar el cache del pronóstico de mañana. |
+| `backend/app/oraculo/prompt_podcast.md` | Sección "Bloque de acciones estructurado" ampliada con reglas duras: cada `accion` máximo 90 caracteres, una sola idea, sin "porque/ya que/para que" (que va en `contexto`), verbo imperativo rioplatense, ejemplo bueno vs. ejemplo malo. Esto ataca el problema en origen — el LLM ahora genera acciones cortas y la sintetización del backend queda como fallback defensivo. |
+| `backend/tests/servicios/test_servicio_pronostico.py` | 12 tests nuevos en dos clases: `TestSintetizarAccion` (6 tests: corta intacta, exactamente en límite, larga recortada en palabra, sin puntuación colgante, vacía, palabra única gigante) y `TestInyectarAccionesPodcast` (6 tests: 3 bloques, sintetización en inyección, lista vacía, sin bloque, texto vacío, bloque sin acciones mantiene fallback). |
+| `backend/tests/servicios/test_servicio_podcast.py` | Nueva clase `TestInvalidarCachePronostico` con 3 tests: clave correcta, no-op si redis es None, captura excepciones de Redis sin propagar. |
+
+### Tests
+- **Backend:** 15 tests nuevos. Suite total relacionada: 60 pasando (`test_servicio_podcast`, `test_servicio_pronostico`, `test_servicio_podcast_bootstrap`). Suite completa del backend: 634 passed, 1 skipped, 1 failed (el test fallido es `TestFormatearRespuestaChat::test_formatea_respuesta_a_maximo_tres_lineas` del oráculo, **pre-existente** — verificado con `git stash` antes de mis cambios). Mis cambios no introducen ninguna falla.
+- **Frontend:** `npx tsc --noEmit` sin errores.
+
+### Como funciona
+1. **El bug en una oración**: el dashboard mostraba accionables fallback porque el cache del pronóstico se generaba ANTES de que el podcast del día estuviera listo, y nadie invalidaba ese cache cuando el podcast finalmente terminaba con sus acciones reales.
+2. **Cadena causal completa**:
+   - **t=0**: Usuario loguea. `/auth/me` encola `bootstrap_dia_podcast(usuario_id)` como background task.
+   - **t=0.5s**: Frontend pide `GET /pronostico/diario`. El backend busca `podcast.acciones_json` en BD pero el podcast está en estado `generando_*`, así que `acciones_podcast = None`. El pronóstico se genera con Claude (sin la transcripción del podcast porque tampoco existe aún) y se cachea en `cosmic:pronostico:diario:{usuario_id}:{fecha}` con TTL hasta medianoche.
+   - **t=15-30s**: Bootstrap termina. `podcast.acciones_json` queda poblado en BD. Pero el cache del pronóstico ya está fijo.
+   - **t=∞**: Toda llamada subsiguiente al pronóstico devuelve el cache viejo, sin acciones del podcast. El frontend cae al `momento.frase` (fallback) o muestra los accionables hardcodeados del `_generar_fallback_diario`.
+3. **Fix #1 — invalidar cache desde el servicio del podcast**: cuando `ServicioPodcast.generar_episodio` termina el pipeline exitosamente para `tipo="dia"`, llama a `_invalidar_cache_pronostico_diario(redis, usuario_id, fecha_objetivo)`. Como es el servicio el que sabe cuándo termina el podcast, es la fuente única de verdad. Cualquier caller que pase `redis` se beneficia automáticamente.
+4. **Fix #2 — bootstrap pasa Redis al servicio**: `servicio_podcast_bootstrap.py` ahora crea su propio cliente `Redis` (porque corre fuera del request lifecycle de FastAPI) y lo pasa a `generar_episodio(..., redis=redis)`. Cierre limpio en el `finally`.
+5. **Fix #3 — síntesis de acciones largas**: aunque el podcast empezó a generar acciones cortas (por el cambio de prompt), las acciones existentes en BD pueden ser largas. El método `_sintetizar_accion` recorta soft a max 110 chars (≈2 líneas a 11px en la columna del momento del dashboard, que mide ~280px). Estrategia: si excede, busca la última palabra completa antes de 100 chars, limpia puntuación colgante, agrega "…". Si no encuentra espacio (palabra única gigante), corta hard.
+6. **Fix #4 — prompt del podcast pide acciones cortas**: ataca el problema en origen. El LLM ahora recibe instrucciones explícitas: max 90 chars por acción, una sola idea, sin sub-cláusulas largas, sin "porque/ya que/para que" (que va al campo `contexto`, descartado al inyectar), ejemplo bueno y ejemplo malo. La síntesis del backend queda como red de seguridad.
+7. **Limpieza colateral**: la invalidación inline en `POST /podcast/generar` (líneas 153-158 del original) se eliminó porque el servicio ahora la maneja. Single source of truth, no duplicación. La ruta `POST /podcast/preview-manana` (que también dispara generación de tipo "dia" para mañana) ahora también pasa el cliente Redis para que el cache del pronóstico de mañana se invalide cuando llegue el día siguiente.
+8. **Próxima petición del usuario**: cuando el podcast termina (3-30s después del login), el cache se borra. La próxima vez que el dashboard pida el pronóstico, se regenera con `acciones_podcast` poblado, se ejecuta `_inyectar_acciones_podcast` (que ahora sintetiza), y se cachea de nuevo con las acciones reales sintetizadas. El frontend muestra los accionables correctos.
+
+---
+
+## Sesion: Iconos de fases lunares ilustrados (SVGs propios)
+**Fecha:** 2026-04-11 ~19:00 (ARG)
+
+### Que se hizo
+Reemplazado el componente `IconoFaseLunar` (que dibujaba inline las 8 fases con paths simples monocromáticos) por una versión que usa los SVGs ilustrados de `frontend/public/img/fases-lunares/` (estilo con gradientes y sombreado, escala de grises). El cambio es transparente para todos los call sites: dashboard, calendario y panel de detalle del día siguen usando el mismo componente con la misma API.
+
+### Frontend — Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/componentes/ui/icono-fase-lunar.tsx` | Reescritura completa. Antes: 8 fases dibujadas inline con `<path>` y `<circle>` que heredaban color via `currentColor`. Ahora: mapping `MAPA_FASE_ARCHIVO` que traduce el nombre de la fase en español al nombre de archivo en inglés (`Luna Nueva → new-moon`, `Creciente → waxing-crescent`, `Cuarto Creciente → first-quarter`, `Gibosa Creciente → waxing-gibbous`, `Luna Llena → full-moon`, `Gibosa Menguante → waning-gibbous`, `Cuarto Menguante → last-quarter`, `Menguante → waning-crescent`), y renderiza con `<Image>` de `next/image` apuntando a `/img/fases-lunares/{archivo}.svg`. Wrapper `<span>` con `inline-flex` para layout, `aria-label={fase}` para accesibilidad, `unoptimized` para que Next sirva el SVG sin pasarlo por su pipeline de optimización (los SVGs son livianos y ya están minificados). Fallback a `crescent-moon.svg` si la fase no matchea. |
+
+### Tests
+- `npx tsc --noEmit` sin errores.
+- Sin tests unitarios nuevos: cambio puramente visual del componente, sin cambio de API ni props. Los tests existentes que renderizan dashboard/calendario siguen funcionando porque el contrato del componente (props `fase`/`tamaño`/`className`) no cambió.
+
+### Como funciona
+1. Los SVGs en `/public/img/fases-lunares/` son ilustraciones con gradientes lineales y stops de opacidad sobre `#262626` — NO son monocromáticos puros. Por eso no se pueden usar con la técnica `mask-image` + `bg-current` que usa `IconoAstral` (esa técnica solo lee el alpha del SVG y descarta los gradientes internos). Acá necesitamos preservar los gradientes intactos.
+2. El componente delega a `next/image` con `width={tamaño}`, `height={tamaño}`, `unoptimized` (para que Next sirva el SVG raw), `draggable={false}` y `select-none` para que no se pueda arrastrar como una imagen normal.
+3. El wrapper externo es un `<span>` con `inline-flex shrink-0 items-center justify-center` que mantiene el comportamiento original del componente respecto a layout (no rompe en grids/flex containers donde antes vivía un `<svg>`).
+4. Mapping español→inglés está definido en una constante `MAPA_FASE_ARCHIVO` al tope del archivo. Si en el futuro el backend agrega una nueva fase en español o renombra alguna, basta con actualizar ese mapa.
+5. **Nota sobre `className="text-..."` en call sites**: el `panel-detalle-dia.tsx` pasaba `text-[color:var(--color-acento)]` al componente. Antes ese color afectaba el `currentColor` del SVG inline; ahora se ignora visualmente porque el SVG tiene sus colores propios. La className se sigue aplicando al wrapper para tokens de margin/padding/sombras que el call site quiera, solo el `text-color` deja de tener efecto sobre el render del icono. Comportamiento esperado dado que el usuario pidió usar las ilustraciones tal cual.
+
+---
+
+## Sesion: Perlas del día — recordatorios íntimos generados con Haiku
+**Fecha:** 2026-04-11 ~20:30 (ARG)
+
+### Que se hizo
+Nueva feature en el header del calendario cósmico: 2-3 aforismos breves (≤70 caracteres) personalizados para el usuario, generados dinámicamente con Claude Haiku desde su perfil estático (carta natal + Human Design + numerología). Reemplaza al `PanelDetalleDiaHeader` que mostraba el detalle del día seleccionado (información ya disponible al hover/click sobre cada celda → era duplicación). Las perlas son recordatorios del SER del usuario: nunca mencionan tránsitos, planetas, casas, números ni jerga astrológica. Se cachean en Redis hasta medianoche ARG. El tono se elige automáticamente: voseo argentino si el `pais_nacimiento` del perfil es Argentina, español neutro latino para el resto de LATAM.
+
+### Backend — Archivos creados
+| Archivo | Descripcion |
+|---------|-------------|
+| `backend/app/servicios/perlas_fallback.py` | 10 ternas curadas en voseo + 10 en neutro como fallback determinista cuando Haiku falla o no hay API key. Helper `obtener_terna_del_dia(es_voseo, usuario_id, fecha)` usa `random.Random(semilla)` para que la misma combinación devuelva siempre la misma terna (evita parpadeos entre requests del mismo día). |
+| `backend/app/servicios/servicio_perlas.py` | Servicio principal `ServicioPerlas.obtener_perlas_diarias()`. Reusa el patrón del pronóstico: cache Redis con TTL hasta medianoche ARG + 1h, contexto cósmico vía `_obtener_contexto()` (mismo método que `servicio_pronostico` y `servicio_oraculo`), llamada async a `anthropic.AsyncAnthropic` con `config.oraculo_modelo` (Haiku 4.5), `temperature=1.0` para variedad, `max_tokens=300`. El system prompt es estricto: regla por regla (≤70 chars, sin jerga, sin tránsitos, sin signos de exclamación, una perla por dimensión mente/acción/emoción) más anti-ejemplos y ejemplos correctos. La detección de voseo es conservadora: solo dispara para `argentina`, `república argentina`, `ar`, `arg`. Validación post-generación: `_validar_perlas` rechaza items con largo fuera de rango, signos de exclamación o tipos inválidos; si quedan menos de 2 perlas válidas, cae a fallback. Registra consumo de tokens en `servicio_consumo_api`. |
+| `backend/app/esquemas/perlas.py` | `PerlasDiariasSchema` Pydantic con `perlas: list[str]`, `fuente: 'haiku'\|'curado'`, `tono: 'voseo'\|'neutro'`. |
+| `backend/app/rutas/v1/perlas.py` | Router `APIRouter(prefix="/perlas")` con un solo endpoint: `GET /perlas/diaria?fecha=YYYY-MM-DD`. Usa `Depends(obtener_usuario_actual)` y los placeholders estándar de DB/Redis. Devuelve `{exito, datos}` siguiendo el formato del resto de la API. |
+
+### Backend — Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `backend/app/principal.py` | Importa `perlas` en `_registrar_rutas` y lo registra con `app.include_router(perlas.router, prefix=prefijo, tags=["Perlas del día"])`. |
+
+### Frontend — Archivos creados
+| Archivo | Descripcion |
+|---------|-------------|
+| `frontend/src/lib/hooks/usar-perlas.ts` | Hook `usarPerlasDiarias()` con react-query: queryKey `["perlas", "diaria", fechaHoy]`, fetcher `clienteApi.get<PerlasDiariasDTO>("/perlas/diaria?fecha=...")`, `staleTime` 6h, `refetchOnWindowFocus: false`, `retry: 1`. Exporta también el tipo `PerlasDiariasDTO`. |
+| `frontend/src/app/(app)/calendario-cosmico/_componentes/perla-del-dia.tsx` | Componente `<PerlaDelDia>` con prop `expandido` (true=3 perlas, false=2). Render: card glassmorphism `var(--shell-superficie-suave)` con borde sutil, glow ambiental violeta en esquina, eyebrow `✦ PERLAS` discreto en uppercase tracking, `<ul>` con perlas separadas por hairline `border-t`, tipografía serif (`var(--font-serif)`) 12.5-13px en `var(--shell-texto-secundario)`. Animación `fade-in` 240ms al cargar. Skeleton de 2-3 líneas con `animate-pulse` mientras carga. Mensaje "Las perlas vuelven pronto." si hay error o lista vacía. |
+
+### Frontend — Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/lib/hooks/index.ts` | Agrega `export { usarPerlasDiarias }` y `export type { PerlasDiariasDTO }` desde `./usar-perlas`. |
+| `frontend/src/app/(app)/calendario-cosmico/_componentes/calendario-mes.tsx` | Importa `<PerlaDelDia>` desde `./perla-del-dia`. Reemplaza el render condicional `{detalleSeleccionado ? <PanelDetalleDiaHeader/> : <placeholder/>}` por un simple `<PerlaDelDia />`. Elimina la función entera `PanelDetalleDiaHeader` (~70 líneas), la interfaz `DetalleDiaSeleccionado`, el `useMemo` `detalleSeleccionado` y el import ahora innecesario `describirFaseLunar`. El resto de los helpers (`calcularRitmoPersonal`, `obtenerEventosClave`, `IconoFaseLunar`, `tonoEvento`, `parseISO`) sigue usándose en el render de las celdas y en el cálculo del `indiceSemanaActiva`. |
+
+### Tests
+- Smoke tests del backend ejecutados standalone: detección de país (Argentina/variantes → voseo, resto → neutro), largo de fallbacks (todos en rango 15-80 chars, sin signos de exclamación), determinismo del helper (mismo `(usuario, fecha)` siempre devuelve la misma terna), validación de perlas (rechaza listas vacías, items cortos, items con `!`).
+- App boot ejecutado con `from app.principal import aplicacion` — la ruta `/api/v1/perlas/diaria` aparece registrada.
+- `npx tsc --noEmit` sin errores nuevos (los 2 errores remanentes en `usar-explicar.ts` y `store-explicar.ts` son pre-existentes y no relacionados).
+
+### Como funciona
+1. **Trigger**: cuando el usuario abre `/calendario-cosmico`, el componente `<PerlaDelDia>` se monta dentro del header del calendario y dispara `usarPerlasDiarias()`.
+2. **Hook**: react-query construye la queryKey `["perlas", "diaria", "2026-04-11"]` y llama a `clienteApi.get("/perlas/diaria?fecha=2026-04-11")`. El cliente API auto-inyecta el `Authorization: Bearer {token}` desde localStorage.
+3. **Endpoint**: `GET /api/v1/perlas/diaria` lee el `usuario` desde la dependencia `obtener_usuario_actual` y delega a `ServicioPerlas.obtener_perlas_diarias(sesion, redis, usuario_id, fecha)`.
+4. **Cache HIT**: el servicio busca en Redis con la key `cosmic:perlas:diaria:{usuario_id}:{fecha}`. Si existe, devuelve el JSON cacheado al instante. Cero llamadas a Anthropic.
+5. **Cache MISS — contexto**: si no hay cache, carga el perfil del usuario via `RepositorioPerfil.obtener_por_usuario(usuario_id)` y luego todos los cálculos del perfil via `RepositorioCalculo.obtener_todos_por_perfil(perfil.id)`. Inyecta los `datos_personales` (incluyendo `pais_nacimiento`) en el dict de cálculos.
+6. **Tono**: `_es_voseo(pais_nacimiento)` normaliza el string (lowercase, strip) y verifica si está en el set `_PAISES_VOSEO`. Solo "argentina"/"república argentina"/"ar"/"arg" disparan voseo. Cualquier otro país (incluyendo None) usa neutro.
+7. **Generación con Haiku**: si hay `anthropic_api_key`, arma el system prompt con las reglas estrictas (variando los ejemplos y las indicaciones de pronombres según `es_voseo`), llama `cliente.messages.create(model=oraculo_modelo, max_tokens=300, temperature=1.0, system=..., messages=[{role:user, content: resumen_perfil}])`. Reusa `ServicioOraculo._resumir_perfil()` para serializar el contexto como texto limpio (mismo método que ya usan oráculo y pronóstico).
+8. **Parseo y validación**: extrae el primer JSON object del texto de respuesta (busca `{...}` con `find/rfind`), parsea con `json.loads`, valida cada perla individualmente (largo 15-80 chars, sin `!`, no string vacío, no comillas residuales). Si quedan menos de 2 perlas válidas o cualquier paso falla, cae a fallback.
+9. **Fallback determinista**: `obtener_terna_del_dia(es_voseo, str(usuario_id), fecha_obj)` usa `random.Random(f"{usuario_id}:{fecha}")` como seed → la misma combinación devuelve siempre la misma terna durante el mismo día. Esto evita que el usuario vea perlas distintas si la página se recarga varias veces antes de que Anthropic vuelva.
+10. **Cache write**: el resultado (exitoso o fallback) se guarda en Redis con `setex(key, ttl, json)`. TTL = segundos hasta la próxima medianoche ARG + 1h de gracia. Al día siguiente, el cache expira y se genera una terna nueva.
+11. **Render**: el frontend muestra un skeleton de 2-3 líneas mientras `isLoading`, luego hace fade-in de la lista. Cada perla es un `<li>` con tipografía serif y separador hairline arriba (excepto la primera). Sin íconos, sin colores, sin chips — minimalismo total para que el texto sea el foco.
+12. **Costo estimado**: ~3k tokens de entrada (resumen del perfil) + ~80 tokens de salida (3 perlas + JSON wrapping) por usuario por día. Con cache 24h: 1 llamada por usuario por día. A precio Haiku 4.5: centavos por usuario al mes.
+
+---
+
+## Sesion: Feature "Explicame mejor" — micro-chat sobre selección de texto
+**Fecha:** 2026-04-11 ~17:30 (ARG)
+
+### Que se hizo
+Se agregó un menú contextual global que aparece cuando el usuario selecciona texto en cualquier sección no-administrativa de la app. El menú tiene dos acciones: **Copiar** (clipboard nativo + toast) y **Explicame mejor** (abre un tooltip con una explicación personalizada generada por Claude Haiku, usando el contexto cósmico completo del usuario — natal, HD, numerología). La feature funciona como "Explain code" de VS Code pero para el contenido astral. Está siempre presente, en el contenedor principal y en todos los rails laterales (incluido el panel de transcripción de podcast).
+
+### Backend — Archivos creados/modificados
+| Archivo | Cambio |
+|---------|--------|
+| `backend/app/servicios/servicio_oraculo.py` | **Nuevo método** `ServicioOraculo.explicar_seleccion(texto, contexto_seccion, perfil_cosmico)` + helper privado `_construir_system_explicacion()`. Reusa `_resumir_perfil()` y `_formatear_respuesta_chat()`. Es one-shot (sin historial), `max_tokens=350`, `temperature=0.6`, modelo `config.oraculo_modelo` (Haiku). System prompt corto y pedagógico que pide explicar el fragmento concreto en relación al perfil personal del usuario, en máx 4 oraciones, español rioplatense, sin markdown. |
+| `backend/app/rutas/v1/chat.py` | **Nuevo endpoint** `POST /chat/explicar` + schemas `ExplicarRequest`/`ExplicarResponse`/`RespuestaExplicar` + helper `_clave_explicar(usuario_id, texto)` que normaliza el texto (`strip().lower()`) y genera la key Redis `explicar:{usuario_id}:{sha256(texto)[:16]}`. El endpoint hace cache lookup ANTES de tocar la cuota — un cache hit sirve la respuesta sin descontar mensajes. En cache miss, reusa los helpers ya existentes (`_es_premium`, `_verificar_limite`, `_incrementar_conteo`, `_obtener_contexto_cosmico`), llama el servicio, guarda en Redis con TTL 30 días, registra consumo via `registrar_consumo` y descuenta cuota solo si la respuesta no fue fallback de error. Importa `hashlib` para el hash SHA256. |
+| `backend/tests/rutas/test_rutas_chat_explicar.py` | **NUEVO** archivo de tests con 7 casos: premium primer request (llama Haiku, guarda cache, restantes=null), segundo request mismo texto (cache hit, sin llamar Anthropic), gratis primer request (descuenta cuota, restantes=2), gratis al límite (LimiteExcedido → 403), gratis al límite con cache hit (sirve igual sin error), texto vacío/muy largo (Pydantic 422), normalización mayúsculas/espacios (variantes comparten cache). Fixture `redis_falso` extendida con soporte de `set` para esto. |
+
+### Frontend — Archivos creados/modificados
+| Archivo | Cambio |
+|---------|--------|
+| `frontend/src/lib/tipos/explicar.ts` | **NUEVO**. Tipos `ExplicarRequest`, `ExplicarResponse`, `SeleccionActiva` (con `texto`, `rect: DOMRect`, `contextoSeccion: string`). Re-exportado desde `tipos/index.ts`. |
+| `frontend/src/lib/stores/store-explicar.ts` | **NUEVO** store Zustand. Estado: `seleccion`, `fase` (`'cerrado'\|'menu'\|'cargando'\|'listo'\|'error'`), `respuesta`, `desdeCache`, `mensajesRestantes`. Acciones: `abrirMenu`, `cerrar`, `empezarCarga`, `setRespuesta`, `setError`. |
+| `frontend/src/lib/hooks/usar-seleccion-explicable.ts` | **NUEVO**. Listener global `selectionchange` en `document` con debounce de 120ms. Valida que la selección esté dentro de `[data-explicable="true"]` y NO tenga ningún ancestro con `[data-no-explicable="true"]`. Excluye automáticamente `<input>`, `<textarea>` y `[contenteditable]`. Cierra en scroll, resize, ESC, route change, click fuera, selección vacía. Normaliza el texto (trim + colapso de whitespace) y extrae `contextoSeccion` del primer segmento del pathname. |
+| `frontend/src/lib/hooks/usar-explicar.ts` | **NUEVO**. `useMutation` de react-query a `POST /chat/explicar`. `onMutate` setea la fase del store a 'cargando', `onSuccess` setea la respuesta, `onError` marca error. |
+| `frontend/src/lib/hooks/index.ts` | Re-exporta `usarSeleccionExplicable` y `usarExplicar`. |
+| `frontend/src/componentes/explicar/avatar-astra-mini.tsx` | **NUEVO**. Avatar circular con halo violet usando `next/image` y el isotipo oficial `/img/isotipo-ciruela.png`. |
+| `frontend/src/componentes/explicar/menu-seleccion-explicar.tsx` | **NUEVO**. Menú contextual flotante (createPortal a document.body, z-index 9999). Calcula posición a partir del `rect` de la selección — arriba por defecto, abajo si no hay espacio, clamp horizontal al viewport. Glassmorphism violet con `var(--shell-panel)` + blur. Dos botones: **Copiar** (`navigator.clipboard.writeText` + toast "Texto copiado" + limpia selección) y **Explicame mejor** (gradiente violet, dispara la mutation). Animación entrada con framer-motion (fade + scale 96→100, 150ms). Cierre por click fuera (`mousedown` listener) — el listener verifica que el target NO esté dentro del propio menú via `data-explicar-menu="true"`. |
+| `frontend/src/componentes/explicar/tooltip-explicacion-astra.tsx` | **NUEVO**. Tooltip de respuesta (createPortal a body, z-index 9998). Posicionado bajo la selección (arriba si no hay espacio). Header con `<AvatarAstraMini>` + etiqueta "Astra te explica" + preview del texto seleccionado (truncado a 42 chars) + botón X. Cuerpo con 3 estados: **cargando** (3 dots pulsantes con `animate-chat-soft-pulse` + texto "Astra está pensando…"), **listo** (texto de Haiku con tipografía 13px line-height 1.6), **error** (mensaje + botón Reintentar que reinvoca la mutation). Footer con CTA gradiente "Seguir en el chat" (navega a `/chat?contexto=...&q=...`) + badge de cuota (`Desde caché` verde si `desde_cache=true`, contador "X mensajes" si gratis, nada si premium). Width clamp 340px. Animación fade + scale 200ms. Cerrado por X, click fuera (con delay de 50ms para no cerrarse al abrir). |
+| `frontend/src/componentes/explicar/capa-explicar.tsx` | **NUEVO**. Componente orquestador. Llama `usarSeleccionExplicable()` (monta el listener global) y renderiza condicionalmente menú o tooltip vía `<AnimatePresence>`. Se monta una sola vez en `LayoutApp`. |
+| `frontend/src/componentes/layouts/layout-app.tsx` | Importa `<CapaExplicar>` y la monta tanto en el branch desktop como en el mobile. Agrega `data-explicable="true"` + `data-app-shell="true"` al wrapper raíz de cada uno. Como `(admin)/*` y `(auth)/*` no usan `LayoutApp`, quedan automáticamente excluidos del feature. |
+| `frontend/src/componentes/layouts/navbar.tsx` | Agrega `data-no-explicable="true"` al `<nav>` raíz. |
+| `frontend/src/componentes/layouts/sidebar-navegacion.tsx` | Agrega `data-no-explicable="true"` al `<aside>` raíz. |
+| `frontend/src/componentes/layouts/header-mobile.tsx` | Agrega `data-no-explicable="true"` al `<header>`. |
+| `frontend/src/componentes/layouts/barra-navegacion-inferior.tsx` | Agrega `data-no-explicable="true"` al `<nav>` del tab bar. |
+| `frontend/src/componentes/layouts/reproductor-cosmico.tsx` | Agrega `data-no-explicable="true"` al `<footer>`. |
+| `frontend/src/componentes/layouts/mini-reproductor.tsx` | Agrega `data-no-explicable="true"` al wrapper del mini player. |
+| `frontend/src/componentes/layouts/contenedor-toasts.tsx` | Agrega `data-no-explicable="true"` al wrapper de toasts. |
+| `frontend/src/componentes/layouts/banner-podcast-dia.tsx` | Agrega `data-no-explicable="true"` al banner. |
+| `frontend/src/componentes/ui/icono.tsx` | Agrega `Copy` de Phosphor al mapa de iconos como `copiar`. |
+| `frontend/src/lib/tipos/index.ts` | Re-exporta los tipos nuevos del feature. |
+
+### Tests
+- **Backend:** 7 tests nuevos, todos verdes. Toda la suite del chat (`test_rutas_chat.py` + `test_rutas_chat_explicar.py`) → 8 tests pasando. La suite completa del backend tiene 1 test pre-existente fallando (`test_servicio_oraculo.py::test_formatea_respuesta_a_maximo_tres_lineas`) que NO está relacionado con esta feature — verificado con `git stash`.
+- **Frontend:** `cd frontend && npx tsc --noEmit` sin errores.
+
+### Como funciona
+1. El usuario está leyendo cualquier sección de la app (dashboard, carta-natal, diseño-humano, numerología, podcast con su transcripción abierta, etc.) y selecciona un fragmento de texto con el mouse o el touch.
+2. El hook global `usarSeleccionExplicable()` (montado dentro de `<CapaExplicar />` en `LayoutApp`) escucha el evento `selectionchange` en `document` con debounce de 120ms. Valida que la selección esté dentro de un nodo con `[data-explicable="true"]` (lo tiene el wrapper raíz de `LayoutApp`), que ningún ancestro lleve `[data-no-explicable="true"]` (lo llevan navbar, sidebar, reproductor, toasts, header mobile, tab bar, banner) y que no sea un input/textarea/contenteditable. Si todo pasa, normaliza el texto (trim + colapso de whitespace), captura el `getBoundingClientRect()` del Range y publica `{ texto, rect, contextoSeccion }` en `useStoreExplicar` con `fase: 'menu'`.
+3. `<CapaExplicar />` reacciona al store y renderiza `<MenuSeleccionExplicar />` (vía `createPortal` a body con z-index 9999) flotando arriba de la selección. El menú tiene dos botones: **Copiar** (clipboard nativo + toast + limpia la selección) y **Explicame mejor** (gradiente violet).
+4. Si el usuario toca **Explicame mejor**, `usarExplicar()` dispara `POST /chat/explicar` con body `{ texto, contexto_seccion }`. El store pasa a `fase: 'cargando'` y `<MenuSeleccionExplicar />` se desmonta automáticamente para dar paso a `<TooltipExplicacionAstra />`.
+5. El tooltip aparece bajo la selección (o arriba si no hay espacio) con un skeleton de 3 dots pulsantes. En el backend, el endpoint primero busca en Redis con la key `explicar:{usuario_id}:{hash(texto)}`. Si hay cache hit (TTL 30 días), responde instantáneo SIN descontar cuota — el tooltip muestra la respuesta cacheada con un badge verde "Desde caché".
+6. En cache miss, el endpoint reusa los mismos helpers del chat principal (`_es_premium`, `_verificar_limite`, `_obtener_contexto_cosmico`) — el feature comparte la cuota diaria del chat (3/día gratis, ilimitado premium). Llama `ServicioOraculo.explicar_seleccion()` que arma un system prompt corto, pedagógico, con el contexto cósmico del usuario inyectado, y consulta Haiku con `max_tokens=350` y `temperature=0.6`. La respuesta se guarda en Redis con TTL 30 días y la cuota se descuenta solo si fue exitosa.
+7. El tooltip muestra la respuesta (texto 13px, line-height 1.6), un badge con la cuota restante (o "Desde caché"), y un CTA "Seguir en el chat" que navega a `/chat?contexto={seccion}&q={texto}` para que el usuario pueda profundizar en el chat principal con el contexto pre-cargado (la lectura de los query params en `/chat` queda como TODO de PR futuro).
+8. El tooltip se cierra por: botón X, click fuera (con delay 50ms para no cerrarse al abrir), ESC, o cambio de ruta. Al cerrarse, llama `window.getSelection().removeAllRanges()` para limpiar la selección visual.
+9. Como `(admin)/*` tiene su propio layout sin `LayoutApp`, ahí no se monta `<CapaExplicar />` y la feature queda automáticamente excluida — no hay que mantener una lista negra. Lo mismo aplica para `(auth)/*`, `(checkout)/*`, `(onboarding)/*`. Para opt-out granular dentro de `(app)/*` se usa el atributo `data-no-explicable="true"`.
+10. Cache key incluye `usuario_id` porque la respuesta es personalizada por carta natal — dos usuarios distintos seleccionando "Generador Manifestante" reciben respuestas diferentes y NO comparten cache. Hash con `sha256(texto.strip().lower())[:16]` normaliza variaciones (mayúsculas, espacios extra, etc.) para que la misma palabra en distintas formas comparta cache.
+
+---
+
+## Sesion: Landing ASTRA aislada mobile-first
+**Fecha:** 2026-04-11 ~22:22 (ARG)
+
+### Que se hizo
+Se construyo la landing premium de ASTRA dentro de la app aislada `landing/`, sin tocar `frontend/` ni conectarla a produccion. La pantalla usa el contenido de `docs/comunicacion-landing-astra.md`, CTAs internos, diseno mobile-first, version desktop editorial y animaciones con Motion/Framer.
+
+### Frontend — Archivos creados/modificados
+| Archivo | Descripcion |
+|---------|-------------|
+| `landing/README.md` | Reemplaza la documentacion default de Create Next App por instrucciones de uso, alcance y comandos de validacion de la landing aislada. |
+| `landing/app/page.tsx` | Reemplaza el scaffold default por el entrypoint de la pagina ASTRA. |
+| `landing/app/layout.tsx` | Configura idioma `es`, metadata SEO, iconos de marca y fuentes base para la app aislada. |
+| `landing/app/globals.css` | Define tokens visuales ciruela, fondo premium, superficies glass, botones, foco accesible, tipografia display y soporte de movimiento reducido. |
+| `landing/app/componentes/icono-astral.tsx` | Nuevo componente local para renderizar iconos astrales SVG mediante `mask-image`, sin depender del codigo de `frontend/`. |
+| `landing/app/componentes/pagina-landing-astra.tsx` | Implementa la landing completa: navegacion, hero, visual del agente IA, lectura integrada, como funciona, herramientas, FODA, decisiones, web/app, FAQ, cierre y barra CTA mobile. |
+| `landing/public/img/logo-astra-blanco.png` | Copia local del logo ASTRA para que la landing no dependa de assets de `frontend/`. |
+| `landing/public/img/isotipo-blanco.png` | Copia local del isotipo blanco para navegacion y marca. |
+| `landing/public/img/isotipo-ciruela.png` | Copia local del isotipo ciruela para metadata e iconos. |
+| `landing/public/img/icons/014-personal.svg` | Icono astral local para modulos de mapa personal y Diseno Humano. |
+| `landing/public/img/icons/019-healthy.svg` | Icono astral local disponible para secciones de energia y cuidado. |
+| `landing/public/img/icons/020-astrology.svg` | Icono astral local para carta astrologica. |
+| `landing/public/img/icons/021-numerology.svg` | Icono astral local para numerologia. |
+| `landing/public/img/icons/022-emotion.svg` | Icono astral local disponible para procesos emocionales. |
+| `landing/public/img/icons/023-book.svg` | Icono astral local para podcast/lectura. |
+| `landing/public/img/icons/024-career.svg` | Icono astral local para perfil FODA y decisiones. |
+| `context/resumen-de-cambios.md` | Agrega esta entrada de changelog con alcance, archivos y validacion. |
+
+### Tests
+- `cd landing && npm run lint` paso sin errores.
+- `cd landing && npx tsc --noEmit` paso sin errores.
+- Busqueda de palabras vetadas, colores prohibidos y simbolos zodiacales Unicode en `landing/app`, `landing/public` y `landing/README.md` sin coincidencias.
+- `cd landing && npm run build` no pudo ejecutarse porque el shell actual usa Node `v18.17.1` y Next.js 16.2.3 requiere Node `>=20.9.0`.
+- No se agregaron tests unitarios: cambio visual/prototipo aislado, sin APIs, backend ni integracion con produccion.
+
+### Como funciona
+1. La app `landing/` queda como prototipo independiente. Su ruta raiz renderiza `PaginaLandingAstra`, una landing cliente con Motion/Framer para animaciones de entrada, scroll y visual del mapa personal.
+2. `layout.tsx` mantiene metadata SEO y `lang="es"`; no exporta rutas ni integra auth, backend, dashboard ni la app principal.
+3. La navegacion superior usa anclas internas. En desktop muestra links a secciones principales y CTA. En mobile se simplifica y suma una barra CTA fija inferior que apunta a `#crear-mapa`.
+4. El hero comunica la promesa principal: autoconocimiento con agente IA que conecta carta astrologica, numerologia, Diseno Humano y transitos planetarios en tiempo real.
+5. El visual principal muestra al agente IA conectando nodos del mapa personal y una senal diaria de claridad, con animaciones suaves y fallback por `prefers-reduced-motion`.
+6. Las secciones desarrollan lectura integrada, funcionamiento, modulos, FODA personal, decisiones/mejores momentos, web + app, preguntas frecuentes y cierre.
+7. Los assets de marca e iconos viven localmente en `landing/public/img/`. El componente `IconoAstral` usa esos SVG con `mask-image`, por lo que la landing no importa componentes ni archivos desde `frontend/`.
+
+---
+
+## Sesion: Tooltip "Explicame mejor" — "Seguir en el chat" abre conversacion nueva sembrada
+**Fecha:** 2026-04-11 ~17:00 (ARG)
+
+### Que se hizo
+El boton "Seguir en el chat" del tooltip contextual ahora crea una conversacion nueva en backend, la siembra con el intercambio del tooltip (pregunta del usuario + respuesta de Astra), y abre el chat directo en esa conversacion en vez de caer sobre la conversacion activa existente.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambios |
+|---------|---------|
+| `backend/app/rutas/v1/chat.py` | `POST /chat/nueva` ahora acepta body opcional `NuevaConversacionRequest` con `mensajes_iniciales` (lista de `{rol, contenido}`) y `titulo`. Tras crear la conversacion siembra los mensajes con `agregar_mensaje` y opcionalmente la renombra. |
+| `frontend/src/lib/hooks/usar-chat.ts` | `usarNuevaConversacion` ahora acepta payload opcional `{mensajes_iniciales?, titulo?}` y lo envia al endpoint. Se exportan tipos `MensajeSemillaChat` y `PayloadNuevaConversacion`. |
+| `frontend/src/componentes/explicar/tooltip-explicacion-astra.tsx` | `onSeguirEnChat` ahora hace `mutateAsync` a `usarNuevaConversacion` con la semilla `[user: "Explicame mejor: ..."`, `assistant: <respuesta>]` y titulo derivado del texto seleccionado. Al recibir el id navega a `/chat?conv=<id>`. Fallback: si la respuesta no esta lista o falla la mutacion, abre `/chat` vacio sin bloquear al usuario. |
+| `frontend/src/app/(app)/chat/page.tsx` | Lee `?conv=<id>` con `useSearchParams`. Si el id existe en la lista de conversaciones, lo selecciona como activa, llama `cambiar_conversacion_web` para activarla en backend, y limpia el query param con `router.replace("/chat")`. El efecto de auto-seleccion legacy se inhibe cuando `convQuery` esta presente. |
+
+### Tests
+No se agregaron tests nuevos. `npx tsc --noEmit` corre limpio en `frontend/`.
+
+### Como funciona
+1. Usuario selecciona texto en cualquier vista, abre el menu contextual y dispara "Explicame mejor". El tooltip muestra la respuesta de Haiku via `POST /chat/explicar` (cacheada en Redis).
+2. Al pulsar "Seguir en el chat", el tooltip llama `POST /chat/nueva` enviando como semilla `[{rol:"user", contenido:'Explicame mejor: "<texto>"'}, {rol:"assistant", contenido:<respuesta>}]` y un titulo corto derivado del texto.
+3. El backend archiva la conversacion web activa, crea una nueva, agrega los mensajes semilla y aplica el titulo.
+4. El frontend navega a `/chat?conv=<id>`. La pagina del chat detecta el query param, selecciona esa conversacion como activa (en cliente y en backend via `cambiar_conversacion_web`), y limpia el `?conv=` para que recargas posteriores no re-disparen el deep-link.
+5. `AreaChatWeb` carga el historial de la conversacion activa via `GET /chat/historial`, asi que el usuario llega al chat con la pregunta + la respuesta del tooltip ya pintadas como contexto inicial y puede seguir la conversacion desde ahi.
+
+---
+
+## Sesion: Tooltip "Explicame mejor" — contexto extendido + selección violeta ciruela
+**Fecha:** 2026-04-11 ~17:30 (ARG)
+
+### Que se hizo
+Cuando el usuario selecciona un fragmento corto (ej: "no naciste para encajar"), ahora se envía también el bloque completo que lo rodea (ej: "Vos no naciste para encajar, naciste para reflejar.") como contexto subyacente al endpoint `/chat/explicar`, para que Astra interprete la frase en su contexto natural en lugar de adivinar a partir de palabras sueltas. Además, el highlight de selección de texto en toda la app pasa a violeta ciruela ASTRA en vez del azul nativo del navegador.
+
+### Backend/Frontend — Archivos creados/modificados
+| Archivo | Cambios |
+|---------|---------|
+| `backend/app/rutas/v1/chat.py` | `ExplicarRequest` suma campo opcional `contexto_extendido: str | None` (max 1500). `_clave_explicar` ahora hashea `texto + contexto_extendido` para que el mismo fragmento en bloques distintos no comparta cache. El handler propaga el contexto al servicio. |
+| `backend/app/servicios/servicio_oraculo.py` | `explicar_seleccion` y `_construir_system_explicacion` aceptan `contexto_extendido`. El system prompt inyecta el bloque completo como "úsalo solo como contexto, NO lo expliques entero", y la instrucción ahora pide interpretar fragmentos ambiguos a la luz del bloque que los rodea. |
+| `frontend/src/lib/tipos/explicar.ts` | `SeleccionActiva` y `ExplicarRequest` suman `contextoExtendido` / `contexto_extendido`. |
+| `frontend/src/lib/hooks/usar-seleccion-explicable.ts` | Nueva función `extraerContextoExtendido(range, seleccion)` que sube por el árbol DOM hasta el primer elemento bloque (P, LI, BLOCKQUOTE, H1-6, TD, etc.) sin salir de `[data-explicable]`, normaliza su `textContent` y, si supera 1200 chars, lo recorta a las oraciones que rodean al fragmento seleccionado. Si la selección ya cubre el bloque completo, no se envía contexto extra. |
+| `frontend/src/lib/hooks/usar-explicar.ts` | La mutation acepta y envía `contexto_extendido`. |
+| `frontend/src/componentes/explicar/menu-seleccion-explicar.tsx` | Pasa `contextoExtendido` al disparar la mutation. |
+| `frontend/src/componentes/explicar/tooltip-explicacion-astra.tsx` | "Reintentar" también pasa `contextoExtendido`. |
+| `frontend/src/app/globals.css` | Reglas globales `::selection` y `::-moz-selection` con `background-color: var(--color-violet-700)` (violeta ciruela ASTRA) y `color: #fff`. |
+
+### Tests
+`backend/tests/rutas/test_rutas_chat_explicar.py` corre limpio (7 passed). `npx tsc --noEmit` limpio en `frontend/`. No se agregaron tests nuevos — los existentes siguen siendo válidos porque `contexto_extendido` es opcional.
+
+### Como funciona
+1. El listener `selectionchange` captura la selección como antes; tras validar zona explicable y longitud, llama `extraerContextoExtendido(range, texto)`.
+2. La función sube por el árbol DOM desde `commonAncestorContainer` hasta encontrar el primer elemento bloque dentro de la misma zona `[data-explicable]`. Toma su `textContent` normalizado.
+3. Si el bloque es esencialmente igual a la selección, devuelve `null` (no hay contexto extra). Si supera 1200 chars, recorta al entorno de oración alrededor del fragmento usando separadores `.!?…`.
+4. El store guarda `seleccion.contextoExtendido` junto al `texto` y el `rect`. El menú contextual y el botón "Reintentar" del tooltip lo pasan a la mutation.
+5. `POST /chat/explicar` recibe `contexto_extendido`, lo incluye en la clave de cache (mismo fragmento + distinto bloque = distinta respuesta) y lo pasa a `ServicioOraculo.explicar_seleccion`.
+6. El system prompt para Haiku ahora incluye, cuando hay contexto, una sección "El fragmento aparece dentro de este bloque más amplio (úsalo solo como contexto…)" + el bloque entre comillas «», y la instrucción de interpretar fragmentos ambiguos "a la luz del bloque que lo rodea".
+7. En paralelo, la regla CSS global `::selection` pinta cualquier selección de texto en la app con violeta ciruela (`--color-violet-700` = `#5b21b6`) sobre texto blanco, en lugar del highlight azul del SO.
+
+---
+
+## Sesion: Landing ASTRA — mockups producto y tipografia aerea
+**Fecha:** 2026-04-11 ~22:41 (ARG)
+
+### Que se hizo
+Se refino la landing aislada de ASTRA incorporando mockups de producto en el hero: una ventana estilo Mac con dashboard web y un telefono con la app movil. Tambien se cambio la tipografia de titulos a Cormorant Garamond con pesos livianos para lograr una lectura mas aerea y editorial.
+
+### Frontend — Archivos creados/modificados
+| Archivo | Descripcion |
+|---------|-------------|
+| `landing/app/layout.tsx` | Agrega `Cormorant_Garamond` desde `next/font/google` como variable tipografica display, manteniendo Geist para textos de interfaz. |
+| `landing/app/globals.css` | Actualiza `--font-display` y la clase `.font-display` con peso 300 y tracking mas abierto para una jerarquia visual mas liviana. |
+| `landing/app/componentes/pagina-landing-astra.tsx` | Reemplaza el visual abstracto del hero por `MockupsProducto`, con `MockupDashboardMac`, `MockupAppMobile` y una tarjeta flotante del agente IA conectando web/app. |
+| `context/resumen-de-cambios.md` | Agrega esta entrada de changelog con alcance, archivos y validacion. |
+
+### Tests
+- `cd landing && npm run lint` paso sin errores.
+- `cd landing && npx tsc --noEmit` paso sin errores.
+- Busqueda de palabras vetadas, colores prohibidos y simbolos zodiacales Unicode en `landing/app`, `landing/public` y `landing/README.md` sin coincidencias.
+- `cd landing && npm run build` sigue bloqueado por el entorno local: Node `v18.17.1`; Next.js 16.2.3 requiere Node `>=20.9.0`.
+
+### Como funciona
+1. El hero mantiene la promesa comercial y reemplaza el artefacto abstracto por una maqueta concreta de producto.
+2. El mockup web muestra una ventana con barra superior, sidebar ASTRA, dashboard "Mapa estrategico", lectura integrada, fortalezas, oportunidades, cuidado y proxima ventana favorable.
+3. El mockup mobile muestra la aplicacion en un telefono con energia actual, mensaje del agente IA y acciones rapidas.
+4. Una tarjeta flotante del agente IA actua como union visual entre dashboard web y app movil, reforzando que ASTRA conecta el mapa personal con el momento actual.
+5. La nueva fuente display se aplica a los titulos existentes mediante la variable global `--font-display`, sin cambiar la estructura de secciones ni agregar dependencias nuevas.
