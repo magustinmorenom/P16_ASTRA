@@ -255,6 +255,36 @@ class ServicioPronostico:
 
         return max(1, min(10, claridad)), max(1, min(10, intuicion))
 
+    # Límite de caracteres por accionable. Calculado para que entre cómodo
+    # en 2 líneas en la columna de momentos del dashboard:
+    #   ancho columna ≈ 280px - 14px (bullet + gap) ≈ 266px útiles
+    #   font-size 11px Inter ≈ 50-55 chars/línea
+    #   2 líneas ≈ 100-110 chars
+    _MAX_LARGO_ACCIONABLE = 110
+    _CORTE_PALABRA_ACCIONABLE = 100
+
+    @classmethod
+    def _sintetizar_accion(cls, texto: str) -> str:
+        """Recorta una acción larga a max ~2 líneas preservando palabras enteras.
+
+        Estrategia:
+            1. Si entra completa (≤ MAX), devuelve tal cual.
+            2. Si excede, busca la última palabra completa antes de
+               CORTE_PALABRA y agrega "…".
+            3. Si no encuentra espacio (palabra única gigante), corta hard.
+        """
+        texto = (texto or "").strip()
+        if len(texto) <= cls._MAX_LARGO_ACCIONABLE:
+            return texto
+
+        recorte = texto[: cls._CORTE_PALABRA_ACCIONABLE]
+        ultimo_espacio = recorte.rfind(" ")
+        if ultimo_espacio > 50:  # asegurar que el recorte tenga sentido
+            recorte = recorte[:ultimo_espacio]
+        # Limpiar puntuación final colgante
+        recorte = recorte.rstrip(",;:.- ")
+        return f"{recorte}…"
+
     @classmethod
     def _inyectar_acciones_podcast(cls, resultado: dict, acciones_podcast: list[dict]) -> dict:
         """Sobrescribe los accionables de los momentos con las acciones reales del podcast.
@@ -263,14 +293,18 @@ class ServicioPronostico:
             {"bloque": "manana"|"tarde"|"noche", "accion": "...", "contexto": "..."}
         Los momentos del pronóstico esperan:
             {"accionables": ["string1", "string2", ...]}
+
+        Cada `accion` se sintetiza a max ~110 chars (≈2 líneas en el dashboard)
+        para evitar que un texto muy largo desborde la card del momento.
         """
-        # Agrupar acciones por bloque
+        # Agrupar acciones por bloque, sintetizando longitud sobre la marcha.
         acciones_por_bloque: dict[str, list[str]] = {}
         for accion in acciones_podcast:
             bloque = accion.get("bloque", "")
             texto = accion.get("accion", "")
             if bloque and texto:
-                acciones_por_bloque.setdefault(bloque, []).append(texto)
+                texto_sintetizado = cls._sintetizar_accion(texto)
+                acciones_por_bloque.setdefault(bloque, []).append(texto_sintetizado)
 
         if not acciones_por_bloque:
             return resultado

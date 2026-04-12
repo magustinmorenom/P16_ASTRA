@@ -190,6 +190,7 @@ export default function BannerPodcastDia() {
     <div
       role="status"
       aria-live="polite"
+      data-no-explicable="true"
       className="animate-banner-in relative z-30 w-full border-b"
       style={{
         borderColor: "var(--shell-borde)",

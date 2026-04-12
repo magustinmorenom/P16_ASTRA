@@ -31,11 +31,21 @@ export function usarEnviarMensaje() {
   });
 }
 
+export interface MensajeSemillaChat {
+  rol: "user" | "assistant";
+  contenido: string;
+}
+
+export interface PayloadNuevaConversacion {
+  mensajes_iniciales?: MensajeSemillaChat[];
+  titulo?: string;
+}
+
 export function usarNuevaConversacion() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () =>
-      clienteApi.post<NuevaConversacion>("/chat/nueva"),
+    mutationFn: (payload?: PayloadNuevaConversacion) =>
+      clienteApi.post<NuevaConversacion>("/chat/nueva", payload ?? {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chat", "historial"] });
       queryClient.invalidateQueries({ queryKey: ["chat", "conversaciones"] });

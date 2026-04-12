@@ -56,5 +56,11 @@ export {
 
 export { usarPronosticoDiario, usarPronosticoSemanal, usarPronosticoSemanaSiguiente } from "./usar-pronostico";
 
+export { usarPerlasDiarias } from "./usar-perlas";
+export type { PerlasDiariasDTO } from "./usar-perlas";
+
 export { usarEsMobile } from "./usar-es-mobile";
 export { usarAudio } from "./usar-audio";
+
+export { usarSeleccionExplicable } from "./usar-seleccion-explicable";
+export { usarExplicar } from "./usar-explicar";

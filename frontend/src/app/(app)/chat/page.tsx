@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Icono } from "@/componentes/ui/icono";
 import PanelConversacionesWeb from "@/componentes/chat/panel-conversaciones-web";
 import AreaChatWeb from "@/componentes/chat/area-chat-web";
@@ -14,6 +15,9 @@ import HeaderMobile from "@/componentes/layouts/header-mobile";
 
 export default function PaginaChat() {
   const esMobile = usarEsMobile();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const convQuery = searchParams.get("conv");
 
   const [conversacionActiva, setConversacionActiva] = useState<string | null>(
     null,
@@ -27,11 +31,28 @@ export default function PaginaChat() {
   const cambiarMutation = usarCambiarConversacion();
   const nuevaMutation = usarNuevaConversacion();
 
+  // Si llegamos con ?conv=<id> (por ejemplo desde el tooltip "Explicame mejor"),
+  // priorizamos esa conversación: la activamos en backend, la seleccionamos en
+  // el panel y limpiamos el query param para no re-disparar el efecto.
+  useEffect(() => {
+    if (!convQuery || conversaciones.length === 0) return;
+    const objetivo = conversaciones.find((c) => c.id === convQuery);
+    if (!objetivo) return;
+
+    setConversacionActiva(objetivo.id);
+    setTituloActiva(objetivo.titulo || objetivo.preview || null);
+    setPanelMovilAbierto(false);
+    setInicializado(true);
+    cambiarMutation.mutate(objetivo.id);
+    router.replace("/chat");
+  }, [convQuery, conversaciones, cambiarMutation, router]);
+
   // Auto-seleccionar la conversacion activa al cargar.
   // Si la conversacion activa es de un dia anterior (hora local del usuario),
   // NO se selecciona: arranca en limpio para forzar sesion nueva al escribir.
   useEffect(() => {
     if (inicializado || conversaciones.length === 0) return;
+    if (convQuery) return; // dejamos que el efecto de arriba maneje el deep-link
 
     const activa = conversaciones.find((c) => c.activa && !c.archivada);
     if (activa) {

@@ -7,6 +7,18 @@ html {
   background: var(--color-fondo);
 }
 
+/* Selección de texto: violeta ciruela ASTRA en toda la app */
+::selection {
+  background-color: var(--color-violet-700);
+  color: #ffffff;
+  text-shadow: none;
+}
+::-moz-selection {
+  background-color: var(--color-violet-700);
+  color: #ffffff;
+  text-shadow: none;
+}
+
 /* Cursor pointer global para elementos interactivos */
 button,
 [role="button"],

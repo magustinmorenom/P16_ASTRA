@@ -9,6 +9,7 @@ import { MomentosDia } from "./momentos-dia";
 import { NumeroDelDia } from "./numero-del-dia";
 import { LunaPosicion } from "./luna-posicion";
 import { NivelesEnergia } from "./niveles-energia";
+import { PerlasDia } from "./perlas-dia";
 import { ResumenPersonalUnificado } from "./resumen-personal-unificado";
 
 interface HeroSeccionProps {
@@ -96,6 +97,9 @@ export function HeroSeccion({
                 </p>
               </div>
             </div>
+
+            {/* Perlas del día — recordatorios íntimos generados por IA, encima del CTA del podcast */}
+            <PerlasDia />
 
             <div className="mt-auto flex flex-col items-start gap-2.5 pb-0.5 lg:pt-2">
               <button

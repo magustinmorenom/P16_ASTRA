@@ -38,8 +38,15 @@ Después del último párrafo del guion, agregá una línea exacta `---ACCIONES-
 
 Cada acción debe tener:
 - `bloque`: "manana", "tarde" o "noche"
-- `accion`: verbo imperativo + objeto concreto (ej: "Mandá ese mail pendiente antes de las 10")
-- `contexto`: por qué hoy aplica según los tránsitos/número (ej: "Mercurio trígono tu Sol natal impulsa la comunicación")
+- `accion`: verbo imperativo + objeto concreto. **MÁXIMO 90 caracteres**, idealmente 60-80. Sin sub-cláusulas largas, sin justificación dentro de la acción. Ejemplo bueno: "Mandá ese mail pendiente antes de las 10". Ejemplo malo: "Mandá ese mail pendiente que venís postergando desde la semana pasada antes de las 10 para liberar la cabeza".
+- `contexto`: por qué hoy aplica según los tránsitos/número (ej: "Mercurio trígono tu Sol natal impulsa la comunicación"). Esto NO se muestra al usuario — es metadata.
+
+Reglas duras para `accion`:
+- Máximo 90 caracteres totales (incluyendo espacios y puntuación).
+- Una sola idea por acción. Si tenés dos cosas que decir, generá dos acciones separadas.
+- Sin "porque", "ya que", "para que", "dado que" — eso va en `contexto`.
+- Empezá con verbo en imperativo rioplatense ("Mandá", "Escribí", "Salí", "Evitá").
+- Incluí timing concreto cuando sume ("antes de las 10", "después de almorzar"), pero no obligatorio.
 
 Distribuí las acciones así:
 - **Mañana** (2-3): enfoque, inicio, claridad

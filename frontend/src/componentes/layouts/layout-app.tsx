@@ -10,6 +10,7 @@ import PanelLyrics from "@/componentes/layouts/panel-lyrics";
 import LayoutMobile from "@/componentes/layouts/layout-mobile";
 import BannerPodcastDia from "@/componentes/layouts/banner-podcast-dia";
 import { ContenedorToasts } from "@/componentes/layouts/contenedor-toasts";
+import { CapaExplicar } from "@/componentes/explicar/capa-explicar";
 import { useStoreAuth } from "@/lib/stores/store-auth";
 import { usarEsMobile } from "@/lib/hooks/usar-es-mobile";
 
@@ -45,17 +46,20 @@ export default function LayoutApp({
   /* ======= MOBILE LAYOUT ======= */
   if (esMobile) {
     return (
-      <>
+      <div data-explicable="true" data-app-shell="true">
         <BannerPodcastDia />
         <LayoutMobile>{children}</LayoutMobile>
         <ContenedorToasts />
-      </>
+        <CapaExplicar />
+      </div>
     );
   }
 
   /* ======= DESKTOP LAYOUT ======= */
   return (
     <div
+      data-explicable="true"
+      data-app-shell="true"
       className="flex h-screen flex-col overflow-hidden"
       style={{ background: "var(--shell-fondo-profundo)" }}
     >
@@ -83,6 +87,7 @@ export default function LayoutApp({
       <ReproductorCosmico />
       <PanelLyrics />
       <ContenedorToasts />
+      <CapaExplicar />
     </div>
   );
 }

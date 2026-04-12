@@ -1,6 +1,7 @@
 "use client";
 
 import { Icono, type NombreIcono } from "@/componentes/ui/icono";
+import { IconoFaseLunar } from "@/componentes/ui/icono-fase-lunar";
 import { BarraEnergia } from "./barra-energia";
 import type { ClimaCosmicoDTO, LunaInfoDTO, NumeroPersonalDTO } from "@/lib/tipos";
 
@@ -71,7 +72,7 @@ export function HeroClima({ clima, luna, numeroPersonal }: HeroClimaProps) {
         {/* Footer: Luna + Número personal */}
         <div className="flex items-center gap-3 pt-3 border-t border-white/[0.08]">
           <span className="flex items-center gap-1.5 text-[12px] text-violet-200/70">
-            <Icono nombre="luna" tamaño={13} peso="fill" className="text-violet-300/60" />
+            <IconoFaseLunar fase={luna.fase} tamaño={16} />
             {luna.fase} en {luna.signo}
           </span>
           <span className="h-3.5 w-px bg-white/10" />

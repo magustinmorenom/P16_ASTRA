@@ -39,6 +39,9 @@ async def bootstrap_dia_podcast(usuario_id: uuid.UUID) -> None:
     try:
         # Imports locales para evitar cargar dependencias pesadas al importar
         # este módulo desde `auth.py` en el hot path de `/auth/me`.
+        from redis.asyncio import Redis
+
+        from app.configuracion import obtener_configuracion
         from app.datos.repositorio_perfil import RepositorioPerfil
         from app.datos.repositorio_plan import RepositorioPlan
         from app.datos.repositorio_suscripcion import RepositorioSuscripcion
@@ -46,8 +49,14 @@ async def bootstrap_dia_podcast(usuario_id: uuid.UUID) -> None:
         from app.datos.sesion import crear_motor_async, crear_sesion_factory
         from app.servicios.servicio_podcast import ServicioPodcast
 
+        config = obtener_configuracion()
         motor = crear_motor_async()
         factory = crear_sesion_factory(motor)
+        # Cliente Redis dedicado al background task: lo necesitamos para que
+        # `ServicioPodcast.generar_episodio` invalide el cache del pronóstico
+        # diario cuando el episodio queda `listo`. Sin esto, el dashboard
+        # sigue mostrando los accionables del fallback durante todo el día.
+        redis = Redis.from_url(config.redis_url, decode_responses=True)
         try:
             async with factory() as sesion:
                 # 1. Usuario activo
@@ -83,12 +92,17 @@ async def bootstrap_dia_podcast(usuario_id: uuid.UUID) -> None:
                     dia_arg_actual(),
                     "dia",
                     origen="auto",
+                    redis=redis,
                 )
                 logger.info(
                     "bootstrap podcast diario completado para usuario %s",
                     uid_str,
                 )
         finally:
+            try:
+                await redis.aclose()
+            except Exception:
+                pass
             await motor.dispose()
 
     except Exception as e:

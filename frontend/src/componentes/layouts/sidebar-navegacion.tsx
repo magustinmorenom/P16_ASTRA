@@ -221,6 +221,7 @@ export default function SidebarNavegacion() {
     <>
       {/* Desktop sidebar */}
       <aside
+        data-no-explicable="true"
         className={cn(
           "hidden flex-shrink-0 flex-col overflow-hidden border-r transition-[width] duration-200 ease-in-out lg:flex",
           colapsado ? "w-[68px]" : "w-[264px]"

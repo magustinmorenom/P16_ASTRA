@@ -624,6 +624,7 @@ export default function Navbar() {
 
   return (
     <nav
+      data-no-explicable="true"
       className="relative z-40 shrink-0 overflow-visible border-b"
       style={{
         borderColor: "var(--shell-borde)",

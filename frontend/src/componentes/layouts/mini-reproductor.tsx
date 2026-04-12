@@ -51,6 +51,7 @@ export default function MiniReproductor() {
       )}
 
       <div
+        data-no-explicable="true"
         className="fixed left-0 right-0 z-40"
         style={{
           bottom: "calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px))",

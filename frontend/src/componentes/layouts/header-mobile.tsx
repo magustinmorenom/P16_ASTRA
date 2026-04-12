@@ -9,6 +9,13 @@ interface MetaHeaderMobile {
   icono: NombreIcono;
   texto: string;
   tono?: "violeta" | "oro" | "verde" | "rojo";
+  /**
+   * Nodo custom para reemplazar el `<Icono>` Phosphor por un icono especial
+   * (ej: IconoFaseLunar ilustrado para mostrar la fase real de la luna).
+   * Si se pasa, sobrescribe el render del icono Phosphor pero mantiene
+   * `icono` como fallback semántico.
+   */
+  iconoCustom?: React.ReactNode;
 }
 
 interface HeaderMobileProps {
@@ -49,6 +56,7 @@ export default function HeaderMobile({
 
   return (
     <header
+      data-no-explicable="true"
       className={cn("sticky top-0 z-30 lg:hidden")}
       style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 6px)" }}
     >
@@ -111,7 +119,7 @@ export default function HeaderMobile({
                       obtenerClasesMeta(meta.tono)
                     )}
                   >
-                    <Icono nombre={meta.icono} tamaño={13} />
+                    {meta.iconoCustom ?? <Icono nombre={meta.icono} tamaño={13} />}
                     <span>{meta.texto}</span>
                   </div>
                 ))}

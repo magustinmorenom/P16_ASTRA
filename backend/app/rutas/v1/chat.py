@@ -1,5 +1,6 @@
 """Endpoints del chat web con el Oráculo ASTRA."""
 
+import hashlib
 import uuid
 from datetime import date, timezone
 
@@ -236,14 +237,44 @@ async def obtener_historial(
     }
 
 
+class MensajeSemilla(BaseModel):
+    rol: str = Field(..., pattern="^(user|assistant)$")
+    contenido: str = Field(..., min_length=1, max_length=4000)
+
+
+class NuevaConversacionRequest(BaseModel):
+    """Body opcional para POST /chat/nueva.
+
+    Permite sembrar la conversación recién creada con un historial inicial
+    (por ejemplo, el intercambio que ocurrió en el tooltip "Explicame mejor").
+    """
+
+    mensajes_iniciales: list[MensajeSemilla] | None = None
+    titulo: str | None = Field(None, max_length=120)
+
+
 @router.post("/nueva")
 async def nueva_conversacion(
+    datos: NuevaConversacionRequest | None = None,
     usuario: Usuario = Depends(obtener_usuario_actual),
     db: AsyncSession = Depends(_obtener_db_placeholder),
 ):
-    """Archiva la conversación actual y crea una nueva."""
+    """Archiva la conversación actual y crea una nueva.
+
+    Si se envían `mensajes_iniciales`, la nueva conversación arranca con ese
+    historial pre-cargado (caso de uso: continuar en el chat el intercambio
+    iniciado en el tooltip "Explicame mejor").
+    """
     repo = RepositorioConversacion(db)
     conversacion = await repo.nueva_conversacion_web(usuario.id)
+
+    if datos and datos.mensajes_iniciales:
+        for msg in datos.mensajes_iniciales:
+            await repo.agregar_mensaje(
+                conversacion.id, msg.rol, msg.contenido,
+            )
+        if datos.titulo:
+            await repo.renombrar(usuario.id, conversacion.id, datos.titulo)
 
     return {
         "exito": True,
@@ -378,3 +409,143 @@ async def eliminar_conversacion(
     if not eliminada:
         raise HTTPException(status_code=404, detail="Conversación no encontrada")
     return {"exito": True, "datos": {"eliminada": True}}
+
+
+# ── Explicar selección — micro-chat sobre texto seleccionado ─────
+
+class ExplicarRequest(BaseModel):
+    """Body del endpoint POST /chat/explicar."""
+
+    texto: str = Field(..., min_length=2, max_length=600)
+    contexto_seccion: str = Field(..., min_length=1, max_length=64)
+    contexto_extendido: str | None = Field(
+        None,
+        max_length=1500,
+        description=(
+            "Bloque (oración / párrafo / item) que rodea a la selección. "
+            "Permite interpretar fragmentos cortos en su contexto natural."
+        ),
+    )
+
+
+class ExplicarResponse(BaseModel):
+    """Datos devueltos por POST /chat/explicar."""
+
+    respuesta: str
+    desde_cache: bool
+    mensajes_restantes: int | None = None  # None = ilimitado (premium)
+
+
+class RespuestaExplicar(RespuestaBase):
+    datos: ExplicarResponse
+
+
+def _clave_explicar(
+    usuario_id: uuid.UUID, texto: str, contexto_extendido: str | None = None
+) -> str:
+    """Construye la clave de Redis para cachear una explicación.
+
+    Normaliza texto + contexto extendido (trim + lowercase) para que variaciones
+    triviales compartan cache, pero el mismo fragmento en contextos distintos
+    NO comparta respuesta (la interpretación cambia según el bloque que lo rodea).
+    La clave incluye el usuario_id porque la respuesta es personalizada por carta.
+    """
+    base = texto.strip().lower()
+    if contexto_extendido:
+        base = f"{base}|{contexto_extendido.strip().lower()}"
+    h = hashlib.sha256(base.encode("utf-8")).hexdigest()[:16]
+    return f"explicar:{usuario_id}:{h}"
+
+
+@router.post("/explicar", response_model=RespuestaExplicar)
+async def explicar_seleccion(
+    datos: ExplicarRequest,
+    usuario: Usuario = Depends(obtener_usuario_actual),
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+    redis: Redis = Depends(_obtener_redis_placeholder),
+):
+    """Explica un fragmento de texto que el usuario seleccionó en la app.
+
+    Reusa el límite diario de mensajes del chat principal (3/día gratis,
+    ilimitado premium). El cache de Redis (TTL 30 días) hace que reseleccionar
+    el mismo texto sea instantáneo y NO descuente cuota.
+
+    No persiste mensajes en `repositorio_conversacion` — es efímero.
+    """
+    # 1. Cache lookup ANTES de tocar la cuota.
+    clave_cache = _clave_explicar(
+        usuario.id, datos.texto, datos.contexto_extendido
+    )
+    cacheado = await redis.get(clave_cache)
+    if cacheado:
+        if isinstance(cacheado, bytes):
+            cacheado = cacheado.decode("utf-8")
+        logger.info(
+            "Chat explicar: usuario=%s cache_hit (sin descuento de cuota)",
+            usuario.id,
+        )
+        return {
+            "exito": True,
+            "datos": ExplicarResponse(
+                respuesta=cacheado,
+                desde_cache=True,
+                mensajes_restantes=None,
+            ),
+        }
+
+    # 2. Verificar cuota (reusa helper del chat).
+    premium = await _es_premium(db, usuario.id)
+    restantes = await _verificar_limite(redis, usuario.id, premium)
+
+    # 3. Obtener perfil cósmico (reusa helper del chat).
+    perfil_cosmico = await _obtener_contexto_cosmico(db, usuario.id)
+
+    # 4. Llamar al servicio (Haiku, one-shot).
+    respuesta, tokens, tokens_in, tokens_out = await ServicioOraculo.explicar_seleccion(
+        texto_seleccionado=datos.texto,
+        contexto_seccion=datos.contexto_seccion,
+        perfil_cosmico=perfil_cosmico,
+        contexto_extendido=datos.contexto_extendido,
+    )
+
+    # 5. Guardar en cache (TTL 30 días) — solo si la respuesta no fue un fallback de error.
+    #    Heurística: las respuestas de fallback empiezan con "Disculpá," o "El oráculo no está".
+    es_respuesta_valida = bool(respuesta) and tokens > 0
+    if es_respuesta_valida:
+        await redis.set(clave_cache, respuesta, ex=30 * 86400)
+
+    # 6. Registrar consumo (reusa helper que ya existe).
+    from app.configuracion import obtener_configuracion as _obtener_config
+    from app.servicios.servicio_consumo_api import registrar_consumo
+
+    _cfg = _obtener_config()
+    await registrar_consumo(
+        db,
+        usuario_id=usuario.id,
+        servicio="anthropic",
+        operacion="chat_explicar",
+        tokens_entrada=tokens_in,
+        tokens_salida=tokens_out,
+        modelo=_cfg.oraculo_modelo,
+    )
+
+    # 7. Descontar cuota (reusa helper) solo si la llamada fue exitosa.
+    if not premium and es_respuesta_valida:
+        await _incrementar_conteo(redis, usuario.id)
+        restantes = (restantes or LIMITE_DIARIO_GRATIS) - 1
+
+    logger.info(
+        "Chat explicar: usuario=%s tokens=%d restantes=%s",
+        usuario.id,
+        tokens,
+        restantes,
+    )
+
+    return {
+        "exito": True,
+        "datos": ExplicarResponse(
+            respuesta=respuesta,
+            desde_cache=False,
+            mensajes_restantes=restantes,
+        ),
+    }

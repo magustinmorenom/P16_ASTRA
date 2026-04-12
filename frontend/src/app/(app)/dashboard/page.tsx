@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Icono } from "@/componentes/ui/icono";
+import { IconoFaseLunar } from "@/componentes/ui/icono-fase-lunar";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
 import { precargarAudiosPodcast } from "@/lib/hooks/usar-audio";
@@ -232,7 +233,13 @@ export default function PaginaDashboard() {
       ? { icono: "wifi" as const, texto: `Energía ${pronosticoDiario.clima.energia}/10` }
       : { icono: "destello" as const, texto: "Pronóstico pendiente", tono: "rojo" as const },
     pronosticoDiario
-      ? { icono: "luna" as const, texto: `Luna en ${pronosticoDiario.luna.signo}` }
+      ? {
+          icono: "luna" as const,
+          texto: `Luna en ${pronosticoDiario.luna.signo}`,
+          iconoCustom: (
+            <IconoFaseLunar fase={pronosticoDiario.luna.fase} tamaño={14} />
+          ),
+        }
       : { icono: "calendario" as const, texto: fechaHoy },
     podcastDiaGenerando
       ? { icono: "microfono" as const, texto: "Preparando audio", tono: "oro" as const }

@@ -614,3 +614,124 @@ class ServicioOraculo:
         except anthropic.APIError as e:
             logger.error("Error en API de Anthropic: %s", e)
             return "Disculpá, hubo un error al consultar al oráculo. Intentá de nuevo.", 0, 0, 0
+
+    # ──────────────────────────────────────────────────────────────────
+    # Explicar selección — micro-chat sobre texto seleccionado en la UI
+    # ──────────────────────────────────────────────────────────────────
+
+    @classmethod
+    def _construir_system_explicacion(
+        cls,
+        texto_seleccionado: str,
+        contexto_seccion: str,
+        perfil_cosmico: dict | None,
+        contexto_extendido: str | None = None,
+    ) -> str:
+        """System prompt corto y pedagógico para 'Explicame mejor'.
+
+        Reusa _resumir_perfil() para inyectar el contexto cósmico del usuario,
+        pero NO carga el system prompt completo del oráculo (es una interacción
+        de un único turno, no una conversación).
+
+        Si se provee `contexto_extendido` (el bloque/oración que rodea a la
+        selección), se inyecta en el prompt para que Claude pueda interpretar
+        fragmentos cortos en su contexto natural.
+        """
+        if perfil_cosmico:
+            resumen_perfil = cls._resumir_perfil(perfil_cosmico)
+        else:
+            resumen_perfil = "No hay perfil cósmico disponible."
+
+        bloque_contexto = ""
+        if contexto_extendido and contexto_extendido.strip() != texto_seleccionado.strip():
+            bloque_contexto = (
+                "El fragmento aparece dentro de este bloque más amplio (úsalo "
+                "solo como contexto para entender el sentido completo, NO lo "
+                "expliques entero):\n\n"
+                f"  «{contexto_extendido}»\n\n"
+            )
+
+        return (
+            "Sos Astra, oráculo personal de ASTRA. El usuario está leyendo la sección "
+            f"\"{contexto_seccion}\" de la app y seleccionó este fragmento de texto:\n\n"
+            f"  ⟨{texto_seleccionado}⟩\n\n"
+            f"{bloque_contexto}"
+            "Tu tarea es explicarle ESE fragmento concreto (no el bloque completo) "
+            "en relación a SU carta personal — natal, diseño humano y numerología — "
+            "en máximo 4 oraciones, español rioplatense, sin markdown, sin listas, "
+            "sin emojis. Empezá llamándolo por su nombre. Conectá el término o frase "
+            "con uno o dos datos concretos de su perfil. Cerrá con una frase práctica "
+            "o una invitación a profundizar. Si el fragmento es ambiguo (un par de "
+            "palabras sueltas, un número solo), interpretalo a la luz del bloque que "
+            "lo rodea y de la sección donde aparece.\n\n"
+            "## Contexto del Consultante\n"
+            f"{resumen_perfil}\n"
+        )
+
+    @classmethod
+    async def explicar_seleccion(
+        cls,
+        texto_seleccionado: str,
+        contexto_seccion: str,
+        perfil_cosmico: dict | None,
+        contexto_extendido: str | None = None,
+    ) -> tuple[str, int, int, int]:
+        """Genera una explicación corta y personalizada del texto seleccionado.
+
+        Retorna (respuesta, tokens_total, tokens_in, tokens_out).
+
+        A diferencia de `consultar()`, este método:
+          - No usa historial (es one-shot)
+          - No corre análisis temporal
+          - Tiene max_tokens más bajo (350) y temperature más conservadora (0.6)
+          - Tiene un system prompt especializado en explicar UN fragmento concreto
+        """
+        config = obtener_configuracion()
+
+        if not config.anthropic_api_key:
+            return (
+                "El oráculo no está configurado. Contactá al administrador.",
+                0,
+                0,
+                0,
+            )
+
+        cliente = anthropic.AsyncAnthropic(api_key=config.anthropic_api_key)
+
+        system_prompt = cls._construir_system_explicacion(
+            texto_seleccionado=texto_seleccionado,
+            contexto_seccion=contexto_seccion,
+            perfil_cosmico=perfil_cosmico,
+            contexto_extendido=contexto_extendido,
+        )
+
+        # El "mensaje del usuario" es una pregunta implícita: que Astra explique
+        # el fragmento ya inyectado en el system prompt.
+        mensaje_usuario = (
+            "Explicame qué significa eso que seleccioné y qué dice sobre mí."
+        )
+
+        try:
+            respuesta = await cliente.messages.create(
+                model=config.oraculo_modelo,
+                max_tokens=350,
+                temperature=0.6,
+                system=system_prompt,
+                messages=[{"role": "user", "content": mensaje_usuario}],
+            )
+
+            texto = respuesta.content[0].text if respuesta.content else ""
+            texto = cls._formatear_respuesta_chat(texto)
+            tokens_in = respuesta.usage.input_tokens or 0
+            tokens_out = respuesta.usage.output_tokens or 0
+
+            return texto, tokens_in + tokens_out, tokens_in, tokens_out
+
+        except anthropic.APIError as e:
+            logger.error("Error en API de Anthropic (explicar): %s", e)
+            return (
+                "Disculpá, no pude generar la explicación. Probá de nuevo en unos segundos.",
+                0,
+                0,
+                0,
+            )

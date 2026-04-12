@@ -5,6 +5,7 @@ import uuid
 from datetime import date, timedelta
 from pathlib import Path
 
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.configuracion import obtener_configuracion
@@ -136,6 +137,34 @@ class ServicioPodcast:
         return calculos
 
     @classmethod
+    async def _invalidar_cache_pronostico_diario(
+        cls,
+        redis: Redis | None,
+        usuario_id: uuid.UUID,
+        fecha: date,
+    ) -> None:
+        """Borra el cache del pronóstico diario para una fecha dada.
+
+        El pronóstico inyecta `acciones_json` del podcast en sus
+        `momentos.accionables`. Si el pronóstico se cacheó ANTES de que el
+        podcast estuviera listo (race habitual: dashboard pide pronóstico
+        mientras el bootstrap genera el podcast en background), el cache
+        contiene los accionables del fallback. Borrarlo fuerza regeneración
+        con las acciones reales en la próxima petición.
+
+        No-op si `redis` es None. Captura excepciones y solo loggea —
+        nunca debe romper el pipeline del podcast.
+        """
+        if redis is None:
+            return
+        clave = f"cosmic:pronostico:diario:{usuario_id}:{fecha.isoformat()}"
+        try:
+            await redis.delete(clave)
+            logger.info("Cache de pronóstico invalidado: %s", clave)
+        except Exception as e:
+            logger.warning("No se pudo invalidar cache de pronóstico: %s", e)
+
+    @classmethod
     def _separar_narrativa_acciones(cls, texto_completo: str) -> tuple[str, list[dict] | None]:
         """Separa la narrativa del bloque ---ACCIONES--- JSON.
 
@@ -248,12 +277,19 @@ class ServicioPodcast:
         tipo: str,
         origen: str = "manual",
         fecha_objetivo: date | None = None,
+        redis: Redis | None = None,
     ) -> PodcastEpisodio:
         """Pipeline completo para generar un episodio de podcast.
 
         Args:
             origen: "manual" (usuario pidió), "preview" (adelanto de mañana), "auto" (lazy)
             fecha_objetivo: fecha real para la que se genera el contenido (puede ser mañana)
+            redis: cliente Redis opcional. Si se pasa y el episodio queda `listo`,
+                el servicio invalida el cache del pronóstico de la fecha objetivo
+                para forzar regeneración con las acciones recién producidas. Esto
+                centraliza la invalidación: el servicio es la única fuente de
+                verdad, sin importar quién lo dispare (bootstrap, ruta manual,
+                cron, etc).
         """
         repo = RepositorioPodcast(sesion)
         fecha_clave = _calcular_fecha_clave(tipo, fecha)
@@ -380,6 +416,14 @@ class ServicioPodcast:
                 "Podcast generado: usuario=%s fecha=%s tipo=%s duracion=%.1fs",
                 usuario_id, fecha_clave, tipo, duracion,
             )
+
+            # Invalidar cache del pronóstico diario para tipo "dia"
+            # (ver docstring de `_invalidar_cache_pronostico_diario`).
+            if tipo == "dia":
+                fecha_invalidacion = fecha_objetivo or fecha_clave
+                await cls._invalidar_cache_pronostico_diario(
+                    redis, usuario_id, fecha_invalidacion
+                )
 
             # Notificar por email (fire-and-forget)
             try:
