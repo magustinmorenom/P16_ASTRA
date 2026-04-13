@@ -4,8 +4,6 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion } from "motion/react";
 import {
-  Activity,
-  BarChart3,
   Bot,
   CalendarDays,
   CheckCircle2,
@@ -15,12 +13,12 @@ import {
   Layers3,
   MonitorSmartphone,
   PauseCircle,
-  MessageCircle,
   ShieldCheck,
   Sparkles,
   TimerReset,
 } from "lucide-react";
 import { IconoAstral } from "./icono-astral";
+import { DiagramaOrbital } from "./orbita-hero";
 
 const enlaces = [
   { etiqueta: "Cómo funciona", href: "#como-funciona" },
@@ -192,7 +190,7 @@ function EncabezadoSeccion({
       <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-[#B388FF]">
         {etiqueta}
       </p>
-      <h2 className="font-display text-3xl leading-tight text-white md:text-5xl">
+      <h2 className="font-display text-xl leading-tight text-white md:text-4xl">
         {titulo}
       </h2>
       <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[color:var(--texto-suave)] md:text-lg">
@@ -272,206 +270,6 @@ function Navegacion() {
   );
 }
 
-function MockupsProducto() {
-  const reducirMovimiento = useReducedMotion();
-  const animacionTelefono = reducirMovimiento
-    ? undefined
-    : { y: [0, -10, 0], rotate: [0, -1.2, 0] };
-  const transicionTelefono = reducirMovimiento
-    ? undefined
-    : { duration: 8, repeat: Infinity, ease: "easeInOut" as const };
-
-  return (
-    <motion.div
-      className="relative mx-auto h-[520px] w-full max-w-[620px] sm:h-[600px] lg:h-[650px]"
-      initial={reducirMovimiento ? false : { opacity: 0, scale: 0.96 }}
-      animate={reducirMovimiento ? undefined : { opacity: 1, scale: 1 }}
-      transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-      aria-label="Mockups de ASTRA en plataforma web y aplicación móvil"
-    >
-      <div className="absolute inset-0 rounded-[3rem] bg-[#7C4DFF]/12 blur-3xl" />
-      <div className="absolute left-3 top-12 h-[58%] w-[88%] rounded-[2.2rem] border border-white/[0.08] bg-white/[0.035] shadow-2xl shadow-black/35 backdrop-blur-2xl sm:left-0 sm:top-16 sm:w-[92%]" />
-      <MockupDashboardMac />
-
-      <motion.div
-        className="absolute bottom-6 right-0 z-30 w-[44%] min-w-[168px] max-w-[230px] sm:bottom-8 sm:right-2 lg:right-0"
-        animate={animacionTelefono}
-        transition={transicionTelefono}
-      >
-        <MockupAppMobile />
-      </motion.div>
-
-      <motion.div
-        className="superficie absolute left-6 top-[66%] z-40 hidden max-w-[250px] rounded-3xl p-4 sm:block"
-        animate={reducirMovimiento ? undefined : { y: [0, 8, 0] }}
-        transition={reducirMovimiento ? undefined : { duration: 6, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#7C4DFF]/18 text-[#B388FF]">
-            <Bot aria-hidden="true" className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#B388FF]">
-              Agente IA
-            </p>
-            <p className="mt-1 text-sm leading-5 text-white">
-              Conecta tu mapa con tu momento actual.
-            </p>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-function MockupDashboardMac() {
-  return (
-    <div className="superficie absolute left-0 top-10 z-20 w-[95%] overflow-hidden rounded-[2rem] shadow-2xl shadow-black/40 sm:top-14">
-      <div className="flex h-10 items-center justify-between border-b border-white/[0.08] bg-white/[0.045] px-4">
-        <div className="flex gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-rose-300/60" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#B388FF]/55" />
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-300/55" />
-        </div>
-        <p className="hidden text-xs font-medium text-[color:var(--texto-muted)] sm:block">
-          dashboard.astra
-        </p>
-      </div>
-      <div className="grid min-h-[350px] grid-cols-[72px_1fr] bg-[#13091F]/92 sm:grid-cols-[112px_1fr]">
-        <aside className="border-r border-white/[0.07] bg-white/[0.025] p-3 sm:p-4">
-          <div className="mb-6 flex items-center gap-2">
-            <Image src="/img/isotipo-blanco.png" alt="" width={22} height={24} className="h-6 w-auto" />
-            <span className="hidden text-xs font-semibold tracking-[0.18em] text-white sm:inline">
-              ASTRA
-            </span>
-          </div>
-          {["Mapa", "Hoy", "Chat", "Perfil"].map((item, indice) => (
-            <div
-              key={item}
-              className={`mb-2 rounded-2xl px-3 py-2 text-[10px] font-medium sm:text-xs ${
-                indice === 0
-                  ? "bg-[#7C4DFF]/18 text-white"
-                  : "text-[color:var(--texto-muted)]"
-              }`}
-            >
-              {item}
-            </div>
-          ))}
-        </aside>
-        <div className="p-4 sm:p-6">
-          <div className="mb-5 flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#B388FF]">
-                Mapa estratégico
-              </p>
-              <h3 className="mt-1 font-display text-3xl leading-none text-white sm:text-4xl">
-                Tu energía de hoy
-              </h3>
-            </div>
-            <div className="hidden rounded-full border border-emerald-200/20 bg-emerald-300/10 px-3 py-1 text-xs font-semibold text-emerald-100 sm:block">
-              Claridad alta
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-3xl border border-white/[0.08] bg-white/[0.055] p-4">
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-xs font-semibold text-white">Lectura integrada</p>
-                <BarChart3 aria-hidden="true" className="h-4 w-4 text-[#B388FF]" />
-              </div>
-              <div className="space-y-3">
-                {[
-                  ["Fortalezas", "82%", "bg-emerald-200/70"],
-                  ["Oportunidades", "74%", "bg-[#B388FF]/70"],
-                  ["Cuidado", "38%", "bg-rose-200/60"],
-                ].map(([label, value, color]) => (
-                  <div key={label}>
-                    <div className="mb-1 flex justify-between text-[11px] text-[color:var(--texto-suave)]">
-                      <span>{label}</span>
-                      <span>{value}</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-white/[0.07]">
-                      <div className={`h-full rounded-full ${color}`} style={{ width: value }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="rounded-3xl border border-white/[0.08] bg-white/[0.055] p-4">
-                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-2xl bg-[#7C4DFF]/18">
-                  <IconoAstral nombre="astrologia" className="text-[#B388FF]" tamano={20} />
-                </div>
-                <p className="text-xs font-semibold text-white">Momento disponible</p>
-                <p className="mt-1 text-[11px] leading-5 text-[color:var(--texto-muted)]">
-                  Ordenar prioridades y elegir una acción concreta.
-                </p>
-              </div>
-              <div className="rounded-3xl border border-white/[0.08] bg-white/[0.055] p-4">
-                <div className="flex items-center gap-2 text-[11px] text-[color:var(--texto-suave)]">
-                  <Activity aria-hidden="true" className="h-4 w-4 text-[#B388FF]" />
-                  Próxima ventana favorable
-                </div>
-                <p className="mt-2 text-sm font-semibold text-white">18:30 a 20:10</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-3 grid gap-3 sm:grid-cols-3">
-            {["Carta astrológica", "Numerología", "Diseño Humano"].map((item) => (
-              <div key={item} className="rounded-2xl border border-white/[0.06] bg-white/[0.04] p-3 text-[11px] text-[color:var(--texto-suave)]">
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MockupAppMobile() {
-  return (
-    <div className="rounded-[2.2rem] border border-white/[0.16] bg-[#080411] p-2 shadow-2xl shadow-black/45">
-      <div className="relative overflow-hidden rounded-[1.8rem] border border-white/[0.08] bg-[#13091F]">
-        <div className="mx-auto mt-2 h-1.5 w-16 rounded-full bg-white/[0.14]" />
-        <div className="p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.24em] text-[#B388FF]">App ASTRA</p>
-              <p className="mt-1 text-sm font-semibold text-white">Tu día</p>
-            </div>
-            <Image src="/img/isotipo-blanco.png" alt="" width={28} height={30} className="h-8 w-auto" />
-          </div>
-          <div className="rounded-3xl border border-white/[0.08] bg-white/[0.07] p-4">
-            <p className="text-[11px] text-[color:var(--texto-muted)]">Energía actual</p>
-            <p className="mt-1 font-display text-3xl leading-none text-white">Clara</p>
-            <div className="mt-4 h-2 rounded-full bg-white/[0.08]">
-              <div className="h-full w-[76%] rounded-full bg-[#B388FF]/75" />
-            </div>
-          </div>
-          <div className="mt-3 rounded-3xl border border-white/[0.08] bg-[#7C4DFF]/12 p-3">
-            <div className="flex items-start gap-2">
-              <MessageCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#B388FF]" />
-              <p className="text-[11px] leading-5 text-[color:var(--texto-suave)]">
-                Antes de decidir, revisá qué necesita tu energía.
-              </p>
-            </div>
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {["Pausar", "Avanzar"].map((item) => (
-              <div key={item} className="rounded-2xl border border-white/[0.07] bg-white/[0.045] px-3 py-2 text-center text-[10px] font-semibold text-white">
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function Hero() {
   const reducirMovimiento = useReducedMotion();
 
@@ -490,7 +288,7 @@ function Hero() {
           <Sparkles aria-hidden="true" className="h-4 w-4" />
           Autoconocimiento con IA
         </div>
-        <h1 className="texto-gradiente font-display text-4xl leading-[1.03] tracking-[-0.03em] sm:text-5xl md:text-6xl lg:text-7xl">
+        <h1 className="texto-gradiente font-display text-3xl leading-[1.08] tracking-[-0.03em] sm:text-4xl md:text-5xl lg:text-6xl">
           Conocé tu energía, tus ciclos y tus mejores momentos para avanzar.
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-[color:var(--texto-suave)] sm:text-lg lg:mx-0">
@@ -515,7 +313,7 @@ function Hero() {
         </p>
       </motion.div>
 
-      <MockupsProducto />
+      <DiagramaOrbital />
     </section>
   );
 }
@@ -550,7 +348,7 @@ function LecturaIntegrada() {
             <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7C4DFF]/18 text-[#B388FF]">
               {pilar.icono}
             </div>
-            <h2 className="font-display text-2xl text-white">{pilar.titulo}</h2>
+            <h2 className="font-display text-xl text-white">{pilar.titulo}</h2>
             <p className="mt-3 text-sm leading-7 text-[color:var(--texto-suave)]">
               {pilar.texto}
             </p>
@@ -601,7 +399,7 @@ function ComoFunciona() {
             <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.07] text-sm font-semibold text-[#B388FF]">
               {String(indice + 1).padStart(2, "0")}
             </div>
-            <h3 className="font-display text-2xl leading-tight text-white">{paso.titulo}</h3>
+            <h3 className="font-display text-xl leading-tight text-white">{paso.titulo}</h3>
             <p className="mt-3 text-sm leading-7 text-[color:var(--texto-suave)]">
               {paso.texto}
             </p>
@@ -648,7 +446,7 @@ function FodaPersonal() {
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-[#B388FF]">
             FODA personal
           </p>
-          <h2 className="font-display text-3xl leading-tight text-white md:text-5xl">
+          <h2 className="font-display text-xl leading-tight text-white md:text-4xl">
             Fortalezas, oportunidades, debilidades y amenazas de tu mapa.
           </h2>
           <p className="mt-5 text-base leading-8 text-[color:var(--texto-suave)]">
@@ -685,7 +483,7 @@ function Decisiones() {
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-[#B388FF]">
               Decisiones y mejores momentos
             </p>
-            <h2 className="font-display text-3xl leading-tight text-white md:text-5xl">
+            <h2 className="font-display text-xl leading-tight text-white md:text-4xl">
               Consultá antes de avanzar, pausar o resguardar tu energía.
             </h2>
             <p className="mt-5 text-base leading-8 text-[color:var(--texto-suave)]">
@@ -746,7 +544,7 @@ function WebApp() {
             <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.08]">
               {item.icono}
             </div>
-            <h3 className="font-display text-3xl text-white">{item.titulo}</h3>
+            <h3 className="font-display text-2xl text-white">{item.titulo}</h3>
             <p className="mt-4 text-base leading-8 text-[color:var(--texto-suave)]">
               {item.texto}
             </p>
@@ -799,7 +597,7 @@ function Cierre() {
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-[#B388FF]">
             Crear mi mapa personal
           </p>
-          <h2 className="font-display text-3xl leading-tight text-white md:text-6xl">
+          <h2 className="font-display text-xl leading-tight text-white md:text-4xl">
             Conocerte también es una forma de avanzar.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[color:var(--texto-suave)]">

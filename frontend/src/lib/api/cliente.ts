@@ -104,6 +104,14 @@ class ClienteAPI {
     const json = (await respuesta.json()) as RespuestaAPI<T>;
 
     // El backend siempre envuelve en { exito, datos }.
+    // Si `exito` es false, lanzar error con el detalle del backend.
+    if (json.exito === false) {
+      throw new ErrorAPI(
+        200,
+        json.detalle || json.error || json.mensaje || "Error del servidor",
+      );
+    }
+
     // Si tiene `datos`, devolvemos eso. Si no (edge case), devolvemos el json crudo.
     if (json.datos !== undefined) {
       return json.datos;

@@ -153,11 +153,11 @@ export default function PaginaDashboard() {
   useEffect(() => {
     const epDiaActual = (episodiosHoy ?? []).find((ep) => ep.tipo === "dia");
     const estadoActual = epDiaActual?.estado ?? null;
-    if (
-      estadoEpDiaPrevio.current &&
-      estadoEpDiaPrevio.current !== "listo" &&
-      estadoActual === "listo"
-    ) {
+    const esTransicionAListo =
+      estadoActual === "listo" &&
+      (estadoEpDiaPrevio.current === null ||
+        estadoEpDiaPrevio.current !== "listo");
+    if (esTransicionAListo) {
       queryClient.invalidateQueries({ queryKey: ["pronostico"] });
     }
     estadoEpDiaPrevio.current = estadoActual;
@@ -211,6 +211,23 @@ export default function PaginaDashboard() {
       epDia?.estado === "generando_audio");
   const podcastDiaReproduciendo =
     !!epDia && pistaActual?.id === epDia.id && reproduciendo;
+
+  // Safety net: si el pronóstico cargó con accionables vacíos pero el podcast
+  // ya está listo, forzar re-fetch una vez para que el backend inyecte las
+  // acciones reales del podcast.
+  const revalidacionAccionablesDisparada = useRef(false);
+  useEffect(() => {
+    if (revalidacionAccionablesDisparada.current) return;
+    if (!pronosticoDiario || !podcastDiaListo) return;
+
+    const todosVacios = pronosticoDiario.momentos.every(
+      (m) => !m.accionables || m.accionables.length === 0,
+    );
+    if (todosVacios) {
+      revalidacionAccionablesDisparada.current = true;
+      queryClient.invalidateQueries({ queryKey: ["pronostico"] });
+    }
+  }, [pronosticoDiario, podcastDiaListo, queryClient]);
 
   const [modalLectura, setModalLectura] = useState(false);
   const modalLecturaRef = useRef<HTMLDivElement>(null);
@@ -371,6 +388,7 @@ export default function PaginaDashboard() {
               podcastListo={podcastDiaListo}
               podcastGenerando={podcastDiaGenerando ?? false}
               podcastReproduciendo={podcastDiaReproduciendo}
+              accionablesPreparando={!podcastDiaListo}
               onReproducirPodcast={() => manejarPlayPodcast("dia")}
               onGenerarPodcast={() => generarMutation.mutate("dia")}
               onLeerDia={podcastDiaListo ? () => setModalLectura(true) : undefined}

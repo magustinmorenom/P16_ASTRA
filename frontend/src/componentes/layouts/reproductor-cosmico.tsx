@@ -86,11 +86,12 @@ export default function ReproductorCosmico() {
 
       <div className="flex max-w-[50%] flex-1 flex-col items-center gap-1">
         <div className="flex items-center gap-3 sm:gap-4">
-          <button className="hidden transition-colors sm:block text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]">
-            <Icono nombre="aleatorio" tamaño={16} />
-          </button>
-          <button className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]">
-            <Icono nombre="retroceder" tamaño={20} peso="fill" />
+          <button
+            onClick={() => manejarSeek(Math.max(0, progresoSegundos - 10))}
+            className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]"
+            title="Retroceder 10s"
+          >
+            <Icono nombre="rebobinar" tamaño={20} />
           </button>
           <button
             onClick={toggleReproduccion}
@@ -108,11 +109,12 @@ export default function ReproductorCosmico() {
               />
             )}
           </button>
-          <button className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]">
-            <Icono nombre="avanzar" tamaño={20} peso="fill" />
-          </button>
-          <button className="hidden transition-colors sm:block text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]">
-            <Icono nombre="repetir" tamaño={16} />
+          <button
+            onClick={() => manejarSeek(Math.min(pistaActual.duracionSegundos, progresoSegundos + 10))}
+            className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]"
+            title="Adelantar 10s"
+          >
+            <Icono nombre="adelantar" tamaño={20} />
           </button>
         </div>
 

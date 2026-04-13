@@ -4,6 +4,7 @@ import io
 import uuid
 from datetime import date, datetime, timedelta, timezone
 
+import pytz
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from redis.asyncio import Redis
@@ -19,6 +20,8 @@ from app.dependencias_suscripcion import requiere_plan
 from app.modelos.usuario import Usuario
 from app.servicios.servicio_almacenamiento import ServicioAlmacenamiento
 from app.servicios.servicio_podcast import ServicioPodcast, _calcular_fecha_clave
+
+_TZ_AR = pytz.timezone("America/Argentina/Buenos_Aires")
 
 router = APIRouter(prefix="/podcast", tags=["Podcasts"])
 
@@ -45,13 +48,14 @@ def _serializar_episodio(ep) -> dict:
 
 @router.get("/hoy")
 async def obtener_episodios_hoy(
+    fecha: date | None = Query(None, description="Fecha YYYY-MM-DD (default: hoy ARG)"),
     usuario: Usuario = Depends(obtener_usuario_actual),
     _plan: None = Depends(requiere_plan("premium")),
     db: AsyncSession = Depends(obtener_db),
 ):
     """Obtiene los episodios de podcast existentes para el usuario (día/semana/mes actuales)."""
     repo = RepositorioPodcast(db)
-    hoy = date.today()
+    hoy = fecha or datetime.now(_TZ_AR).date()
 
     episodios = []
     for tipo in ("dia", "semana", "mes"):
@@ -137,6 +141,7 @@ async def obtener_historial(
 @router.post("/generar")
 async def generar_podcast(
     tipo: str = Query(..., pattern="^(dia|semana|mes)$"),
+    fecha: date | None = Query(None, description="Fecha YYYY-MM-DD (default: hoy ARG)"),
     usuario: Usuario = Depends(obtener_usuario_actual),
     _plan: None = Depends(requiere_plan("premium")),
     db: AsyncSession = Depends(obtener_db),
@@ -151,7 +156,7 @@ async def generar_podcast(
     corresponde (tipo "dia", episodio recién listo) — pasamos el cliente
     Redis para que pueda hacerlo.
     """
-    hoy = date.today()
+    hoy = fecha or datetime.now(_TZ_AR).date()
     episodio = await ServicioPodcast.generar_episodio(
         db, usuario.id, hoy, tipo, redis=redis
     )
@@ -190,7 +195,7 @@ async def generar_preview_manana(
             detail="El preview de mañana está disponible a partir de las 19:00 hora local.",
         )
 
-    manana = date.today() + timedelta(days=1)
+    manana = datetime.now(_TZ_AR).date() + timedelta(days=1)
     episodio = await ServicioPodcast.generar_episodio(
         db, usuario.id, manana, "dia",
         origen="preview",

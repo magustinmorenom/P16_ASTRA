@@ -2,8 +2,10 @@
 
 import json
 import uuid
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
+
+import pytz
 
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,6 +25,7 @@ from app.servicios.servicio_tts import ServicioTTS
 
 
 _RUTA_PROMPT_PODCAST = Path(__file__).parent.parent / "oraculo" / "prompt_podcast.md"
+_RUTA_PROMPT_ACCIONABLES = Path(__file__).parent.parent / "oraculo" / "prompt_extraer_accionables.md"
 
 TIPOS_PODCAST = {
     "dia": {
@@ -165,35 +168,80 @@ class ServicioPodcast:
             logger.warning("No se pudo invalidar cache de pronóstico: %s", e)
 
     @classmethod
-    def _separar_narrativa_acciones(cls, texto_completo: str) -> tuple[str, list[dict] | None]:
-        """Separa la narrativa del bloque ---ACCIONES--- JSON.
+    def _cargar_prompt_accionables(cls) -> str:
+        """Carga el prompt de extracción de accionables."""
+        try:
+            return _RUTA_PROMPT_ACCIONABLES.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            logger.warning("prompt_extraer_accionables.md no encontrado")
+            return "Extraé 6-9 acciones concretas del siguiente transcript de podcast, devolvé JSON."
 
-        Returns:
-            (narrativa_limpia, acciones_json o None si no se encontró/parseó)
+    @classmethod
+    async def _extraer_acciones_con_ia(
+        cls, sesion: AsyncSession, usuario_id: uuid.UUID, guion: str
+    ) -> list[dict] | None:
+        """Extrae acciones estructuradas del transcript usando Claude Haiku.
+
+        Llamada liviana (Haiku, ~800 tokens in, ~300 out) que toma el guion
+        narrativo del podcast y devuelve un array JSON de acciones organizadas
+        por bloque temporal (manana/tarde/noche).
         """
-        separador = "---ACCIONES---"
-        if separador not in texto_completo:
-            return texto_completo.strip(), None
+        if not guion:
+            return None
 
-        partes = texto_completo.split(separador, 1)
-        narrativa = partes[0].strip()
-        bloque_json = partes[1].strip()
+        import anthropic
+        config = obtener_configuracion()
+        if not config.anthropic_api_key:
+            logger.warning("Sin API key — no se pueden extraer acciones")
+            return None
 
-        # Limpiar posibles backticks markdown
-        if bloque_json.startswith("```"):
-            lineas = bloque_json.split("\n")
-            lineas = [l for l in lineas if not l.strip().startswith("```")]
-            bloque_json = "\n".join(lineas)
+        system_prompt = cls._cargar_prompt_accionables()
 
         try:
-            acciones = json.loads(bloque_json)
-            if isinstance(acciones, list):
-                return narrativa, acciones
-            logger.warning("Bloque acciones no es una lista, ignorando")
-            return narrativa, None
-        except json.JSONDecodeError as e:
-            logger.warning("Error parseando bloque acciones del podcast: %s", e)
-            return narrativa, None
+            cliente = anthropic.AsyncAnthropic(api_key=config.anthropic_api_key)
+            respuesta = await cliente.messages.create(
+                model=config.oraculo_modelo,  # Haiku — rápido y barato
+                max_tokens=600,
+                temperature=0,  # extracción determinista
+                system=system_prompt,
+                messages=[{"role": "user", "content": guion}],
+            )
+
+            texto = respuesta.content[0].text if respuesta.content else ""
+            tokens_in = respuesta.usage.input_tokens or 0
+            tokens_out = respuesta.usage.output_tokens or 0
+
+            # Registrar consumo
+            from app.servicios.servicio_consumo_api import registrar_consumo
+            await registrar_consumo(
+                sesion,
+                usuario_id=usuario_id,
+                servicio="anthropic",
+                operacion="podcast_extraer_acciones",
+                tokens_entrada=tokens_in,
+                tokens_salida=tokens_out,
+                modelo=config.oraculo_modelo,
+            )
+
+            # Parsear JSON — buscar array entre [ y ]
+            texto = texto.strip()
+            inicio = texto.find("[")
+            fin = texto.rfind("]")
+            if inicio == -1 or fin <= inicio:
+                logger.warning("Haiku no devolvió JSON array: %s", texto[:200])
+                return None
+
+            acciones = json.loads(texto[inicio:fin + 1])
+            if isinstance(acciones, list) and len(acciones) > 0:
+                logger.info("Acciones extraídas con Haiku: %d acciones", len(acciones))
+                return acciones
+
+            logger.warning("Haiku devolvió lista vacía o no-lista")
+            return None
+
+        except Exception as e:
+            logger.error("Error extrayendo acciones con Haiku: %s", e)
+            return None
 
     @classmethod
     def _generar_segmentos(cls, texto: str, duracion: float) -> list[dict]:
@@ -250,22 +298,37 @@ class ServicioPodcast:
     @classmethod
     def _construir_mensaje_usuario(cls, tipo: str, fecha_clave: date, origen: str = "manual") -> str:
         """Construye el mensaje del usuario para la generación del guión."""
+        _tz_ar = pytz.timezone("America/Argentina/Buenos_Aires")
+        ahora_ar = datetime.now(_tz_ar)
+        hora_local = ahora_ar.strftime("%H:%M")
+        hora_num = ahora_ar.hour
+
         marcador = "MAÑANA" if origen == "preview" else "HOY"
+        momento = "mañana" if hora_num < 12 else "tarde" if hora_num < 19 else "noche"
+
+        contexto_hora = (
+            f"HORA LOCAL DEL USUARIO: {hora_local}. "
+            f"MOMENTO DEL DÍA: {momento}. "
+            f"MARCADOR TEMPORAL: {marcador}."
+        )
+
         if tipo == "dia":
             return (
                 f"Generá el episodio de podcast para {fecha_clave.strftime('%d de %B de %Y')}. "
-                f"MARCADOR TEMPORAL PARA EL SALUDO: {marcador}."
+                f"{contexto_hora}"
             )
         elif tipo == "semana":
             fin_semana = fecha_clave + timedelta(days=6)
             return (
                 f"Generá el episodio de podcast semanal para la semana del "
-                f"{fecha_clave.strftime('%d de %B')} al {fin_semana.strftime('%d de %B de %Y')}."
+                f"{fecha_clave.strftime('%d de %B')} al {fin_semana.strftime('%d de %B de %Y')}. "
+                f"{contexto_hora}"
             )
         else:  # mes
             return (
                 f"Generá el episodio de podcast mensual para "
-                f"{_MESES_ES[fecha_clave.month]} de {fecha_clave.year}."
+                f"{_MESES_ES[fecha_clave.month]} de {fecha_clave.year}. "
+                f"{contexto_hora}"
             )
 
     @classmethod
@@ -358,8 +421,18 @@ class ServicioPodcast:
             tokens_out = respuesta.usage.output_tokens or 0
             tokens = tokens_in + tokens_out
 
-            # 4b. Separar narrativa del bloque de acciones JSON
-            guion, acciones = cls._separar_narrativa_acciones(texto_completo)
+            # 4b. El guion es el texto completo (ya no tiene bloque ---ACCIONES---)
+            guion = texto_completo.strip()
+
+            # 4c. Extraer acciones con Haiku (solo para tipo día)
+            acciones: list[dict] | None = None
+            if tipo == "dia":
+                acciones = await cls._extraer_acciones_con_ia(sesion, usuario_id, guion)
+                if not acciones:
+                    logger.warning(
+                        "No se pudieron extraer acciones del podcast dia para usuario=%s",
+                        usuario_id,
+                    )
 
             # Registrar consumo Claude (guión)
             from app.servicios.servicio_consumo_api import registrar_consumo

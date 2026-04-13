@@ -191,8 +191,12 @@ export default function MiniReproductor() {
           </div>
 
           <div className="flex items-center justify-center gap-8 py-6">
-            <button className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]">
-              <Icono nombre="retroceder" tamaño={28} peso="fill" />
+            <button
+              onClick={() => manejarSeek(Math.max(0, progresoSegundos - 10))}
+              className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]"
+              title="Retroceder 10s"
+            >
+              <Icono nombre="rebobinar" tamaño={28} />
             </button>
             <button
               onClick={toggleReproduccion}
@@ -210,8 +214,12 @@ export default function MiniReproductor() {
                 />
               )}
             </button>
-            <button className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]">
-              <Icono nombre="avanzar" tamaño={28} peso="fill" />
+            <button
+              onClick={() => manejarSeek(Math.min(pistaActual.duracionSegundos, progresoSegundos + 10))}
+              className="transition-colors text-[color:var(--color-acento)] hover:text-[color:var(--shell-texto)]"
+              title="Adelantar 10s"
+            >
+              <Icono nombre="adelantar" tamaño={28} />
             </button>
           </div>
 

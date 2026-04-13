@@ -24,6 +24,7 @@ interface HeroSeccionProps {
   podcastListo: boolean;
   podcastGenerando: boolean;
   podcastReproduciendo: boolean;
+  accionablesPreparando?: boolean;
   onReproducirPodcast: () => void;
   onGenerarPodcast: () => void;
   onLeerDia?: () => void;
@@ -41,6 +42,7 @@ export function HeroSeccion({
   podcastListo,
   podcastGenerando,
   podcastReproduciendo,
+  accionablesPreparando = false,
   onReproducirPodcast,
   onGenerarPodcast,
   onLeerDia,
@@ -169,7 +171,7 @@ export function HeroSeccion({
           className="min-w-0 border-b py-3.5 lg:flex lg:h-full lg:border-b-0 lg:border-r lg:px-4 lg:py-0 lg:pl-4 lg:pr-4"
           style={{ borderColor: "var(--shell-borde)" }}
         >
-          <MomentosDia momentos={momentos} expandido />
+          <MomentosDia momentos={momentos} expandido preparando={accionablesPreparando} />
         </div>
 
         <div className="grid grid-cols-1 gap-2.5 pt-3.5 sm:grid-cols-3 lg:hidden">

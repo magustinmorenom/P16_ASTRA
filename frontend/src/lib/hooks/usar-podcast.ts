@@ -12,9 +12,10 @@ function reintentarSiNoEs403(cantidadFallos: number, error: Error) {
 
 /** Obtiene los episodios de podcast existentes (día/semana/mes actuales). */
 export function usarPodcastHoy(refetchRapido = false) {
+  const hoy = new Date().toISOString().split("T")[0];
   return useQuery({
-    queryKey: ["podcast", "hoy"],
-    queryFn: () => clienteApi.get<PodcastEpisodio[]>("/podcast/hoy"),
+    queryKey: ["podcast", "hoy", hoy],
+    queryFn: () => clienteApi.get<PodcastEpisodio[]>(`/podcast/hoy?fecha=${hoy}`),
     retry: reintentarSiNoEs403,
     refetchInterval: (query) => {
       // No seguir haciendo polling si el error es 403
@@ -60,9 +61,10 @@ export function usarPodcastHistorial() {
 /** Genera un episodio de podcast on-demand. */
 export function usarGenerarPodcast() {
   const queryClient = useQueryClient();
+  const hoy = new Date().toISOString().split("T")[0];
   return useMutation({
     mutationFn: (tipo: TipoPodcast) =>
-      clienteApi.post<PodcastEpisodio>(`/podcast/generar?tipo=${tipo}`),
+      clienteApi.post<PodcastEpisodio>(`/podcast/generar?tipo=${tipo}&fecha=${hoy}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["podcast"] });
       // También invalidamos el pronóstico para que se recalcule basándose en este audio/lectura

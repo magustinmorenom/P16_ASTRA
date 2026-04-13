@@ -371,13 +371,13 @@ class ServicioPronostico:
             "momentos": [
                 {"bloque": "manana", "titulo": "Mañana", "icono": "sunrise",
                  "frase": "Empezá el día con calma", "nivel": "neutro",
-                 "accionables": ["Dedicá los primeros 30 min a planificar", "Evitá revisar redes antes de las 9"]},
+                 "accionables": []},
                 {"bloque": "tarde", "titulo": "Tarde", "icono": "sun",
                  "frase": "Buen momento para avanzar tareas", "nivel": "neutro",
-                 "accionables": ["Enfocate en la tarea más importante entre 14 y 16h", "Salí a caminar 10 min si podés"]},
+                 "accionables": []},
                 {"bloque": "noche", "titulo": "Noche", "icono": "moon",
                  "frase": "Descansá y recargá", "nivel": "neutro",
-                 "accionables": ["Cerrá pantallas 1h antes de dormir", "Escribí 3 cosas buenas del día"]},
+                 "accionables": []},
             ],
             "alertas": [],
             "consejo_hd": {
@@ -448,7 +448,7 @@ class ServicioPronostico:
         fecha: date | None = None,
     ) -> dict:
         """Genera o recupera el pronóstico cósmico del día."""
-        fecha_obj = fecha or date.today()
+        fecha_obj = fecha or datetime.now(_TZ_AR).date()
         fecha_str = fecha_obj.isoformat()
         clave_cache = f"pronostico:diario:{usuario_id}:{fecha_str}"
 
@@ -490,22 +490,18 @@ class ServicioPronostico:
         # 5. Extraer info lunar
         luna_info = cls._extraer_info_luna(transitos)
 
-        # 6. Buscar si existe lectura diaria (podcast) para resumir accionables
-        lectura_diaria = None
+        # 6. Buscar si existe podcast listo con acciones extraídas
         acciones_podcast: list[dict] | None = None
         try:
             from app.datos.repositorio_podcast import RepositorioPodcast
             repo_podcast = RepositorioPodcast(sesion)
             podcast = await repo_podcast.obtener_episodio(usuario_id, fecha_obj, "dia")
             if podcast and podcast.estado == "listo":
-                if podcast.guion_md:
-                    lectura_diaria = podcast.guion_md
-                    logger.debug("Lectura diaria encontrada para el usuario %s", usuario_id)
                 if podcast.acciones_json and isinstance(podcast.acciones_json, list):
                     acciones_podcast = podcast.acciones_json
                     logger.debug("Acciones del podcast encontradas: %d acciones", len(acciones_podcast))
         except Exception as e:
-            logger.warning("No se pudo recuperar la lectura diaria para el pronóstico: %s", e)
+            logger.warning("No se pudo recuperar acciones del podcast: %s", e)
 
         # 7. Construir prompt con contexto
         config = obtener_configuracion()
@@ -530,14 +526,6 @@ class ServicioPronostico:
             f"Mes: {numero_personal['mes']['numero']} — {numero_personal['mes']['descripcion']}\n"
             f"Año: {numero_personal['ano']['numero']} — {numero_personal['ano']['descripcion']}\n\n"
         )
-
-        if lectura_diaria:
-            mensaje_usuario += (
-                f"## Lectura Diaria (Podcast Transcript)\n"
-                f"IMPORTANTE: Usá este texto como fuente principal para los 'momentos' y 'accionables'. "
-                f"Resumí e identificá qué hacer y qué evitar basándote en esta lectura:\n\n"
-                f"{lectura_diaria}\n\n"
-            )
 
         mensaje_usuario += "Generá el pronóstico cósmico completo en JSON."
 
@@ -590,13 +578,21 @@ class ServicioPronostico:
             validado = PronosticoDiarioSchema(**pronostico)
             resultado = validado.model_dump()
 
+            total_accionables = sum(
+                len(m.get("accionables", [])) for m in resultado.get("momentos", [])
+            )
+            logger.info("Pronóstico Claude — %d accionables en momentos", total_accionables)
+
         except (json.JSONDecodeError, Exception) as e:
             logger.error("Error generando pronóstico con Claude: %s", e)
             resultado = cls._generar_fallback_diario(numero_personal, luna_info)
 
         # 8b. Inyectar acciones del podcast directamente en los momentos
+        # Los accionables vienen SOLO del podcast (extraídos con Haiku)
         if acciones_podcast:
             resultado = cls._inyectar_acciones_podcast(resultado, acciones_podcast)
+        else:
+            logger.info("Sin acciones de podcast para inyectar")
 
         # 9. Guardar en Redis
         try:

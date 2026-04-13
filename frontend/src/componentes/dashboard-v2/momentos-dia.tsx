@@ -32,6 +32,7 @@ const ICONO_BLOQUE: Record<string, React.ReactNode> = {
 interface MomentosDiaProps {
   momentos: MomentoClaveDTO[];
   expandido?: boolean;
+  preparando?: boolean;
 }
 
 const ETIQUETA_BLOQUE: Record<string, string> = {
@@ -53,11 +54,35 @@ const ESTILO_TARJETA_MOMENTOS = {
   backdropFilter: "none",
 } as const;
 
-export function MomentosDia({ momentos, expandido = false }: MomentosDiaProps) {
+export function MomentosDia({ momentos, expandido = false, preparando = false }: MomentosDiaProps) {
   const ordenBloques = ["manana", "tarde", "noche"] as const;
   const momentosOrdenados = ordenBloques
     .map((b) => momentos.find((m) => m.bloque === b))
     .filter(Boolean) as MomentoClaveDTO[];
+
+  // Si no hay momentos o todos están sin accionables y el podcast se está generando,
+  // mostrar estado "preparando"
+  const sinAccionables =
+    momentosOrdenados.length === 0 ||
+    momentosOrdenados.every((m) => !m.accionables || m.accionables.length === 0);
+
+  if (preparando && sinAccionables) {
+    return (
+      <div
+        className={`flex w-full flex-col items-center justify-center overflow-hidden rounded-[18px] px-4 py-6 text-center ${
+          expandido ? "lg:h-full" : ""
+        }`}
+        style={ESTILO_TARJETA_MOMENTOS}
+      >
+        <div className="mb-3 flex h-8 w-8 items-center justify-center">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[color:var(--color-acento)] border-t-transparent" />
+        </div>
+        <p className="text-[12px] font-medium leading-[1.5] text-[color:var(--shell-texto-secundario)]">
+          Astra está preparando tus accionables para aprovechar al máximo tu día
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div

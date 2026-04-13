@@ -14,7 +14,7 @@
   --borde: rgb(255 255 255 / 0.1);
   --superficie: rgb(255 255 255 / 0.065);
   --superficie-fuerte: rgb(255 255 255 / 0.11);
-  --font-display: var(--font-cormorant), "Cormorant Garamond", "Bodoni 72", Didot, Georgia, serif;
+  --font-display: var(--font-outfit), "Outfit", sans-serif;
 }
 
 @theme inline {
@@ -62,7 +62,7 @@ a {
 
 .font-display {
   font-family: var(--font-display);
-  font-weight: 300;
+  font-weight: 200;
   letter-spacing: -0.012em;
 }
 
