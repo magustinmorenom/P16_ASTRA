@@ -61,14 +61,14 @@ export function HeroSeccion({
     backdropFilter: "none",
   } as const;
   const estiloBotonPrincipal = {
-    borderColor: "var(--shell-borde-fuerte)",
-    background: "var(--shell-gradiente-acento-suave)",
-    color: "var(--shell-texto)",
-    boxShadow: "none",
+    borderColor: "rgba(124,77,255,0.3)",
+    background: "linear-gradient(135deg, #7C4DFF, #5B2DBF)",
+    color: "#FFFFFF",
+    boxShadow: "0 2px 8px rgba(124,77,255,0.3)",
   } as const;
   const estiloIconoBotonPrincipal = {
-    borderColor: "var(--shell-borde-fuerte)",
-    background: "var(--shell-superficie)",
+    borderColor: "rgba(255,255,255,0.2)",
+    background: "rgba(255,255,255,0.15)",
   } as const;
   const estiloBotonSecundario = {
     borderColor: "var(--shell-borde)",
@@ -119,7 +119,7 @@ export function HeroSeccion({
                     >
                       {podcastGenerando ? (
                         <div
-                          className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[color:var(--color-acento)] border-t-transparent"
+                          className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent"
                         />
                       ) : (
                         <Icono
@@ -132,7 +132,7 @@ export function HeroSeccion({
                           }
                           tamaño={12}
                           peso="fill"
-                          className="text-[color:var(--color-acento)]"
+                          className="text-white"
                         />
                       )}
                     </span>

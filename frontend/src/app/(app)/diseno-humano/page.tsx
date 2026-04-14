@@ -903,7 +903,10 @@ export default function PaginaDisenoHumano() {
                 style={{ background: "var(--shell-overlay-suave)" }}
                 aria-label="Cerrar detalle"
               />
-              <div className="relative z-10 max-h-[85vh] w-full overflow-hidden rounded-t-[22px]">
+              <div
+                className="relative z-10 w-full overflow-hidden rounded-t-[22px]"
+                style={{ maxHeight: "calc(90vh - var(--tab-bar-height) - env(safe-area-inset-bottom, 0px))" }}
+              >
                 <PanelContextualHD
                   seleccion={seleccion}
                   datos={datos}

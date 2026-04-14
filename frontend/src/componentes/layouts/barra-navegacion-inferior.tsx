@@ -100,54 +100,54 @@ export default function BarraNavegacionInferior() {
   return (
     <nav
       data-no-explicable="true"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-xl"
+      className="fixed bottom-0 left-0 right-0 z-50 overflow-hidden border-t backdrop-blur-xl"
       style={{
         background: "var(--shell-tabbar)",
         borderColor: "var(--shell-borde)",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
-      <div className="relative flex items-center justify-around h-[72px] pb-[10px]">
+      <div className="relative flex items-center justify-evenly h-[72px] pb-[10px]">
         {/* Tabs izquierdos */}
         {TABS_IZQUIERDOS.map(renderTab)}
 
         {/* Spacer central — reserva columna para el FAB */}
-        <div className="flex-1" aria-hidden="true" />
+        <div className="w-[68px] shrink-0" aria-hidden="true" />
 
         {/* Tabs derechos */}
         {TABS_DERECHOS.map(renderTab)}
 
-        {/* FAB Chat — flota sobre el spacer central */}
-        <Link
-          href="/chat"
-          aria-label="Abrir chat"
-          className={cn(
-            "absolute left-1/2 -translate-x-1/2 bottom-[18px] z-20",
-            "flex items-center justify-center",
-            "w-[68px] h-[68px] rounded-full",
-            "animate-chat-soft-pulse transition-colors",
-            chatActivo
-              ? "bg-[rgba(147,51,234,0.22)]"
-              : "bg-[rgba(124,77,255,0.16)]"
-          )}
-        >
-          <div
+        {/* FAB Chat — flota sobre el spacer central (oculto en /chat) */}
+        {!chatActivo && (
+          <Link
+            href="/chat"
+            aria-label="Abrir chat"
             className={cn(
+              "absolute left-1/2 -translate-x-1/2 bottom-[18px] z-20",
               "flex items-center justify-center",
-              "w-[52px] h-[52px] rounded-full",
-              "shadow-[0_4px_18px_rgba(124,77,255,0.55)]",
-              "transition-colors",
-              chatActivo ? "bg-[#9333EA]" : "bg-[#7C4DFF]"
+              "w-[68px] h-[68px] rounded-full",
+              "animate-chat-soft-pulse transition-colors",
+              "bg-[rgba(124,77,255,0.16)]"
             )}
           >
-            <Icono
-              nombre="chatCirculo"
-              tamaño={26}
-              peso="fill"
-              className="text-white"
-            />
-          </div>
-        </Link>
+            <div
+              className={cn(
+                "flex items-center justify-center",
+                "w-[52px] h-[52px] rounded-full",
+                "shadow-[0_4px_18px_rgba(124,77,255,0.55)]",
+                "transition-colors",
+                "bg-[#7C4DFF]"
+              )}
+            >
+              <Icono
+                nombre="chatCirculo"
+                tamaño={26}
+                peso="fill"
+                className="text-white"
+              />
+            </div>
+          </Link>
+        )}
       </div>
     </nav>
   );

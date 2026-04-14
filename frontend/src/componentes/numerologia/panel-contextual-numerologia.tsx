@@ -182,7 +182,7 @@ function VistaDetalle({
   modo: "desktop" | "mobile";
 }) {
   return (
-    <div className="p-5">
+    <div className={cn("p-5", modo === "mobile" && "pb-8")}>
       {modo === "mobile" && (
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>

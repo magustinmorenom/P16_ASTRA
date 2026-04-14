@@ -20,7 +20,7 @@ export default function LayoutMobile({
 
   return (
     <div
-      className="flex h-[100dvh] flex-col"
+      className="flex h-[100dvh] flex-col overflow-x-hidden"
       style={{ background: "var(--shell-fondo-profundo)" }}
     >
       {/* Contenido principal — cada pagina incluye su propio HeaderMobile */}

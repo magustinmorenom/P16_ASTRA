@@ -1048,7 +1048,10 @@ export default function PaginaNumerologia() {
             style={{ background: "var(--shell-overlay-suave)" }}
             aria-label="Cerrar detalle"
           />
-          <div className="tema-superficie-panel relative max-h-[82vh] overflow-y-auto rounded-t-[28px] border-t">
+          <div
+            className="tema-superficie-panel relative overflow-y-auto overflow-x-hidden scroll-sutil rounded-t-[28px] border-t"
+            style={{ maxHeight: "calc(90vh - var(--tab-bar-height) - env(safe-area-inset-bottom, 0px))" }}
+          >
             <div
               className="sticky top-0 z-10 flex justify-center rounded-t-[28px] pt-3 pb-2"
               style={{ background: "var(--shell-superficie-fuerte)" }}

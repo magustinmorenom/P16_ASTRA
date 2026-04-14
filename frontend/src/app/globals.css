@@ -5,6 +5,7 @@ html {
   scroll-behavior: smooth;
   color-scheme: var(--tema-color-scheme);
   background: var(--color-fondo);
+  overflow-x: hidden;
 }
 
 /* Selección de texto: violeta ciruela ASTRA en toda la app */
@@ -274,8 +275,8 @@ body::-webkit-scrollbar-thumb {
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-left: env(safe-area-inset-left, 0px);
   --safe-area-right: env(safe-area-inset-right, 0px);
-  --tab-bar-height: 56px;
-  --mini-player-height: 56px;
+  --tab-bar-height: 72px;
+  --mini-player-height: 64px;
 }
 
 /* ============================================

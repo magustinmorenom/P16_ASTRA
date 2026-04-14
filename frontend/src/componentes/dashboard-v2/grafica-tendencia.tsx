@@ -174,6 +174,10 @@ export function GraficaTendencia({ datos, fechaHoy }: GraficaTendenciaProps) {
         tono="panel"
         className="flex w-full flex-col gap-0 overflow-hidden rounded-[24px] border border-[var(--shell-borde)] bg-[var(--shell-fondo)]/60 backdrop-blur-xl shadow-[0_18px_40px_rgba(8,3,20,0.10)] py-4"
       >
+        <p className="px-5 pt-1 pb-0 text-[12px] font-semibold tracking-[0.04em] text-[color:var(--shell-texto-secundario)]">
+          Tendencia de energía
+        </p>
+
         {/* Keyframes inline para animacion de dibujo */}
         <style>{`
           @keyframes dibujarLinea {
