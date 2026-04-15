@@ -78,7 +78,7 @@ export function MomentosDia({ momentos, expandido = false, preparando = false }:
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-[color:var(--color-acento)] border-t-transparent" />
         </div>
         <p className="text-[12px] font-medium leading-[1.5] text-[color:var(--shell-texto-secundario)]">
-          Astra está preparando tus accionables para aprovechar al máximo tu día
+          Astra está preparando las claves de tu día
         </p>
       </div>
     );

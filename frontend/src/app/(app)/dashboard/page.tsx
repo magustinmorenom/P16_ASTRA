@@ -220,10 +220,8 @@ export default function PaginaDashboard() {
     if (revalidacionAccionablesDisparada.current) return;
     if (!pronosticoDiario || !podcastDiaListo) return;
 
-    const todosVacios = pronosticoDiario.momentos.every(
-      (m) => !m.accionables || m.accionables.length === 0,
-    );
-    if (todosVacios) {
+    const sinClaves = !pronosticoDiario.claves_dia || pronosticoDiario.claves_dia.length === 0;
+    if (sinClaves) {
       revalidacionAccionablesDisparada.current = true;
       queryClient.invalidateQueries({ queryKey: ["pronostico"] });
     }
@@ -379,7 +377,7 @@ export default function PaginaDashboard() {
             <HeroSeccion
               fecha={new Date()}
               nombreUsuario={nombreSaludo}
-              momentos={pronosticoDiario.momentos}
+              clavesDia={pronosticoDiario.claves_dia ?? []}
               numero={pronosticoDiario.numero_personal}
               luna={pronosticoDiario.luna}
               energia={pronosticoDiario.clima.energia}

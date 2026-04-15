@@ -63,6 +63,8 @@ interface EstadoUI {
   segmentoActual: number;
   /** Indica si el mini reproductor mobile esta expandido a full-screen. */
   miniReproductorExpandido: boolean;
+  /** Indica si el menu explorar mobile esta abierto (side-right). */
+  menuExplorarAbierto: boolean;
 
   /** Cambia el panel lateral activo. */
   setPanelActivo: (panel: PanelActivo) => void;
@@ -91,6 +93,10 @@ interface EstadoUI {
   setSegmentoActual: (idx: number) => void;
   /** Alterna el mini reproductor expandido/colapsado en mobile. */
   toggleMiniReproductor: () => void;
+  /** Alterna el menu explorar mobile. */
+  toggleMenuExplorar: () => void;
+  /** Cierra el menu explorar mobile. */
+  cerrarMenuExplorar: () => void;
 
   /** Lista de toasts activos. */
   toasts: ToastItem[];
@@ -114,6 +120,7 @@ export const useStoreUI = create<EstadoUI>((set) => ({
   silenciado: false,
   segmentoActual: 0,
   miniReproductorExpandido: false,
+  menuExplorarAbierto: false,
 
   setPanelActivo: (panel) => set({ panelActivo: panel }),
   setPasoOnboarding: (paso) => set({ pasoOnboarding: paso }),
@@ -135,6 +142,9 @@ export const useStoreUI = create<EstadoUI>((set) => ({
   setSegmentoActual: (idx) => set({ segmentoActual: idx }),
   toggleMiniReproductor: () =>
     set((estado) => ({ miniReproductorExpandido: !estado.miniReproductorExpandido })),
+  toggleMenuExplorar: () =>
+    set((estado) => ({ menuExplorarAbierto: !estado.menuExplorarAbierto })),
+  cerrarMenuExplorar: () => set({ menuExplorarAbierto: false }),
 
   toasts: [],
   mostrarToast: (variante, mensaje, duracionMs = 4000) => {

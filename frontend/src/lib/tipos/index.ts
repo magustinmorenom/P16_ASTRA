@@ -134,6 +134,7 @@ export type {
   ClimaCosmicoDTO,
   AreaVidaDTO,
   MomentoClaveDTO,
+  ClaveDiaDTO,
   AlertaCosmicaDTO,
   ConsejoHDDTO,
   LunaInfoDTO,

@@ -54,8 +54,7 @@ export default function PaginaChat() {
   }, [convQuery, conversaciones, cambiarMutation, router]);
 
   // Auto-seleccionar la conversacion activa al cargar.
-  // Si la conversacion activa es de un dia anterior (hora local del usuario),
-  // NO se selecciona: arranca en limpio para forzar sesion nueva al escribir.
+  // Si la conversacion activa es de un dia anterior, crear una nueva automáticamente.
   useEffect(() => {
     if (inicializado || conversaciones.length === 0) return;
     if (convQuery) return; // dejamos que el efecto de arriba maneje el deep-link
@@ -76,8 +75,19 @@ export default function PaginaChat() {
       if (esDeHoy) {
         setConversacionActiva(activa.id);
         setTituloActiva(activa.titulo || activa.preview || null);
+        setInicializado(true);
+        return;
       }
     }
+
+    // No hay conversación de hoy — crear una nueva automáticamente
+    nuevaMutation.mutate(undefined, {
+      onSuccess: (data) => {
+        setConversacionActiva(data.conversacion_id);
+        setTituloActiva(null);
+        refetchConversaciones();
+      },
+    });
     setInicializado(true);
   }, [conversaciones, inicializado]);
 

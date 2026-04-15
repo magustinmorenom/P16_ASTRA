@@ -36,6 +36,13 @@ class MomentoClaveSchema(BaseModel):
     accionables: list[str] = Field(default_factory=list, description="2-3 acciones concretas para ese bloque")
 
 
+class ClaveDiaSchema(BaseModel):
+    """Una clave/insight del día extraída del podcast."""
+
+    clave: str = Field(description="Insight corto, max 90 chars")
+    contexto: str = Field(default="", description="Razón astrológica interna")
+
+
 class AlertaCosmicaSchema(BaseModel):
     """Alerta de evento cósmico relevante."""
 
@@ -88,6 +95,7 @@ class PronosticoDiarioSchema(BaseModel):
     consejo_hd: ConsejoHDSchema
     luna: LunaInfoSchema
     numero_personal: NumeroPersonalSchema
+    claves_dia: list[ClaveDiaSchema] = Field(default_factory=list)
 
 
 class DiaSemanalSchema(BaseModel):

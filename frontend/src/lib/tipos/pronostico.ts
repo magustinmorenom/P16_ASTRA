@@ -59,6 +59,11 @@ export interface NumeroPersonalDTO {
   interpretacion_integrada?: string;
 }
 
+export interface ClaveDiaDTO {
+  clave: string;
+  contexto: string;
+}
+
 export interface AccesoPronosticoDTO {
   pronostico_clima: boolean;
   pronostico_areas: boolean;
@@ -78,6 +83,7 @@ export interface PronosticoDiarioDTO {
   luna: LunaInfoDTO;
   numero_personal: NumeroPersonalDTO;
   acceso: AccesoPronosticoDTO;
+  claves_dia?: ClaveDiaDTO[];
 }
 
 export interface DiaSemanalDTO {

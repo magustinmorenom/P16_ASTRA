@@ -2,6 +2,7 @@
 
 import { useStoreUI } from "@/lib/stores/store-ui";
 import BarraNavegacionInferior from "@/componentes/layouts/barra-navegacion-inferior";
+import MenuExplorar from "@/componentes/layouts/menu-explorar";
 import MiniReproductor from "@/componentes/layouts/mini-reproductor";
 // ---------------------------------------------------------------------------
 // Layout Mobile — Shell tipo app nativa
@@ -36,6 +37,9 @@ export default function LayoutMobile({
 
       {/* Barra de navegacion inferior */}
       <BarraNavegacionInferior />
+
+      {/* Menu explorar (side-right) */}
+      <MenuExplorar />
     </div>
   );
 }

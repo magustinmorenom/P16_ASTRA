@@ -322,6 +322,22 @@ class ServicioPronostico:
         return resultado
 
     @classmethod
+    def _extraer_claves_dia(cls, acciones_podcast: list[dict]) -> list[dict]:
+        """Convierte acciones_json del podcast en claves_dia para el pronóstico.
+
+        El prompt actual devuelve {clave, contexto}. Para backward-compat con
+        el formato viejo {accion, bloque, contexto}, se mapea `accion` → `clave`
+        si el campo `clave` no existe.
+        """
+        claves: list[dict] = []
+        for item in acciones_podcast:
+            texto = item.get("clave") or item.get("accion", "")
+            contexto = item.get("contexto", "")
+            if texto:
+                claves.append({"clave": texto, "contexto": contexto})
+        return claves
+
+    @classmethod
     def _generar_fallback_diario(
         cls, numero_personal: dict, luna_info: dict
     ) -> dict:
@@ -510,6 +526,9 @@ class ServicioPronostico:
             fallback = cls._generar_fallback_diario(numero_personal, luna_info)
             if acciones_podcast:
                 fallback = cls._inyectar_acciones_podcast(fallback, acciones_podcast)
+                fallback["claves_dia"] = cls._extraer_claves_dia(acciones_podcast)
+            else:
+                fallback.setdefault("claves_dia", [])
             return fallback
 
         system_prompt = cls._cargar_prompt()
@@ -591,8 +610,10 @@ class ServicioPronostico:
         # Los accionables vienen SOLO del podcast (extraídos con Haiku)
         if acciones_podcast:
             resultado = cls._inyectar_acciones_podcast(resultado, acciones_podcast)
+            resultado["claves_dia"] = cls._extraer_claves_dia(acciones_podcast)
         else:
             logger.info("Sin acciones de podcast para inyectar")
+            resultado.setdefault("claves_dia", [])
 
         # 9. Guardar en Redis
         try:
