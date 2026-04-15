@@ -123,9 +123,9 @@ export default function BarraNavegacionInferior() {
             href="/chat"
             aria-label="Abrir chat"
             className={cn(
-              "absolute left-1/2 -translate-x-1/2 bottom-[18px] z-20",
+              "absolute left-1/2 -translate-x-1/2 bottom-[7px] z-20",
               "flex items-center justify-center",
-              "w-[68px] h-[68px] rounded-full",
+              "w-[60px] h-[60px] rounded-full",
               "animate-chat-soft-pulse transition-colors",
               "bg-[rgba(124,77,255,0.16)]"
             )}
