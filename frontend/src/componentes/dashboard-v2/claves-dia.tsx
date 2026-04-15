@@ -132,7 +132,7 @@ export function ClavesDia({ claves, expandido = false, preparando = false }: Cla
 
               {/* Contexto expandido */}
               {abierta && clave.contexto && (
-                <div className="mt-1.5 animate-[fadeIn_150ms_ease-out] border-l-2 border-violet-400/30 pl-2.5">
+                <div className="mt-1.5 animate-[fadeIn_150ms_ease-out]">
                   <p className="text-[11px] leading-[1.5] text-[color:var(--shell-texto-secundario)]">
                     {clave.contexto}
                   </p>

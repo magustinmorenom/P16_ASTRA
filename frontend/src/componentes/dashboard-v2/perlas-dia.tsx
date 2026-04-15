@@ -32,7 +32,7 @@ export function PerlasDia({ expandido = true }: PropsPerlasDia) {
         <div className="flex items-center gap-2 mb-2.5">
           <Icono nombre="foco" tamaño={15} peso="fill" className="text-violet-400" />
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-400">
-            Perlas de tu perfil
+            Perlas de tu perfil - Conocete mejor
           </p>
         </div>
         <SkeletonPerlas cantidad={expandido ? 3 : 2} />
@@ -71,7 +71,7 @@ export function PerlasDia({ expandido = true }: PropsPerlasDia) {
       <div className="flex items-center gap-2 px-3.5 pt-3 pb-1.5">
         <Icono nombre="foco" tamaño={15} peso="fill" className="text-violet-400" />
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-400">
-          Perlas de tu perfil
+          Perlas de tu perfil - Concete mejor
         </p>
       </div>
 
