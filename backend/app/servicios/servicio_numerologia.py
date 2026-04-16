@@ -2,6 +2,7 @@
 
 from datetime import date
 
+from app.nucleo.utilidades_fecha import dia_arg_actual
 from app.utilidades.constantes import (
     NUMEROS_MAESTROS,
     TABLA_CALDEA,
@@ -121,7 +122,7 @@ class ServicioNumerologia:
     @classmethod
     def _anio_personal(cls, fecha_nacimiento: date, fecha_objetivo: date | None = None) -> int:
         """Calcula el Año Personal basado en el año objetivo (o actual)."""
-        anio_actual = (fecha_objetivo or date.today()).year
+        anio_actual = (fecha_objetivo or dia_arg_actual()).year
         dia = cls._reducir_numero(fecha_nacimiento.day)
         mes = cls._reducir_numero(fecha_nacimiento.month)
         anio = cls._reducir_numero(sum(int(d) for d in str(anio_actual)))
@@ -130,14 +131,14 @@ class ServicioNumerologia:
     @classmethod
     def _mes_personal(cls, fecha_nacimiento: date, fecha_objetivo: date | None = None) -> int:
         """Calcula el Mes Personal: año personal + mes objetivo, reducido."""
-        ref = fecha_objetivo or date.today()
+        ref = fecha_objetivo or dia_arg_actual()
         anio_personal = cls._anio_personal(fecha_nacimiento, ref)
         return cls._reducir_numero(anio_personal + ref.month)
 
     @classmethod
     def _dia_personal(cls, fecha_nacimiento: date, fecha_objetivo: date | None = None) -> int:
         """Calcula el Día Personal: mes personal + día objetivo, reducido."""
-        ref = fecha_objetivo or date.today()
+        ref = fecha_objetivo or dia_arg_actual()
         mes_personal = cls._mes_personal(fecha_nacimiento, ref)
         return cls._reducir_numero(mes_personal + ref.day)
 
@@ -149,7 +150,7 @@ class ServicioNumerologia:
     @classmethod
     def _meses_personales_anio(cls, fecha_nacimiento: date, fecha_objetivo: date | None = None) -> list[dict]:
         """Calcula el número personal de cada mes del año actual."""
-        ref = fecha_objetivo or date.today()
+        ref = fecha_objetivo or dia_arg_actual()
         resultado = []
         for mes in range(1, 13):
             fecha_mes = date(ref.year, mes, 1)

@@ -5,6 +5,7 @@ import { PanelGlass } from "./panel-glass";
 import { Icono } from "@/componentes/ui/icono";
 import { usarPronosticoSemanaSiguiente } from "@/lib/hooks/usar-pronostico";
 import type { DiaSemanalDTO } from "@/lib/tipos";
+import { fechaHoyLocal, fechaDeDate } from "@/lib/utilidades/fecha-local";
 
 const DIAS_SEMANA = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"] as const;
 
@@ -23,7 +24,7 @@ function lunesSiguienteSemana(): string {
   const diff = (7 - hoy.getDay() + 1) % 7 || 7; // días hasta próximo lunes
   const lunes = new Date(hoy);
   lunes.setDate(hoy.getDate() + diff);
-  return lunes.toISOString().split("T")[0];
+  return fechaDeDate(lunes);
 }
 
 const CLIMA_LABEL: Record<string, string> = {
@@ -242,7 +243,7 @@ export function SemanaV2({
             {semanaVisible.map((dia, idx) => {
               const diaSem = obtenerDiaSemana(dia.fecha);
               const diaMes = obtenerDiaMes(dia.fecha);
-              const hoy = new Date().toISOString().split("T")[0] === dia.fecha;
+              const hoy = fechaHoyLocal() === dia.fecha;
 
               return (
                 <div

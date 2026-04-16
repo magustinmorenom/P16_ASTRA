@@ -86,6 +86,9 @@ class Configuracion(BaseSettings):
     resend_api_key: str = ""
     resend_from: str = "ASTRA <noreply@theastra.xyz>"
 
+    # Verificación de email al registrarse
+    verificacion_email_habilitada: bool = True
+
     # MercadoPago — webhook y URLs
     mp_webhook_secret: str = ""
     mp_notification_url: str = "http://localhost:8000/api/v1/suscripcion/webhook"

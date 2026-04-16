@@ -167,9 +167,14 @@ class TestRegistro:
     """Tests de POST /auth/registrar."""
 
     @pytest.mark.asyncio
+    @patch("app.rutas.v1.auth.obtener_configuracion")
     @patch("app.rutas.v1.auth.RepositorioUsuario")
-    async def test_registrar_usuario_exitoso(self, MockRepo, cliente, db_falsa):
+    async def test_registrar_usuario_exitoso(self, MockRepo, MockConfig, cliente, db_falsa):
         """Debe crear usuario y retornar tokens."""
+        config_mock = MagicMock()
+        config_mock.verificacion_email_habilitada = False
+        config_mock.asignar_premium_por_defecto = False
+        MockConfig.return_value = config_mock
         uid = uuid.uuid4()
         usuario_mock = _crear_usuario_mock(
             uid=uid, email="nuevo@test.com", nombre="Nuevo",
@@ -179,6 +184,7 @@ class TestRegistro:
         repo_instance = MockRepo.return_value
         repo_instance.obtener_por_email = AsyncMock(return_value=None)
         repo_instance.crear = AsyncMock(return_value=usuario_mock)
+        repo_instance.marcar_verificado = AsyncMock()
 
         resp = await cliente.post(
             "/api/v1/auth/registrar",
@@ -1166,13 +1172,18 @@ class TestPlanGratisAutoRegistro:
     """Tests de asignación automática de plan gratis al registrar."""
 
     @pytest.mark.asyncio
+    @patch("app.rutas.v1.auth.obtener_configuracion")
     @patch("app.rutas.v1.auth.RepositorioSuscripcion")
     @patch("app.rutas.v1.auth.RepositorioPlan")
     @patch("app.rutas.v1.auth.RepositorioUsuario")
     async def test_registrar_crea_suscripcion_gratis(
-        self, MockRepoUsuario, MockRepoPlan, MockRepoSus, cliente
+        self, MockRepoUsuario, MockRepoPlan, MockRepoSus, MockConfig, cliente
     ):
         """Al registrar, debe crear suscripción al plan gratis."""
+        config_mock = MagicMock()
+        config_mock.verificacion_email_habilitada = False
+        config_mock.asignar_premium_por_defecto = False
+        MockConfig.return_value = config_mock
         uid = uuid.uuid4()
         usuario_mock = _crear_usuario_mock(
             uid=uid, email="nuevo@test.com", nombre="Nuevo",
@@ -1181,6 +1192,7 @@ class TestPlanGratisAutoRegistro:
 
         MockRepoUsuario.return_value.obtener_por_email = AsyncMock(return_value=None)
         MockRepoUsuario.return_value.crear = AsyncMock(return_value=usuario_mock)
+        MockRepoUsuario.return_value.marcar_verificado = AsyncMock()
 
         plan_gratis = MagicMock()
         plan_gratis.id = uuid.uuid4()

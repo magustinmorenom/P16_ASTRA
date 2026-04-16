@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Icono } from "@/componentes/ui/icono";
+import { esHoyLocal } from "@/lib/utilidades/fecha-local";
 import PanelConversacionesWeb from "@/componentes/chat/panel-conversaciones-web";
 import AreaChatWeb from "@/componentes/chat/area-chat-web";
 import {
@@ -54,30 +55,31 @@ export default function PaginaChat() {
   }, [convQuery, conversaciones, cambiarMutation, router]);
 
   // Auto-seleccionar la conversacion activa al cargar.
-  // Si la conversacion activa es de un dia anterior (hora local del usuario),
-  // NO se selecciona: arranca en limpio para forzar sesion nueva al escribir.
+  // Si la conversacion activa es de un dia anterior, crear una nueva automáticamente.
   useEffect(() => {
     if (inicializado || conversaciones.length === 0) return;
     if (convQuery) return; // dejamos que el efecto de arriba maneje el deep-link
 
     const activa = conversaciones.find((c) => c.activa && !c.archivada);
     if (activa) {
-      const esDeHoy = (() => {
-        if (!activa.ultimo_mensaje_en) return true; // conv nueva sin mensajes
-        const ultimo = new Date(activa.ultimo_mensaje_en);
-        const hoy = new Date();
-        return (
-          ultimo.getFullYear() === hoy.getFullYear() &&
-          ultimo.getMonth() === hoy.getMonth() &&
-          ultimo.getDate() === hoy.getDate()
-        );
-      })();
+      const esDeHoy = !activa.ultimo_mensaje_en || esHoyLocal(activa.ultimo_mensaje_en);
 
       if (esDeHoy) {
         setConversacionActiva(activa.id);
         setTituloActiva(activa.titulo || activa.preview || null);
+        setInicializado(true);
+        return;
       }
     }
+
+    // No hay conversación de hoy — crear una nueva automáticamente
+    nuevaMutation.mutate(undefined, {
+      onSuccess: (data) => {
+        setConversacionActiva(data.conversacion_id);
+        setTituloActiva(null);
+        refetchConversaciones();
+      },
+    });
     setInicializado(true);
   }, [conversaciones, inicializado]);
 

@@ -4,7 +4,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 
+import { motion } from "framer-motion";
+
 import LayoutOnboarding from "@/componentes/layouts/layout-onboarding";
+import { Input } from "@/componentes/ui/input";
 import { Icono } from "@/componentes/ui/icono";
 import {
   usarCrearPerfil,
@@ -53,7 +56,10 @@ interface EstadoCalculo {
 /* ─── Estilos compartidos ─── */
 
 const CLASE_INPUT =
-  "h-12 w-full rounded-[18px] border border-white/[0.10] bg-white/[0.08] px-4 text-sm text-white outline-none placeholder:text-white/35 transition-all duration-200 focus:border-white/25 focus:bg-white/[0.12] focus:ring-2 focus:ring-white/[0.06]";
+  "h-12 w-full rounded-[20px] border border-[color:var(--shell-borde)] bg-[color:var(--shell-superficie)] px-4 text-sm text-[color:var(--shell-texto)] outline-none placeholder:text-[color:var(--shell-texto-tenue)] transition-all duration-200 focus:border-[color:var(--shell-borde-fuerte)] focus:bg-[color:var(--shell-superficie-fuerte)] focus:ring-2 focus:ring-[color:var(--shell-overlay-suave)]";
+
+const CLASE_INPUT_ACCESO =
+  "h-12 rounded-[20px] border-[color:var(--shell-borde)] bg-[color:var(--shell-superficie)] text-[color:var(--shell-texto)] placeholder:text-[color:var(--shell-texto-tenue)] focus:border-[color:var(--shell-borde-fuerte)] focus:bg-[color:var(--shell-superficie-fuerte)] focus:ring-[color:var(--shell-overlay-suave)]";
 
 /* ─── Página principal ─── */
 
@@ -115,9 +121,30 @@ function PasoFormulario({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Validación nombre: solo letras, espacios, acentos, apóstrofes, guiones. Min 2 chars.
+  const nombreValido = /^[a-zA-ZÀ-ÿ\u00f1\u00d1' -]{2,100}$/.test(datos.nombre.trim());
+
+  // Validación fecha: entre 1 y 100 años de edad
+  const fechaValida = (() => {
+    if (!datos.fecha_nacimiento) return false;
+    const partes = datos.fecha_nacimiento.split("-");
+    if (partes.length !== 3) return false;
+    const [anio, mes, dia] = partes.map(Number);
+    if (!anio || !mes || !dia || anio < 1900 || anio > 9999) return false;
+    const nacimiento = new Date(anio, mes - 1, dia);
+    if (isNaN(nacimiento.getTime())) return false;
+    const hoy = new Date();
+    const edad = hoy.getFullYear() - nacimiento.getFullYear() -
+      (hoy < new Date(hoy.getFullYear(), nacimiento.getMonth(), nacimiento.getDate()) ? 1 : 0);
+    return edad >= 1 && edad <= 100;
+  })();
+
+  const errorNombre = datos.nombre.length > 0 && !nombreValido;
+  const errorFecha = datos.fecha_nacimiento.length > 0 && !fechaValida;
+
   const puedeAvanzar =
-    datos.nombre.trim() !== "" &&
-    datos.fecha_nacimiento !== "" &&
+    nombreValido &&
+    fechaValida &&
     datos.hora_nacimiento !== "" &&
     lugarSeleccionado &&
     datos.ciudad_nacimiento.trim() !== "";
@@ -189,79 +216,117 @@ function PasoFormulario({
     };
   }, []);
 
-  return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex flex-col items-start text-left">
-        <PillPaso paso={1} />
+  const suave = [0.22, 1, 0.36, 1] as const;
+  const contenedor = { animate: { transition: { staggerChildren: 0.07 } } };
+  const itemAnim = {
+    hidden: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.35, ease: suave } },
+  };
 
-        <h1 className="mt-5 text-2xl font-semibold tracking-tight text-white">
-          Cargá tu momento exacto de nacimiento
+  return (
+    <motion.div
+      className="flex flex-col gap-5"
+      variants={contenedor}
+      initial="hidden"
+      animate="animate"
+    >
+      {/* Header */}
+      <motion.div variants={itemAnim}>
+        <h1 className="text-center text-2xl font-semibold tracking-[-0.03em] text-[color:var(--shell-texto)]">
+          Cargá tus datos de nacimiento
         </h1>
-        <p className="mt-2 text-sm text-white/50">
-          Necesitamos fecha, hora y lugar para construir tu carta natal con precisión.
+        <p className="mt-2 text-center text-[13px] text-[color:var(--shell-texto-tenue)]">
+          Necesitamos fecha, hora y lugar para construir tu carta natal.
         </p>
-      </div>
+      </motion.div>
 
       {/* Form */}
-      <div className="flex flex-col gap-3">
-        <div>
-          <input
+      <motion.div className="flex flex-col gap-4" variants={contenedor} initial="hidden" animate="animate">
+        <motion.div variants={itemAnim}>
+          <Input
+            etiqueta="Nombre completo"
             type="text"
-            placeholder="Nombre completo"
+            placeholder="Tal como figura en tu documento"
+            icono={<Icono nombre="usuario" tamaño={18} />}
             value={datos.nombre}
-            onChange={(e) => onChange({ nombre: e.target.value })}
-            className={CLASE_INPUT}
+            onChange={(e) => {
+              const valor = e.target.value.replace(/[^a-zA-ZÀ-ÿ\u00f1\u00d1' -]/g, "");
+              onChange({ nombre: valor });
+            }}
+            className={CLASE_INPUT_ACCESO}
+            required
+            minLength={2}
+            maxLength={100}
           />
-          <p className="mt-1.5 px-1 text-[11px] text-white/30">
-            Tal como figura en tu cédula de identificación.
-          </p>
-        </div>
+          {errorNombre && (
+            <p className="mt-1 px-1 text-[10px] text-red-400">
+              Ingresá un valor correcto
+            </p>
+          )}
+        </motion.div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <input
+          <motion.div variants={itemAnim}>
+            <Input
+              etiqueta="Fecha de nacimiento"
               type="date"
               value={datos.fecha_nacimiento}
-              onChange={(e) => onChange({ fecha_nacimiento: e.target.value })}
-              className={cn(CLASE_INPUT, "[color-scheme:dark]")}
+              onChange={(e) => {
+                let valor = e.target.value;
+                const partes = valor.split("-");
+                if (partes[0] && partes[0].length > 4) {
+                  partes[0] = partes[0].slice(0, 4);
+                  valor = partes.join("-");
+                }
+                onChange({ fecha_nacimiento: valor });
+              }}
+              min="1925-01-01"
+              max={new Date(Date.now() - 365.25 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
+              className={cn(CLASE_INPUT_ACCESO, "[color-scheme:dark]")}
+              required
             />
-            <p className="mt-1.5 px-1 text-[11px] text-white/30">
-              Día exacto de nacimiento.
-            </p>
-          </div>
-          <div>
-            <input
+            {errorFecha && (
+              <p className="mt-1 px-1 text-[10px] text-red-400">
+                Ingresá un valor correcto
+              </p>
+            )}
+          </motion.div>
+          <motion.div variants={itemAnim}>
+            <Input
+              etiqueta="Hora de nacimiento"
               type="time"
               value={datos.hora_nacimiento}
               onChange={(e) => onChange({ hora_nacimiento: e.target.value })}
-              className={cn(CLASE_INPUT, "[color-scheme:dark]")}
+              className={cn(CLASE_INPUT_ACCESO, "[color-scheme:dark]")}
+              required
             />
-            <p className="mt-1.5 px-1 text-[11px] text-white/30">
+            <p className="mt-1 px-1 text-[10px] text-[color:var(--shell-texto-tenue)]">
               Si no la sabés, usá 12:00.
             </p>
-          </div>
+          </motion.div>
         </div>
 
         {/* Lugar con autocomplete */}
-        <div ref={dropdownRef} className="relative">
+        <motion.div variants={itemAnim} ref={dropdownRef} className="relative">
           <Icono
             nombre="ubicacion"
             tamaño={16}
-            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/35"
+            className="pointer-events-none absolute left-4 top-[38px] text-[color:var(--shell-texto-tenue)]"
           />
-          <input
+          <Input
+            etiqueta="Lugar de nacimiento"
             type="text"
-            placeholder="Lugar de nacimiento"
+            placeholder="Ej: Buenos Aires, Argentina"
             value={consulta}
             onChange={(e) => handleLugarChange(e.target.value)}
             onFocus={() => resultados.length > 0 && setAbierto(true)}
-            className={cn(CLASE_INPUT, "pl-10 pr-10")}
+            className={cn(CLASE_INPUT_ACCESO, "pl-10 pr-10")}
+            required
           />
 
           {buscando && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
+            <div className="absolute right-4 top-[38px]">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[color:var(--shell-borde)] border-t-[color:var(--color-acento)]" />
             </div>
           )}
 
@@ -269,29 +334,33 @@ function PasoFormulario({
             <Icono
               nombre="check"
               tamaño={16}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-400"
+              className="absolute right-4 top-[38px] text-emerald-400"
             />
           )}
 
           {abierto && resultados.length > 0 && (
-            <div className="absolute top-[calc(100%+6px)] z-50 w-full overflow-hidden rounded-2xl border border-white/[0.10] bg-[#1a1128]/95 backdrop-blur-xl">
+            <div
+              className="tema-superficie-panel absolute top-[calc(100%+6px)] z-50 w-full overflow-hidden rounded-2xl border"
+              style={{ borderColor: "var(--shell-borde)", boxShadow: "var(--shell-sombra-fuerte)" }}
+            >
               {resultados.map((resultado, i) => (
                 <button
                   key={`${resultado.latitud}-${resultado.longitud}-${i}`}
                   type="button"
                   onClick={() => seleccionar(resultado)}
-                  className="flex w-full items-center gap-3 border-b border-white/[0.06] px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-white/[0.06]"
+                  className="flex w-full items-center gap-3 border-b px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-[var(--shell-chip-hover)]"
+                  style={{ borderColor: "var(--shell-borde)" }}
                 >
                   <Icono
                     nombre="ubicacion"
                     tamaño={14}
-                    className="shrink-0 text-violet-300"
+                    className="shrink-0 text-[color:var(--color-acento)]"
                   />
                   <div className="min-w-0">
-                    <p className="truncate text-sm text-white/90">
+                    <p className="truncate text-sm text-[color:var(--shell-texto)]">
                       {resultado.nombre_mostrar}
                     </p>
-                    <p className="text-xs text-white/40">
+                    <p className="text-xs text-[color:var(--shell-texto-tenue)]">
                       {resultado.estado ? `${resultado.estado}, ` : ""}
                       {resultado.pais}
                     </p>
@@ -302,27 +371,34 @@ function PasoFormulario({
           )}
 
           {abierto && resultados.length === 0 && !buscando && consulta.length >= 3 && (
-            <div className="absolute top-[calc(100%+6px)] z-50 w-full rounded-2xl border border-white/[0.10] bg-[#1a1128]/95 px-4 py-3 backdrop-blur-xl">
-              <p className="text-sm text-white/40">Sin resultados para esa búsqueda.</p>
+            <div
+              className="tema-superficie-panel absolute top-[calc(100%+6px)] z-50 w-full rounded-2xl border px-4 py-3"
+              style={{ borderColor: "var(--shell-borde)" }}
+            >
+              <p className="text-sm text-[color:var(--shell-texto-tenue)]">Sin resultados para esa búsqueda.</p>
             </div>
           )}
-          <p className="mt-1.5 px-1 text-[11px] text-white/30">
-            Ciudad donde naciste — usamos la zona horaria histórica.
-          </p>
-        </div>
-      </div>
+        </motion.div>
 
-      {/* CTA */}
-      <button
-        type="button"
-        onClick={onSiguiente}
-        disabled={!puedeAvanzar}
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-[18px] border border-white/[0.10] bg-white/[0.10] text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/[0.16] disabled:cursor-not-allowed disabled:opacity-35"
-      >
-        Calcular mi perfil
-        <Icono nombre="flecha-derecha" tamaño={16} />
-      </button>
-    </div>
+        {/* CTA */}
+        <motion.div variants={itemAnim}>
+          <button
+            type="button"
+            onClick={onSiguiente}
+            disabled={!puedeAvanzar}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-[20px] border text-sm font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40"
+            style={{
+              borderColor: "rgba(124,77,255,0.3)",
+              background: "linear-gradient(135deg, #7C4DFF, #5B2DBF)",
+              boxShadow: "0 2px 8px rgba(124,77,255,0.3)",
+            }}
+          >
+            Calcular mi perfil
+            <Icono nombre="flecha" tamaño={16} />
+          </button>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -444,27 +520,25 @@ function PasoCalculando({
     <div className="flex flex-col items-center gap-8">
       {/* Header */}
       <div className="flex flex-col items-center text-center">
-        <PillPaso paso={2} />
-
         {/* Orbits animation — compact */}
         <div className="relative my-5 h-20 w-20">
-          <div className="absolute inset-0 animate-[spin_10s_linear_infinite] rounded-full border border-white/15">
-            <div className="absolute -top-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white/50" />
+          <div className="absolute inset-0 animate-[spin_10s_linear_infinite] rounded-full border" style={{ borderColor: "var(--shell-borde)" }}>
+            <div className="absolute -top-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[color:var(--shell-texto-tenue)]" />
           </div>
-          <div className="absolute inset-2.5 animate-[spin_7s_linear_infinite_reverse] rounded-full border border-white/20">
-            <div className="absolute -top-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-violet-300" />
+          <div className="absolute inset-2.5 animate-[spin_7s_linear_infinite_reverse] rounded-full border" style={{ borderColor: "var(--shell-borde-fuerte)" }}>
+            <div className="absolute -top-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-violet-400" />
           </div>
           <div className="absolute inset-5 flex items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-violet-700 shadow-lg shadow-violet-500/20">
             <Icono nombre="destello" tamaño={16} className="text-white" />
           </div>
         </div>
 
-        <h1 className="text-2xl font-semibold tracking-tight text-white">
+        <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[color:var(--shell-texto)]">
           {todoListo ? "Tu lectura está lista" : "Construyendo tu lectura"}
         </h1>
       </div>
 
-      {/* Progress items — compact */}
+      {/* Progress items */}
       <div className="flex w-full flex-col gap-1.5">
         {pasos.map((item, idx) => {
           const estadoActual = estado[item.clave];
@@ -483,10 +557,10 @@ function PasoCalculando({
               <span
                 className={cn(
                   "text-sm",
-                  estadoActual === "completado" && "text-white/90",
-                  estadoActual === "en_curso" && "text-white/70",
-                  estadoActual === "error" && "text-red-300/80",
-                  estadoActual === "pendiente" && "text-white/50",
+                  estadoActual === "completado" && "text-[color:var(--shell-texto)]",
+                  estadoActual === "en_curso" && "text-[color:var(--shell-texto-secundario)]",
+                  estadoActual === "error" && "text-red-400",
+                  estadoActual === "pendiente" && "text-[color:var(--shell-texto-tenue)]",
                 )}
               >
                 {item.texto}
@@ -500,14 +574,6 @@ function PasoCalculando({
 }
 
 /* ─── Componentes auxiliares ─── */
-
-function PillPaso({ paso }: { paso: number }) {
-  return (
-    <span className="rounded-full border border-white/[0.10] bg-white/[0.06] px-4 py-1.5 text-[11px] font-medium tracking-widest text-white/50">
-      {paso} / 2
-    </span>
-  );
-}
 
 function IndicadorEstado({ estado }: { estado: EstadoItem }) {
   if (estado === "completado") {
@@ -529,14 +595,14 @@ function IndicadorEstado({ estado }: { estado: EstadoItem }) {
   if (estado === "en_curso") {
     return (
       <div className="flex h-5 w-5 items-center justify-center">
-        <div className="h-4 w-4 animate-spin rounded-full border-[1.5px] border-white/30 border-t-violet-300" />
+        <div className="h-4 w-4 animate-spin rounded-full border-[1.5px] border-[color:var(--shell-borde)] border-t-violet-400" />
       </div>
     );
   }
 
   return (
     <div className="flex h-5 w-5 items-center justify-center">
-      <div className="h-1.5 w-1.5 rounded-full bg-white/30" />
+      <div className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--shell-texto-tenue)" }} />
     </div>
   );
 }

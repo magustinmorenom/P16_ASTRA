@@ -70,11 +70,11 @@ export default function HeaderMobile({
           )}
         >
           <div className="relative px-3.5 py-4">
-            <div className="flex items-start gap-3">
+            <div className={cn("flex gap-3", mostrarAtras ? "items-center" : "items-start")}>
               {mostrarAtras && (
                 <button
                   onClick={() => router.back()}
-                  className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors"
                   style={{
                     borderColor: "var(--shell-borde)",
                     background: "var(--shell-superficie)",

@@ -2,7 +2,7 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +18,8 @@ from app.nucleo.servicio_geo import ServicioGeo
 from app.nucleo.servicio_zona_horaria import ServicioZonaHoraria
 from app.principal import _obtener_db_placeholder, _obtener_redis_placeholder
 from app.servicios.servicio_pdf_perfil import ServicioPDFPerfil
+from app.servicios.servicio_podcast_bootstrap import bootstrap_dia_podcast
+from app.registro import logger
 
 router = APIRouter()
 
@@ -25,6 +27,7 @@ router = APIRouter()
 @router.post("/profile")
 async def crear_perfil(
     datos: DatosNacimiento,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(_obtener_db_placeholder),
     usuario: Usuario | None = Depends(obtener_usuario_opcional),
 ):
@@ -56,6 +59,11 @@ async def crear_perfil(
         zona_horaria=zona,
         usuario_id=usuario.id if usuario else None,
     )
+
+    # Bootstrap podcast diario al crear perfil (primera vez)
+    if usuario:
+        logger.info("Perfil creado para %s — disparando bootstrap podcast", usuario.id)
+        background_tasks.add_task(bootstrap_dia_podcast, usuario.id)
 
     return {
         "exito": True,

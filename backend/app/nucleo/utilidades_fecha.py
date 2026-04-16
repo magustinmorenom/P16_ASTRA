@@ -5,7 +5,7 @@ bootstrap del podcast diario) para garantizar coherencia.
 """
 
 from datetime import date, datetime, timezone
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 TZ_ARG = ZoneInfo("America/Argentina/Buenos_Aires")
 
@@ -25,6 +25,21 @@ def dia_arg_de_datetime(dt: datetime | None) -> date | None:
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(TZ_ARG).date()
+
+
+def tz_del_request(header_tz: str | None) -> ZoneInfo:
+    """Resuelve timezone del header X-Timezone, fallback ARG."""
+    if header_tz:
+        try:
+            return ZoneInfo(header_tz)
+        except (ZoneInfoNotFoundError, KeyError):
+            pass
+    return TZ_ARG
+
+
+def dia_actual(tz: ZoneInfo) -> date:
+    """Día actual en la timezone indicada."""
+    return datetime.now(tz).date()
 
 
 def es_primer_acceso_del_dia_arg(ultimo_acceso: datetime | None) -> bool:

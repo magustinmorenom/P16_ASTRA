@@ -10,6 +10,8 @@ export {
   usarVerificarOTP,
   usarConfirmarReset,
   usarEliminarCuenta,
+  usarVerificarCuenta,
+  usarReenviarVerificacion,
 } from "./usar-auth";
 
 export { usarCartaNatal } from "./usar-carta-natal";

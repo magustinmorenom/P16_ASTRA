@@ -9,7 +9,7 @@ class EsquemaRegistro(BaseModel):
     """Datos para registrar un nuevo usuario."""
 
     email: EmailStr
-    nombre: str = Field(min_length=1, max_length=100)
+    nombre: str | None = Field(default=None, min_length=1, max_length=100)
     contrasena: str = Field(min_length=8, max_length=128)
 
 
@@ -57,6 +57,16 @@ class EsquemaConfirmarReset(BaseModel):
 
     token: str
     contrasena_nueva: str = Field(min_length=8, max_length=128)
+
+
+class EsquemaVerificarCuenta(BaseModel):
+    """Datos para verificar cuenta con código OTP."""
+    email: EmailStr
+    codigo: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+
+class EsquemaReenviarVerificacion(BaseModel):
+    """Datos para reenviar código de verificación."""
+    email: EmailStr
 
 
 class EsquemaEliminarCuenta(BaseModel):

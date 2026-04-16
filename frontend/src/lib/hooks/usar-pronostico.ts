@@ -3,10 +3,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { clienteApi } from "@/lib/api/cliente";
 import type { PronosticoDiarioDTO, PronosticoSemanalDTO } from "@/lib/tipos";
+import { fechaHoyLocal } from "@/lib/utilidades/fecha-local";
 
 /** Obtiene el pronóstico cósmico del día (o de una fecha específica). */
 export function usarPronosticoDiario(fecha?: string) {
-  const hoy = new Date().toISOString().split("T")[0];
+  const hoy = fechaHoyLocal();
   const fechaQuery = fecha ?? hoy;
 
   return useQuery({

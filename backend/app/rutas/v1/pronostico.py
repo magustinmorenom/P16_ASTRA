@@ -40,6 +40,9 @@ async def pronostico_diario(
 
         acceso = obtener_acceso_pronostico(plan)
 
+        # Asegurar que claves_dia siempre esté presente (cache viejo puede no tenerlo)
+        datos.setdefault("claves_dia", [])
+
         return {
             "exito": True,
             "datos": {**datos, "acceso": acceso},

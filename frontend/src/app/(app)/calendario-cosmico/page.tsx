@@ -19,6 +19,7 @@ import { usarMiPerfil, usarTransitosRango } from "@/lib/hooks";
 import { formatearFechaISOlocal, calcularRitmoPersonal } from "@/lib/utilidades/calendario-cosmico";
 
 import { CalendarioMes } from "./_componentes/calendario-mes";
+import { CalendarioMobileAcordion } from "./_componentes/calendario-mobile-acordion";
 
 function crearFechaLocal(anio: number, mes: number, dia: number) {
   return new Date(anio, mes, dia, 12, 0, 0);
@@ -160,28 +161,51 @@ export default function PaginaCalendarioCosmico() {
             ) : null}
 
             {!isLoading && !isError ? (
-              <div className="min-h-[720px]">
-                <CalendarioMes
-                  mesVisible={mesVisible}
-                  hoy={hoy}
-                  ritmoHoy={ritmoHoy}
-                  limiteTexto={limiteTexto}
-                  fechaNacimiento={perfil?.fecha_nacimiento}
-                  fechaSeleccionada={fechaSeleccionada}
-                  onSeleccionarFecha={setFechaSeleccionada}
-                  onMesAnterior={() => {
-                    setMesVisible(mesBase);
-                    setFechaSeleccionada(hoy);
-                  }}
-                  onMesSiguiente={() => {
-                    setMesVisible(proximoMes);
-                    setFechaSeleccionada(format(proximoMes, "yyyy-MM-dd"));
-                  }}
-                  puedeIrAtras={!isSameMonth(mesVisible, mesBase)}
-                  puedeIrAdelante={!isSameMonth(mesVisible, proximoMes)}
-                  dias={dias}
-                />
-              </div>
+              <>
+                {/* Desktop: grilla mensual */}
+                <div className="hidden lg:block min-h-[720px]">
+                  <CalendarioMes
+                    mesVisible={mesVisible}
+                    hoy={hoy}
+                    ritmoHoy={ritmoHoy}
+                    limiteTexto={limiteTexto}
+                    fechaNacimiento={perfil?.fecha_nacimiento}
+                    fechaSeleccionada={fechaSeleccionada}
+                    onSeleccionarFecha={setFechaSeleccionada}
+                    onMesAnterior={() => {
+                      setMesVisible(mesBase);
+                      setFechaSeleccionada(hoy);
+                    }}
+                    onMesSiguiente={() => {
+                      setMesVisible(proximoMes);
+                      setFechaSeleccionada(format(proximoMes, "yyyy-MM-dd"));
+                    }}
+                    puedeIrAtras={!isSameMonth(mesVisible, mesBase)}
+                    puedeIrAdelante={!isSameMonth(mesVisible, proximoMes)}
+                    dias={dias}
+                  />
+                </div>
+
+                {/* Mobile: acordeón por día */}
+                <div className="lg:hidden">
+                  <CalendarioMobileAcordion
+                    mesVisible={mesVisible}
+                    hoy={hoy}
+                    fechaNacimiento={perfil?.fecha_nacimiento}
+                    onMesAnterior={() => {
+                      setMesVisible(mesBase);
+                      setFechaSeleccionada(hoy);
+                    }}
+                    onMesSiguiente={() => {
+                      setMesVisible(proximoMes);
+                      setFechaSeleccionada(format(proximoMes, "yyyy-MM-dd"));
+                    }}
+                    puedeIrAtras={!isSameMonth(mesVisible, mesBase)}
+                    puedeIrAdelante={!isSameMonth(mesVisible, proximoMes)}
+                    dias={dias}
+                  />
+                </div>
+              </>
             ) : null}
           </section>
         </div>

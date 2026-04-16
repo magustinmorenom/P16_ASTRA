@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.nucleo.servicio_efemerides import ServicioEfemerides
 from app.nucleo.servicio_zona_horaria import ServicioZonaHoraria
+from app.nucleo.utilidades_fecha import dia_arg_actual
 from app.utilidades.constantes import ASPECTOS
 from app.utilidades.convertidores import diferencia_angular
 
@@ -250,7 +251,7 @@ class ServicioTransitos:
 
         # Fallback: calcular en vivo y persistir
         datos = calcular_transito_para_fecha(fecha_obj)
-        datos["estado"] = _determinar_estado(fecha_obj, date.today())
+        datos["estado"] = _determinar_estado(fecha_obj, dia_arg_actual())
         datos["eventos"] = calcular_eventos(
             datos["planetas"],
             planetas_ayer,
@@ -291,7 +292,7 @@ class ServicioTransitos:
 
         repo = RepositorioTransito(sesion)
         existentes = await repo.obtener_rango(inicio, fin)
-        hoy = date.today()
+        hoy = dia_arg_actual()
         existentes_por_fecha = {t.fecha: t for t in existentes}
         faltantes = []
         dias = []

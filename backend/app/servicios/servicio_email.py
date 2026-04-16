@@ -144,6 +144,24 @@ class ServicioEmail:
         return await ServicioEmail.enviar(email, "Tu código de verificación — ASTRA", html)
 
     @staticmethod
+    async def enviar_verificacion_cuenta(email: str, nombre: str, codigo: str) -> Optional[str]:
+        """Email con código OTP para verificar la cuenta al registrarse."""
+        html = _cargar_template("verificacion_cuenta", {
+            "nombre": nombre,
+            "codigo": codigo,
+        })
+        return await ServicioEmail.enviar(email, "Verificá tu cuenta — ASTRA", html)
+
+    @staticmethod
+    async def enviar_cuenta_verificada(email: str, nombre: str) -> Optional[str]:
+        """Confirmación de que la cuenta fue verificada exitosamente."""
+        html = _cargar_template("cuenta_verificada", {
+            "nombre": nombre,
+            "url_app": ServicioEmail._url_app(),
+        })
+        return await ServicioEmail.enviar(email, "Cuenta verificada — ASTRA", html)
+
+    @staticmethod
     async def enviar_suscripcion_activa(email: str, nombre: str, plan: str) -> Optional[str]:
         """Notificación de suscripción activada."""
         html = _cargar_template("suscripcion_activa", {

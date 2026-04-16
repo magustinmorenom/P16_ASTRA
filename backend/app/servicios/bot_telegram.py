@@ -4,6 +4,8 @@ import uuid
 from datetime import date
 
 from redis.asyncio import Redis
+
+from app.nucleo.utilidades_fecha import dia_arg_actual
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from telegram import Update
 from telegram.ext import (
@@ -147,7 +149,7 @@ class BotTelegram:
 
     async def _cmd_transitos(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Muestra los tránsitos del día."""
-        hoy = date.today().isoformat()
+        hoy = dia_arg_actual().isoformat()
         transitos = ServicioTransitos.obtener_transitos_fecha(hoy)
 
         lineas = [f"Tránsitos del {hoy}\n"]
@@ -248,7 +250,7 @@ class BotTelegram:
             from datetime import date, timedelta
             proximos = []
             for i in range(1, 4):
-                fecha_f = (date.today() + timedelta(days=i)).isoformat()
+                fecha_f = (dia_arg_actual() + timedelta(days=i)).isoformat()
                 try:
                     t = await ServicioTransitos.obtener_transitos_fecha_persistido(fecha_f, sesion)
                     proximos.append({"fecha": fecha_f, "planetas": t.get("planetas", []), "fase_lunar": t.get("fase_lunar", "")})

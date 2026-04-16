@@ -3,20 +3,13 @@
 import { useMemo } from "react";
 
 import { usarPerlasDiarias } from "@/lib/hooks/usar-perlas";
+import { Icono } from "@/componentes/ui/icono";
 import { cn } from "@/lib/utilidades/cn";
 
 interface PropsPerlasDia {
-  /** Si es true, muestra hasta 3 perlas; si es false, hasta 2 (modo compacto). */
   expandido?: boolean;
 }
 
-/**
- * Stack de 2-3 aforismos breves personalizados generados por Haiku.
- * Vive en el hero del dashboard, justo encima del botón "Escuchar ahora".
- *
- * Estilo: tipografía serif sutil, separadores hairline, sin íconos ni colores,
- * para que las frases sean el único foco visual del bloque.
- */
 export function PerlasDia({ expandido = true }: PropsPerlasDia) {
   const { data, isLoading, isError } = usarPerlasDiarias();
 
@@ -26,93 +19,103 @@ export function PerlasDia({ expandido = true }: PropsPerlasDia) {
     return todas.slice(0, limite);
   }, [data, expandido]);
 
+  /* ── Loading ── */
+  if (isLoading) {
+    return (
+      <div
+        className="overflow-hidden rounded-[18px] border px-3.5 pt-3 pb-3"
+        style={{
+          background: "linear-gradient(160deg, rgba(124,77,255,0.07), rgba(179,136,255,0.03) 60%, transparent)",
+          borderColor: "rgba(124,77,255,0.12)",
+        }}
+      >
+        <div className="flex items-center gap-2 mb-2.5">
+          <Icono nombre="foco" tamaño={15} peso="fill" className="text-violet-400" />
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-400">
+            Perlas de tu perfil - Conocete mejor
+          </p>
+        </div>
+        <SkeletonPerlas cantidad={expandido ? 3 : 2} />
+      </div>
+    );
+  }
+
+  /* ── Error / vacío ── */
+  if (isError || perlasVisibles.length === 0) {
+    return (
+      <div
+        className="flex items-center justify-center overflow-hidden rounded-[18px] border px-4 py-5 text-center"
+        style={{
+          background: "linear-gradient(160deg, rgba(124,77,255,0.07), rgba(179,136,255,0.03) 60%, transparent)",
+          borderColor: "rgba(124,77,255,0.12)",
+        }}
+      >
+        <Icono nombre="foco" tamaño={18} peso="regular" className="mr-2 text-violet-400/60" />
+        <p className="text-[12px] font-medium text-[color:var(--shell-texto-tenue)]">
+          Las perlas vuelven pronto
+        </p>
+      </div>
+    );
+  }
+
+  /* ── Con perlas ── */
   return (
-    <div className="relative">
-      {/* Eyebrow discreto */}
-      <div className="mb-2 flex items-center gap-1.5">
-        <span
-          aria-hidden
-          className="text-[10px] leading-none"
-          style={{ color: "var(--color-acento)" }}
-        >
-          
-        </span>
-        <span
-          className="text-[9px] font-semibold uppercase tracking-[0.22em]"
-          style={{ color: "var(--shell-texto-tenue)" }}
-        >
-        Perlas de tu perfil
-        </span>
+    <div
+      className="overflow-hidden rounded-[18px] border"
+      style={{
+        background: "linear-gradient(160deg, rgba(124,77,255,0.07), rgba(179,136,255,0.03) 60%, transparent)",
+        borderColor: "rgba(124,77,255,0.12)",
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2 px-3.5 pt-3 pb-1.5">
+        <Icono nombre="foco" tamaño={15} peso="fill" className="text-violet-400" />
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-400">
+          Perlas de tu perfil - Concete mejor
+        </p>
       </div>
 
-      {isLoading ? (
-        <SkeletonPerlas cantidad={expandido ? 3 : 2} />
-      ) : isError || perlasVisibles.length === 0 ? (
-        <p className="text-[12px] italic text-[color:var(--shell-texto-tenue)]">
-          Las perlas vuelven pronto.
-        </p>
-      ) : (
-        <ul
-          key={perlasVisibles.join("|")}
-          className="flex flex-col gap-2 animate-[fade-in_240ms_ease-out_both]"
-        >
-          {perlasVisibles.map((perla, idx) => (
-            <li
-              key={`${idx}-${perla.slice(0, 16)}`}
-              className={cn(idx > 0 && "border-t pt-2")}
-              style={
-                idx > 0
-                  ? {
-                      borderColor: "var(--shell-borde)",
-                      animationDelay: `${idx * 60}ms`,
-                    }
-                  : undefined
-              }
-            >
-              <p
-                className="font-display text-[12.5px] leading-snug lg:text-[13px]"
-                style={{
-                  color: "var(--shell-texto-secundario)",
-                  letterSpacing: "0.005em",
-                }}
-              >
-                {perla}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* Chips */}
+      <div
+        key={perlasVisibles.join("|")}
+        className="flex flex-wrap gap-1.5 px-3 pb-3 animate-[fadeIn_240ms_ease-out_both]"
+      >
+        {perlasVisibles.map((perla, idx) => (
+          <span
+            key={`${idx}-${perla.slice(0, 16)}`}
+            className={cn(
+              "inline-block rounded-full border px-3 py-1.5",
+              "text-[11px] font-normal leading-[1.4] tracking-[0.01em]",
+              "text-[color:var(--shell-texto-secundario)]"
+            )}
+            style={{
+              background: "var(--shell-superficie)",
+              borderColor: "var(--shell-borde)",
+              animationDelay: `${idx * 60}ms`,
+            }}
+          >
+            {perla}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
 
 function SkeletonPerlas({ cantidad }: { cantidad: number }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-wrap gap-1.5">
       {Array.from({ length: cantidad }).map((_, idx) => (
         <div
           key={idx}
-          className={cn("flex flex-col gap-1", idx > 0 && "border-t pt-2")}
-          style={idx > 0 ? { borderColor: "var(--shell-borde)" } : undefined}
-        >
-          <div
-            className="h-3 rounded-full"
-            style={{
-              background: "var(--shell-chip)",
-              width: `${65 + ((idx * 13) % 25)}%`,
-              animation: "pulse 1.4s ease-in-out infinite",
-            }}
-          />
-          <div
-            className="h-3 rounded-full"
-            style={{
-              background: "var(--shell-chip)",
-              width: `${40 + ((idx * 17) % 30)}%`,
-              animation: "pulse 1.4s ease-in-out infinite",
-              animationDelay: "120ms",
-            }}
-          />
-        </div>
+          className="h-[30px] rounded-full"
+          style={{
+            background: "rgba(124,77,255,0.08)",
+            width: `${80 + ((idx * 23) % 60)}px`,
+            animation: "pulse 1.4s ease-in-out infinite",
+            animationDelay: `${idx * 120}ms`,
+          }}
+        />
       ))}
     </div>
   );

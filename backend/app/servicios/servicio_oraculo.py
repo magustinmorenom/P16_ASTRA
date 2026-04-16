@@ -8,6 +8,8 @@ import anthropic
 import pytz
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.nucleo.utilidades_fecha import dia_arg_actual
+
 from app.configuracion import obtener_configuracion
 from app.registro import logger
 
@@ -487,7 +489,7 @@ class ServicioOraculo:
         )
 
         # Determinar rango de fechas
-        hoy = date.today()
+        hoy = dia_arg_actual()
         if intent.mes_especifico:
             anio = intent.anio or hoy.year
             fecha_inicio = date(anio, intent.mes_especifico, 1)

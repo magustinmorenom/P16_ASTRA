@@ -1,11 +1,11 @@
 import type {
-  MomentoClaveDTO,
+  ClaveDiaDTO,
   NumeroPersonalDTO,
   LunaInfoDTO,
 } from "@/lib/tipos";
 import { Icono } from "@/componentes/ui/icono";
 import { TarjetaFecha } from "./tarjeta-fecha";
-import { MomentosDia } from "./momentos-dia";
+import { ClavesDia } from "./claves-dia";
 import { NumeroDelDia } from "./numero-del-dia";
 import { LunaPosicion } from "./luna-posicion";
 import { NivelesEnergia } from "./niveles-energia";
@@ -15,7 +15,7 @@ import { ResumenPersonalUnificado } from "./resumen-personal-unificado";
 interface HeroSeccionProps {
   fecha: Date;
   nombreUsuario: string;
-  momentos: MomentoClaveDTO[];
+  clavesDia: ClaveDiaDTO[];
   numero: NumeroPersonalDTO;
   luna: LunaInfoDTO;
   energia: number;
@@ -33,7 +33,7 @@ interface HeroSeccionProps {
 export function HeroSeccion({
   fecha,
   nombreUsuario,
-  momentos,
+  clavesDia,
   numero,
   luna,
   energia,
@@ -171,7 +171,7 @@ export function HeroSeccion({
           className="min-w-0 border-b py-3.5 lg:flex lg:h-full lg:border-b-0 lg:border-r lg:px-4 lg:py-0 lg:pl-4 lg:pr-4"
           style={{ borderColor: "var(--shell-borde)" }}
         >
-          <MomentosDia momentos={momentos} expandido preparando={accionablesPreparando} />
+          <ClavesDia claves={clavesDia} expandido preparando={accionablesPreparando} />
         </div>
 
         <div className="grid grid-cols-1 gap-2.5 pt-3.5 sm:grid-cols-3 lg:hidden">

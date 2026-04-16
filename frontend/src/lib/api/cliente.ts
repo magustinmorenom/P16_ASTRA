@@ -45,7 +45,10 @@ class ClienteAPI {
       typeof window !== "undefined"
         ? localStorage.getItem("token_acceso")
         : null;
-    const headers: HeadersInit = { "Content-Type": "application/json" };
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+      "X-Timezone": Intl.DateTimeFormat().resolvedOptions().timeZone,
+    };
     if (token) headers["Authorization"] = `Bearer ${token}`;
     return headers;
   }

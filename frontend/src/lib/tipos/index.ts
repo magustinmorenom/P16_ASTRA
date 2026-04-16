@@ -22,6 +22,7 @@ export type {
   RespuestaTokens,
   Usuario,
   UsuarioConSuscripcion,
+  RespuestaRegistro,
   RespuestaRegistroLogin,
 } from "./auth";
 
@@ -134,6 +135,7 @@ export type {
   ClimaCosmicoDTO,
   AreaVidaDTO,
   MomentoClaveDTO,
+  ClaveDiaDTO,
   AlertaCosmicaDTO,
   ConsejoHDDTO,
   LunaInfoDTO,
