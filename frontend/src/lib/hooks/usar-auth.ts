@@ -6,6 +6,7 @@ import { useStoreAuth } from "@/lib/stores/store-auth";
 import type {
   EsquemaRegistro,
   EsquemaLogin,
+  RespuestaRegistro,
   RespuestaRegistroLogin,
 } from "@/lib/tipos";
 
@@ -36,12 +37,27 @@ export function usarLogin() {
  * Almacena tokens y carga el usuario.
  */
 export function usarRegistro() {
+  return useMutation({
+    mutationFn: async (datos: EsquemaRegistro) => {
+      return await clienteApi.post<RespuestaRegistro>(
+        "/auth/registrar",
+        datos,
+      );
+    },
+  });
+}
+
+/**
+ * Hook para verificar cuenta con código OTP.
+ * Almacena tokens y carga el usuario.
+ */
+export function usarVerificarCuenta() {
   const { cargarUsuario } = useStoreAuth();
 
   return useMutation({
-    mutationFn: async (datos: EsquemaRegistro) => {
+    mutationFn: async (datos: { email: string; codigo: string }) => {
       const resp = await clienteApi.post<RespuestaRegistroLogin>(
-        "/auth/registrar",
+        "/auth/verificar-cuenta",
         datos,
       );
       localStorage.setItem("token_acceso", resp.token_acceso);
@@ -49,6 +65,16 @@ export function usarRegistro() {
       await cargarUsuario();
       return resp;
     },
+  });
+}
+
+/**
+ * Hook para reenviar código de verificación.
+ */
+export function usarReenviarVerificacion() {
+  return useMutation({
+    mutationFn: (datos: { email: string }) =>
+      clienteApi.post("/auth/reenviar-verificacion", datos),
   });
 }
 

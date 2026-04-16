@@ -124,7 +124,7 @@ export default function LayoutAuth({
             animate="visible"
           >
             {/* Mobile: solo logo */}
-            <div className="mb-6 flex justify-center lg:hidden">
+            <div className="mb-10 flex justify-center lg:hidden">
               <Image
                 src="/img/logo-astra-blanco.png"
                 alt="ASTRA"

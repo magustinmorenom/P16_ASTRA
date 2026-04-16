@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { clienteApi } from "@/lib/api/cliente";
+import { fechaHoyLocal } from "@/lib/utilidades/fecha-local";
 
 export interface PerlasDiariasDTO {
   perlas: string[];
@@ -14,7 +15,7 @@ export interface PerlasDiariasDTO {
  * Cache local: 6h. El backend cachea hasta medianoche ARG.
  */
 export function usarPerlasDiarias() {
-  const hoy = new Date().toISOString().split("T")[0];
+  const hoy = fechaHoyLocal();
 
   return useQuery({
     queryKey: ["perlas", "diaria", hoy],

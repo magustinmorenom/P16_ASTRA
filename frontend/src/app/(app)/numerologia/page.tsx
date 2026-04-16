@@ -929,7 +929,7 @@ export default function PaginaNumerologia() {
                         pasada && !seleccionado && "opacity-50",
                       )}
                     >
-                      {/* Node circle */}
+                      {/* Node circle — fondo opaco para tapar la línea */}
                       <div
                         className={cn(
                           "relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 text-[17px] font-semibold transition-all duration-200",
@@ -942,10 +942,8 @@ export default function PaginaNumerologia() {
                               ? "rgba(212, 162, 52, 0.35)"
                               : "var(--shell-borde)",
                           background: activa
-                            ? "var(--shell-chip)"
-                            : pasada
-                              ? "var(--shell-superficie-suave)"
-                              : "var(--shell-superficie)",
+                            ? "var(--shell-fondo)"
+                            : "var(--shell-fondo)",
                           color: activa
                             ? "var(--shell-badge-violeta-texto)"
                             : pasada
@@ -1050,7 +1048,10 @@ export default function PaginaNumerologia() {
           />
           <div
             className="tema-superficie-panel relative overflow-y-auto overflow-x-hidden scroll-sutil rounded-t-[28px] border-t"
-            style={{ maxHeight: "calc(90vh - var(--tab-bar-height) - env(safe-area-inset-bottom, 0px))" }}
+            style={{
+              maxHeight: "calc(90vh - var(--tab-bar-height) - env(safe-area-inset-bottom, 0px))",
+              paddingBottom: "calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px))",
+            }}
           >
             <div
               className="sticky top-0 z-10 flex justify-center rounded-t-[28px] pt-3 pb-2"

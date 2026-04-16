@@ -896,17 +896,26 @@ export default function PaginaDisenoHumano() {
           </div>
 
           {haySeleccionMobile && (
-            <div className="fixed inset-0 z-50 flex items-end lg:hidden">
+            <div className="fixed inset-0 z-50 flex flex-col justify-end lg:hidden">
               <button
                 onClick={cerrarSeleccion}
-                className="absolute inset-0 backdrop-blur-[1px]"
+                className="absolute inset-0"
                 style={{ background: "var(--shell-overlay-suave)" }}
                 aria-label="Cerrar detalle"
               />
               <div
-                className="relative z-10 w-full overflow-hidden rounded-t-[22px]"
-                style={{ maxHeight: "calc(90vh - var(--tab-bar-height) - env(safe-area-inset-bottom, 0px))" }}
+                className="tema-superficie-panel relative overflow-y-auto overflow-x-hidden scroll-sutil rounded-t-[28px] border-t"
+                style={{
+                  maxHeight: "calc(90vh - var(--tab-bar-height) - env(safe-area-inset-bottom, 0px))",
+                  paddingBottom: "calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px))",
+                }}
               >
+                <div
+                  className="sticky top-0 z-10 flex justify-center rounded-t-[28px] pt-3 pb-2"
+                  style={{ background: "var(--shell-superficie-fuerte)" }}
+                >
+                  <div className="h-1 w-10 rounded-full" style={{ background: "var(--shell-borde-fuerte)" }} />
+                </div>
                 <PanelContextualHD
                   seleccion={seleccion}
                   datos={datos}

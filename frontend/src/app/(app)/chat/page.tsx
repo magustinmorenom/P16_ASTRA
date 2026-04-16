@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Icono } from "@/componentes/ui/icono";
+import { esHoyLocal } from "@/lib/utilidades/fecha-local";
 import PanelConversacionesWeb from "@/componentes/chat/panel-conversaciones-web";
 import AreaChatWeb from "@/componentes/chat/area-chat-web";
 import {
@@ -61,16 +62,7 @@ export default function PaginaChat() {
 
     const activa = conversaciones.find((c) => c.activa && !c.archivada);
     if (activa) {
-      const esDeHoy = (() => {
-        if (!activa.ultimo_mensaje_en) return true; // conv nueva sin mensajes
-        const ultimo = new Date(activa.ultimo_mensaje_en);
-        const hoy = new Date();
-        return (
-          ultimo.getFullYear() === hoy.getFullYear() &&
-          ultimo.getMonth() === hoy.getMonth() &&
-          ultimo.getDate() === hoy.getDate()
-        );
-      })();
+      const esDeHoy = !activa.ultimo_mensaje_en || esHoyLocal(activa.ultimo_mensaje_en);
 
       if (esDeHoy) {
         setConversacionActiva(activa.id);

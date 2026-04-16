@@ -25,9 +25,11 @@ from app.esquemas.auth import (
     EsquemaEliminarCuenta,
     EsquemaLogin,
     EsquemaLogout,
+    EsquemaReenviarVerificacion,
     EsquemaRegistro,
     EsquemaRenovarToken,
     EsquemaSolicitarReset,
+    EsquemaVerificarCuenta,
     EsquemaVerificarOTP,
 )
 from app.excepciones import (
@@ -70,31 +72,115 @@ async def _asignar_plan_inicial(usuario_id: uuid.UUID, db: AsyncSession) -> None
 async def registrar(
     datos: EsquemaRegistro,
     db: AsyncSession = Depends(_obtener_db_placeholder),
+    redis: Redis = Depends(_obtener_redis_placeholder),
 ):
     """Registra un nuevo usuario con email y contraseña."""
     repo = RepositorioUsuario(db)
+    config = obtener_configuracion()
 
     # Verificar email duplicado
     existente = await repo.obtener_por_email(datos.email)
     if existente:
+        # Si ya existe pero no está verificado y la verificación está habilitada,
+        # permitir reenviar OTP
+        if config.verificacion_email_habilitada and not existente.verificado:
+            codigo = f"{random.randint(0, 999999):06d}"
+            await redis.set(f"otp:verify:{datos.email.lower()}", codigo, ex=600)
+            try:
+                await ServicioEmail.enviar_verificacion_cuenta(
+                    existente.email, existente.nombre, codigo,
+                )
+            except Exception:
+                logger.warning("No se pudo enviar OTP de verificación a %s", datos.email)
+            return {
+                "exito": True,
+                "datos": {"requiere_verificacion": True, "email": datos.email},
+            }
         raise EmailYaRegistrado(datos.email)
 
     # Crear usuario
     hash_contrasena = ServicioAuth.hashear_contrasena(datos.contrasena)
+    nombre = datos.nombre or datos.email.split("@")[0]
     usuario = await repo.crear(
         email=datos.email,
-        nombre=datos.nombre,
+        nombre=nombre,
         hash_contrasena=hash_contrasena,
     )
 
     # Asignar plan inicial automáticamente
     await _asignar_plan_inicial(usuario.id, db)
 
-    # Email de bienvenida (fire-and-forget)
+    if config.verificacion_email_habilitada:
+        # Generar OTP y enviar email de verificación
+        codigo = f"{random.randint(0, 999999):06d}"
+        await redis.set(f"otp:verify:{datos.email.lower()}", codigo, ex=600)
+        try:
+            await ServicioEmail.enviar_verificacion_cuenta(
+                usuario.email, usuario.nombre, codigo,
+            )
+        except Exception:
+            logger.warning("No se pudo enviar OTP de verificación a %s", usuario.email)
+
+        return {
+            "exito": True,
+            "datos": {"requiere_verificacion": True, "email": datos.email},
+        }
+
+    # Verificación deshabilitada — flujo directo
+    await repo.marcar_verificado(usuario.id)
+
     try:
         await ServicioEmail.enviar_bienvenida(usuario.email, usuario.nombre)
     except Exception:
         logger.warning("No se pudo enviar email de bienvenida a %s", usuario.email)
+
+    tokens = ServicioAuth.generar_tokens(usuario.id, usuario.email)
+    return {
+        "exito": True,
+        "datos": {
+            "usuario": {
+                "id": str(usuario.id),
+                "email": usuario.email,
+                "nombre": usuario.nombre,
+            },
+            **tokens,
+        },
+    }
+
+
+@router.post("/verificar-cuenta")
+async def verificar_cuenta(
+    datos: EsquemaVerificarCuenta,
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+    redis: Redis = Depends(_obtener_redis_placeholder),
+):
+    """Verifica la cuenta con código OTP enviado al registrarse."""
+    clave = f"otp:verify:{datos.email.lower()}"
+    codigo_guardado = await redis.get(clave)
+
+    if not codigo_guardado:
+        raise ErrorTokenInvalido("Código expirado. Solicitá uno nuevo.")
+
+    if isinstance(codigo_guardado, bytes):
+        codigo_guardado = codigo_guardado.decode()
+
+    if codigo_guardado != datos.codigo:
+        raise ErrorAutenticacion("Código incorrecto.")
+
+    repo = RepositorioUsuario(db)
+    usuario = await repo.obtener_por_email(datos.email)
+    if not usuario or not usuario.activo:
+        raise ErrorTokenInvalido("Código expirado. Solicitá uno nuevo.")
+
+    # Marcar como verificado y eliminar OTP
+    await repo.marcar_verificado(usuario.id)
+    await redis.delete(clave)
+
+    # Email de cuenta verificada (fire-and-forget)
+    try:
+        await ServicioEmail.enviar_cuenta_verificada(usuario.email, usuario.nombre)
+    except Exception:
+        logger.warning("No se pudo enviar email de verificación exitosa a %s", usuario.email)
 
     # Generar tokens
     tokens = ServicioAuth.generar_tokens(usuario.id, usuario.email)
@@ -110,6 +196,30 @@ async def registrar(
             **tokens,
         },
     }
+
+
+@router.post("/reenviar-verificacion")
+async def reenviar_verificacion(
+    datos: EsquemaReenviarVerificacion,
+    db: AsyncSession = Depends(_obtener_db_placeholder),
+    redis: Redis = Depends(_obtener_redis_placeholder),
+):
+    """Reenvía el código OTP de verificación de cuenta."""
+    repo = RepositorioUsuario(db)
+    usuario = await repo.obtener_por_email(datos.email)
+
+    if usuario and not usuario.verificado and usuario.activo:
+        codigo = f"{random.randint(0, 999999):06d}"
+        await redis.set(f"otp:verify:{datos.email.lower()}", codigo, ex=600)
+        try:
+            await ServicioEmail.enviar_verificacion_cuenta(
+                usuario.email, usuario.nombre, codigo,
+            )
+        except Exception:
+            logger.warning("No se pudo reenviar OTP a %s", datos.email)
+
+    # Siempre retorna OK por seguridad
+    return {"exito": True, "mensaje": "Si el email está registrado, recibirás un nuevo código."}
 
 
 @router.post("/login")

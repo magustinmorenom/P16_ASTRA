@@ -467,31 +467,35 @@ export default function PaginaCartaNatal() {
           </div>
 
           {haySeleccionMobile && (
-            <>
+            <div className="fixed inset-0 z-50 flex flex-col justify-end lg:hidden">
               <button
                 type="button"
                 aria-label="Cerrar panel contextual"
                 onClick={cerrarSeleccion}
-                className="fixed inset-0 z-40 backdrop-blur-[2px] lg:hidden"
+                className="absolute inset-0"
                 style={{ background: "var(--shell-overlay-suave)" }}
               />
-              <div className="tema-superficie-panel fixed inset-x-3 bottom-3 z-50 max-h-[72vh] overflow-hidden rounded-[28px] lg:hidden">
-                <div className="flex justify-center py-2">
-                  <div className="h-1 w-14 rounded-full" style={{ background: "var(--shell-borde-fuerte)" }} />
-                </div>
+              <div
+                className="tema-superficie-panel relative overflow-y-auto overflow-x-hidden scroll-sutil rounded-t-[28px] border-t"
+                style={{
+                  maxHeight: "calc(90vh - var(--tab-bar-height) - env(safe-area-inset-bottom, 0px))",
+                  paddingBottom: "calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px))",
+                }}
+              >
                 <div
-                  className="max-h-[calc(72vh-20px)] overflow-y-auto scroll-sutil"
-                  onClick={(evento) => evento.stopPropagation()}
+                  className="sticky top-0 z-10 flex justify-center rounded-t-[28px] pt-3 pb-2"
+                  style={{ background: "var(--shell-superficie-fuerte)" }}
                 >
-                  <PanelContextual
-                    seleccion={seleccion}
-                    datos={datos}
-                    onCerrar={cerrarSeleccion}
-                    modo="movil"
-                  />
+                  <div className="h-1 w-10 rounded-full" style={{ background: "var(--shell-borde-fuerte)" }} />
                 </div>
+                <PanelContextual
+                  seleccion={seleccion}
+                  datos={datos}
+                  onCerrar={cerrarSeleccion}
+                  modo="movil"
+                />
               </div>
-            </>
+            </div>
           )}
 
           <div className="hidden lg:flex flex-1 min-h-0">

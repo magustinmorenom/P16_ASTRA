@@ -17,6 +17,8 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 import anthropic
+
+from app.nucleo.utilidades_fecha import dia_arg_actual
 import pytz
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -198,7 +200,7 @@ Sin texto antes ni después. Sin markdown. Sin explicaciones."""
         Si Haiku falla o no hay API key, cae a una terna curada estática
         determinista por (usuario, fecha) para evitar parpadeos.
         """
-        fecha_obj = fecha or date.today()
+        fecha_obj = fecha or dia_arg_actual()
         clave_cache = f"cosmic:perlas:diaria:{usuario_id}:{fecha_obj.isoformat()}"
 
         # 1. Cache HIT

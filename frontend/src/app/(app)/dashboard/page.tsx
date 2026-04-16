@@ -8,6 +8,7 @@ import { IconoFaseLunar } from "@/componentes/ui/icono-fase-lunar";
 import { Esqueleto } from "@/componentes/ui/esqueleto";
 import HeaderMobile from "@/componentes/layouts/header-mobile";
 import { precargarAudiosPodcast } from "@/lib/hooks/usar-audio";
+import { fechaHoyLocal, fechaDeDate } from "@/lib/utilidades/fecha-local";
 import {
   usarPronosticoDiario,
   usarPronosticoSemanal,
@@ -83,8 +84,8 @@ export default function PaginaDashboard() {
     const lunes2 = new Date(lunes1);
     lunes2.setDate(lunes1.getDate() + 7);
     return {
-      fechaSiguienteSemana: lunes1.toISOString().split("T")[0],
-      fechaTerceraSemana: lunes2.toISOString().split("T")[0],
+      fechaSiguienteSemana: fechaDeDate(lunes1),
+      fechaTerceraSemana: fechaDeDate(lunes2),
     };
   }, []);
 
@@ -93,7 +94,7 @@ export default function PaginaDashboard() {
   const { data: pronosticoTercera } =
     usarPronosticoSemanaSiguiente(fechaTerceraSemana);
 
-  const hoyISO = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const hoyISO = useMemo(() => fechaHoyLocal(), []);
 
   const datosTendencia = useMemo(() => {
     const todas = [
@@ -253,9 +254,9 @@ export default function PaginaDashboard() {
 
   // Header mobile
   const metasHeaderMobile = [
-    pronosticoDiario
-      ? { icono: "wifi" as const, texto: `Energía ${pronosticoDiario.clima.energia}/10` }
-      : { icono: "destello" as const, texto: "Pronóstico pendiente", tono: "rojo" as const },
+    ...(pronosticoDiario
+      ? [{ icono: "wifi" as const, texto: `Energía ${pronosticoDiario.clima.energia}/10` }]
+      : []),
     pronosticoDiario
       ? {
           icono: "luna" as const,
@@ -280,7 +281,9 @@ export default function PaginaDashboard() {
           titulo={`${saludo}, ${nombreSaludo}`}
           subtitulo={
             pronosticoDiario?.clima.frase_sintesis
-              ?? "Cargando tu pronóstico personalizado..."
+              ?? (errorPronostico
+                ? "Completá tu perfil para activar tus lecturas"
+                : "Cargando tu pronóstico personalizado...")
           }
           metas={metasHeaderMobile}
           accionDerecha={

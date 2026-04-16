@@ -77,6 +77,15 @@ class RepositorioUsuario:
         )
         await self.sesion.commit()
 
+    async def marcar_verificado(self, usuario_id: uuid.UUID) -> None:
+        """Marca la cuenta del usuario como verificada."""
+        await self.sesion.execute(
+            update(Usuario)
+            .where(Usuario.id == usuario_id)
+            .values(verificado=True)
+        )
+        await self.sesion.commit()
+
     async def desactivar(self, usuario_id: uuid.UUID) -> None:
         """Soft-delete: pone activo=False en un usuario."""
         await self.sesion.execute(

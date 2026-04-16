@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utilidades/cn";
 import type { DiaSemanalDTO } from "@/lib/tipos";
+import { fechaHoyLocal } from "@/lib/utilidades/fecha-local";
 
 interface VistaSemanaProps {
   semana: DiaSemanalDTO[];
@@ -18,7 +19,7 @@ const CLIMA_DOT: Record<string, string> = {
 const DIAS_CORTOS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 export function VistaSemana({ semana }: VistaSemanaProps) {
-  const hoyStr = new Date().toISOString().split("T")[0];
+  const hoyStr = fechaHoyLocal();
 
   return (
     <div>

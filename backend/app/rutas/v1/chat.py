@@ -2,7 +2,8 @@
 
 import hashlib
 import uuid
-from datetime import date, timezone
+from datetime import date, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -14,7 +15,9 @@ from app.datos.repositorio_conversacion import RepositorioConversacion
 from app.datos.repositorio_perfil import RepositorioPerfil
 from app.datos.repositorio_plan import RepositorioPlan
 from app.datos.repositorio_suscripcion import RepositorioSuscripcion
+from app.dependencias import obtener_tz_usuario
 from app.dependencias_auth import obtener_usuario_actual
+from app.nucleo.utilidades_fecha import dia_actual
 from app.esquemas.respuesta import RespuestaBase
 from app.excepciones import LimiteExcedido
 from app.modelos.usuario import Usuario
@@ -60,7 +63,7 @@ async def _es_premium(db: AsyncSession, usuario_id: uuid.UUID) -> bool:
 
 
 async def _verificar_limite(
-    redis: Redis, usuario_id: uuid.UUID, es_premium: bool
+    redis: Redis, usuario_id: uuid.UUID, es_premium: bool, tz: ZoneInfo
 ) -> int | None:
     """Verifica límite diario. Retorna mensajes restantes (None=ilimitado).
 
@@ -69,7 +72,7 @@ async def _verificar_limite(
     if es_premium:
         return None
 
-    hoy = date.today().isoformat()
+    hoy = dia_actual(tz).isoformat()
     clave = f"chat:limite:{usuario_id}:{hoy}"
     conteo = await redis.get(clave)
     conteo = int(conteo) if conteo else 0
@@ -83,9 +86,9 @@ async def _verificar_limite(
     return LIMITE_DIARIO_GRATIS - conteo
 
 
-async def _incrementar_conteo(redis: Redis, usuario_id: uuid.UUID) -> None:
+async def _incrementar_conteo(redis: Redis, usuario_id: uuid.UUID, tz: ZoneInfo) -> None:
     """Incrementa el contador diario de mensajes."""
-    hoy = date.today().isoformat()
+    hoy = dia_actual(tz).isoformat()
     clave = f"chat:limite:{usuario_id}:{hoy}"
     pipe = redis.pipeline()
     pipe.incr(clave)
@@ -124,12 +127,13 @@ async def enviar_mensaje(
     usuario: Usuario = Depends(obtener_usuario_actual),
     db: AsyncSession = Depends(_obtener_db_placeholder),
     redis: Redis = Depends(_obtener_redis_placeholder),
+    tz: ZoneInfo = Depends(obtener_tz_usuario),
 ):
     """Envía un mensaje al oráculo y recibe respuesta."""
     premium = await _es_premium(db, usuario.id)
 
     # Verificar límite (lanza LimiteExcedido si se excedió)
-    restantes = await _verificar_limite(redis, usuario.id, premium)
+    restantes = await _verificar_limite(redis, usuario.id, premium, tz)
 
     # Obtener o crear conversación web
     repo_conv = RepositorioConversacion(db)
@@ -140,8 +144,7 @@ async def enviar_mensaje(
 
     # Obtener tránsitos actuales + próximos 3 días
     try:
-        from datetime import date, timedelta
-        hoy = date.today()
+        hoy = dia_actual(tz)
         transitos = ServicioTransitos.obtener_transitos_actuales()
         # Agregar tránsitos de los próximos 3 días para responder sobre "mañana", "lunes", etc.
         proximos_dias = []
@@ -201,7 +204,7 @@ async def enviar_mensaje(
 
     # Incrementar conteo para usuarios gratis
     if not premium:
-        await _incrementar_conteo(redis, usuario.id)
+        await _incrementar_conteo(redis, usuario.id, tz)
         restantes = (restantes or LIMITE_DIARIO_GRATIS) - 1
 
     logger.info(
@@ -463,6 +466,7 @@ async def explicar_seleccion(
     usuario: Usuario = Depends(obtener_usuario_actual),
     db: AsyncSession = Depends(_obtener_db_placeholder),
     redis: Redis = Depends(_obtener_redis_placeholder),
+    tz: ZoneInfo = Depends(obtener_tz_usuario),
 ):
     """Explica un fragmento de texto que el usuario seleccionó en la app.
 
@@ -495,7 +499,7 @@ async def explicar_seleccion(
 
     # 2. Verificar cuota (reusa helper del chat).
     premium = await _es_premium(db, usuario.id)
-    restantes = await _verificar_limite(redis, usuario.id, premium)
+    restantes = await _verificar_limite(redis, usuario.id, premium, tz)
 
     # 3. Obtener perfil cósmico (reusa helper del chat).
     perfil_cosmico = await _obtener_contexto_cosmico(db, usuario.id)
@@ -531,7 +535,7 @@ async def explicar_seleccion(
 
     # 7. Descontar cuota (reusa helper) solo si la llamada fue exitosa.
     if not premium and es_respuesta_valida:
-        await _incrementar_conteo(redis, usuario.id)
+        await _incrementar_conteo(redis, usuario.id, tz)
         restantes = (restantes or LIMITE_DIARIO_GRATIS) - 1
 
     logger.info(

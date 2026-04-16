@@ -22,6 +22,7 @@ export type {
   RespuestaTokens,
   Usuario,
   UsuarioConSuscripcion,
+  RespuestaRegistro,
   RespuestaRegistroLogin,
 } from "./auth";
 

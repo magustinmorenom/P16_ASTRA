@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clienteApi, ErrorAPI } from "@/lib/api/cliente";
 import type { PodcastEpisodio, TipoPodcast } from "@/lib/tipos";
+import { fechaHoyLocal } from "@/lib/utilidades/fecha-local";
 
 /** No reintentar en errores 403 (falta de permisos/plan). */
 function reintentarSiNoEs403(cantidadFallos: number, error: Error) {
@@ -12,7 +13,7 @@ function reintentarSiNoEs403(cantidadFallos: number, error: Error) {
 
 /** Obtiene los episodios de podcast existentes (día/semana/mes actuales). */
 export function usarPodcastHoy(refetchRapido = false) {
-  const hoy = new Date().toISOString().split("T")[0];
+  const hoy = fechaHoyLocal();
   return useQuery({
     queryKey: ["podcast", "hoy", hoy],
     queryFn: () => clienteApi.get<PodcastEpisodio[]>(`/podcast/hoy?fecha=${hoy}`),
@@ -61,7 +62,7 @@ export function usarPodcastHistorial() {
 /** Genera un episodio de podcast on-demand. */
 export function usarGenerarPodcast() {
   const queryClient = useQueryClient();
-  const hoy = new Date().toISOString().split("T")[0];
+  const hoy = fechaHoyLocal();
   return useMutation({
     mutationFn: (tipo: TipoPodcast) =>
       clienteApi.post<PodcastEpisodio>(`/podcast/generar?tipo=${tipo}&fecha=${hoy}`),

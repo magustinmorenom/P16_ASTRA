@@ -8,6 +8,8 @@ from pathlib import Path
 import anthropic
 import pytz
 from redis.asyncio import Redis
+
+from app.nucleo.utilidades_fecha import dia_arg_actual
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.configuracion import obtener_configuracion
@@ -637,7 +639,7 @@ class ServicioPronostico:
         fecha_inicio: date | None = None,
     ) -> dict:
         """Genera pronóstico resumido de 7 días."""
-        hoy = date.today()
+        hoy = dia_arg_actual()
         # Calcular lunes de la semana solicitada (o la actual)
         if fecha_inicio:
             lunes = fecha_inicio - timedelta(days=fecha_inicio.weekday())

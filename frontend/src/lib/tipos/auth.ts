@@ -6,7 +6,7 @@
 /** Datos para registrar un nuevo usuario. */
 export interface EsquemaRegistro {
   email: string;
-  nombre: string;
+  nombre?: string;
   /** Mínimo 8 caracteres, máximo 128. */
   contrasena: string;
 }
@@ -74,4 +74,13 @@ export interface RespuestaRegistroLogin {
   token_acceso: string;
   token_refresco: string;
   tipo: string;
+}
+
+/** Respuesta de registro que puede requerir verificación OTP. */
+export interface RespuestaRegistro {
+  requiere_verificacion?: boolean;
+  email?: string;
+  usuario?: Pick<Usuario, "id" | "email" | "nombre">;
+  token_acceso?: string;
+  token_refresco?: string;
 }

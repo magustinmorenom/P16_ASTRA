@@ -7,6 +7,7 @@ import pytz
 from app.datos.repositorio_transito import RepositorioTransito
 from app.nucleo.servicio_efemerides import ServicioEfemerides
 from app.nucleo.servicio_zona_horaria import ServicioZonaHoraria
+from app.nucleo.utilidades_fecha import dia_arg_actual
 from app.registro import logger
 from app.utilidades.constantes import ASPECTOS
 from app.utilidades.convertidores import diferencia_angular
@@ -181,7 +182,7 @@ async def verificar_y_completar_ventana(repo: RepositorioTransito) -> int:
 
     Retorna la cantidad de días insertados.
     """
-    hoy = date.today()
+    hoy = dia_arg_actual()
     fecha_objetivo = hoy + timedelta(days=DIAS_VENTANA_FUTURO)
 
     # 1. Rotar estados
@@ -230,7 +231,7 @@ async def verificar_y_completar_ventana(repo: RepositorioTransito) -> int:
 
 async def purgar_transitos_antiguos(repo: RepositorioTransito) -> int:
     """Elimina tránsitos con más de 5 años de antigüedad."""
-    fecha_limite = date.today() - timedelta(days=DIAS_RETENCION_PASADO)
+    fecha_limite = dia_arg_actual() - timedelta(days=DIAS_RETENCION_PASADO)
     eliminados = await repo.purgar_antiguos(fecha_limite)
     if eliminados > 0:
         logger.info("Purga de tránsitos: %d filas eliminadas (anteriores a %s)", eliminados, fecha_limite)
